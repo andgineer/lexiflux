@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <script src="https://unpkg.com/htmx.org@1.9.6" integrity="sha384-FhXw7b6AlE/jyjlZH5iHa/tTe9EpJ1Y55RjcgPbjeWMskSxZt1v9qkxLJWNJaGni" crossorigin="anonymous"></script>
+    <style>
+        /* Body and Container Styles */
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+        }
+        #articles {
+            display: grid;
+            grid-template-columns: repeat(1, 1fr);
+            gap: 20px;
+            max-width: 1200px;
+            margin: auto;
+            padding: 20px;
+        }
+        h1 {
+            grid-column: 1 / -1;  /* Span all columns */
+            margin-bottom: 20px;
+            text-align: center;
+            text-decoration: underline;
+        }
+
+        /* Article Styles */
+        .article {
+            border: 1px solid #ccc;
+            padding: 20px;
+            border-radius: 8px;
+        }
+
+        .article h2 {
+            font-size: 24px;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        .image-container {
+            display: flex;
+            justify-content: center;
+        }
+        .article img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+        }
+        .article p {
+            text-align: justify;
+        }
+    </style>
+</head>
+<body>
+<h1>Articles</h1>
+<div id="articles">
+    {% for page in page_obj %}
+    <div class="article">
+        <h2>{{ page.number }}</h2>
+        <p>{{ page.content }}</p>
+
+        {% if page_obj.has_next and forloop.last %}
+        <span hx-get="{% url 'articles' %}?page={{ page_obj.next_page_number }}"
+              hx-swap="beforeend" hx-target="#articles" hx-select=".article"
+              hx-trigger="revealed">
+            </span>
+        {% endif %}
+
+    </div>
+    {% endfor %}
+
+</div>
+
+
+</body>
+</html>
