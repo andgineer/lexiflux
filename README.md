@@ -1,0 +1,4 @@
+# LexiFlux
+
+## Scripts
+    make help
