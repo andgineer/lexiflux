@@ -1,1 +1,1 @@
-"""LexiFlux."""
+"""Lexiflux."""

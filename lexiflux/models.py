@@ -1,4 +1,4 @@
-"""Models for the LexiFlux app.""" ""
+"""Models for the Lexiflux app.""" ""
 from django.db import models
 
 
