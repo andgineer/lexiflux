@@ -52,15 +52,15 @@
     </style>
 </head>
 <body>
-<h1>Articles</h1>
+<h1>Book</h1>
 <div id="articles">
-    {% for page in page_obj %}
+    {% for page in pages %}
     <div class="article">
         <h2>{{ page.number }}</h2>
         <p>{{ page.content }}</p>
 
-        {% if page_obj.has_next and forloop.last %}
-        <span hx-get="{% url 'articles' %}?page={{ page_obj.next_page_number }}"
+        {% if pages.has_next and forloop.last %}
+        <span hx-get="{% url 'book' %}?page={{ pages.next_page_number }}"
               hx-swap="beforeend" hx-target="#articles" hx-select=".article"
               hx-trigger="revealed">
             </span>

@@ -1,1 +1,10 @@
+# test
 faker
+
+# build
+pip-tools
+
+# lint
+pre-commit
+pylint
+mypy

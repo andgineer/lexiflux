@@ -11,6 +11,13 @@ migrate:
 run:
 	python manage.py runserver
 
+.HELP: reqs  ## Upgrade requirements including pre-commit
+reqs:
+	pre-commit autoupdate
+	bash ./scripts/compile_requirements.sh
+	pip install -r requirements.dev.txt
+	pip install -r requirements.txt
+
 .HELP: help  ## Display this message
 help:
 	@grep -E \
