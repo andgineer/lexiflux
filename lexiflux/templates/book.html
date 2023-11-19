@@ -8,20 +8,23 @@
 </head>
 
 <body>
-<h1 class="text-center">Book</h1>
-<div id="articles" class="row">
-    {% for page in pages %}
-    <div id="pages">
-        <h2 class="card-title text-center">{{ page.number }}</h2>
-        <p class="card-text">{{ page.content }}</p>
-        {% if pages.has_next and forloop.last %}
-        <span hx-get="{% url 'book' %}?page={{ pages.next_page_number }}"
-              hx-swap="beforeend" hx-target="#articles" hx-select="#pages"
-              hx-trigger="revealed">
-            </span>
-        {% endif %}
+
+<nav class="navbar navbar-expand-lg navbar-light bg-light fixed-top">
+    <div class="container">
+        <a class="navbar-brand" href="#">Book</a>
     </div>
-    {% endfor %}
+</nav>
+
+<div id="page-scroll" style="margin-top: 70px;">
+    <div class="row justify-content-center"
+            hx-get="{% url 'bookPage' %}?page={{ page.number|add:1 }}"
+            hx-trigger="revealed"
+            hx-swap="afterend">
+        <div id="page-{{ page.number }}" class="col-10">
+            <h2 class="card-title text-center">{{ page.number }}</h2>
+            <p class="card-text">{{ page.content }}</p>
+        </div>
+    </div>
 </div>
 
 <!-- Bootstrap 5 JavaScript (requires Popper.js) -->
