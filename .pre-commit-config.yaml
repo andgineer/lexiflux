@@ -2,7 +2,9 @@ exclude: |
     (?x)(
         tests/|
         docs/|
+        core/|
         migrations/|
+        manage.py|
         __about__.py
     )
 repos:
@@ -95,6 +97,9 @@ repos:
 
       - id: pylint
         name: Pylint
-        entry: pylint --max-line-length=99 --ignore-imports=yes
+        entry: pylint |
+          --max-line-length=99
+          --ignore-imports=yes
+          --load-plugins=pylint_django
         files: \.py$
         language: python

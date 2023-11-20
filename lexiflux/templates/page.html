@@ -1,5 +1,5 @@
 <div class="row justify-content-center"
-        hx-get="{% url 'bookPage' %}?page={{ page.number|add:1 }}"
+        hx-get="{% url 'book-page' %}?page={{ page.number|add:1 }}"
         hx-trigger="revealed"
         hx-swap="afterend">
     <div id="page-{{ page.number }}" class="col-10">
