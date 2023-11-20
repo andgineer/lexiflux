@@ -97,9 +97,11 @@ repos:
 
       - id: pylint
         name: Pylint
-        entry: pylint |
+        entry: |
+          pylint
           --max-line-length=99
           --ignore-imports=yes
           --load-plugins=pylint_django
+          --django-settings-module=lexiflux.settings
         files: \.py$
         language: python

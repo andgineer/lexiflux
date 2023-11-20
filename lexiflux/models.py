@@ -2,7 +2,7 @@
 from django.db import models
 
 
-class BookPage(models.Model):
+class BookPage(models.Model):  # type: ignore
     """A book page."""
 
     number = models.PositiveIntegerField()
