@@ -1,9 +1,17 @@
 <div class="row justify-content-center"
-        hx-get="{% url 'book-page' %}?page={{ page.number|add:1 }}"
-        hx-trigger="revealed"
-        hx-swap="afterend">
-    <div id="page-{{ page.number }}" class="col-10">
-        <h2 class="card-title text-center">{{ page.number }}</h2>
+     {% if type == 'next' %}
+        hx-get="{% url 'book-page' %}?book-page={{ book_page|add:1 }}&type={{ type }}"
+     {% else %}
+        hx-get="{% url 'book-page' %}?book-page={{ book_page|add:-1 }}&type={{ type }}"
+     {% endif %}
+     hx-trigger="revealed"
+     {% if type == 'next' %}
+        hx-swap="afterend"
+     {% else %}
+        hx-swap="beforebegin"
+     {% endif %}">
+    <div id="page-{{ book_page }}" class="col-10">
+        <h2 class="card-title text-center">{{ book_page }}</h2>
         <p class="card-text">{{ page.content }}</p>
     </div>
 </div>

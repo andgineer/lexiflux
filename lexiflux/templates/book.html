@@ -7,6 +7,7 @@
     </nav>
 
     <div id="page-scroll" style="margin-top: 70px;">
-        {% include "page.html" %}
+        {% include "page.html" with type="prev" book_page=page.number %}
+        {% include "page.html" with type="next" book_page=page.number|add:1 %}
     </div>
 {% endblock %}
