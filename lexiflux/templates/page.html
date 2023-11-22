@@ -1,15 +1,13 @@
 <div class="row justify-content-center"
      {% if type == 'next' %}
         hx-get="{% url 'book-page' %}?book-page={{ book_page|add:1 }}&type={{ type }}"
+        hx-swap="afterend"
+        hx-trigger="revealed"
      {% else %}
         hx-get="{% url 'book-page' %}?book-page={{ book_page|add:-1 }}&type={{ type }}"
-     {% endif %}
-     hx-trigger="revealed"
-     {% if type == 'next' %}
-        hx-swap="afterend"
-     {% else %}
-        hx-swap="beforebegin"
-     {% endif %}">
+        hx-swap="beforebegin focus-scroll:true"
+        hx-trigger="revealed"
+     {% endif %}>
     <div id="page-{{ book_page }}" class="col-10">
         <h2 class="card-title text-center">{{ book_page }}</h2>
         <p class="card-text">{{ page.content }}</p>

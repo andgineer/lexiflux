@@ -1,12 +1,6 @@
 {% extends "base.html" %}
 {% block content %}
-    <nav class="navbar navbar-expand-lg navbar-light bg-light fixed-top">
-        <div class="container">
-            <a class="navbar-brand" href="#">Book</a>
-        </div>
-    </nav>
-
-    <div id="page-scroll" style="margin-top: 70px;">
+    <div id="page-scroll" class="overflow-auto">
         {% include "page.html" with type="prev" book_page=page.number %}
         {% include "page.html" with type="next" book_page=page.number|add:1 %}
     </div>
