@@ -7,6 +7,13 @@ migrate:
 	python manage.py makemigrations
 	python manage.py migrate
 
+.HELP: add-pages  ## Add pages to DB
+add-pages:
+	python manage.py add-pages
+
+.HELP: init-db  ## Create tables and add pages to DB
+init-db: migrate add-pages
+
 .HELP: run  ## Run local server
 run:
 	python manage.py runserver

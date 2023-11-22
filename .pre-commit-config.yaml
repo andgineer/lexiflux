@@ -5,6 +5,7 @@ exclude: |
         core/|
         migrations/|
         manage.py|
+        management/commands/|
         __about__.py
     )
 repos:
