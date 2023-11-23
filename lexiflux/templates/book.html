@@ -18,8 +18,17 @@
         {%  include "page.html" %}
     </div>
 
+    <nav class="navbar navbar-expand-lg navbar-light bg-light navbar-fixed-bottom">
+        <div class="container-fluid">
+                Next
+        </div>
+    </nav>
+
     <script>
         document.body.addEventListener('htmx:configRequest', function(event) {
+                {# https://htmx.org/events/#htmx:configRequest #}
+                {# Is triggered after htmx has collected parameters for inclusion in the request. #}
+                {# detail.parameters - the parameters that will be submitted in the request. #}
             if (event.target.id === 'next-button') {
                 let container = document.getElementById('word-container');
                 let words = document.querySelectorAll('.word');
