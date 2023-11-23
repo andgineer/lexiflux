@@ -1,7 +1,46 @@
 {% extends "base.html" %}
 {% block content %}
-    <div id="page-scroll" class="overflow-auto">
-        {% include "page.html" with type="prev" book_page=page.number %}
-        {% include "page.html" with type="next" book_page=page.number|add:1 %}
+
+    <nav class="navbar navbar-expand-lg navbar-light bg-light fixed-top">
+        <div class="container-fluid">
+            <button
+                    class="btn btn-primary"
+                    id="next-button"
+                    hx-get="{% url 'book-page' %}"
+                    hx-target="#word-container"
+                    hx-swap="outerHTML">
+                Next
+            </button>
+        </div>
+    </nav>
+
+    <div id="word-container" class="mt-5 p-3" style="overflow-y: hidden;">
+        {%  include "page.html" %}
     </div>
+
+    <script>
+        document.body.addEventListener('htmx:configRequest', function(event) {
+            if (event.target.id === 'next-button') {
+                let container = document.getElementById('word-container');
+                let words = document.querySelectorAll('.word');
+                let containerRect = container.getBoundingClientRect();
+                let lastVisibleWordId = null;
+
+                for (let word of words) {
+                    let wordRect = word.getBoundingClientRect();
+                    if (wordRect.top >= containerRect.top && wordRect.bottom <= containerRect.bottom) {
+                        lastVisibleWordId = word.id;
+                    } else {
+                        // Exit the loop when the first invisible word is encountered
+                        break;
+                    }
+                }
+                if (lastVisibleWordId) {
+                    // Modify the request parameters before the HTMX request is made
+                    event.detail.parameters['last-word-id'] = lastVisibleWordId.replace('word-', '');
+                }
+            }
+        });
+    </script>
+
 {% endblock %}
