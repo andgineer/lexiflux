@@ -1,4 +1,7 @@
 
 {% for word in words %}
-    <span id="word-{{ forloop.counter }}" hx-trigger="click" class="word">{{ word }}</span>
+    <span id="word-{{ forloop.counter }}"
+          hx-trigger="click" class="word"
+          hx-get="{% url 'word' %}?id={{ page.number }}:{{ forloop.counter }}"
+          hx-swap="outerHTML">{{ word }}</span>
 {% endfor %}

@@ -13,17 +13,13 @@
             }
 
             #word-container {
-                flex-grow: 1; /* Allows the container to expand to fill available space */
-                overflow-y: auto; /* Adds scroll if content overflows */
+                flex-grow: 1;
+                overflow: hidden; /* Hide overflow instead of scroll */
                 padding: 10px;
-                margin-bottom: 50px;
             }
 
-            .navbar-fixed-bottom {
+            .navbar {
                 width: 100%;
-                position: fixed;
-                bottom: 0;
-                height: 50px;
             }
         </style>
     </head>

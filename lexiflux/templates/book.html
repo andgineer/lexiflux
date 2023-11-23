@@ -1,24 +1,24 @@
 {% extends "base.html" %}
 {% block content %}
 
-    <nav class="navbar navbar-expand-lg navbar-light bg-light fixed-top">
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
         <div class="container-fluid">
             <button
                     class="btn btn-primary"
                     id="next-button"
                     hx-get="{% url 'book-page' %}"
                     hx-target="#word-container"
-                    hx-swap="outerHTML">
+                    hx-swap="innerHTML">
                 Next
             </button>
         </div>
     </nav>
 
-    <div id="word-container" class="mt-5 p-3" style="overflow-y: hidden;">
+    <div id="word-container" class="container-fluid">
         {%  include "page.html" %}
     </div>
 
-    <nav class="navbar navbar-expand-lg navbar-light bg-light navbar-fixed-bottom">
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
         <div class="container-fluid">
                 Next
         </div>
@@ -49,6 +49,10 @@
                     event.detail.parameters['last-word-id'] = lastVisibleWordId.replace('word-', '');
                 }
             }
+        });
+        document.body.addEventListener('htmx:afterSwap', function(event) {
+            // Trigger a resize event to prompt Bootstrap to recalculate the layout
+            window.dispatchEvent(new Event('resize'));
         });
     </script>
 
