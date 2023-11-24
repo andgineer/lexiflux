@@ -1,5 +1,9 @@
 """Lexiflux app config."""
+from typing import Any
+
 from django.apps import AppConfig
+from django.db.models.signals import post_migrate
+from django.dispatch import receiver
 
 
 class LexifluxConfig(AppConfig):  # type: ignore
@@ -7,3 +11,15 @@ class LexifluxConfig(AppConfig):  # type: ignore
 
     default_auto_field = "django.db.models.BigAutoField"
     name = "lexiflux"
+
+    def ready(self) -> None:
+        """Run when the app is ready."""
+
+        @receiver(post_migrate)  # type: ignore
+        def populate_languages(sender: Any, **kwargs: Any) -> None:
+            if sender.name == "lexiflux":
+                from .dictionary.google_languages import (  # pylint: disable=import-outside-toplevel
+                    update_languages,
+                )
+
+                update_languages()

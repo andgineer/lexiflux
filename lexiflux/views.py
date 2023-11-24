@@ -9,8 +9,9 @@ from .models import BookPage
 
 def book(request: HttpRequest) -> HttpResponse:
     """Render book."""
+    book_id = request.GET.get("book", 1)
     page_number = request.GET.get("book-page", 1)
-    page = BookPage.objects.get(number=page_number)
+    page = BookPage.objects.get(book_id=book_id, number=page_number)
     words = page.content.split(" ")
     return render(
         request,
@@ -24,9 +25,10 @@ def book(request: HttpRequest) -> HttpResponse:
 
 def book_page(request: HttpRequest) -> HttpResponse:
     """Render the book page."""
+    book_id = request.GET.get("book", 1)
     page_number = request.GET.get("book-page", 1)
     try:
-        page = BookPage.objects.get(number=page_number)
+        page = BookPage.objects.get(book_id=book_id, number=page_number)
     except BookPage.DoesNotExist:
         return HttpResponse(f"error: Page {page_number} not found", status=500)
     last_word_id = request.GET.get("last-word-id", "0")
@@ -46,9 +48,13 @@ def book_page(request: HttpRequest) -> HttpResponse:
 
 def word_click(request: HttpRequest) -> HttpResponse:
     """Word click event."""
+    book_id = request.GET.get("book", 1)
     page_number, word_number = request.GET.get("id", 1).split(":")
     try:
-        page = BookPage.objects.get(number=page_number)
+        page = BookPage.objects.get(
+            book_id=book_id,
+            number=page_number,
+        )
     except BookPage.DoesNotExist:
         return HttpResponse(f"error: Page {page_number} not found", status=500)
     words = page.content.split(" ")

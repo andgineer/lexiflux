@@ -25,6 +25,14 @@ reqs:
 	pip install -r requirements.dev.txt
 	pip install -r requirements.txt
 
+.HELP: sql  ## sqlite3
+sql:
+	sqlite3 db.sqlite3
+
+.HELP: get-books  ## Select books from DB
+get-books:
+	sqlite3 db.sqlite3 "SELECT * FROM lexiflux_book;"
+
 .HELP: help  ## Display this message
 help:
 	@grep -E \
