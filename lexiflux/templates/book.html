@@ -26,9 +26,13 @@
 
     <script>
         document.body.addEventListener('htmx:configRequest', function(event) {
-                {# https://htmx.org/events/#htmx:configRequest #}
-                {# Is triggered after htmx has collected parameters for inclusion in the request. #}
-                {# detail.parameters - the parameters that will be submitted in the request. #}
+            // Add page and book parameters to all HTMX requests
+            let page = {{ page.number }};
+            let book = {{ book.id }};
+            event.detail.parameters['page-num'] = page;
+            event.detail.parameters['book-id'] = book;
+
+            // Detect last word for the next button
             if (event.target.id === 'next-button') {
                 let container = document.getElementById('word-container');
                 let words = document.querySelectorAll('.word');
@@ -45,11 +49,11 @@
                     }
                 }
                 if (lastVisibleWordId) {
-                    // Modify the request parameters before the HTMX request is made
                     event.detail.parameters['last-word-id'] = lastVisibleWordId.replace('word-', '');
                 }
             }
         });
+
         document.body.addEventListener('htmx:afterSwap', function(event) {
             // Trigger a resize event to prompt Bootstrap to recalculate the layout
             window.dispatchEvent(new Event('resize'));

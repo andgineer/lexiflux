@@ -9,14 +9,15 @@ from .models import BookPage
 
 def book(request: HttpRequest) -> HttpResponse:
     """Render book."""
-    book_id = request.GET.get("book", 1)
-    page_number = request.GET.get("book-page", 1)
+    book_id = request.GET.get("book-id", 1)
+    page_number = request.GET.get("page-num", 1)
     page = BookPage.objects.get(book_id=book_id, number=page_number)
     words = page.content.split(" ")
     return render(
         request,
         "book.html",
         {
+            "book": page.book,
             "page": page,
             "words": words,
         },
@@ -25,15 +26,15 @@ def book(request: HttpRequest) -> HttpResponse:
 
 def book_page(request: HttpRequest) -> HttpResponse:
     """Render the book page."""
-    book_id = request.GET.get("book", 1)
-    page_number = request.GET.get("book-page", 1)
+    book_id = request.GET.get("book-id", 1)
+    page_number = request.GET.get("page-num", 1)
     try:
         page = BookPage.objects.get(book_id=book_id, number=page_number)
     except BookPage.DoesNotExist:
         return HttpResponse(f"error: Page {page_number} not found", status=500)
     last_word_id = request.GET.get("last-word-id", "0")
     last_word_id = int(last_word_id) if last_word_id.isdigit() else 0
-    print("last_word_id", last_word_id)
+    print(book_id, page_number, "last_word_id", last_word_id)
     words = page.content.split(" ")
     content = render_to_string(
         "page.html",
@@ -48,8 +49,9 @@ def book_page(request: HttpRequest) -> HttpResponse:
 
 def word_click(request: HttpRequest) -> HttpResponse:
     """Word click event."""
-    book_id = request.GET.get("book", 1)
-    page_number, word_number = request.GET.get("id", 1).split(":")
+    book_id = request.GET.get("book-id", 1)
+    page_number = request.GET.get("page-num", 1)
+    word_id = request.GET.get("id", 1)
     try:
         page = BookPage.objects.get(
             book_id=book_id,
@@ -58,9 +60,14 @@ def word_click(request: HttpRequest) -> HttpResponse:
     except BookPage.DoesNotExist:
         return HttpResponse(f"error: Page {page_number} not found", status=500)
     words = page.content.split(" ")
-    word = words[int(word_number) - 1]  # word_number is 1-based
-    print("word", page_number, word_number, word)
-    template = Template("<span id='word-{{ page.number }}:{{ word_id }}'>{{ word }}</span>")
-    context = Context({"word": word, "word_id": word_number})
+    word = words[int(word_id) - 1]  # Django forloop.counter starts at 1
+    print(book_id, page_number, word_id, word)
+    template = Template(
+        """<span id="word-{{ word_id }}" class="word"
+          hx-trigger="click"
+          hx-get="{% url 'word' %}?id={{ word_id }}"
+          hx-swap="outerHTML">{{ word }}</span>"""
+    )
+    context = Context({"word": word, "word_id": word_id})
     content = template.render(context)
     return HttpResponse(content)
