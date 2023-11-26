@@ -1,7 +1,32 @@
+<div id="book" class="d-flex flex-column vh-100">
 
-{% for word in words %}
-    <span id="word-{{ forloop.counter }}" class="word"
-          hx-trigger="click"
-          hx-get="{% url 'word' %}?id={{ forloop.counter }}"
-          hx-swap="outerHTML">{{ word }}</span>
-{% endfor %}
+    <nav class="navbar">
+        <div class="container-fluid d-flex align-items-center justify-content-between">
+        <button
+            class="btn btn-primary"
+            id="prev-button">
+            &#8592; <!-- Left arrow -->
+        </button>
+
+        <div class="mx-3 text-truncate title-container">
+            {{ book.title }}
+        </div>
+
+        <button
+            class="btn btn-primary"
+            id="next-button">
+            &#8594; <!-- Right arrow -->
+        </button>
+        </div>
+    </nav>
+
+    <div id="word-container" class="container-fluid flex-grow-1">
+        ???
+    </div>
+
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <div class="container-fluid">
+                Next
+        </div>
+    </nav>
+</div>

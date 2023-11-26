@@ -2,7 +2,6 @@
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render
 from django.template import Context, Template
-from django.template.loader import render_to_string
 
 from .models import BookPage
 
@@ -11,63 +10,57 @@ def book(request: HttpRequest) -> HttpResponse:
     """Render book."""
     book_id = request.GET.get("book-id", 1)
     page_number = request.GET.get("page-num", 1)
-    page = BookPage.objects.get(book_id=book_id, number=page_number)
-    words = page.content.split(" ")
+    page_number = BookPage.objects.get(book_id=book_id, number=page_number)
+    words = page_number.content.split(" ")
     return render(
         request,
         "book.html",
         {
-            "book": page.book,
-            "page": page,
+            "book": page_number.book,
+            "page": page_number,
             "words": words,
+            "top_word": 0,
         },
     )
 
 
-def next_page(request: HttpRequest) -> HttpResponse:
-    """Next page."""
+def page(request: HttpRequest) -> HttpResponse:
+    """Book page."""
     book_id = request.GET.get("book-id", 1)
     page_number = request.GET.get("page-num", 1)
     try:
-        page = BookPage.objects.get(book_id=book_id, number=page_number)
+        book_page = BookPage.objects.get(book_id=book_id, number=page_number)
     except BookPage.DoesNotExist:
         return HttpResponse(f"error: Page {page_number} not found", status=500)
-    last_word_id = request.GET.get("last-word-id", "0")
-    last_word_id = int(last_word_id) if last_word_id.isdigit() else 0
-    print(book_id, page_number, "last_word_id", last_word_id)
-    words = page.content.split(" ")
-    content = render_to_string(
+    top_word = request.GET.get("top-word", 0)
+    top_word = int(top_word)
+    words = book_page.content.split(" ")
+    print(book_id, page_number, "top_word", top_word, "from", len(words))
+    return render(
+        request,
         "page.html",
         {
-            "page": page,
+            "book": book_page.book,
+            "page": book_page,
             "words": words,
+            "top_word": 0,
         },
     )
 
-    return HttpResponse(content)
 
-
-def previous_page(request: HttpRequest) -> HttpResponse:
-    """Previous page."""
+def viewport(request: HttpRequest) -> HttpResponse:
+    """User changed viewport inside loaded book page."""
     book_id = request.GET.get("book-id", 1)
     page_number = request.GET.get("page-num", 1)
-    try:
-        page = BookPage.objects.get(book_id=book_id, number=page_number)
-    except BookPage.DoesNotExist:
-        return HttpResponse(f"error: Page {page_number} not found", status=500)
-    # last_word_id = request.GET.get("last-word-id", "0")
-    # last_word_id = int(last_word_id) if last_word_id.isdigit() else 0
-    # print(book_id, page_number, "last_word_id", last_word_id)
-    words = page.content.split(" ")
-    content = render_to_string(
-        "page.html",
-        {
-            "page": page,
-            "words": words,
-        },
-    )
-
-    return HttpResponse(content)
+    # todo: save viewport in the user session
+    # try:
+    #     page = BookPage.objects.get(book_id=book_id, number=page_number)
+    # except BookPage.DoesNotExist:
+    #     return HttpResponse(f"error: Page {page_number} not found", status=500)
+    top_word = request.GET.get("top-word", 0)
+    top_word = int(top_word)
+    print(book_id, page_number, "top_word", top_word)
+    return HttpResponse(status=200)
 
 
 def word_click(request: HttpRequest) -> HttpResponse:
@@ -76,14 +69,14 @@ def word_click(request: HttpRequest) -> HttpResponse:
     page_number = request.GET.get("page-num", 1)
     word_id = request.GET.get("id", 1)
     try:
-        page = BookPage.objects.get(
+        book_page = BookPage.objects.get(
             book_id=book_id,
             number=page_number,
         )
     except BookPage.DoesNotExist:
         return HttpResponse(f"error: Page {page_number} not found", status=500)
-    words = page.content.split(" ")
-    word = words[int(word_id) - 1]  # Django forloop.counter starts at 1
+    words = book_page.content.split(" ")
+    word = words[int(word_id)]
     print(book_id, page_number, word_id, word)
     template = Template(
         """<span id="word-{{ word_id }}" class="word"
