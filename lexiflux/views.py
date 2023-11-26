@@ -24,8 +24,8 @@ def book(request: HttpRequest) -> HttpResponse:
     )
 
 
-def book_page(request: HttpRequest) -> HttpResponse:
-    """Render the book page."""
+def next_page(request: HttpRequest) -> HttpResponse:
+    """Next page."""
     book_id = request.GET.get("book-id", 1)
     page_number = request.GET.get("page-num", 1)
     try:
@@ -35,6 +35,29 @@ def book_page(request: HttpRequest) -> HttpResponse:
     last_word_id = request.GET.get("last-word-id", "0")
     last_word_id = int(last_word_id) if last_word_id.isdigit() else 0
     print(book_id, page_number, "last_word_id", last_word_id)
+    words = page.content.split(" ")
+    content = render_to_string(
+        "page.html",
+        {
+            "page": page,
+            "words": words,
+        },
+    )
+
+    return HttpResponse(content)
+
+
+def previous_page(request: HttpRequest) -> HttpResponse:
+    """Previous page."""
+    book_id = request.GET.get("book-id", 1)
+    page_number = request.GET.get("page-num", 1)
+    try:
+        page = BookPage.objects.get(book_id=book_id, number=page_number)
+    except BookPage.DoesNotExist:
+        return HttpResponse(f"error: Page {page_number} not found", status=500)
+    # last_word_id = request.GET.get("last-word-id", "0")
+    # last_word_id = int(last_word_id) if last_word_id.isdigit() else 0
+    # print(book_id, page_number, "last_word_id", last_word_id)
     words = page.content.split(" ")
     content = render_to_string(
         "page.html",
