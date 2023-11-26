@@ -118,7 +118,8 @@
             }
 
             function fillContainerWithWords(startWordIndex, totalWords) {
-                console.log('Filling words:', wordsArray.slice(0, 10));
+                {#console.log('Filling words:', wordsArray.slice(0, 10));#}
+                {#todo: do not clear container if top word is the same#}
                 let container = document.getElementById('word-container');
                 let existingSpans = container.getElementsByClassName('word');
                 let existingSpansMap = {};
