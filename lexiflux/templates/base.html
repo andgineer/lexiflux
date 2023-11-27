@@ -12,7 +12,7 @@
                 flex-direction: column;
             }
 
-            #word-container {
+            #words-container {
                 flex-grow: 1;
                 overflow: hidden; /* Hide overflow instead of scroll */
                 padding: 10px;
@@ -43,19 +43,19 @@
 
         <script>
             let wordsArray = {{ words|safe }};
+            let totalWords = wordsArray.length;
             let topWord = {{ top_word }};
             let pageNum = {{ page.number }};
             let bookId = {{ book.id }};
 
             function getLastVisibleWord() {
-                let container = document.getElementById('word-container');
                 let words = document.querySelectorAll('.word');
-                let containerRect = container.getBoundingClientRect();
+                let containerRect = wordsContainer.getBoundingClientRect();
                 let lastVisibleWordIndex = 0;
 
                 for (let i = 0; i < words.length; i++) {
                     let wordRect = words[i].getBoundingClientRect();
-                    if (wordRect.bottom <= containerRect.bottom && wordRect.right <= containerRect.right) {
+                    if (wordRect.bottom <= containerRect.bottom) {
                         lastVisibleWordIndex = i;
                     } else {
                         break; // Exit the loop when the first invisible word is encountered
@@ -64,64 +64,60 @@
                 return lastVisibleWordIndex;
             }
 
-            function estimateLineHeightAndWordsPerLine(currentTopWordId) {
-                let firstWord = document.getElementById('word-' + currentTopWordId);
-                let firstWordRect = firstWord.getBoundingClientRect();
-                let words = document.querySelectorAll('.word');
-                let wordsPerLine = 0;
-                let lineHeight = firstWordRect.height;
-
-                for (let word of words) {
-                    let rect = word.getBoundingClientRect();
-                    if (rect.top === firstWordRect.top) {
-                        wordsPerLine++;
-                    } else {
-                        break; // Break the loop when the first word of the next line is encountered
-                    }
-                }
-                return { lineHeight, wordsPerLine };
+            function getVisibleWordsNum() {
+                let lastVisibleWordIndex = getLastVisibleWord();
+                return lastVisibleWordIndex - topWord + 1;
             }
 
-            function getPrevPageTopWord() {
-                // Find such previous word, so that the last word of the container is the word before the current top word
-                let { lineHeight, wordsPerLine } = estimateLineHeightAndWordsPerLine(topWord);
-                let containerHeight = document.getElementById('word-container').clientHeight;
-                let maxLines = Math.floor(containerHeight / lineHeight);
-                let estimatedWordsInContainer = maxLines * wordsPerLine;
+            function getPrevViewport() {
+                // Search for the topWord where the last visible word is the word before the current topWord
+                let targetLastWord = topWord - 1;
+                // start with heuristic to narrow down the search: go back by 2 viewports number of words
+                let low = Math.max(0, topWord - getVisibleWordsNum() * 2);
+                let high = topWord - 1;
 
-                let low = Math.max(0, topWord - estimatedWordsInContainer);
-                let high = topWord;
-                let mid;
+                let result = binarySearchForTopWord(low, high, targetLastWord);
+                if (result !== -1) {
+                    return result;
+                }
 
+                // If the heuristic-based search fails, start a new search from the beginning
+                result = binarySearchForTopWord(0, high, targetLastWord);
+                if (result !== -1) {
+                    return result;
+                }
+                else {
+                    // If the search did not find the exact match, shift viewport to the beginning
+                    return 0;
+                }
+            }
+
+            function binarySearchForTopWord(low, high, targetLastWord) {
                 while (low < high) {
-                    mid = Math.floor((low + high) / 2);
-                    if (isLastWordPreviousToCurrentTopWord(mid, topWord, wordsArray.length)) {
+                    let mid = Math.floor((low + high) / 2);
+                    suppressRedraw(wordsContainer);
+                    fillContainerWithWords(mid);
+                    resumeRedraw(wordsContainer);
+
+                    let lastVisibleWord = getLastVisibleWord();
+
+                    if (lastVisibleWord < targetLastWord) {
+                        low = mid + 1;
+                    } else if (lastVisibleWord > targetLastWord) {
                         high = mid;
                     } else {
-                        low = mid + 1;
+                        // Found the topWord where the last visible word is our targetLastWord
+                        return mid;
                     }
                 }
-
-                return low;
+                // If the search did not find the exact match, return -1
+                return -1;
             }
 
-            function isLastWordPreviousToCurrentTopWord(candidateTopWordId, currentTopWordId, totalWords) {
-                let container = document.getElementById('word-container');
-                suppressRedraw(container);
-
-                fillContainerWithWords(candidateTopWordId, totalWords);
-                let lastWordId = getLastVisibleWord();
-
-                resumeRedraw(container);
-
-                return lastWordId === currentTopWordId - 1;
-            }
-
-            function fillContainerWithWords(startWordIndex, totalWords) {
-                {#console.log('Filling words:', wordsArray.slice(0, 10));#}
-                {#todo: do not clear container if top word is the same#}
-                let container = document.getElementById('word-container');
-                let existingSpans = container.getElementsByClassName('word');
+            function fillContainerWithWords(startWordIndex) {
+                // console.log('Filling words:', wordsArray.slice(0, 10));
+                // todo: do not clear container if top word is the same
+                let existingSpans = wordsContainer.getElementsByClassName('word');
                 let existingSpansMap = {};
 
                 // Map existing spans by their IDs
@@ -129,10 +125,10 @@
                     existingSpansMap[span.id] = span;
                 }
 
-                container.innerHTML = ''; // Clear the container to reorder spans
-                let containerRect = container.getBoundingClientRect();
+                wordsContainer.innerHTML = ''; // Clear the container to reorder spans
+                let containerRect = wordsContainer.getBoundingClientRect();
 
-                for (let i = startWordIndex; i < totalWords && i < startWordIndex + totalWords; i++) {
+                for (let i = startWordIndex; i < wordsArray.length && i < startWordIndex + totalWords; i++) {
                     let wordId = 'word-' + i;
                     let wordSpan;
                     let isNewSpan = false;
@@ -153,7 +149,7 @@
                     }
 
                     // Temporarily add the word to the container to measure it
-                    container.appendChild(wordSpan);
+                    wordsContainer.appendChild(wordSpan);
 
                     // If it's a reused span, reprocess it with HTMX
                     if (!isNewSpan) {
@@ -161,15 +157,15 @@
                     }
 
                     // Check if the word fits fully within the container
-                    let wordRect = wordSpan.getBoundingClientRect();
-                    if (wordRect.bottom > containerRect.bottom || wordRect.right > containerRect.right) {
+                    // let wordRect = wordSpan.getBoundingClientRect();
+                    // if (wordRect.bottom > containerRect.bottom || wordRect.right > containerRect.right) {
                         // Word does not fully fit, remove it and stop adding more words
-                        container.removeChild(wordSpan);
-                        break;
-                    }
+                    //    wordsContainer.removeChild(wordSpan);
+                    //    break;
+                    //}
 
                     // Add a space after the word
-                    container.appendChild(document.createTextNode(' '));
+                    wordsContainer.appendChild(document.createTextNode(' '));
                 }
             }
 
@@ -181,14 +177,33 @@
                 container.style.visibility = 'visible';
             }
 
-            function loadPage(pageNum) {
-                fetch('/page?page-num=' + pageNum)
-                    .then(response => response.text())
+            function loadPage(pageNumber) {
+                fetch('/page?page-num=' + pageNumber)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Network response was not ok');
+                        }
+                        return response.json(); // Parse the JSON response
+                    })
                     .then(data => {
-                        document.getElementById('book').innerHTML = data;
+                        document.getElementById('book').innerHTML = data.html;
+                        // Update global variables with new data
+                        if (data.data) {
+                            wordsArray = data.data.words;
+                            totalWords = wordsArray.length;
+                            topWord = data.data.topWord;
+                            pageNum = parseInt(data.data.pageNum);
+                            bookId = data.data.bookId;
+                            reInitDom();
+                            fillContainerWithWords(topWord);
+                        } else {
+                            console.error('Invalid or missing data in response');
+                            console.log("Response data:", data);
+                        }
                     })
                     .catch(error => console.error('Error:', error));
             }
+
             function reportVieportChange() {
                 let url = `/viewport?top-word=${topWord}&book-id=${bookId}&page-num=${pageNum}`;
                 fetch(url)
@@ -212,31 +227,49 @@
                 event.detail.parameters['top-word'] = topWord;
             });
 
-            document.getElementById('prev-button').addEventListener('click', function() {
-                topWord = getPrevPageTopWord();
-                fillContainerWithWords(topWord, wordsArray.length);
+            function handlePrevButtonClick() {
+                topWord = getPrevViewport();
+                fillContainerWithWords(topWord);
                 reportVieportChange();
-            });
+            }
 
-            // Event listener for the next button
-            document.getElementById('next-button').addEventListener('click', function() {
+            function handleNextButtonClick() {
                 let lastWordIndex = getLastVisibleWord();
+                console.log('Last word index:', lastWordIndex);
                 if (lastWordIndex >= wordsArray.length - 1) {
                     // Last word is already visible, load the next page
-                    loadPage({{ page.number|add:1 }});
+                    loadPage(pageNum + 1);
                 } else {
                     // Shift viewport and report it to the server
                     topWord = lastWordIndex + 1;
                     reportVieportChange();
-                    fillContainerWithWords(topWord, wordsArray.length);
+                    fillContainerWithWords(topWord);
                 }
-            });
+            }
 
-            window.addEventListener('resize', function() {
-                fillContainerWithWords(topWord, wordsArray.length);
-            });
+            function reInitDom() {
+                // Reattach event listener to the previous button
+                let prevButton = document.getElementById('prev-button');
+                if (prevButton) {
+                    prevButton.removeEventListener('click', handlePrevButtonClick);
+                    prevButton.addEventListener('click', handlePrevButtonClick);
+                }
 
-            fillContainerWithWords(topWord, wordsArray.length);
+                // Reattach event listener to the next button
+                let nextButton = document.getElementById('next-button');
+                if (nextButton) {
+                    nextButton.removeEventListener('click', handleNextButtonClick);
+                    nextButton.addEventListener('click', handleNextButtonClick);
+                }
+
+                wordsContainer = document.getElementById('words-container');
+
+            // window.addEventListener('resize', function() {
+            //    fillContainerWithWords(topWord);
+            // );
+            }
+            reInitDom();
+            fillContainerWithWords(topWord);
         </script>
 
     </body>

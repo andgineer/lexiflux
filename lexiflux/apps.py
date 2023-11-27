@@ -17,6 +17,7 @@ class LexifluxConfig(AppConfig):  # type: ignore
 
         @receiver(post_migrate)  # type: ignore
         def populate_languages(sender: Any, **kwargs: Any) -> None:
+            # todo move to migration script
             if sender.name == "lexiflux":
                 from .dictionary.google_languages import (  # pylint: disable=import-outside-toplevel
                     update_languages,

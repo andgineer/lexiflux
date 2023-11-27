@@ -1,7 +1,8 @@
 """Vies for the Lexiflux app."""
-from django.http import HttpRequest, HttpResponse
+from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import render
 from django.template import Context, Template
+from django.template.loader import render_to_string
 
 from .models import BookPage
 
@@ -36,15 +37,27 @@ def page(request: HttpRequest) -> HttpResponse:
     top_word = int(top_word)
     words = book_page.content.split(" ")
     print(book_id, page_number, "top_word", top_word, "from", len(words))
-    return render(
-        request,
+    rendered_html = render_to_string(
         "page.html",
         {
             "book": book_page.book,
             "page": book_page,
             "words": words,
-            "top_word": 0,
+            "top_word": top_word,
         },
+        request,
+    )
+
+    return JsonResponse(
+        {
+            "html": rendered_html,
+            "data": {
+                "bookId": book_id,
+                "pageNum": page_number,
+                "words": words,
+                "topWord": top_word,
+            },
+        }
     )
 
 
