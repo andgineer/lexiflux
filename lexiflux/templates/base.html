@@ -49,20 +49,27 @@
             let bookId = {{ book.id }};
 
             function getLastVisibleWord() {
-                let words = document.querySelectorAll('.word');
                 let containerRect = wordsContainer.getBoundingClientRect();
-                let lastVisibleWordIndex = 0;
+                let lastVisibleWordIndex = topWord;
 
-                for (let i = 0; i < words.length; i++) {
-                    let wordRect = words[i].getBoundingClientRect();
-                    if (wordRect.bottom <= containerRect.bottom) {
-                        lastVisibleWordIndex = i;
+                for (let i = topWord; i < wordsArray.length; i++) {
+                    let wordId = 'word-' + i;
+                    let wordElement = document.getElementById(wordId);
+
+                    if (wordElement) {
+                        let wordRect = wordElement.getBoundingClientRect();
+                        if (wordRect.bottom <= containerRect.bottom) {
+                            lastVisibleWordIndex = i;
+                        } else {
+                            break; // Exit the loop when the first invisible word is encountered
+                        }
                     } else {
-                        break; // Exit the loop when the first invisible word is encountered
+                        break; // Exit the loop if the word element does not exist
                     }
                 }
                 return lastVisibleWordIndex;
             }
+
 
             function getVisibleWordsNum() {
                 let lastVisibleWordIndex = getLastVisibleWord();
@@ -196,6 +203,7 @@
                             bookId = data.data.bookId;
                             reInitDom();
                             fillContainerWithWords(topWord);
+                            htmx.process(wordsContainer);  // Process HTMX attributes in the new HTML
                         } else {
                             console.error('Invalid or missing data in response');
                             console.log("Response data:", data);
@@ -228,6 +236,15 @@
             });
 
             function handlePrevButtonClick() {
+                if (topWord === 0) {
+                    // Already at the beginning of the page, load the previous page
+                    if (pageNum === 1) {
+                        // Already at the beginning of the book, do nothing
+                        return;
+                    }
+                    loadPage(pageNum - 1);
+                    return;
+                }
                 topWord = getPrevViewport();
                 fillContainerWithWords(topWord);
                 reportVieportChange();
@@ -239,12 +256,11 @@
                 if (lastWordIndex >= wordsArray.length - 1) {
                     // Last word is already visible, load the next page
                     loadPage(pageNum + 1);
-                } else {
-                    // Shift viewport and report it to the server
-                    topWord = lastWordIndex + 1;
-                    reportVieportChange();
-                    fillContainerWithWords(topWord);
+                    return;
                 }
+                topWord = lastWordIndex + 1;
+                reportVieportChange();
+                fillContainerWithWords(topWord);
             }
 
             function reInitDom() {
