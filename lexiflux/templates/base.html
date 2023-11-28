@@ -71,8 +71,27 @@
             }
 
             function getVisibleWordsNum() {
+                let containerRect = wordsContainer.getBoundingClientRect();
                 let lastVisibleWordIndex = getLastVisibleWord();
-                return lastVisibleWordIndex - topWord + 1;
+                let visibleWordsNum = lastVisibleWordIndex - topWord + 1;
+                console.log('Visible words:', visibleWordsNum);
+                let lastWordElement = document.getElementById('word-' + lastVisibleWordIndex);
+
+                let bottomGapInLines;
+                if (lastWordElement) {
+                    let lastWordRect = lastWordElement.getBoundingClientRect();
+                    let lineHeight = lastWordRect.height;
+                    let spaceAtBottom = containerRect.bottom - lastWordRect.bottom;
+                    bottomGapInLines = spaceAtBottom / lineHeight;
+                }
+                if (!lastWordElement || bottomGapInLines > 1.5) {
+                    fillContainerWithWords(0);
+                    lastVisibleWordIndex = getLastVisibleWord(0);
+                    visibleWordsNum = lastVisibleWordIndex + 1;
+                    fillContainerWithWords(topWord);
+                    console.log('Visible words after re-fill:', visibleWordsNum);
+                }
+                return visibleWordsNum;
             }
 
             function findViewportStart(targetLastWord) {
@@ -110,6 +129,7 @@
             }
 
             function binarySearchForTopWord(low, high, targetLastWord) {
+                console.log('Searching for topWord:', targetLastWord, `between`, low, high);
                 while (low < high) {
                     let mid = Math.floor((low + high) / 2);
                     suppressRedraw(wordsContainer);
@@ -117,6 +137,7 @@
                     resumeRedraw(wordsContainer);
 
                     let lastVisibleWord = getLastVisibleWord(mid);
+                    console.log('mid:', mid, 'lastVisibleWord:', lastVisibleWord, 'low:', low, 'high:', high);
 
                     if (lastVisibleWord < targetLastWord) {
                         low = mid + 1;
