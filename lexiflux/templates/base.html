@@ -70,7 +70,8 @@
                 return lastVisibleWordIndex;
             }
 
-            function getVisibleWordsNum() {
+            function wordsInViewport() {
+                // Count the number of words that fit in the viewport
                 let containerRect = wordsContainer.getBoundingClientRect();
                 let lastVisibleWordIndex = getLastVisibleWord();
                 let visibleWordsNum = lastVisibleWordIndex - topWord + 1;
@@ -91,40 +92,62 @@
                     fillContainerWithWords(topWord);
                     console.log('Visible words after re-fill:', visibleWordsNum);
                 }
-                return visibleWordsNum;
+                return visibleWordsNum === 0 ? 1 : visibleWordsNum;
             }
 
-            function findViewportStart(targetLastWord) {
-                // Search for the topWord where the last visible word is the word before the current topWord
+            function findViewport(targetLastWord) {
+                // Search for the such topWord so the last visible word is the targetLastWord.
+                // targetLastWord defaults to the word before the current topWord.
                 if (targetLastWord === undefined) {
                     targetLastWord = topWord - 1;
                 }
-                let high = topWord - 1;
-
-                // start with heuristic to narrow down the search: go back by 2 viewports number of words
-                let result = binarySearchForTopWord(Math.max(0, topWord - getVisibleWordsNum() * 2), high, targetLastWord);
-                if (result === -1) {
-                    // If the heuristic-based search fails, start a search from the beginning
-                    result = binarySearchForTopWord(0, high, targetLastWord);
+                if (topWord === 0) {
+                    return 0;  // Already at the beginning of the page
                 }
-                if (result !== -1) {
-                    // try squeeze more words in the viewport
-                    for (let i = result; i >= 0; i--) {
-                        suppressRedraw(wordsContainer);
-                        fillContainerWithWords(i);
-                        resumeRedraw(wordsContainer);
-                        if (getLastVisibleWord(i) === targetLastWord) {
-                            result = i;
-                        } else {
-                            break;
-                        }
+                suppressRedraw(wordsContainer);
+                try {
+                    // heuristic to narrow down the search: go back by 2 viewports number of words
+                    let low = Math.max(0, topWord - wordsInViewport() * 2);
+                    fillContainerWithWords(low);
+                    let lastVisibleWord = getLastVisibleWord(low);
+                    if (lastVisibleWord === targetLastWord) {
+                        return low; // wild guess was correct
                     }
-                    return result;
-                }
-                else {
-                    // If the search did not find the exact match, shift viewport to the beginning
-                    fillContainerWithWords(0)
-                    return 0;
+                    else if (lastVisibleWord > targetLastWord) {
+                        // If the last visible word is inside the viewport
+                        // we should shift the viewport to the left and let the binary search do the rest
+                        low = 0;
+                    }
+                    let high = topWord - 1;
+                    let viewportTopWord = binarySearchForTopWord(low, high, targetLastWord);
+                    fillContainerWithWords(viewportTopWord);
+                    if (getLastVisibleWord(viewportTopWord) === targetLastWord) {
+                        console.log('try squeeze more words in the viewport');
+                        for (let i = viewportTopWord; i >= 0; i--) {
+                            fillContainerWithWords(i);
+                            if (getLastVisibleWord(i) === targetLastWord) {
+                                viewportTopWord = i;
+                            } else {
+                                break;
+                            }
+                        }
+                        return viewportTopWord;
+                    }
+                    else {
+                        // If the search did not find the exact match, it couldn'b bee exactly the last
+                        console.log('shift viewport till the target is visible');
+                        for (let i = viewportTopWord; i >= 0; i--) {
+                            fillContainerWithWords(i);
+                            if (getLastVisibleWord(i) >= targetLastWord) {
+                                viewportTopWord = i;
+                            } else {
+                                break;
+                            }
+                        }
+                        return viewportTopWord;
+                    }
+                } finally {
+                    resumeRedraw(wordsContainer);
                 }
             }
 
@@ -147,11 +170,7 @@
                         return mid;
                     }
                 }
-                fillContainerWithWords(low);
-                if (getLastVisibleWord(low) === targetLastWord)
-                    return low;
-                else
-                    return -1;
+                return low;
             }
 
             function fillContainerWithWords(startWordIndex) {
@@ -279,7 +298,7 @@
                     await loadPage(pageNum - 1);
                     topWord = totalWords;  // Set topWord to the end of the page to trigger a search for the beginning of the page
                 }
-                topWord = findViewportStart();
+                topWord = findViewport();
                 fillContainerWithWords(topWord);
                 reportVieportChange();
             }
