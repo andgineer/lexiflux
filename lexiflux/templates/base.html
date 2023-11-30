@@ -112,6 +112,7 @@
                 if (topWord === 0) {
                     return 0;  // Already at the beginning of the page
                 }
+                let high = topWord - 1;  // topWord changed by fillContainerWithWords so fix it there
                 suppressRedraw(wordsContainer);
                 try {
                     // heuristic to narrow down the search: go back by 2 viewports number of words
@@ -126,7 +127,6 @@
                         // we should shift the viewport to the left and let the binary search do the rest
                         low = 0;
                     }
-                    let high = topWord - 1;
                     let viewportTopWord = binarySearchForTopWord(low, high, targetLastWord);
                     fillContainerWithWords(viewportTopWord);
                     if (getLastVisibleWord(viewportTopWord) === targetLastWord) {
@@ -136,19 +136,21 @@
                             if (getLastVisibleWord(i) === targetLastWord) {
                                 viewportTopWord = i;
                             } else {
+                                fillContainerWithWords(viewportTopWord);
                                 break;
                             }
                         }
                         return viewportTopWord;
                     }
                     else {
-                        // If the search did not find the exact match, it couldn'b bee exactly the last
+                        // If the search did not find the exact match, it couldn't be exactly the last
                         log('shift viewport till the target is visible');
                         for (let i = viewportTopWord; i >= 0; i--) {
                             fillContainerWithWords(i);
                             if (getLastVisibleWord(i) >= targetLastWord) {
                                 viewportTopWord = i;
                             } else {
+                                fillContainerWithWords(viewportTopWord);
                                 break;
                             }
                         }
@@ -182,7 +184,7 @@
             }
 
             function fillContainerWithWords(startWordIndex) {
-                // log('Filling words:', wordsArray.slice(0, 10));
+                topWord = startWordIndex;
                 // todo: do not clear container if top word is the same
                 let existingSpans = wordsContainer.getElementsByClassName('word');
                 let existingSpansMap = {};
@@ -306,8 +308,7 @@
                     await loadPage(pageNum - 1);
                     topWord = totalWords;  // Set topWord to the end of the page to trigger a search for the beginning of the page
                 }
-                topWord = findViewport();
-                fillContainerWithWords(topWord);
+                findViewport();
                 reportVieportChange();
             }
 
