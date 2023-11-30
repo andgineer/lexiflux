@@ -234,12 +234,23 @@
                 htmx.process(wordsContainer);
             }
 
+            let redrawSuppressCount = 0;
+
             function suppressRedraw(container) {
-                container.style.visibility = 'hidden';
+                if (redrawSuppressCount === 0) {
+                    container.style.visibility = 'hidden';
+                }
+                redrawSuppressCount++;
             }
 
             function resumeRedraw(container) {
-                container.style.visibility = 'visible';
+                redrawSuppressCount--;
+                if (redrawSuppressCount === 0) {
+                    container.style.visibility = 'visible';
+                } else if (redrawSuppressCount < 0) {
+                    console.error('Mismatched calls to suppressRedraw and resumeRedraw');
+                    redrawSuppressCount = 0; // Reset to prevent further errors
+                }
             }
 
             function loadPage(pageNumber) {
