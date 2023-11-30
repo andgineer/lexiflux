@@ -12,14 +12,12 @@ def book(request: HttpRequest) -> HttpResponse:
     book_id = request.GET.get("book-id", 1)
     page_number = request.GET.get("page-num", 1)
     page_number = BookPage.objects.get(book_id=book_id, number=page_number)
-    words = page_number.content.split(" ")
     return render(
         request,
         "book.html",
         {
             "book": page_number.book,
             "page": page_number,
-            "words": words,
             "top_word": 0,
         },
     )

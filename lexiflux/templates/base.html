@@ -50,8 +50,8 @@
                 }
             }
 
-            let wordsArray = {{ words|safe }};
-            let totalWords = wordsArray.length;
+            let totalWords;
+            let wordSpans;
             let topWord = {{ top_word }};
             let pageNum = {{ page.number }};
             let bookId = {{ book.id }};
@@ -60,7 +60,7 @@
                 let lastVisibleWordIndex = filledFromWord !== undefined ? filledFromWord : topWord;
                 let containerRect = wordsContainer.getBoundingClientRect();
 
-                for (let i = lastVisibleWordIndex; i < wordsArray.length; i++) {
+                for (let i = lastVisibleWordIndex; i < totalWords; i++) {
                     let wordId = 'word-' + i;
                     let wordElement = document.getElementById(wordId);
 
@@ -186,40 +186,10 @@
             function fillContainerWithWords(startWordIndex) {
                 topWord = startWordIndex;
                 // todo: do not clear container if top word is the same
-                let existingSpans = wordsContainer.getElementsByClassName('word');
-                let existingSpansMap = {};
-
-                // Map existing spans by their IDs
-                for (let span of existingSpans) {
-                    existingSpansMap[span.id] = span;
-                }
-
                 wordsContainer.innerHTML = ''; // Clear the container to reorder spans
                 let containerRect = wordsContainer.getBoundingClientRect();
-
-                for (let i = startWordIndex; i < wordsArray.length && i < startWordIndex + totalWords; i++) {
-                    let wordId = 'word-' + i;
-                    let wordSpan;
-                    let isNewSpan = false;
-
-                    if (existingSpansMap[wordId]) {
-                        // Reuse existing span
-                        wordSpan = existingSpansMap[wordId];
-                    } else {
-                        // Create a new span
-                        wordSpan = document.createElement('span');
-                        wordSpan.id = wordId;
-                        wordSpan.className = 'word';
-                        wordSpan.setAttribute('hx-trigger', 'click');
-                        wordSpan.setAttribute('hx-get', '{% url "word" %}?id=' + i);
-                        wordSpan.setAttribute('hx-swap', 'outerHTML');
-                        wordSpan.textContent = wordsArray[i];
-                        isNewSpan = true;
-                    }
-
-                    // Temporarily add the word to the container to measure it
-                    wordsContainer.appendChild(wordSpan);
-
+                for (let i = startWordIndex; i < wordSpans.length; i++) {
+                    wordsContainer.appendChild(wordSpans[i]);
                     // Check if the word fits fully within the container
                     // let wordRect = wordSpan.getBoundingClientRect();
                     // if (wordRect.bottom > containerRect.bottom || wordRect.right > containerRect.right) {
@@ -227,9 +197,7 @@
                     //    wordsContainer.removeChild(wordSpan);
                     //    break;
                     //}
-
-                    // Add a space after the word
-                    wordsContainer.appendChild(document.createTextNode(' '));
+                    wordsContainer.appendChild(document.createTextNode(' ')); // Add a space after the word
                 }
                 htmx.process(wordsContainer);
             }
@@ -266,11 +234,21 @@
                             document.getElementById('book').innerHTML = data.html;
                             // Update global variables with new data
                             if (data.data) {
-                                wordsArray = data.data.words;
-                                totalWords = wordsArray.length;
+                                totalWords = data.data.words.length;
                                 topWord = data.data.topWord;
                                 pageNum = parseInt(data.data.pageNum);
                                 bookId = data.data.bookId;
+
+                                wordSpans = data.data.words.map((word, index) => {
+                                    let wordSpan = document.createElement('span');
+                                    wordSpan.id = 'word-' + index;
+                                    wordSpan.className = 'word';
+                                    wordSpan.setAttribute('hx-trigger', 'click');
+                                    wordSpan.setAttribute('hx-get', '{% url "word" %}?id=' + index);
+                                    wordSpan.setAttribute('hx-swap', 'outerHTML');
+                                    wordSpan.textContent = word;
+                                    return wordSpan;
+                                });
                                 reInitDom();
                                 fillContainerWithWords(topWord);
                                 resolve(); // Resolve the promise after updating the DOM
@@ -325,7 +303,7 @@
 
             function handleNextButtonClick() {
                 let lastWordIndex = getLastVisibleWord();
-                if (lastWordIndex >= wordsArray.length - 1) {
+                if (lastWordIndex >= totalWords - 1) {
                     // Last word is already visible, load the next page
                     loadPage(pageNum + 1);
                     return;
@@ -356,8 +334,13 @@
             //    fillContainerWithWords(topWord);
             // );
             }
-            reInitDom();
-            fillContainerWithWords(topWord);
+            document.addEventListener('DOMContentLoaded', function() {
+                loadPage(pageNum).then(() => {
+                    log('Page loaded successfully.');
+                }).catch(error => {
+                    console.error('Failed to load page:', error);
+                });
+            });
         </script>
 
     </body>
