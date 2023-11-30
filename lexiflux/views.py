@@ -31,17 +31,14 @@ def page(request: HttpRequest) -> HttpResponse:
         book_page = BookPage.objects.get(book_id=book_id, number=page_number)
     except BookPage.DoesNotExist:
         return HttpResponse(f"error: Page {page_number} not found", status=500)
-    top_word = request.GET.get("top-word", 0)
-    top_word = int(top_word)
     words = book_page.content.split(" ")
-    print(book_id, page_number, "top_word", top_word, "from", len(words))
+    print(book_id, page_number, "words", len(words))
     rendered_html = render_to_string(
         "page.html",
         {
             "book": book_page.book,
             "page": book_page,
             "words": words,
-            "top_word": top_word,
         },
         request,
     )
@@ -53,7 +50,6 @@ def page(request: HttpRequest) -> HttpResponse:
                 "bookId": book_id,
                 "pageNum": page_number,
                 "words": words,
-                "topWord": top_word,
             },
         }
     )
