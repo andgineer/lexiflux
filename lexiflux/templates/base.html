@@ -347,14 +347,14 @@
                 clearTimeout(resizeTimeout);
                 resizeTimeout = setTimeout(function() {
                     fillWordsContainer(topWord);
-                }, 150);
+                }, 50);
             }
 
             function handleHtmxAfterSwap(event) {
                 if (event.detail.trigger && event.detail.trigger.classList.contains('word')) {
                     setTimeout(function() {
                         fillWordsContainer(topWord);
-                    }, 150);
+                    }, 50);
                 }
             }
 
