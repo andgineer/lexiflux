@@ -55,6 +55,7 @@
             let topWord;
             let lastTopWord;
             let lastAddedWordIndex;
+            let resizeTimeout;
 
             let debugLogging = true;
             function log(...args) {
@@ -165,13 +166,18 @@
             }
 
             function renderWordsContainer(newTopWord) {
-                if (newTopWord === undefined) {
-                    newTopWord = topWord;
-                }
-                if (lastTopWord !== newTopWord) {
-                    fillWordsContainer(newTopWord);
-                } else {
-                    resizeWordsContainer();
+                suppressRedraw(wordsContainer);
+                try {
+                    if (newTopWord === undefined) {
+                        newTopWord = topWord;
+                    }
+                    if (lastTopWord !== newTopWord) {
+                        fillWordsContainer(newTopWord);
+                    } else {
+                        resizeWordsContainer();
+                    }
+                } finally {
+                    resumeRedraw(wordsContainer);
                 }
             }
 
@@ -308,13 +314,6 @@
                     .catch(error => console.error('Error:', error));
             }
 
-            document.body.addEventListener('htmx:configRequest', function(event) {
-                // Add page and book parameters to all HTMX requests
-                event.detail.parameters['page-num'] = pageNum;
-                event.detail.parameters['book-id'] = bookId;
-                event.detail.parameters['top-word'] = topWord;
-            });
-
             async function handlePrevButtonClick() {
                 if (topWord === 0) {
                     // Already at the beginning of the page, load the previous page
@@ -344,6 +343,21 @@
                 reportVieportChange();
             }
 
+            function handleResize() {
+                clearTimeout(resizeTimeout);
+                resizeTimeout = setTimeout(function() {
+                    fillWordsContainer(topWord);
+                }, 150);
+            }
+
+            function handleHtmxAfterSwap(event) {
+                if (event.detail.trigger && event.detail.trigger.classList.contains('word')) {
+                    setTimeout(function() {
+                        fillWordsContainer(topWord);
+                    }, 150);
+                }
+            }
+
             function reInitDom() {
                 // Reattach event listener to the previous button
                 let prevButton = document.getElementById('prev-button');
@@ -362,6 +376,17 @@
                 wordsContainer = document.getElementById('words-container');
             }
 
+            window.addEventListener('resize', handleResize);
+
+            document.body.addEventListener('htmx:afterSwap', handleHtmxAfterSwap);
+
+            document.body.addEventListener('htmx:configRequest', function(event) {
+                // Add page and book parameters to all HTMX requests
+                event.detail.parameters['page-num'] = pageNum;
+                event.detail.parameters['book-id'] = bookId;
+                event.detail.parameters['top-word'] = topWord;
+            });
+
             document.addEventListener('DOMContentLoaded', function() {
                 loadPage(pageNum).then(() => {
                     log('Page loaded successfully.');
@@ -371,9 +396,6 @@
                 });
             });
 
-            window.addEventListener('resize', function() {
-                renderWordsContainer(topWord);
-            });
         </script>
 
     </body>
