@@ -1,3 +1,9 @@
+module.exports = {
+    log,
+    suppressRedraw,
+    resumeRedraw
+};
+
 let debugLogging = true;
 function log(...args) {
     if (debugLogging) {

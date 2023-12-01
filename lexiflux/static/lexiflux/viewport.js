@@ -1,6 +1,28 @@
-let bookId = document.body.getAttribute('data-book-id');
-let pageNum = document.body.getAttribute('data-page-number');
-let clickWordUrl = document.body.getAttribute('click-word-url');
+const {
+    log,
+    suppressRedraw,
+    resumeRedraw
+} = require('./utils.js');
+
+module.exports = {
+    wordsInViewport,
+    findViewport,
+    renderWordsContainer,
+    loadPage,
+    reportVieportChange,
+    initializeVariables,
+    getBookId: () => bookId,
+    getPageNum: () => pageNum,
+    getTopWord: () => topWord,
+    getTotalWords:() => totalWords,
+    getLastAddedWordIndex: () => lastAddedWordIndex,
+};
+
+let bookId;
+let pageNum;
+let clickWordUrl;
+
+let wordsContainer = document.getElementById('words-container');
 
 let wordSpans;
 let totalWords;
@@ -8,7 +30,13 @@ let totalWords;
 let topWord;
 let lastTopWord;
 let lastAddedWordIndex;
-let resizeTimeout;
+
+function initializeVariables() {
+    bookId = document.body.getAttribute('data-book-id');
+    pageNum = document.body.getAttribute('data-page-number');
+    clickWordUrl = document.body.getAttribute('data-click-word-url');
+    console.log('bookId:', bookId, 'pageNum:', pageNum, 'clickWordUrl:', clickWordUrl);
+}
 
 function wordsInViewport() {
     // Count the number of words that fit in the viewport
@@ -194,6 +222,7 @@ function loadPage(pageNumber) {
             })
             .then(data => {
                 document.getElementById('book').innerHTML = data.html;
+                wordsContainer = document.getElementById('words-container');
                 // Update global variables with new data
                 if (data.data) {
                     totalWords = data.data.words.length;
@@ -211,7 +240,6 @@ function loadPage(pageNumber) {
                         wordSpan.textContent = word;
                         return wordSpan;
                     });
-                    reInitDom();
                     resolve(); // Resolve the promise after updating the DOM
                 } else {
                     console.error('Invalid or missing data in response');

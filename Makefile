@@ -33,6 +33,10 @@ sql:
 get-books:
 	sqlite3 db.sqlite3 "SELECT * FROM lexiflux_book;"
 
+.HELP: js  ## Bundle and minify JavaScript in Django static folder
+js:
+	npm run build
+
 .HELP: help  ## Display this message
 help:
 	@grep -E \
