@@ -1,11 +1,6 @@
-module.exports = {
-    log,
-    suppressRedraw,
-    resumeRedraw
-};
+export let debugLogging = true;
 
-let debugLogging = true;
-function log(...args) {
+export function log(...args: any[]): void {
     if (debugLogging) {
         console.log(...args);
     }
@@ -13,14 +8,14 @@ function log(...args) {
 
 let redrawSuppressCount = 0;
 
-function suppressRedraw(container) {
+export function suppressRedraw(container: HTMLElement): void {
     if (redrawSuppressCount === 0) {
         container.style.visibility = 'hidden';
     }
     redrawSuppressCount++;
 }
 
-function resumeRedraw(container) {
+export function resumeRedraw(container: HTMLElement): void {
     redrawSuppressCount--;
     if (redrawSuppressCount === 0) {
         container.style.visibility = 'visible';
