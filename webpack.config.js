@@ -1,21 +1,24 @@
 const path = require('path');
 
 module.exports = {
-  entry: './lexiflux/static/lexiflux/main.js',
+  entry: './lexiflux/viewport/main.ts',
   output: {
     path: path.resolve(__dirname, 'lexiflux/static/lexiflux'),
     filename: 'bundle.js'
   },
+  resolve: {
+    extensions: ['.ts', '.js'], // Add .ts
+  },
   module: {
     rules: [
       {
-        test: /\.js$/,
+        test: /\.ts$/, // Changed to .ts
         exclude: /node_modules/,
         use: {
-          loader: 'babel-loader'
+          loader: 'ts-loader' // Changed to ts-loader
         }
       }
     ]
   },
-  mode: 'development'  // 'production' // 'development' for non-minified output
+  mode: 'production' // 'development' for non-minified output
 };
