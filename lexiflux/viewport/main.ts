@@ -1,4 +1,4 @@
-const {
+import {
     loadPage,
     findViewport,
     renderWordsContainer,
@@ -9,67 +9,63 @@ const {
     getTopWord,
     getBookId,
     getLastAddedWordIndex
-} = require('./viewport.js');
+} from './viewport';
 
-const { log } = require('./utils.js');
+import { log } from './utils';
 
-let resizeTimeout;
+let resizeTimeout: NodeJS.Timeout;
 
-async function handlePrevButtonClick() {
+async function handlePrevButtonClick(): Promise<void> {
     if (getTopWord() === 0) {
-        // Already at the beginning of the page, load the previous page
         if (getPageNum() === 1) {
-            // Already at the beginning of the book, do nothing
             return;
         }
         await loadPage(getPageNum() - 1);
         findViewport(getTotalWords() - 1);
         reInitDom();
         reportVieportChange();
-        return;
+    } else {
+        findViewport(getTopWord() - 1);
+        reportVieportChange();
     }
-    findViewport(getTopWord() - 1);
-    reportVieportChange();
 }
 
-async function handleNextButtonClick() {
-    let lastWordIndex = getLastAddedWordIndex();
+async function handleNextButtonClick(): Promise<void> {
+    let lastWordIndex: number = getLastAddedWordIndex();
     if (lastWordIndex >= getTotalWords() - 1) {
-        // Last word is already visible, load the next page
         await loadPage(getPageNum() + 1);
         renderWordsContainer(0);
         reInitDom();
         reportVieportChange();
-        return;
+    } else {
+        renderWordsContainer(lastWordIndex + 1);
+        reportVieportChange();
     }
-    renderWordsContainer(lastWordIndex + 1);
-    reportVieportChange();
 }
 
-function handleResize() {
+function handleResize(): void {
     clearTimeout(resizeTimeout);
-    resizeTimeout = setTimeout(function() {
+    resizeTimeout = setTimeout(() => {
         renderWordsContainer();
-    }, 50);
+    }, 150);
 }
 
-function handleHtmxAfterSwap(event) {
-    if (event.detail.trigger && event.detail.trigger.classList.contains('word')) {
-        setTimeout(function() {
+function handleHtmxAfterSwap(event: Event): void {
+    let detail = (event as CustomEvent).detail;
+    if (detail.trigger && detail.trigger.classList.contains('word')) {
+        setTimeout(() => {
             renderWordsContainer();
-        }, 50);
+        }, 150);
     }
 }
 
-function reInitDom() {
-    // Reattach event listener to the previous button
+function reInitDom(): void {
     let prevButton = document.getElementById('prev-button');
     if (prevButton) {
         prevButton.removeEventListener('click', handlePrevButtonClick);
         prevButton.addEventListener('click', handlePrevButtonClick);
     }
 
-    // Reattach event listener to the next button
     let nextButton = document.getElementById('next-button');
     if (nextButton) {
         nextButton.removeEventListener('click', handleNextButtonClick);
@@ -81,20 +77,20 @@ window.addEventListener('resize', handleResize);
 
 document.body.addEventListener('htmx:afterSwap', handleHtmxAfterSwap);
 
-document.body.addEventListener('htmx:configRequest', function(event) {
-    // Add page and book parameters to all HTMX requests
-    event.detail.parameters['page-num'] = getPageNum();
-    event.detail.parameters['book-id'] = getBookId();
-    event.detail.parameters['top-word'] = getTopWord();
+document.body.addEventListener('htmx:configRequest', (event: Event) => {
+    let detail = (event as CustomEvent).detail;
+    detail.parameters['page-num'] = getPageNum();
+    detail.parameters['book-id'] = getBookId();
+    detail.parameters['top-word'] = getTopWord();
 });
 
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', () => {
     initializeVariables();
     loadPage(getPageNum()).then(() => {
         log('Page loaded successfully.');
         renderWordsContainer(0);
         reInitDom();
-    }).catch(error => {
+    }).catch((error: Error) => {
         console.error('Failed to load page:', error);
     });
 });
