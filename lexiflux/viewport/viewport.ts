@@ -271,3 +271,7 @@ export function getTotalWords(): number {
 export function getLastAddedWordIndex(): number {
     return lastAddedWordIndex;
 }
+
+export function getWordSpans(): HTMLElement[] {
+    return wordSpans;
+}
