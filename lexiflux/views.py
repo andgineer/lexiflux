@@ -94,3 +94,9 @@ def word_click(request: HttpRequest) -> HttpResponse:
     context = Context({"word": word, "word_id": word_id})
     content = template.render(context)
     return HttpResponse(content)
+
+
+def translate(request: HttpRequest) -> HttpResponse:
+    """Translate event."""
+    text = request.GET.get("text", "")
+    return HttpResponse(text)

@@ -5,7 +5,7 @@ export let bookId: string = '';
 export let pageNum: number = 0;
 export let clickWordUrl: string = '';
 
-let wordsContainer = initializeWordsContainer()
+let wordsContainer = getWordsContainer()
 
 let wordSpans: HTMLElement[] = [];
 let totalWords: number = 0;
@@ -14,7 +14,7 @@ let topWord: number = 0;
 let lastTopWord: number | undefined;
 let lastAddedWordIndex: number = 0;
 
-function initializeWordsContainer(): HTMLElement {
+export function getWordsContainer(): HTMLElement {
     const container = document.getElementById('words-container');
     if (!container) {
         throw new Error("Failed to find the 'words-container' element.");
@@ -207,13 +207,14 @@ export function loadPage(pageNumber: number): Promise<void> {
                 if (!data || !data.data) {
                     throw new Error('Invalid or missing data in response');
                 }
+                log('Page ', pageNumber, ' loaded successfully.');
 
                 const bookElement = document.getElementById('book');
                 if (bookElement) {
                     bookElement.innerHTML = data.html;
                 }
 
-                wordsContainer = initializeWordsContainer()
+                wordsContainer = getWordsContainer()
                 totalWords = data.data.words.length;
                 lastTopWord = undefined;
                 pageNum = parseInt(data.data.pageNum);
@@ -223,10 +224,7 @@ export function loadPage(pageNumber: number): Promise<void> {
                     let wordSpan = document.createElement('span');
                     wordSpan.id = 'word-' + index;
                     wordSpan.className = 'word';
-                    wordSpan.setAttribute('hx-trigger', 'click');
-                    wordSpan.setAttribute('hx-get', clickWordUrl + '?id=' + index);
-                    wordSpan.setAttribute('hx-swap', 'outerHTML');
-                    wordSpan.textContent = word;
+                    wordSpan.innerHTML = word + ' &nbsp;';
                     return wordSpan;
                 });
 

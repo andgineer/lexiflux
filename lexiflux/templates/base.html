@@ -34,8 +34,25 @@
                 white-space: nowrap;
             }
 
-            .word::after {
-                content: ' '; /* This adds a space after each word */
+            .word {
+              margin-right: 0px;
+              display: inline-block; /* For better control over spacing */
+            }
+
+            .translation-span {
+              display: inline-block; /* Keeps the span inline but allows block children */
+            }
+
+            .translation-text {
+              background-color: #f8f9fa; /* Light background for the translation */
+              border: 1px solid #ddd; /* Border for the translation */
+              padding: 5px;
+              font-size: 0.9em; /* Smaller font size for the translation */
+              text-align: center;
+            }
+
+            .original-text {
+              /* Styling for the original text if needed */
             }
         </style>
     </head>

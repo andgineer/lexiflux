@@ -8,4 +8,5 @@ urlpatterns = [
     path("page", views.page, name="page"),
     path("viewport", views.viewport, name="viewport"),
     path("word", views.word_click, name="word"),
+    path("translate", views.translate, name="translate"),
 ]
