@@ -66,13 +66,9 @@ interface TranslationResponse {
 }
 
 function sendTranslationRequest(selectedText: string, range: Range): void {
-  // Encode the selected text to be safely included in a URL
   const encodedText = encodeURIComponent(selectedText);
-
-  // Construct the URL with the encoded selected text as a query parameter
   const url = `/translate?text=${encodedText}`;
 
-  // Send the GET request
   fetch(url)
     .then(response => {
       if (!response.ok) {
@@ -81,7 +77,6 @@ function sendTranslationRequest(selectedText: string, range: Range): void {
       return response.text();
     })
     .then(translatedText => {
-      // Handle the translated text (e.g., display it in the UI)
       log('Translated text:', translatedText);
       displayTranslation(selectedText, translatedText, range);
       const selection = window.getSelection();
@@ -95,57 +90,76 @@ function sendTranslationRequest(selectedText: string, range: Range): void {
 }
 
 function displayTranslation(selectedText: string, translatedText: string, range: Range): void {
-  let selection = window.getSelection();
-  if (selection && selection.rangeCount > 0) {
-    // Create a new span for the translation and the selected text
-    let translationSpan = document.createElement('span');
-    translationSpan.className = 'translation-span';
+  // Create a container to hold the original elements
+  let originalElementsContainer = document.createElement('div');
 
-    // Create a div for the translation
-    let translationDiv = document.createElement('div');
-    translationDiv.className = 'translation-text';
-    translationDiv.textContent = translatedText;
+  // Clone and append each element in the range to the container
+  range.cloneContents().childNodes.forEach(node => {
+    originalElementsContainer.appendChild(node.cloneNode(true));
+  });
 
-    // Create a div for the original text
-    let originalTextDiv = document.createElement('div');
-    originalTextDiv.className = 'original-text';
-    originalTextDiv.textContent = selectedText;
+  let translationSpan = document.createElement('span');
+  translationSpan.className = 'translation-span';
+  translationSpan.dataset.originalHtml = originalElementsContainer.innerHTML; // Store original HTML
 
-    // Append the translation and original text to the span
-    translationSpan.appendChild(translationDiv);
-    translationSpan.appendChild(originalTextDiv);
+  let translationDiv = document.createElement('div');
+  translationDiv.className = 'translation-text';
+  translationDiv.textContent = translatedText;
 
-    // Replace the selected text with the new span
-    range.deleteContents();
-    range.insertNode(translationSpan);
-  }
+  let originalTextDiv = document.createElement('div');
+  originalTextDiv.className = 'original-text';
+  originalTextDiv.textContent = selectedText;
+
+  translationSpan.appendChild(translationDiv);
+  translationSpan.appendChild(originalTextDiv);
+
+  range.deleteContents();
+  range.insertNode(translationSpan);
 }
 
 function handleWordClick(event: MouseEvent): void {
-  let clickedWordSpan = event.target as HTMLElement;
+  let clickedElement = event.target as HTMLElement;
 
-  // Check if the clicked word is already translated
-  if (clickedWordSpan.classList.contains('translated')) {
-    // Remove the translation
-    clickedWordSpan.classList.remove('translated');
-    if (typeof clickedWordSpan.dataset.originalText === 'string') {
-      clickedWordSpan.innerHTML = clickedWordSpan.dataset.originalText;
-    }
+  // Find the closest translation span
+  let translationSpan = clickedElement.closest('.translation-span') as HTMLElement | null;
+  if (translationSpan) {
+    restoreOriginalSpans(translationSpan);
   } else {
-    // Treat the click as a selection and translate the word
-    let selectedText = clickedWordSpan.textContent;
+    // Handle new translation
+    let selectedText = clickedElement.textContent;
     if (selectedText) {
       let range = document.createRange();
-      range.selectNode(clickedWordSpan);
+      range.selectNode(clickedElement);
       sendTranslationRequest(selectedText, range);
     }
   }
 }
 
+function restoreOriginalSpans(translationSpan: HTMLElement): void {
+  let originalHtml = translationSpan.dataset.originalHtml;
+  if (originalHtml) {
+    let tempContainer = document.createElement('div');
+    tempContainer.innerHTML = originalHtml;
+
+    const parent = translationSpan.parentNode;
+    if (parent) {
+      // Replace the translation span with the original spans
+      Array.from(tempContainer.childNodes).forEach(child => {
+        if (child instanceof HTMLElement) {
+          parent.insertBefore(child, translationSpan);
+        }
+      });
+      translationSpan.remove();
+    }
+  }
+}
+
 function handleWordContainerClick(event: MouseEvent): void {
-    // Check if the clicked element is a word span
-    if (event.target && (event.target as HTMLElement).classList.contains('word')) {
-        handleWordClick(event as MouseEvent);
+    let target = event.target as HTMLElement;
+
+    // Check if the target or its parent is a word or a translation
+    if (target.classList.contains('word') || target.classList.contains('translation-text') || target.closest('.translation-span')) {
+        handleWordClick(event);
     }
 }
 
@@ -155,6 +169,14 @@ function handleMouseUpEvent(): void {
   if (selection && selection.rangeCount > 0) {
     let range = selection.getRangeAt(0);
     let selectedText = range.toString();
+
+    // Check if the selection includes a translated word
+    let containerElement = range.commonAncestorContainer as HTMLElement;
+    let translationSpan = containerElement.closest('.translation-span') as HTMLElement | null;
+    if (translationSpan) {
+      restoreOriginalSpans(translationSpan);
+    }
+
     if (selectedText) {
       sendTranslationRequest(selectedText, range);
     }
