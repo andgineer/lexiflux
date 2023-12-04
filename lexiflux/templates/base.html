@@ -40,25 +40,34 @@
             }
 
             .translation-span {
-              display: inline-block; /* Keeps the span inline but allows block children */
+              display: inline-block;
+              background-color: #e0e0e0; /* Slightly darker background */
+              border-radius: 5px; /* Optional: adds rounded corners */
+              padding: 5px;
+              margin-bottom: 5px; /* Space between translation and original text */
             }
 
             .translation-text {
-              background-color: #f8f9fa; /* Light background for the translation */
-              border: 1px solid #ddd; /* Border for the translation */
+              background-color: #f8f9fa;
+              border: 1px solid #ddd;
               padding: 5px;
-              font-size: 0.9em; /* Smaller font size for the translation */
+              font-size: 0.9em;
               text-align: center;
             }
 
             .original-text {
-              /* Styling for the original text if needed */
+              /* Styling for the original text */
+              font-style: italic; /* Optional: italicize the original text */
+            }
+
+            .arrow-indicator {
+              text-align: center;
+              font-size: 1.2em; /* Adjust the size of the arrow */
             }
         </style>
     </head>
     <body data-book-id="{{ book.id }}"
-          data-page-number="{{ page.number }}"
-          data-click-word-url="{% url 'word' %}">
+          data-page-number="{{ page.number }}">
 
         {% block content %}{% endblock %}
 

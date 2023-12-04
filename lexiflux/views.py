@@ -1,7 +1,7 @@
 """Vies for the Lexiflux app."""
+from deep_translator import GoogleTranslator
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import render
-from django.template import Context, Template
 from django.template.loader import render_to_string
 
 from .models import BookPage
@@ -70,33 +70,10 @@ def viewport(request: HttpRequest) -> HttpResponse:
     return HttpResponse(status=200)
 
 
-def word_click(request: HttpRequest) -> HttpResponse:
-    """Word click event."""
-    book_id = request.GET.get("book-id", 1)
-    page_number = request.GET.get("page-num", 1)
-    word_id = request.GET.get("id", 1)
-    try:
-        book_page = BookPage.objects.get(
-            book_id=book_id,
-            number=page_number,
-        )
-    except BookPage.DoesNotExist:
-        return HttpResponse(f"error: Page {page_number} not found", status=500)
-    words = book_page.content.split(" ")
-    word = words[int(word_id)]
-    print(book_id, page_number, word_id, word)
-    template = Template(
-        """<span id="word-{{ word_id }}" class="word"
-          hx-trigger="click"
-          hx-get="{% url 'word' %}?id={{ word_id }}"
-          hx-swap="outerHTML">{{ word }}</span>"""
-    )
-    context = Context({"word": word, "word_id": word_id})
-    content = template.render(context)
-    return HttpResponse(content)
-
-
 def translate(request: HttpRequest) -> HttpResponse:
     """Translate event."""
     text = request.GET.get("text", "")
-    return HttpResponse(text)
+    source = "sr"
+    target = "ru"
+    translated = GoogleTranslator(source=source, target=target).translate(text)
+    return HttpResponse(translated)

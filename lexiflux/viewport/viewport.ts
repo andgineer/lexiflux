@@ -3,7 +3,7 @@ declare const htmx: any;  // included in the HTML page
 
 export let bookId: string = '';
 export let pageNum: number = 0;
-export let clickWordUrl: string = '';
+
 
 let wordsContainer = getWordsContainer()
 
@@ -25,8 +25,7 @@ export function getWordsContainer(): HTMLElement {
 export function initializeVariables(): void {
     bookId = document.body.getAttribute('data-book-id') || '';
     pageNum = parseInt(document.body.getAttribute('data-page-number') || '0');
-    clickWordUrl = document.body.getAttribute('data-click-word-url') || '';
-    console.log('bookId:', bookId, 'pageNum:', pageNum, 'clickWordUrl:', clickWordUrl);
+    console.log('bookId:', bookId, 'pageNum:', pageNum);
 }
 
 export function wordsInViewport(): number {

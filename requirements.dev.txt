@@ -16,7 +16,7 @@ dill==0.3.7
     # via pylint
 distlib==0.3.7
     # via virtualenv
-faker==20.0.3
+faker==20.1.0
     # via -r requirements.dev.in
 filelock==3.13.1
     # via virtualenv
@@ -26,7 +26,7 @@ isort==5.12.0
     # via pylint
 mccabe==0.7.0
     # via pylint
-mypy==1.7.0
+mypy==1.7.1
     # via -r requirements.dev.in
 mypy-extensions==1.0.0
     # via mypy
@@ -36,7 +36,7 @@ packaging==23.2
     # via build
 pip-tools==7.3.0
     # via -r requirements.dev.in
-platformdirs==3.11.0
+platformdirs==4.0.0
     # via
     #   pylint
     #   virtualenv
@@ -63,9 +63,9 @@ tomlkit==0.12.3
     # via pylint
 typing-extensions==4.8.0
     # via mypy
-virtualenv==20.24.6
+virtualenv==20.25.0
     # via pre-commit
-wheel==0.41.3
+wheel==0.42.0
     # via pip-tools
 
 # The following packages are considered to be unsafe in a requirements file:
