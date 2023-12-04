@@ -1,12 +1,17 @@
 """Vies for the Lexiflux app."""
 from deep_translator import GoogleTranslator
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.forms import UserCreationForm
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import render
 from django.template.loader import render_to_string
+from django.urls import reverse_lazy
+from django.views import generic
 
 from .models import BookPage
 
 
+@login_required  # type: ignore
 def book(request: HttpRequest) -> HttpResponse:
     """Render book."""
     book_id = request.GET.get("book-id", 1)
@@ -23,6 +28,7 @@ def book(request: HttpRequest) -> HttpResponse:
     )
 
 
+@login_required  # type: ignore
 def page(request: HttpRequest) -> HttpResponse:
     """Book page."""
     book_id = request.GET.get("book-id", 1)
@@ -55,6 +61,7 @@ def page(request: HttpRequest) -> HttpResponse:
     )
 
 
+@login_required  # type: ignore
 def viewport(request: HttpRequest) -> HttpResponse:
     """User changed viewport inside loaded book page."""
     book_id = request.GET.get("book-id", 1)
@@ -77,3 +84,17 @@ def translate(request: HttpRequest) -> HttpResponse:
     target = "ru"
     translated = GoogleTranslator(source=source, target=target).translate(text)
     return HttpResponse(translated)
+
+
+class SignUpView(generic.CreateView):  # type: ignore
+    """Sign up view."""
+
+    form_class = UserCreationForm
+    success_url = reverse_lazy("login")
+    template_name = "signup.html"
+
+
+@login_required  # type: ignore
+def profile(request: HttpRequest) -> HttpResponse:
+    """Profile page."""
+    return render(request, "profile.html")

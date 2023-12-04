@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-md-6 offset-md-3">
+            <h2 class="text-center">Sign Up</h2>
+            <form method="post" action="{% url 'signup' %}" class="mt-4">
+                {% csrf_token %}
+                {% for field in form %}
+                    <div class="mb-3">
+                        {{ field.label_tag }}
+                        {{ field }}
+                        {% if field.help_text %}
+                            <small class="form-text text-muted">{{ field.help_text }}</small>
+                        {% endif %}
+                        {% for error in field.errors %}
+                            <div class="alert alert-danger">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                {% endfor %}
+                <button type="submit" class="btn btn-primary">Sign up</button>
+            </form>
+
+{#             Comment out or remove this section if you don't want social account options#}
+{#            <hr>#}
+{#            <p class="text-center">Or sign up with:</p>#}
+{#            <div class="d-flex justify-content-center">#}
+{#                <a href="{% provider_login_url 'google' %}" class="btn btn-danger me-2">Google</a>#}
+{#                <a href="{% provider_login_url 'apple' %}" class="btn btn-dark">Apple</a>#}
+{#                <!-- Add other providers as needed -->#}
+{#            </div>#}
+{#            #}
+
+            <p class="mt-4 text-center">Already have an account? <a href="{% url 'login' %}">Log in</a></p>
+        </div>
+    </div>
+</div>
+{% endblock %}
