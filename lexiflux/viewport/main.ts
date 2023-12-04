@@ -80,6 +80,7 @@ function sendTranslationRequest(selectedText: string, range: Range, selectedWord
     .then(translatedText => {
       log('Translated text:', translatedText);
       createAndReplaceTranslationSpan(selectedText, translatedText, selectedWordSpans);
+      renderWordsContainer();
     })
     .catch(error => {
       console.error('Error during translation:', error);
@@ -201,6 +202,7 @@ function restoreOriginalSpans(translationSpan: HTMLElement): void {
         wordSpans.splice(index, 1); // Remove the translation span
         wordSpans.splice(index, 0, ...originalSpans); // Insert the original word spans
     }
+    renderWordsContainer();
   }
 }
 
