@@ -14,6 +14,7 @@ class LexifluxConfig(AppConfig):  # type: ignore
 
     def ready(self) -> None:
         """Run when the app is ready."""
+        import lexiflux.signals  # pylint: disable=import-outside-toplevel,unused-import  # noqa: F401
 
         @receiver(post_migrate)  # type: ignore
         def populate_languages(sender: Any, **kwargs: Any) -> None:

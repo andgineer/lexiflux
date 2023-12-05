@@ -1,12 +1,9 @@
 """Vies for the Lexiflux app."""
 from deep_translator import GoogleTranslator
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.forms import UserCreationForm
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import render
 from django.template.loader import render_to_string
-from django.urls import reverse_lazy
-from django.views import generic
 
 from .models import BookPage
 
@@ -86,15 +83,8 @@ def translate(request: HttpRequest) -> HttpResponse:
     return HttpResponse(translated)
 
 
-class SignUpView(generic.CreateView):  # type: ignore
-    """Sign up view."""
-
-    form_class = UserCreationForm
-    success_url = reverse_lazy("login")
-    template_name = "signup.html"
-
-
 @login_required  # type: ignore
 def profile(request: HttpRequest) -> HttpResponse:
+    # if not request.user.is_approved:
     """Profile page."""
     return render(request, "profile.html")

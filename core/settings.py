@@ -30,6 +30,9 @@ LOGIN_URL = 'login'
 LOGIN_REDIRECT_URL = 'book'
 LOGOUT_REDIRECT_URL = 'login'
 
+AUTH_USER_MODEL = 'core.CustomUser'
+AUTHENTICATION_BACKENDS = ['core.backends.CustomUserBackend']
+
 
 # Application definition
 
@@ -48,6 +51,7 @@ INSTALLED_APPS = [
     'allauth.socialaccount.providers.google',
     'allauth.socialaccount.providers.apple',
     'widget_tweaks',
+    'core',
     "lexiflux",
 ]
 
