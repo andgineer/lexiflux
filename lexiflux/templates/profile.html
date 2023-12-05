@@ -2,11 +2,22 @@
 
 {% block content %}
 <div class="container mt-5">
-    <div class="row">
-        <div class="col-md-6 offset-md-3">
-            <h2>User Profile</h2>
-            <p><strong>Email:</strong> {{ user.email }}</p>
-            <a href="{% url 'logout' %}" class="btn btn-danger">Logout</a>
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow">
+                <div class="card-body">
+                    <h2 class="card-title text-center">User Profile</h2>
+                    <div class="mb-3">
+                        <label class="form-label"><strong>Email:</strong></label>
+                        <p class="form-control-plaintext">{{ user.email }}</p>
+                    </div>
+                    <!-- Logout Form -->
+                    <form action="{% url 'logout' %}" method="post" hx-post="{% url 'logout' %}" hx-redirect="/">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-danger w-100">Logout</button>
+                    </form>
+                </div>
+            </div>
         </div>
     </div>
 </div>

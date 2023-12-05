@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     # Include providers as needed
     'allauth.socialaccount.providers.google',
     'allauth.socialaccount.providers.apple',
+    'widget_tweaks',
     "lexiflux",
 ]
 
