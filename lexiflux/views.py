@@ -10,17 +10,17 @@ from .models import Book, BookPage
 
 
 @login_required  # type: ignore
-def book(request: HttpRequest) -> HttpResponse:
+def reader(request: HttpRequest) -> HttpResponse:
     """Render book."""
     book_id = request.GET.get("book-id", 1)
     page_number = request.GET.get("page-num", 1)
-    page_number = BookPage.objects.get(book_id=book_id, number=page_number)
+    book_page = BookPage.objects.get(book_id=book_id, number=page_number)
     return render(
         request,
-        "book.html",
+        "reader.html",
         {
-            "book": page_number.book,
-            "page": page_number,
+            "book": book_page.book,
+            "page": book_page,
             "top_word": 0,
         },
     )
@@ -60,8 +60,8 @@ def page(request: HttpRequest) -> HttpResponse:
 
 
 @login_required  # type: ignore
-def viewport(request: HttpRequest) -> HttpResponse:
-    """User changed viewport inside loaded book page."""
+def position(request: HttpRequest) -> HttpResponse:
+    """Read position changed."""
     book_id = request.GET.get("book-id", 1)
     page_number = request.GET.get("page-num", 1)
     # todo: save viewport in the user session
@@ -76,13 +76,13 @@ def viewport(request: HttpRequest) -> HttpResponse:
 
 
 def translate(request: HttpRequest) -> HttpResponse:
-    """Translate event."""
+    """Translate request."""
     text = request.GET.get("text", "")
     source = "sr"
     target = "ru"
     translated = GoogleTranslator(source=source, target=target).translate(text)
-    html_content = """<p>Hello</p>"""
-    return JsonResponse({"translatedText": translated, "html": html_content})
+    article = """<p>Hello</p>"""
+    return JsonResponse({"translatedText": translated, "article": article})
 
 
 @login_required  # type: ignore

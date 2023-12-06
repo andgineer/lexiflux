@@ -4,10 +4,10 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
-    path("", views.book, name="book"),
+    path("", views.reader, name="reader"),
     path("library", views.library, name="library"),
     path("page", views.page, name="page"),
-    path("viewport", views.viewport, name="viewport"),
+    path("position", views.position, name="position"),
     path("translate", views.translate, name="translate"),
     path("profile/", views.profile, name="profile"),
 ]

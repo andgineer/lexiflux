@@ -2,7 +2,7 @@ import {
     loadPage,
     findViewport,
     renderWordsContainer,
-    reportVieportChange,
+    reportReadingPosition,
     initializeVariables,
     getPageNum,
     getTotalWords,
@@ -25,10 +25,10 @@ async function handlePrevButtonClick(): Promise<void> {
         await loadPage(getPageNum() - 1);
         findViewport(getTotalWords() - 1);
         reInitDom();
-        reportVieportChange();
+        reportReadingPosition();
     } else {
         findViewport(getTopWord() - 1);
-        reportVieportChange();
+        reportReadingPosition();
     }
 }
 
@@ -38,10 +38,10 @@ async function handleNextButtonClick(): Promise<void> {
         await loadPage(getPageNum() + 1);
         renderWordsContainer(0);
         reInitDom();
-        reportVieportChange();
+        reportReadingPosition();
     } else {
         renderWordsContainer(lastWordIndex + 1);
-        reportVieportChange();
+        reportReadingPosition();
     }
 }
 
@@ -77,11 +77,11 @@ function sendTranslationRequest(selectedText: string, range: Range, selectedWord
             }
             return response.json();
         })
-    .then((data: { translatedText: string; html: string }) => {
+    .then((data: { translatedText: string; article: string }) => {
       log('Translated:', data);
       const sidebar = document.getElementById('sidebar');
       if (sidebar) {
-        sidebar.innerHTML = data.html; // Set innerHTML only if sidebar is not null
+        sidebar.innerHTML = data.article; // Set innerHTML only if sidebar is not null
       } else {
         console.error('Sidebar element not found');
       }

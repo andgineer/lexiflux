@@ -236,8 +236,8 @@ export function loadPage(pageNumber: number): Promise<void> {
     });
 }
 
-export function reportVieportChange(): void {
-    let url = `/viewport?top-word=${topWord}&book-id=${bookId}&page-num=${pageNum}`;
+export function reportReadingPosition(): void {
+    let url = `/position?top-word=${topWord}&book-id=${bookId}&page-num=${pageNum}`;
     fetch(url)
         .then(response => {
             if (!response.ok) {
