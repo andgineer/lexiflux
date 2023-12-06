@@ -72,14 +72,20 @@ function sendTranslationRequest(selectedText: string, range: Range, selectedWord
 
   fetch(url)
     .then(response => {
-      if (!response.ok) {
-        throw new Error('Network response was not ok');
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+    .then((data: { translatedText: string; html: string }) => {
+      log('Translated:', data);
+      const sidebar = document.getElementById('sidebar');
+      if (sidebar) {
+        sidebar.innerHTML = data.html; // Set innerHTML only if sidebar is not null
+      } else {
+        console.error('Sidebar element not found');
       }
-      return response.text();
-    })
-    .then(translatedText => {
-      log('Translated text:', translatedText);
-      createAndReplaceTranslationSpan(selectedText, translatedText, selectedWordSpans);
+      createAndReplaceTranslationSpan(selectedText, data.translatedText, selectedWordSpans);
       renderWordsContainer();
     })
     .catch(error => {
@@ -130,19 +136,6 @@ function handleWordClick(event: MouseEvent): void {
     let translationSpan = clickedElement.closest('.translation-span') as HTMLElement | null;
     if (translationSpan) {
       restoreOriginalSpans(translationSpan);
-    }
-  } else if (clickedElement.classList.contains('word')) {
-    // Handle click on a word span
-    let selectedText = clickedElement.textContent;
-    if (selectedText) {
-      let range = document.createRange();
-      range.selectNode(clickedElement);
-
-      // Assuming the clicked word is the only word to be translated
-      let selectedWordSpans = [clickedElement];
-
-      removeTranslationsInRange(range);
-      sendTranslationRequest(selectedText, range, selectedWordSpans);
     }
   }
 }
@@ -231,48 +224,56 @@ function handleMouseUpEvent(): void {
 }
 
 function getSelectedWordSpans(range: Range): HTMLElement[] {
-  let startNode = range.startContainer;
-  let endNode = range.endContainer;
+    let startNode: Node = range.startContainer;
+    let endNode: Node = range.endContainer;
 
-  // Adjust startNode to include the word span if the selection starts partway through it
-  while (startNode && startNode.nodeType !== Node.ELEMENT_NODE) {
-    if (startNode.parentNode) {
-      startNode = startNode.parentNode;
-    } else {
-      break; // Exit the loop if parentNode is null
-    }
-  }
-
-  // Ensure startNode is an HTMLElement before checking classList
-  if (startNode && startNode.nodeType === Node.ELEMENT_NODE && !(startNode as HTMLElement).classList.contains('word')) {
-    while (startNode && startNode.nodeType !== Node.ELEMENT_NODE) {
-      if (startNode.parentNode) {
-        startNode = startNode.parentNode;
-      } else {
-        break; // Exit the loop if parentNode is null
-      }
-    }
-  }
-
-  let selectedWordSpans: HTMLElement[] = [];
-  let currentNode: Node | null = startNode;
-
-  // Traverse the DOM from the start node to the end node
-  while (currentNode && currentNode !== endNode) {
-    if (currentNode.nodeType === Node.ELEMENT_NODE && (currentNode as HTMLElement).classList.contains('word')) {
-      selectedWordSpans.push(currentNode as HTMLElement);
+    // Adjust startNode to include the word span if the selection starts partway through it
+    if (startNode.nodeType !== Node.ELEMENT_NODE) {
+        startNode = startNode.parentNode || startNode;
     }
 
-    currentNode = getNextNode(currentNode);
-  }
+    // If startNode is an element but not a word span, find the next word span
+    if (startNode instanceof HTMLElement && !startNode.classList.contains('word')) {
+        // Find the next word span by traversing next siblings
+        let nextWordSpan = startNode.nextElementSibling;
+        while (nextWordSpan && !nextWordSpan.classList.contains('word')) {
+            nextWordSpan = nextWordSpan.nextElementSibling;
+        }
+        startNode = nextWordSpan || startNode;
+    }
 
-  // Include the end node if it's a word span
-  if (endNode && endNode.nodeType === Node.ELEMENT_NODE && (endNode as HTMLElement).classList.contains('word')) {
-    selectedWordSpans.push(endNode as HTMLElement);
-  }
+    // Adjust endNode to include the word span if the selection ends partway through it
+    if (endNode.nodeType !== Node.ELEMENT_NODE) {
+        endNode = endNode.parentNode || endNode;
+    }
+    if (endNode instanceof HTMLElement && !endNode.classList.contains('word')) {
+        let prevWordSpan = endNode.previousElementSibling;
+        while (prevWordSpan && !prevWordSpan.classList.contains('word')) {
+            prevWordSpan = prevWordSpan.previousElementSibling;
+        }
+        endNode = prevWordSpan || endNode;
+    }
 
-  return selectedWordSpans;
+    let selectedWordSpans: HTMLElement[] = [];
+    let currentNode: Node | null = startNode;
+
+    // Traverse the DOM from the start node to the end node
+    while (currentNode && currentNode !== endNode) {
+        if (currentNode instanceof HTMLElement && currentNode.classList.contains('word')) {
+            selectedWordSpans.push(currentNode);
+        }
+        currentNode = getNextNode(currentNode);
+    }
+
+    // Include the end node if it's a word span
+    if (endNode instanceof HTMLElement && endNode.classList.contains('word')) {
+        selectedWordSpans.push(endNode);
+    }
+
+    return selectedWordSpans;
 }
+
+
 
 function getNextNode(node: Node): Node | null {
   if (node.firstChild) {

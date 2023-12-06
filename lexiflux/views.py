@@ -81,7 +81,8 @@ def translate(request: HttpRequest) -> HttpResponse:
     source = "sr"
     target = "ru"
     translated = GoogleTranslator(source=source, target=target).translate(text)
-    return HttpResponse(translated)
+    html_content = """<p>Hello</p>"""
+    return JsonResponse({"translatedText": translated, "html": html_content})
 
 
 @login_required  # type: ignore

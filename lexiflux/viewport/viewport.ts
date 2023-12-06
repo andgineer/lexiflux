@@ -223,7 +223,7 @@ export function loadPage(pageNumber: number): Promise<void> {
                     let wordSpan = document.createElement('span');
                     wordSpan.id = 'word-' + index;
                     wordSpan.className = 'word';
-                    wordSpan.innerHTML = word + ' &nbsp;';
+                    wordSpan.innerHTML = ' ' + word;
                     return wordSpan;
                 });
 
