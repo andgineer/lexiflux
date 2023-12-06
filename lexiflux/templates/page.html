@@ -1,32 +1,31 @@
 <div id="book" class="d-flex flex-column vh-100">
 
-    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+    <nav class="navbar navbar-light bg-light">
         <div class="container-fluid">
             {% include 'hamburger.html' with current_page='reader' %}
-
-            <div class="mx-3 text-truncate title-container">
+            <div class="text-truncate">
                 {{ book.title }}
             </div>
         </div>
     </nav>
 
-    <div id="words-container" class="container-fluid flex-grow-1">
+    <div id="words-container" class="container-fluid flex-grow-1 overflow-hidden">
         ???
     </div>
 
-    <nav class="navbar navbar-expand-lg navbar-light bg-light navbar-fixed-bottom">
+    <nav class="navbar navbar-expand-lg navbar-light bg-light d-flex justify-content-between navbar-fixed-bottom">
         <button
             class="btn btn-primary"
             id="prev-button">
             &#8592; <!-- Left arrow -->
         </button>
 
-        <div class="mx-3 text-truncate title-container">
+        <div class="text-truncate">
             {{ page.number }}
         </div>
 
         <button
-            class="btn btn-primary"
+            class="btn btn-primary pull-right"
             id="next-button">
             &#8594; <!-- Right arrow -->
         </button>
