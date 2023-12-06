@@ -5,6 +5,7 @@ from . import views
 
 urlpatterns = [
     path("", views.book, name="book"),
+    path("library", views.library, name="library"),
     path("page", views.page, name="page"),
     path("viewport", views.viewport, name="viewport"),
     path("translate", views.translate, name="translate"),

@@ -1,11 +1,12 @@
 """Vies for the Lexiflux app."""
 from deep_translator import GoogleTranslator
 from django.contrib.auth.decorators import login_required
+from django.db import models
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import render
 from django.template.loader import render_to_string
 
-from .models import BookPage
+from .models import Book, BookPage
 
 
 @login_required  # type: ignore
@@ -88,3 +89,12 @@ def profile(request: HttpRequest) -> HttpResponse:
     # if not request.user.is_approved:
     """Profile page."""
     return render(request, "profile.html")
+
+
+@login_required  # type: ignore
+def library(request: HttpRequest) -> HttpResponse:
+    """Retrieve books shared with the user or public books."""
+    books = Book.objects.filter(
+        models.Q(shared_with=request.user) | models.Q(visibility=Book.PUBLIC)
+    ).distinct()
+    return render(request, "library.html", {"books": books})

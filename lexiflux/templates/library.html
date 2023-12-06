@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div id="book" class="d-flex flex-column vh-100">
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <div class="container-fluid">
+            {% include 'hamburger.html' with current_page='library' %}
+
+            <div class="mx-3 text-truncate title-container">
+                {{ book.title }}
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid flex-grow-1">
+        <div class="row justify-content-center">
+        <div class="card shadow col-md-10">
+            <div class="card-body">
+                <h2 class="text-center my-4">Your Books</h2>
+                <div class="d-flex justify-content-end mb-3">
+                    <button class="btn btn-primary" id="import-button">Import Books</button>
+                </div>
+                <div class="list-group">
+                    {% for book in books %}
+                        <a href="{% url 'book_detail' book.id %}" class="list-group-item list-group-item-action">
+                            {{ book.title }} by {{ book.author.name }}
+                        </a>
+                    {% empty %}
+                        <p>No books available.</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}
