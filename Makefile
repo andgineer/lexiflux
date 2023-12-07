@@ -28,7 +28,7 @@ reqs:
 
 .HELP: sql  ## sqlite3
 sql:
-	sqlite3 db.sqlite3
+	sqlite3 db.sqlite3 -header
 
 .HELP: get-books  ## Select books from DB
 get-books:
