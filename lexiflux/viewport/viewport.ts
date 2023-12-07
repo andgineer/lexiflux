@@ -1,5 +1,4 @@
 import { log, suppressRedraw, resumeRedraw } from './utils';
-declare const htmx: any;  // included in the HTML page
 
 export let bookId: string = '';
 export let pageNum: number = 0;
@@ -157,7 +156,6 @@ export function fillWordsContainer(startWordIndex: number): void {
         lastAddedWordIndex = i;
     }
     log('fillWordsContainer from', startWordIndex, 'lastAddedWordIndex:', lastAddedWordIndex);
-    htmx.process(wordsContainer);
 }
 
 export function resizeWordsContainer(): void {
@@ -189,7 +187,6 @@ export function resizeWordsContainer(): void {
 
     if (oldLastAddedWordIndex !== lastAddedWordIndex) {
         log('resizeWordsContainer', lastAddedWordIndex - oldLastAddedWordIndex);
-        htmx.process(wordsContainer);
     }
 }
 

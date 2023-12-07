@@ -16,6 +16,7 @@ import {
 import { log } from './utils';
 
 let resizeTimeout: NodeJS.Timeout;
+let clickTimeout: NodeJS.Timeout | null = null;
 
 async function handlePrevButtonClick(): Promise<void> {
     if (getTopWord() === 0) {
@@ -52,18 +53,9 @@ function handleResize(): void {
     }, 150);
 }
 
-function handleHtmxAfterSwap(event: Event): void {
-    let detail = (event as CustomEvent).detail;
-    if (detail.trigger && detail.trigger.classList.contains('word')) {
-        setTimeout(() => {
-            renderWordsContainer();
-        }, 150);
-    }
-}
-
-
 interface TranslationResponse {
   translatedText: string;
+  article: string
 }
 
 function sendTranslationRequest(selectedText: string, range: Range, selectedWordSpans: HTMLElement[]): void {
@@ -77,7 +69,7 @@ function sendTranslationRequest(selectedText: string, range: Range, selectedWord
             }
             return response.json();
         })
-    .then((data: { translatedText: string; article: string }) => {
+    .then((data: TranslationResponse) => {
       log('Translated:', data);
       const sidebar = document.getElementById('sidebar');
       if (sidebar) {
@@ -140,32 +132,6 @@ function handleWordClick(event: MouseEvent): void {
   }
 }
 
-function removeTranslationsInRange(range: Range): void {
-  // Get the common ancestor container of the range
-  let commonAncestor = range.commonAncestorContainer;
-  let containerElement = commonAncestor.nodeType === Node.ELEMENT_NODE
-    ? commonAncestor as Element
-    : commonAncestor.parentElement;
-
-  if (containerElement) {
-    // Find all translation spans within the container
-    const translationSpans = containerElement.querySelectorAll('.translation-span');
-
-    translationSpans.forEach((span: Element) => {
-      // Check if the translation span is within or intersects the range
-      if (isSpanInRange(span, range)) {
-        span.remove(); // Remove the translation span
-      }
-    });
-  }
-}
-
-function isSpanInRange(span: Element, range: Range): boolean {
-  let spanRange = document.createRange();
-  spanRange.selectNode(span);
-  return range.intersectsNode(span);
-}
-
 function restoreOriginalSpans(translationSpan: HTMLElement): void {
   let originalHtml = translationSpan.dataset.originalHtml;
   if (originalHtml) {
@@ -204,7 +170,18 @@ function handleWordContainerClick(event: MouseEvent): void {
 
     // Check if the target or its parent is a word or a translation
     if (target.classList.contains('word') || target.classList.contains('translation-text') || target.closest('.translation-span')) {
-        handleWordClick(event);
+        if (clickTimeout !== null) {
+            // If a timer is already running, this is a double click
+            clearTimeout(clickTimeout);
+            clickTimeout = null;
+            handleDblClick(event);
+        } else {
+            // Start a timer to call the single click handler
+            clickTimeout = setTimeout(() => {
+                handleWordClick(event);
+                clickTimeout = null;
+            }, 200); // 200 ms delay
+        }
     }
 }
 
@@ -274,6 +251,16 @@ function getSelectedWordSpans(range: Range): HTMLElement[] {
 }
 
 
+function handleDblClick(event: MouseEvent): void {
+    let clickedElement = event.target as HTMLElement;
+
+    // Check if clicked on a word or a translation text
+    if (clickedElement.classList.contains('word') || clickedElement.classList.contains('translation-text')) {
+        let text = clickedElement.textContent || '';
+        let url = 'https://glosbe.com/sr/ru/' + encodeURIComponent(text);
+        window.open(url, '_blank');
+    }
+}
 
 function getNextNode(node: Node): Node | null {
   if (node.firstChild) {
@@ -311,14 +298,16 @@ function reInitDom(): void {
 
         wordsContainer.removeEventListener('click', handleWordContainerClick);
         wordsContainer.addEventListener('click', handleWordContainerClick);
+
+        wordsContainer.removeEventListener('dblclick', handleDblClick);
+        wordsContainer.addEventListener('dblclick', handleDblClick);
+
     } else {
         console.error('Could not find words container');
     }
 }
 
 window.addEventListener('resize', handleResize);
-
-document.body.addEventListener('htmx:afterSwap', handleHtmxAfterSwap);
 
 document.body.addEventListener('htmx:configRequest', (event: Event) => {
     let detail = (event as CustomEvent).detail;

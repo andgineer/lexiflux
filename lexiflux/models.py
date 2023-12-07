@@ -1,6 +1,9 @@
 """Models for the lexiflux app."""
 from django.conf import settings
 from django.db import models
+from django.utils import timezone
+
+from core.models import CustomUser
 
 
 class Language(models.Model):  # type: ignore
@@ -80,6 +83,7 @@ class ReaderProfile(models.Model):  # type: ignore
     current_book = models.ForeignKey(
         Book, on_delete=models.SET_NULL, null=True, blank=True, related_name="current_readers"
     )
+    native_language = models.ForeignKey(Language, on_delete=models.SET_NULL, null=True)
 
 
 class ReadingProgress(models.Model):  # type: ignore
@@ -91,6 +95,33 @@ class ReadingProgress(models.Model):  # type: ignore
     book = models.ForeignKey(Book, on_delete=models.CASCADE)
     page_number = models.PositiveIntegerField()
     top_word_id = models.PositiveIntegerField()  # Assuming word ID is an integer
+
+    last_read_time = models.DateTimeField(default=timezone.now)
+
+    @classmethod
+    def update_user_progress(
+        cls, user: CustomUser, book_id: int, page_number: int, top_word_id: int
+    ) -> None:
+        """Update user reading progress."""
+        reader_profile, _ = ReaderProfile.objects.get_or_create(user=user)
+
+        # We search using user&book only but this is not enough to create a new record.
+        # Thus we cannot use get_or_create.
+        reading_progress = cls.objects.filter(
+            reader=reader_profile, book_id=book_id
+        ).first() or cls(reader=reader_profile, book_id=book_id)
+        reading_progress.page_number = page_number
+        reading_progress.top_word_id = top_word_id
+        reading_progress.last_read_time = timezone.now()
+        reading_progress.save()
+
+    def get_books_ordered_by_last_read(self) -> models.QuerySet[Book]:
+        """Return books ordered by last read time."""
+        return (
+            Book.objects.filter(reading_progresses__reader=self)
+            .annotate(last_read_time=models.Max("reading_progresses__last_read_time"))
+            .order_by("-last_read_time")
+        )
 
     class Meta:
         """Meta class for ReadingProgress."""

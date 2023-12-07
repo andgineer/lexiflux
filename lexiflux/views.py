@@ -1,12 +1,12 @@
 """Vies for the Lexiflux app."""
-from deep_translator import GoogleTranslator
 from django.contrib.auth.decorators import login_required
 from django.db import models
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import render
 from django.template.loader import render_to_string
 
-from .models import Book, BookPage
+from .models import Book, BookPage, ReaderProfile, ReadingProgress
+from .translation import get_translator
 
 
 @login_required  # type: ignore
@@ -62,26 +62,36 @@ def page(request: HttpRequest) -> HttpResponse:
 @login_required  # type: ignore
 def position(request: HttpRequest) -> HttpResponse:
     """Read position changed."""
-    book_id = request.GET.get("book-id", 1)
-    page_number = request.GET.get("page-num", 1)
-    # todo: save viewport in the user session
-    # try:
-    #     page = BookPage.objects.get(book_id=book_id, number=page_number)
-    # except BookPage.DoesNotExist:
-    #     return HttpResponse(f"error: Page {page_number} not found", status=500)
-    top_word = request.GET.get("top-word", 0)
-    top_word = int(top_word)
-    print(book_id, page_number, "top_word", top_word)
+    try:
+        book_id = int(request.GET.get("book-id"))
+        page_number = int(request.GET.get("page-num"))
+        top_word = int(request.GET.get("top-word", 0))
+    except (TypeError, ValueError, KeyError):
+        return HttpResponse("Invalid or missing parameters", status=400)
+
+    ReadingProgress.update_user_progress(
+        user=request.user, book_id=book_id, page_number=page_number, top_word_id=top_word
+    )
     return HttpResponse(status=200)
 
 
+@login_required  # type: ignore
 def translate(request: HttpRequest) -> HttpResponse:
-    """Translate request."""
-    text = request.GET.get("text", "")
-    source = "sr"
-    target = "ru"
-    translated = GoogleTranslator(source=source, target=target).translate(text)
-    article = """<p>Hello</p>"""
+    """Translate text."""
+    print("Translating text")
+    text = request.GET.get("text", 1)  # todo: None
+    book_id = request.GET.get("book-id", 1)  # todo: None
+    user_id = request.user.id
+
+    # if not book_id:
+    #     return JsonResponse({"error": "Book ID is required"}, status=400)
+
+    print("Translating", text)
+    translator = get_translator(book_id, user_id)
+    print("Translator", translator)
+    translated = translator.translate(text)
+    print("Translated", translated)
+    article = """<p>Hello</p>"""  # Example content
     return JsonResponse({"translatedText": translated, "article": article})
 
 
@@ -94,8 +104,19 @@ def profile(request: HttpRequest) -> HttpResponse:
 
 @login_required  # type: ignore
 def library(request: HttpRequest) -> HttpResponse:
-    """Retrieve books shared with the user or public books."""
-    books = Book.objects.filter(
-        models.Q(shared_with=request.user) | models.Q(visibility=Book.PUBLIC)
-    ).distinct()
+    """Library page."""
+    reader_profile, _ = ReaderProfile.objects.get_or_create(user=request.user)
+
+    books = (
+        Book.objects.filter(models.Q(shared_with=request.user) | models.Q(visibility=Book.PUBLIC))
+        .annotate(
+            last_read_time=models.Max(
+                "readingprogress__last_read_time",
+                filter=models.Q(readingprogress__reader=reader_profile),
+            )
+        )
+        .order_by("-last_read_time")
+        .distinct()
+    )
+
     return render(request, "library.html", {"books": books})
