@@ -1,5 +1,7 @@
 # test
 pytest
+pytest-cov
+coveralls
 faker
 
 # build
