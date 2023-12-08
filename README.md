@@ -1,6 +1,8 @@
+[![Build Status](https://github.com/andgineer/lexiflux/workflows/ci/badge.svg)](https://github.com/andgineer/lexiflux/actions)
+[![Coverage](https://raw.githubusercontent.com/andgineer/lexiflux/python-coverage-comment-action-data/badge.svg)](https://htmlpreview.github.io/?https://github.com/andgineer/lexiflux/blob/python-coverage-comment-action-data/htmlcov/index.html)
 # Lexiflux
 
-Infinite scroll with HTMX in Django.
+Reading foreign texts with dictionary.
 
 ## Scripts
     make help
@@ -11,3 +13,8 @@ Infinite scroll with HTMX in Django.
 
 https://github.com/nidhaloff/deep-translator
 https://github.com/terryyin/translate-python
+
+
+## Coverage report
+* [Codecov](https://app.codecov.io/gh/andgineer/lexiflux/tree/main/src%2Fgarmin_daily)
+* [Coveralls](https://coveralls.io/github/andgineer/lexiflux)

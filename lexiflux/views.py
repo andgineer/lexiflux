@@ -120,3 +120,18 @@ def library(request: HttpRequest) -> HttpResponse:
     )
 
     return render(request, "library.html", {"books": books})
+
+
+def import_book(request: HttpRequest) -> HttpResponse:
+    """Import a book."""
+    if request.method == "POST":
+        text = request.POST.get("text")
+        title = request.POST.get("title")
+        author_id = request.POST.get("author_id")  # Assuming author_id is provided
+
+        book = Book.objects.create(title=title, author_id=author_id)
+        book.import_text(text)
+
+        return HttpResponse("Book imported successfully")
+
+    return HttpResponse("Invalid request", status=400)
