@@ -37,25 +37,32 @@ class PageSplitter:
     def find_nearest_page_end(self, text: str, start_index: int) -> int:
         """Find the nearest page end."""
         patterns = [
-            re.compile(r"(\r\n|\n\n)"),  # Paragraph end
+            re.compile(r"\r?\n(\s*\r?\n)+"),  # Paragraph end
             re.compile(r"[^\s.!?]*\w[^\s.!?]*[.!?]\s"),  # Sentence end
             re.compile(r"\w+\b"),  # Word end
         ]
 
         for pattern in patterns:
             if nearest_end := self.find_nearest_end(text, start_index, pattern):
-                print(nearest_end, pattern)
                 return nearest_end
 
         # If no suitable end found, return the maximum allowed length
         return min(len(text), start_index + self.PAGE_LENGTH_TARGET)
+
+    @staticmethod
+    def normalize(text: str) -> str:
+        """Make later processing more simple.."""
+        text = re.sub(r"\r?\n(\s*\r?\n)+", "\n\n", text)
+        text = re.sub(r"\r", "", text)
+        text = re.sub(r"[^\S\n\r]+", " ", text)
+        return text
 
     def pages(self) -> Iterator[str]:
         """Split the text into pages."""
         start = 0
         while start < len(self.text):
             end = self.find_nearest_page_end(self.text, start)
-            yield self.text[start:end]
+            yield self.normalize(self.text[start:end])
             start = end
 
 

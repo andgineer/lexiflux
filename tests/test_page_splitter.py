@@ -13,17 +13,18 @@ def mock_page_splitter():
 
 def test_paragraph_end_priority(mock_page_splitter):
     # Paragraph end is within 25% error margin but farther than sentence end
-    text = "a" * 28 + ". " + 'b' * 5 + "\n\n" + "Next paragraph."
+    text = "a" * 25 + ".  " + 'b' * 5 + "\n\n" + "a"*22 + "\r\n\t\r\n" + "b" * 3 + ". \r" + "a" * 10
     splitter = PageSplitter(StringIO(text))
     pages = list(splitter.pages())
-    assert len(pages) == 2
-    assert "a" * 28 + ". " + 'b' * 5 + "\n\n" == pages[0]
-    assert "Next paragraph." == pages[1]
+    assert len(pages) == 3
+    assert "a" * 25 + ". " + 'b' * 5 + "\n\n" == pages[0]
+    assert "a"*22 + "\n\n" == pages[1]
+    assert "b" * 3 + ". " + "a" * 10 == pages[2]
 
 
 def test_sentence_end_priority(mock_page_splitter):
     # Sentence end near farther than word end
-    text = "a" * 23 + ". " + 'b' * 5 + " next sentence."
+    text = "a" * 23 + ". " + 'b' * 5 + " next  sentence."
     splitter = PageSplitter(StringIO(text))
     pages = list(splitter.pages())
     assert len(pages) == 2
