@@ -6,14 +6,14 @@
 |-------------------------------- | -------: | -------: | ------: | --------: |
 | lexiflux/apps.py                |       14 |       14 |      0% |      2-27 |
 | lexiflux/import\_plain\_text.py |       40 |        5 |     88% |15-16, 70-72 |
-| lexiflux/models.py              |       65 |       65 |      0% |     2-137 |
+| lexiflux/models.py              |       77 |       77 |      0% |     2-160 |
 | lexiflux/settings.py            |        0 |        0 |    100% |           |
 | lexiflux/signals.py             |       13 |       13 |      0% |      2-27 |
 | lexiflux/tests.py               |        0 |        0 |    100% |           |
 | lexiflux/translation.py         |       18 |       18 |      0% |      2-31 |
 | lexiflux/urls.py                |        3 |        3 |      0% |       2-6 |
 | lexiflux/views.py               |       65 |       65 |      0% |     2-137 |
-|                       **TOTAL** |  **218** |  **183** | **16%** |           |
+|                       **TOTAL** |  **230** |  **195** | **15%** |           |
 
 
 ## Setup coverage badge
