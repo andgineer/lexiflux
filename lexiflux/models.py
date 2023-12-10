@@ -1,4 +1,7 @@
 """Models for the lexiflux app."""
+import json
+from typing import Any, Dict
+
 from django.conf import settings
 from django.db import models
 from django.utils import timezone
@@ -48,6 +51,15 @@ class Book(models.Model):  # type: ignore
     title = models.CharField(max_length=200)
     author = models.ForeignKey(Author, on_delete=models.CASCADE)
     language = models.ForeignKey(Language, on_delete=models.SET_NULL, null=True)
+    context = models.TextField(null=True, blank=True, default="{}")
+
+    def set_context(self, context_dict: Dict[str, Any]) -> None:
+        """Set the context as a serialized JSON string."""
+        self.context = json.dumps(context_dict)
+
+    def get_context(self) -> Dict[str, Any]:
+        """Get the context as a Python dictionary."""
+        return json.loads(self.context)  # type: ignore
 
     @property
     def current_reading_by_count(self) -> int:
@@ -64,6 +76,17 @@ class Book(models.Model):  # type: ignore
     def __str__(self) -> str:
         """Return the string representation of a Book."""
         return self.title  # type: ignore
+
+
+class BookFile(models.Model):  # type: ignore
+    """Model to store original book files as blobs."""
+
+    book = models.OneToOneField(Book, on_delete=models.CASCADE, related_name="original_file")
+    file_blob = models.BinaryField()
+
+    def __str__(self) -> str:
+        """Return the string representation of a BookFile."""
+        return f"Original file for {self.book.title}"
 
 
 class BookPage(models.Model):  # type: ignore
