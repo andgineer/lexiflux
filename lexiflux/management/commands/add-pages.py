@@ -21,7 +21,7 @@ class Command(BaseCommand):
 
         # Ensure there is at least one author, language, and book
         author, _ = Author.objects.get_or_create(name=fake.name())
-        language, _ = Language.objects.get_or_create(code='en', defaults={'name': 'English'})
+        language, _ = Language.objects.get_or_create(google_code='en', defaults={'name': 'English'})
         book, _ = Book.objects.get_or_create(title=fake.sentence(), defaults={'author': author, 'language': language})
 
         # Get the highest existing page number for the selected book or default to 0 if no pages exist

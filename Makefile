@@ -8,8 +8,8 @@ migrate:
 	python manage.py makemigrations core
 	python manage.py migrate
 
-.HELP: add-pages  ## Add pages to DB
-add-pages:
+.HELP: pages  ## Create random book with random pages
+pages:
 	python manage.py add-pages
 
 .HELP: init-db  ## Create tables and add pages to DB

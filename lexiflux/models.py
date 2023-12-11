@@ -13,7 +13,9 @@ from lexiflux.import_plain_text import PageSplitter
 class Language(models.Model):  # type: ignore
     """Model to store languages."""
 
-    code = models.CharField(max_length=10, unique=True)
+    google_code = models.CharField(max_length=10, unique=True)  # Google Translate language code
+    epub_code = models.CharField(max_length=10)  # EPUB (ISO-639) language code
+
     name = models.CharField(max_length=100, unique=True)
 
     def __str__(self) -> str:
