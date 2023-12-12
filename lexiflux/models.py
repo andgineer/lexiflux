@@ -53,15 +53,15 @@ class Book(models.Model):  # type: ignore
     title = models.CharField(max_length=200)
     author = models.ForeignKey(Author, on_delete=models.CASCADE)
     language = models.ForeignKey(Language, on_delete=models.SET_NULL, null=True)
-    context = models.TextField(null=True, blank=True, default="{}")
+    toc = models.TextField(null=True, blank=True, default="{}")
 
-    def set_context(self, context_dict: Dict[str, Any]) -> None:
+    def set_toc(self, context_dict: Dict[str, Any]) -> None:
         """Set the context as a serialized JSON string."""
-        self.context = json.dumps(context_dict)
+        self.toc = json.dumps(context_dict)
 
-    def get_context(self) -> Dict[str, Any]:
+    def get_toc(self) -> Dict[str, Any]:
         """Get the context as a Python dictionary."""
-        return json.loads(self.context)  # type: ignore
+        return json.loads(self.toc)  # type: ignore
 
     @property
     def current_reading_by_count(self) -> int:
