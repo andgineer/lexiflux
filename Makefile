@@ -12,8 +12,16 @@ migrate:
 pages:
 	python manage.py add-pages
 
-.HELP: init-db  ## Create tables and add pages to DB
-init-db: migrate add-pages
+.HELP: init-db  ## KILL Database and reinit new one
+init-db: kill-db migrate admin pages
+
+.HELP: kill-db  ## KILL Database
+kill-db:
+	rm -f db.sqlite3
+
+.HELP: admin  ## Create admin
+admin:
+	DJANGO_SUPERUSER_PASSWORD=admin python manage.py createsuperuser --username admin --email admin@example.com --noinput
 
 .HELP: run  ## Run local server
 run:

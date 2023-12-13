@@ -27,7 +27,7 @@ DEBUG = True
 ALLOWED_HOSTS = []
 SITE_ID = 1
 LOGIN_URL = 'login'
-LOGIN_REDIRECT_URL = 'book'
+LOGIN_REDIRECT_URL = 'reader'
 LOGOUT_REDIRECT_URL = 'login'
 
 AUTH_USER_MODEL = 'core.CustomUser'
