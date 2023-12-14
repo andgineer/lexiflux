@@ -7,7 +7,7 @@
 
 Reading foreign texts with dictionary.
 
-<br/>
+<br clear="left"/>
 
 ## Scripts
     make help
