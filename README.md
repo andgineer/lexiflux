@@ -1,11 +1,11 @@
 [![Build Status](https://github.com/andgineer/lexiflux/workflows/CI/badge.svg)](https://github.com/andgineer/lexiflux/actions)
 [![Coverage](https://raw.githubusercontent.com/andgineer/lexiflux/python-coverage-comment-action-data/badge.svg)](https://htmlpreview.github.io/?https://github.com/andgineer/lexiflux/blob/python-coverage-comment-action-data/htmlcov/index.html)
 <table style="border-collapse: collapse;">
-  <tr style="border:none;">
-    <td style="border:none;">
+  <tr style="border: none !important;">
+    <td style="border: none !important;">
 <img align="left" width="200" src="lexiflux/static/android-chrome-192x192.png" />
     </td>
-    <td style="border:none;">
+    <td style="border: none !important;">
 <H1>Lexiflux</H1>
 
 Reading foreign texts with dictionary.
