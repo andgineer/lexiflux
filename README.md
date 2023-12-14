@@ -1,6 +1,6 @@
 [![Build Status](https://github.com/andgineer/lexiflux/workflows/CI/badge.svg)](https://github.com/andgineer/lexiflux/actions)
 [![Coverage](https://raw.githubusercontent.com/andgineer/lexiflux/python-coverage-comment-action-data/badge.svg)](https://htmlpreview.github.io/?https://github.com/andgineer/lexiflux/blob/python-coverage-comment-action-data/htmlcov/index.html)
-<table border="0" style="border:none;">
+<table style="border-collapse: collapse;">
   <tr style="border:none;">
     <td style="border:none;">
 <img align="left" width="200" src="lexiflux/static/android-chrome-192x192.png" />
