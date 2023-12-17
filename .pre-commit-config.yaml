@@ -3,6 +3,7 @@ exclude: |
         tests/|
         docs/|
         core/|
+        venv/|
         migrations/|
         manage.py|
         management/commands/|
@@ -99,10 +100,12 @@ repos:
       - id: pylint
         name: Pylint
         entry: |
-          pylint
-          --max-line-length=99
-          --ignore-imports=yes
-          --load-plugins=pylint_django
-          --django-settings-module=lexiflux.settings
+          bash -c 'PYTHONPATH=. DJANGO_SETTINGS_MODULE=core.settings \
+          pylint \
+          --max-line-length=99 \
+          --ignore-imports=yes \
+          --load-plugins=pylint_django \
+          --django-settings-module=lexiflux.settings \
+          "$@"' --
         files: \.py$
         language: python

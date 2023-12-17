@@ -83,9 +83,9 @@ def import_book_from_epub(epub_file_path: str) -> None:
             )
 
     print(f"Book pages: {book_instance.pages.count()}")
-    page = book_instance.pages.all()[9]
+    page = book_instance.pages.all()[15]
     print(f"Book pages: {page.content[:500]}")
-    page = book_instance.pages.all()[11]
+    page = book_instance.pages.all()[16]
     print(f"Book pages: {page.content[:500]}")
     book_instance.content = book_toc
     book_instance.save()

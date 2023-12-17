@@ -1,5 +1,5 @@
 from django.core.management.base import BaseCommand, CommandError
-from lexiflux.import_epub import import_book_from_epub  # Adjust the import path as necessary
+from lexiflux.ebook.book_epub import import_book_from_epub  # Adjust the import path as necessary
 
 
 class Command(BaseCommand):

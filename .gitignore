@@ -2,3 +2,7 @@ venv
 db.sqlite3
 .idea/
 bundle.js
+.DS_Store
+.coverage
+**/__pycache__/
+node_modules/
