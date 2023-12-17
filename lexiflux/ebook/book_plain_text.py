@@ -1,6 +1,6 @@
 """Import a plain text file into Lexiflux."""
 import re
-from typing import IO, Dict, Iterator, List, Optional, Union
+from typing import IO, Any, Dict, Iterator, List, Optional, Union
 
 
 class BookPlainText:
@@ -10,11 +10,14 @@ class BookPlainText:
     PAGE_LENGTH_ERROR_TOLERANCE = 0.25  # Tolerance for page length error
     assert 0 < PAGE_LENGTH_ERROR_TOLERANCE < 1
     CHAPTER_HEADER_DISTANCE = 300  # Minimum character distance between chapter headers
+    GUTENBERG_ENDING_SIZE = 30 * 1024  # Maximum size of the Gutenberg licence text
+    GUTENBERG_START_SIZE = 1024  # Minimum size of the Gutenberg preamble
 
     def __init__(
         self, file_path: Union[str, IO[str]], languages: Optional[List[str]] = None
     ) -> None:
         """Initialize."""
+        self.meta: Dict[str, Any] = {}
         if languages is None:
             languages = ["en", "sr"]
         self.languages = languages
@@ -24,7 +27,8 @@ class BookPlainText:
         else:
             self.text = file_path.read()
         # self.headings = self.get_headings()
-        self.book_end = self.get_end_location()
+        self.book_end = self.cut_gutenberg_ending()
+        self.book_start = self.parse_gutenberg_header()
 
     def find_nearest_page_end_match(
         self, page_start_index: int, pattern: re.Pattern[str]
@@ -43,7 +47,7 @@ class BookPlainText:
         start_pos = max(
             page_start_index
             + int(self.PAGE_LENGTH_TARGET * (1 - self.PAGE_LENGTH_ERROR_TOLERANCE)),
-            0,
+            self.book_start,
         )
         ends = [match.end() for match in pattern.finditer(self.text, start_pos, end_pos)]
         return (
@@ -78,7 +82,7 @@ class BookPlainText:
 
     def pages(self) -> Iterator[str]:
         """Split a text into pages of approximately equal length."""
-        start = 0
+        start = self.book_start
         while start < self.book_end:
             end = self.find_nearest_page_end(start)
             page = self.normalize(self.text[start:end])
@@ -203,22 +207,50 @@ class BookPlainText:
             if i == 0 or headings[i] - headings[i - 1] > self.CHAPTER_HEADER_DISTANCE
         ]
 
-    def get_end_location(self) -> int:
-        """Find the end of the book content."""
+    def cut_gutenberg_ending(self) -> int:
+        """For books from Project Gutenberg cut off licence."""
         end_patterns = [
             "End of the Project Gutenberg EBook",
             "End of Project Gutenberg's",
-            "***END OF THE PROJECT GUTENBERG EBOOK",
+            "*** END OF THE PROJECT GUTENBERG EBOOK",
             "*** END OF THIS PROJECT GUTENBERG EBOOK",
         ]
         for pattern in end_patterns:
-            index = self.text.find(pattern)
+            index = self.text.find(pattern, min(0, len(self.text) - self.GUTENBERG_ENDING_SIZE))
             if index != -1:
                 return index
         return len(self.text)
 
+    def parse_gutenberg_header(self) -> int:
+        """For books from Project Gutenberg cut off licence."""
+        header = self.text[: self.GUTENBERG_START_SIZE]
+        header_signature = "The Project Gutenberg eBook"
+        header_patterns = {
+            "title": r"Title:\s*([^\n]*)\n",
+            "author": r"Author:\s*([^\n]*)\n",
+            "released": r"Release date:\s*([^\n]*)\n",
+            "language": r"Language:\s*([^\n]*)\n",
+            "credits": r"Credits:\s*([^\n]*)\n",
+        }
+        header_end_pattern = r"\*\*\* START OF THE PROJECT GUTENBERG EBOOK[^*\n]* \*\*\*"
+        if header_pos := header.find(header_signature) != -1:
+            header_end = header_pos + len(header_signature)
+            for field, pattern in header_patterns.items():
+                if match := re.search(pattern, header):
+                    self.meta[field] = match[1]
+                    header_end = max(header_end, match.end())
+            if match := re.search(header_end_pattern, header):
+                return match.end()
+            return header_end
+        return 0
+
 
 if __name__ == "__main__":
-    splitter = BookPlainText("path_to_your_book.txt")
-    for page_content in splitter.pages():
-        print(page_content)
+    splitter = BookPlainText("tests/resources/alice_adventure_in_wonderland.txt")
+    print(
+        splitter.meta,
+        splitter.text[splitter.book_start : 1024],
+        splitter.text[splitter.book_end - 100 : splitter.book_end],
+    )
+    # for page_content in splitter.pages():
+    #     print(page_content)
