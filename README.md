@@ -2,19 +2,18 @@
 
 [Full report](https://htmlpreview.github.io/?https://github.com/andgineer/lexiflux/blob/python-coverage-comment-action-data/htmlcov/index.html)
 
-| Name                            |    Stmts |     Miss |   Cover |   Missing |
-|-------------------------------- | -------: | -------: | ------: | --------: |
-| lexiflux/apps.py                |       14 |       14 |      0% |      2-27 |
-| lexiflux/import\_epub.py        |       45 |       45 |      0% |      2-96 |
-| lexiflux/import\_plain\_text.py |       40 |        5 |     88% |15-16, 70-72 |
-| lexiflux/models.py              |       78 |       78 |      0% |     2-162 |
-| lexiflux/settings.py            |        0 |        0 |    100% |           |
-| lexiflux/signals.py             |       13 |       13 |      0% |      2-27 |
-| lexiflux/tests.py               |        0 |        0 |    100% |           |
-| lexiflux/translation.py         |       18 |       18 |      0% |      2-31 |
-| lexiflux/urls.py                |        3 |        3 |      0% |       2-6 |
-| lexiflux/views.py               |       65 |       65 |      0% |     2-137 |
-|                       **TOTAL** |  **276** |  **241** | **13%** |           |
+| Name                                |    Stmts |     Miss |   Cover |   Missing |
+|------------------------------------ | -------: | -------: | ------: | --------: |
+| lexiflux/apps.py                    |       14 |       14 |      0% |      2-27 |
+| lexiflux/ebook/book\_plain\_text.py |       92 |       44 |     52% |22-23, 92-102, 108-196, 200, 217, 222-224 |
+| lexiflux/models.py                  |       78 |       78 |      0% |     2-162 |
+| lexiflux/settings.py                |        0 |        0 |    100% |           |
+| lexiflux/signals.py                 |       13 |       13 |      0% |      2-27 |
+| lexiflux/tests.py                   |        0 |        0 |    100% |           |
+| lexiflux/translation.py             |       18 |       18 |      0% |      2-31 |
+| lexiflux/urls.py                    |        3 |        3 |      0% |       2-6 |
+| lexiflux/views.py                   |       65 |       65 |      0% |     2-137 |
+|                           **TOTAL** |  **283** |  **235** | **17%** |           |
 
 
 ## Setup coverage badge

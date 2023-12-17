@@ -60,12 +60,12 @@
             <button type="button" class="exc show_exc button_toggle_exc" value="exc" data-shortcut="x" title="Toggle lines excluded">0<span class="text"> excluded</span></button>
         </h2>
         <p class="text">
-            <a id="prevFileLink" class="nav" href="d_816b02d96dab55f8_import_plain_text_py.html">&#xab; prev</a> &nbsp; &nbsp;
+            <a id="prevFileLink" class="nav" href="d_a5feceb8b1f4fde1_book_plain_text_py.html">&#xab; prev</a> &nbsp; &nbsp;
             <a id="indexLink" class="nav" href="index.html">&Hat; index</a> &nbsp; &nbsp;
             <a id="nextFileLink" class="nav" href="d_816b02d96dab55f8_signals_py.html">&#xbb; next</a>
             &nbsp; &nbsp; &nbsp;
-            <a class="nav" href="https://coverage.readthedocs.io/en/7.3.2">coverage.py v7.3.2</a>,
-            created at 2023-12-14 20:04 +0000
+            <a class="nav" href="https://coverage.readthedocs.io/en/7.3.3">coverage.py v7.3.3</a>,
+            created at 2023-12-17 10:21 +0000
         </p>
         <aside class="hidden">
             <button type="button" class="button_next_chunk" data-shortcut="j"/>
@@ -89,7 +89,7 @@
     <p class="mis show_mis"><span class="n"><a id="t7" href="#t7">7</a></span><span class="t"><span class="key">from</span> <span class="nam">django</span><span class="op">.</span><span class="nam">utils</span> <span class="key">import</span> <span class="nam">timezone</span>&nbsp;</span><span class="r"></span></p>
     <p class="pln"><span class="n"><a id="t8" href="#t8">8</a></span><span class="t">&nbsp;</span><span class="r"></span></p>
     <p class="mis show_mis"><span class="n"><a id="t9" href="#t9">9</a></span><span class="t"><span class="key">from</span> <span class="nam">core</span><span class="op">.</span><span class="nam">models</span> <span class="key">import</span> <span class="nam">CustomUser</span>&nbsp;</span><span class="r"></span></p>
-    <p class="mis show_mis"><span class="n"><a id="t10" href="#t10">10</a></span><span class="t"><span class="key">from</span> <span class="nam">lexiflux</span><span class="op">.</span><span class="nam">import_plain_text</span> <span class="key">import</span> <span class="nam">PageSplitter</span>&nbsp;</span><span class="r"></span></p>
+    <p class="mis show_mis"><span class="n"><a id="t10" href="#t10">10</a></span><span class="t"><span class="key">from</span> <span class="nam">lexiflux</span><span class="op">.</span><span class="nam">ebook</span><span class="op">.</span><span class="nam">book_plain_text</span> <span class="key">import</span> <span class="nam">BookPlainText</span>&nbsp;</span><span class="r"></span></p>
     <p class="pln"><span class="n"><a id="t11" href="#t11">11</a></span><span class="t">&nbsp;</span><span class="r"></span></p>
     <p class="pln"><span class="n"><a id="t12" href="#t12">12</a></span><span class="t">&nbsp;</span><span class="r"></span></p>
     <p class="mis show_mis"><span class="n"><a id="t13" href="#t13">13</a></span><span class="t"><span class="key">class</span> <span class="nam">Language</span><span class="op">(</span><span class="nam">models</span><span class="op">.</span><span class="nam">Model</span><span class="op">)</span><span class="op">:</span>  <span class="com"># type: ignore</span>&nbsp;</span><span class="r"></span></p>
@@ -152,7 +152,7 @@
     <p class="pln"><span class="n"><a id="t70" href="#t70">70</a></span><span class="t">&nbsp;</span><span class="r"></span></p>
     <p class="mis show_mis"><span class="n"><a id="t71" href="#t71">71</a></span><span class="t">    <span class="key">def</span> <span class="nam">import_plain_text</span><span class="op">(</span><span class="nam">self</span><span class="op">,</span> <span class="nam">text</span><span class="op">:</span> <span class="nam">str</span><span class="op">)</span> <span class="op">-></span> <span class="key">None</span><span class="op">:</span>&nbsp;</span><span class="r"></span></p>
     <p class="pln"><span class="n"><a id="t72" href="#t72">72</a></span><span class="t">        <span class="str">"""Import plain text into the book."""</span>&nbsp;</span><span class="r"></span></p>
-    <p class="mis show_mis"><span class="n"><a id="t73" href="#t73">73</a></span><span class="t">        <span class="nam">splitter</span> <span class="op">=</span> <span class="nam">PageSplitter</span><span class="op">(</span><span class="nam">text</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
+    <p class="mis show_mis"><span class="n"><a id="t73" href="#t73">73</a></span><span class="t">        <span class="nam">splitter</span> <span class="op">=</span> <span class="nam">BookPlainText</span><span class="op">(</span><span class="nam">text</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
     <p class="mis show_mis"><span class="n"><a id="t74" href="#t74">74</a></span><span class="t">        <span class="nam">pages</span> <span class="op">=</span> <span class="nam">splitter</span><span class="op">.</span><span class="nam">pages</span><span class="op">(</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
     <p class="mis show_mis"><span class="n"><a id="t75" href="#t75">75</a></span><span class="t">        <span class="key">for</span> <span class="nam">i</span><span class="op">,</span> <span class="nam">page_content</span> <span class="key">in</span> <span class="nam">enumerate</span><span class="op">(</span><span class="nam">pages</span><span class="op">,</span> <span class="nam">start</span><span class="op">=</span><span class="num">1</span><span class="op">)</span><span class="op">:</span>&nbsp;</span><span class="r"></span></p>
     <p class="mis show_mis"><span class="n"><a id="t76" href="#t76">76</a></span><span class="t">            <span class="nam">BookPage</span><span class="op">.</span><span class="nam">objects</span><span class="op">.</span><span class="nam">create</span><span class="op">(</span><span class="nam">book</span><span class="op">=</span><span class="nam">self</span><span class="op">,</span> <span class="nam">number</span><span class="op">=</span><span class="nam">i</span><span class="op">,</span> <span class="nam">content</span><span class="op">=</span><span class="nam">page_content</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
@@ -246,12 +246,12 @@
 <footer>
     <div class="content">
         <p>
-            <a id="prevFileLink" class="nav" href="d_816b02d96dab55f8_import_plain_text_py.html">&#xab; prev</a> &nbsp; &nbsp;
+            <a id="prevFileLink" class="nav" href="d_a5feceb8b1f4fde1_book_plain_text_py.html">&#xab; prev</a> &nbsp; &nbsp;
             <a id="indexLink" class="nav" href="index.html">&Hat; index</a> &nbsp; &nbsp;
             <a id="nextFileLink" class="nav" href="d_816b02d96dab55f8_signals_py.html">&#xbb; next</a>
             &nbsp; &nbsp; &nbsp;
-            <a class="nav" href="https://coverage.readthedocs.io/en/7.3.2">coverage.py v7.3.2</a>,
-            created at 2023-12-14 20:04 +0000
+            <a class="nav" href="https://coverage.readthedocs.io/en/7.3.3">coverage.py v7.3.3</a>,
+            created at 2023-12-17 10:21 +0000
         </p>
     </div>
 </footer>
