@@ -1,6 +1,6 @@
 """Import a plain text file into Lexiflux."""
 import re
-from typing import IO, Any, Dict, Iterator, List, Optional, Union
+from typing import IO, Any, Dict, Iterator, List, Optional, Tuple, Union
 
 
 class MetadataField:  # pylint: disable=too-few-public-methods
@@ -19,6 +19,8 @@ class BookPlainText:
     PAGE_LENGTH_TARGET = 3000  # Target page length in characters
     PAGE_LENGTH_ERROR_TOLERANCE = 0.25  # Tolerance for page length error
     assert 0 < PAGE_LENGTH_ERROR_TOLERANCE < 1
+    PAGE_MIN_LENGTH = int(PAGE_LENGTH_TARGET * (1 - PAGE_LENGTH_ERROR_TOLERANCE))
+    PAGE_MAX_LENGTH = int(PAGE_LENGTH_TARGET * (1 + PAGE_LENGTH_ERROR_TOLERANCE))
     CHAPTER_HEADER_DISTANCE = 300  # Minimum character distance between chapter headers
     GUTENBERG_ENDING_SIZE = 30 * 1024  # Maximum size of the Gutenberg licence text
     GUTENBERG_START_SIZE = 1024  # Minimum size of the Gutenberg preamble
@@ -28,6 +30,7 @@ class BookPlainText:
     ) -> None:
         """Initialize."""
         self.meta: Dict[str, Any] = {}
+        self.headings: List[Tuple[str, str]] = []
         if languages is None:
             languages = ["en", "sr"]
         self.languages = languages
@@ -50,13 +53,11 @@ class BookPlainText:
         and PAGE_LENGTH_ERROR_TOLERANCE.
         """
         end_pos = min(
-            page_start_index
-            + int(self.PAGE_LENGTH_TARGET * (1 + self.PAGE_LENGTH_ERROR_TOLERANCE)),
+            page_start_index + int(self.PAGE_MAX_LENGTH),
             self.book_end,
         )
         start_pos = max(
-            page_start_index
-            + int(self.PAGE_LENGTH_TARGET * (1 - self.PAGE_LENGTH_ERROR_TOLERANCE)),
+            page_start_index + int(self.PAGE_MIN_LENGTH),
             self.book_start,
         )
         ends = [match.end() for match in pattern.finditer(self.text, start_pos, end_pos)]
@@ -85,34 +86,44 @@ class BookPlainText:
     @staticmethod
     def normalize(text: str) -> str:
         """Make later processing more simple."""
-        text = re.sub(r"\r?\n(\s*\r?\n)+", "\n\n", text)
+        text = re.sub(r"\r?\n", "<br/>", text)
         text = re.sub(r"\r", "", text)
         text = re.sub(r"[^\S\n\r]+", " ", text)
         return text
 
     def pages(self) -> Iterator[str]:
-        """Split a text into pages of approximately equal length."""
+        """Split a text into pages of approximately equal length.
+
+        Also clear headings and recollect them during pages generation.
+        """
         start = self.book_start
+        self.headings = []
+        page_num = 0
         while start < self.book_end:
+            page_num += 1
             end = self.find_nearest_page_end(start)
-            page = self.normalize(self.text[start:end])
-            # find chapters in the page
-            # correct end if last one is inside PAGE_LENGTH_ERROR_TOLERANCE
-            yield page
+
+            # shift end if found heading near the end
+            if headings := self.get_headings(
+                self.text[start + self.PAGE_MIN_LENGTH : end], page_num
+            ):
+                end = int(headings[0][1].split(":")[1])  # pos from first heading
+
+            page_text = self.normalize(self.text[start:end])
+            if headings := self.get_headings(page_text, page_num):
+                self.headings.extend(headings)
+            yield page_text
             start = end
 
-    def get_headings(self, text: str) -> Dict[str, str]:
+    def get_headings(self, page_text: str, page_num: int) -> List[Tuple[str, str]]:
         """Detect chapter headings in the text."""
         patterns = self.prepare_heading_patterns()
-        headings = {}
-        lines = re.split(r"\n|<br/>", text)
-        for i, line in enumerate(lines):
-            line = line.replace("\r", "")
-            # if line.upper() == line
-            for pattern in patterns:
-                if match := pattern.match(line):
-                    headings[line] = f"{i}:{match.start()}"
-                    break
+        headings: List[Tuple[str, str]] = []
+        for pattern in patterns:
+            headings.extend(
+                (match.group().replace("<br/>", " "), f"{page_num}:{match.start()}")
+                for match in pattern.finditer(page_text)
+            )
         return headings
 
     def prepare_heading_patterns(self) -> List[re.Pattern[str]]:  # pylint: disable=too-many-locals
@@ -183,30 +194,38 @@ class BookPlainText:
         ordinals_pat = "(the )?(" + "|".join(ordinal_number_words) + ")"
         enumerators_list = [arabic_numerals, roman_numerals, number_words_pat, ordinals_pat]
         enumerators = "(" + "|".join(enumerators_list) + ")"
-        form1 = "(chapter|GLAVA|глава) " + enumerators
+
+        chapter_name = r"[\w \t '`\"’\?!:\/-]{0,120}"
+        name_line = rf"(<br\/>{chapter_name}<br\/>)?"  # [ \t]*{chapter_name}|
+        form1 = "(chapter|GLAVA|глава)[ \t]*" + enumerators + r"\.?" + name_line
 
         # Form 2: II. The Mail
         enumerators = roman_numerals
         separators = r"(\. | )"
-        title_case = "[A-Z][a-z]"
-        form2 = enumerators + separators + title_case
+        title_case = "[A-Z][a-z]"  # \p{Lu}+
+        form2 = enumerators + separators + title_case + name_line
 
         # Form 3: II. THE OPEN ROAD
         enumerators = roman_numerals
         separators = r"(\. )"
         title_case = "[A-Z][A-Z]"
-        form3 = enumerators + separators + title_case
+        form3 = enumerators + separators + title_case + name_line
 
         # Form 4: a number on its own, e.g. 8, VIII
         arabic_numerals = r"^\d+\.?$"
         roman_numerals = r"(?=[MDCLXVI])M{0,3}(CM|CD|D?C{0,3})(XC|XL|L?X{0,3})(IX|IV|V?I{0,3})\.?$"
         enumerators_list = [arabic_numerals, roman_numerals]
         enumerators = "(" + "|".join(enumerators_list) + ")"
-        form4 = enumerators
+        form4 = enumerators + name_line
 
-        pat = re.compile(form1, re.IGNORECASE)
+        line_start = r"(^|\n|<br\/>)"  # Matches start of text, newline, or <br/>
+        line_end = r"($|\n|<br\/>)"  # Matches end of text, newline, or <br/>
+
+        print(f"{line_start}{form1}{line_end}")
+        print(f"{line_start}({form2}|{form3}|{form4}){line_end}")
+        pat = re.compile(f"{line_start}{form1}{line_end}", re.IGNORECASE)
         # This one is case-sensitive.
-        pat2 = re.compile(f"({form2}|{form3}|{form4})")
+        pat2 = re.compile(f"{line_start}({form2}|{form3}|{form4}){line_end}")
         return [pat, pat2]
 
     def ignore_close_headings(self, headings: List[int]) -> List[int]:
@@ -264,5 +283,8 @@ if __name__ == "__main__":
         splitter.text[splitter.book_start : 1024],
         splitter.text[splitter.book_end - 100 : splitter.book_end],
     )
+    for page in splitter.pages():
+        pass
+    print(splitter.headings)
     # for page_content in splitter.pages():
     #     print(page_content)
