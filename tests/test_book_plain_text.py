@@ -7,8 +7,12 @@ from lexiflux.ebook.book_plain_text import BookPlainText
 def mock_page_splitter():
     original_target = BookPlainText.PAGE_LENGTH_TARGET
     BookPlainText.PAGE_LENGTH_TARGET = 30  # Mocked target length for testing
+    BookPlainText.PAGE_MIN_LENGTH = int(BookPlainText.PAGE_LENGTH_TARGET * (1 - BookPlainText.PAGE_LENGTH_ERROR_TOLERANCE))
+    BookPlainText.PAGE_MAX_LENGTH = int(BookPlainText.PAGE_LENGTH_TARGET * (1 + BookPlainText.PAGE_LENGTH_ERROR_TOLERANCE))
     yield
     BookPlainText.PAGE_LENGTH_TARGET = original_target  # Reset to original after tests
+    BookPlainText.PAGE_MIN_LENGTH = int(BookPlainText.PAGE_LENGTH_TARGET * (1 - BookPlainText.PAGE_LENGTH_ERROR_TOLERANCE))
+    BookPlainText.PAGE_MAX_LENGTH = int(BookPlainText.PAGE_LENGTH_TARGET * (1 + BookPlainText.PAGE_LENGTH_ERROR_TOLERANCE))
 
 
 def test_paragraph_end_priority(mock_page_splitter):
@@ -17,8 +21,8 @@ def test_paragraph_end_priority(mock_page_splitter):
     splitter = BookPlainText(StringIO(text))
     pages = list(splitter.pages())
     assert len(pages) == 3
-    assert "a" * 25 + ". " + 'b' * 5 + "\n\n" == pages[0]
-    assert "a"*22 + "\n\n" == pages[1]
+    assert "a" * 25 + ". " + 'b' * 5 + "<br/><br/>" == pages[0]
+    assert "a"*22 + "<br/> <br/>" == pages[1]
     assert "b" * 3 + ". " + "a" * 10 == pages[2]
 
 

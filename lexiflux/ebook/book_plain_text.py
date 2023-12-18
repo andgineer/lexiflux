@@ -70,9 +70,9 @@ class BookPlainText:
     def find_nearest_page_end(self, page_start_index: int) -> int:
         """Find the nearest page end."""
         patterns = [  # sorted by priority
-            re.compile(r"\r?\n(\s*\r?\n)+"),  # Paragraph end
-            re.compile(r"[^\s.!?]*\w[^\s.!?]*[.!?]\s"),  # Sentence end
-            re.compile(r"\w+\b"),  # Word end
+            re.compile(r"\r?\n(\s*\r?\n)+", re.UNICODE),  # Paragraph end
+            re.compile(r"[^\s.!?]*\w[^\s.!?]*[.!?]\s", re.UNICODE),  # Sentence end
+            re.compile(r"\w+\b", re.UNICODE),  # Word end
         ]
 
         for pattern in patterns:
@@ -88,7 +88,7 @@ class BookPlainText:
         """Make later processing more simple."""
         text = re.sub(r"\r?\n", "<br/>", text)
         text = re.sub(r"\r", "", text)
-        text = re.sub(r"[^\S\n\r]+", " ", text)
+        text = re.sub(r"[\s]+", " ", text)
         return text
 
     def pages(self) -> Iterator[str]:
@@ -121,9 +121,10 @@ class BookPlainText:
         headings: List[Tuple[str, str]] = []
         for pattern in patterns:
             headings.extend(
-                (match.group().replace("<br/>", " "), f"{page_num}:{match.start()}")
+                (match.group().replace("<br/>", " ").strip(), f"{page_num}:{match.start()}")
                 for match in pattern.finditer(page_text)
             )
+        # self.ignore_close_headings(headings)
         return headings
 
     def prepare_heading_patterns(self) -> List[re.Pattern[str]]:  # pylint: disable=too-many-locals
@@ -221,11 +222,9 @@ class BookPlainText:
         line_start = r"(^|\n|<br\/>)"  # Matches start of text, newline, or <br/>
         line_end = r"($|\n|<br\/>)"  # Matches end of text, newline, or <br/>
 
-        print(f"{line_start}{form1}{line_end}")
-        print(f"{line_start}({form2}|{form3}|{form4}){line_end}")
-        pat = re.compile(f"{line_start}{form1}{line_end}", re.IGNORECASE)
+        pat = re.compile(f"{line_start}{form1}{line_end}", re.IGNORECASE | re.UNICODE)
         # This one is case-sensitive.
-        pat2 = re.compile(f"{line_start}({form2}|{form3}|{form4}){line_end}")
+        pat2 = re.compile(f"{line_start}({form2}|{form3}|{form4}){line_end}", re.UNICODE)
         return [pat, pat2]
 
     def ignore_close_headings(self, headings: List[int]) -> List[int]:
