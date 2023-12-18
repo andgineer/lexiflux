@@ -3,6 +3,16 @@ import re
 from typing import IO, Any, Dict, Iterator, List, Optional, Union
 
 
+class MetadataField:  # pylint: disable=too-few-public-methods
+    """Book metadata fields."""
+
+    TITLE = "title"
+    AUTHOR = "author"
+    RELEASED = "released"
+    LANGUAGE = "language"
+    CREDITS = "credits"
+
+
 class BookPlainText:
     """Import ebook from plain text."""
 
@@ -224,23 +234,25 @@ class BookPlainText:
     def parse_gutenberg_header(self) -> int:
         """For books from Project Gutenberg cut off licence."""
         header = self.text[: self.GUTENBERG_START_SIZE]
-        header_signature = "The Project Gutenberg eBook"
+        header_signature_pattern = r"^[\uFEFF\s]*The Project Gutenberg eBook"
         header_patterns = {
-            "title": r"Title:\s*([^\n]*)\n",
-            "author": r"Author:\s*([^\n]*)\n",
-            "released": r"Release date:\s*([^\n]*)\n",
-            "language": r"Language:\s*([^\n]*)\n",
-            "credits": r"Credits:\s*([^\n]*)\n",
+            MetadataField.TITLE: r"Title:\s*([^\n]*)\n",
+            MetadataField.AUTHOR: r"Author:\s*([^\n]*)\n",
+            MetadataField.RELEASED: r"Release date:\s*([^\n]*)\n",
+            MetadataField.LANGUAGE: r"Language:\s*([^\n]*)\n",
+            MetadataField.CREDITS: r"Credits:\s*([^\n]*)\n",
         }
         header_end_pattern = r"\*\*\* START OF THE PROJECT GUTENBERG EBOOK[^*\n]* \*\*\*"
-        if header_pos := header.find(header_signature) != -1:
-            header_end = header_pos + len(header_signature)
+        if signature := re.search(header_signature_pattern, header):
+            if match := re.search(header_end_pattern, header):
+                header_end = match.end()
+                header = header[:header_end]
+            else:
+                header_end = signature.end()
             for field, pattern in header_patterns.items():
                 if match := re.search(pattern, header):
                     self.meta[field] = match[1]
                     header_end = max(header_end, match.end())
-            if match := re.search(header_end_pattern, header):
-                return match.end()
             return header_end
         return 0
 
