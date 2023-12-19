@@ -39,7 +39,6 @@ class BookPlainText:
                 self.text = file.read()
         else:
             self.text = file_path.read()
-        # self.headings = self.get_headings()
         self.book_end = self.cut_gutenberg_ending()
         self.book_start = self.parse_gutenberg_header()
 
@@ -88,7 +87,7 @@ class BookPlainText:
         """Make later processing more simple."""
         text = re.sub(r"\r?\n", "<br/>", text)
         text = re.sub(r"\r", "", text)
-        text = re.sub(r"[\s]+", " ", text)
+        text = re.sub(r"[ \t]+", " ", text)
         return text
 
     def pages(self) -> Iterator[str]:
@@ -107,12 +106,15 @@ class BookPlainText:
             if headings := self.get_headings(
                 self.text[start + self.PAGE_MIN_LENGTH : end], page_num
             ):
-                end = int(headings[0][1].split(":")[1])  # pos from first heading
+                end = self.PAGE_MIN_LENGTH + int(
+                    headings[0][1].split(":")[1]
+                )  # pos from first heading
 
             page_text = self.normalize(self.text[start:end])
             if headings := self.get_headings(page_text, page_num):
                 self.headings.extend(headings)
             yield page_text
+            assert end > start
             start = end
 
     def get_headings(self, page_text: str, page_num: int) -> List[Tuple[str, str]]:
@@ -120,20 +122,23 @@ class BookPlainText:
         patterns = self.prepare_heading_patterns()
         headings: List[Tuple[str, str]] = []
         for pattern in patterns:
-            headings.extend(
-                (match.group().replace("<br/>", " ").strip(), f"{page_num}:{match.start()}")
-                for match in pattern.finditer(page_text)
-            )
-        # self.ignore_close_headings(headings)
+            if match := pattern.search(page_text):
+                headings.append(
+                    (match.group().replace("<br/>", " ").strip(), f"{page_num}:{match.start()}")
+                )
+                break
         return headings
 
     def prepare_heading_patterns(self) -> List[re.Pattern[str]]:  # pylint: disable=too-many-locals
         """Prepare regex patterns for detecting chapter headings."""
         # Form 1: Chapter I, Chapter 1, Chapter the First, CHAPTER 1
         # Ways of enumerating chapters, e.g.
+        space = r"[ \t]"
+        line_sep = rf"{space}*(\r?\n|<br\/>)"
+        line_start = rf"{space}*(^|\r?\n|<br\/>)"
         arabic_numerals = r"\d+"
         roman_numerals = "(?=[MDCLXVI])M{0,3}(CM|CD|D?C{0,3})(XC|XL|L?X{0,3})(IX|IV|V?I{0,3})"
-        number_words_by_tens = [
+        number_words_by_tens_list = [
             "twenty",
             "thirty",
             "forty",
@@ -143,7 +148,7 @@ class BookPlainText:
             "eighty",
             "ninety",
         ]
-        number_words = [
+        number_words_list = [
             "one",
             "two",
             "three",
@@ -163,9 +168,9 @@ class BookPlainText:
             "seventeen",
             "eighteen",
             "nineteen",
-        ] + number_words_by_tens
-        number_words_pat = "(" + "|".join(number_words) + ")"
-        ordinal_number_words_by_tens = [
+        ] + number_words_by_tens_list
+        number_word = "(" + "|".join(number_words_list) + ")"
+        ordinal_number_words_by_tens_list = [
             "twentieth",
             "thirtieth",
             "fortieth",
@@ -174,8 +179,8 @@ class BookPlainText:
             "seventieth",
             "eightieth",
             "ninetieth",
-        ] + number_words_by_tens
-        ordinal_number_words = (
+        ] + number_words_by_tens_list
+        ordinal_number_words_list = (
             [
                 "first",
                 "second",
@@ -189,43 +194,30 @@ class BookPlainText:
                 "twelfth",
                 "last",
             ]
-            + [numberWord + "th" for numberWord in number_words]
-            + ordinal_number_words_by_tens
+            + [f"{numberWord}th" for numberWord in number_words_list]
+        ) + ordinal_number_words_by_tens_list
+        ordinal_word = "(the )?(" + "|".join(ordinal_number_words_list) + ")"
+        enumerators = rf"({arabic_numerals}|{roman_numerals}|{number_word}|{ordinal_word})"
+        delimiter = rf"(\.|{space}?){space}*"
+        chapter_name = r"[\w \t '`\"’\?!:\/-]{1,120}"
+        name_line = rf"{line_sep}{space}*{chapter_name}{space}*"
+
+        templ_key_word = (
+            rf"(chapter|glava|глава){space}+"
+            rf"({enumerators}{delimiter})?({space}+{chapter_name}|{name_line})?"
         )
-        ordinals_pat = "(the )?(" + "|".join(ordinal_number_words) + ")"
-        enumerators_list = [arabic_numerals, roman_numerals, number_words_pat, ordinals_pat]
-        enumerators = "(" + "|".join(enumerators_list) + ")"
+        templ_numbered = (
+            rf"({arabic_numerals}|{roman_numerals}){delimiter}({chapter_name}|{name_line})?"
+        )
 
-        chapter_name = r"[\w \t '`\"’\?!:\/-]{0,120}"
-        name_line = rf"(<br\/>{chapter_name}<br\/>)?"  # [ \t]*{chapter_name}|
-        form1 = "(chapter|GLAVA|глава)[ \t]*" + enumerators + r"\.?" + name_line
-
-        # Form 2: II. The Mail
-        enumerators = roman_numerals
-        separators = r"(\. | )"
-        title_case = "[A-Z][a-z]"  # \p{Lu}+
-        form2 = enumerators + separators + title_case + name_line
-
-        # Form 3: II. THE OPEN ROAD
-        enumerators = roman_numerals
-        separators = r"(\. )"
-        title_case = "[A-Z][A-Z]"
-        form3 = enumerators + separators + title_case + name_line
-
-        # Form 4: a number on its own, e.g. 8, VIII
-        arabic_numerals = r"^\d+\.?$"
-        roman_numerals = r"(?=[MDCLXVI])M{0,3}(CM|CD|D?C{0,3})(XC|XL|L?X{0,3})(IX|IV|V?I{0,3})\.?$"
-        enumerators_list = [arabic_numerals, roman_numerals]
-        enumerators = "(" + "|".join(enumerators_list) + ")"
-        form4 = enumerators + name_line
-
-        line_start = r"(^|\n|<br\/>)"  # Matches start of text, newline, or <br/>
-        line_end = r"($|\n|<br\/>)"  # Matches end of text, newline, or <br/>
-
-        pat = re.compile(f"{line_start}{form1}{line_end}", re.IGNORECASE | re.UNICODE)
-        # This one is case-sensitive.
-        pat2 = re.compile(f"{line_start}({form2}|{form3}|{form4}){line_end}", re.UNICODE)
-        return [pat, pat2]
+        return [
+            re.compile(
+                f"{line_start}{templ_key_word}{line_sep}{line_sep}", re.IGNORECASE | re.UNICODE
+            ),
+            re.compile(
+                f"{line_start}{templ_numbered}{line_sep}{line_sep}", re.IGNORECASE | re.UNICODE
+            ),
+        ]
 
     def ignore_close_headings(self, headings: List[int]) -> List[int]:
         """Ignore headings that are too close to each other, likely belonging to a TOC."""
@@ -276,7 +268,8 @@ class BookPlainText:
 
 
 if __name__ == "__main__":
-    splitter = BookPlainText("tests/resources/alice_adventure_in_wonderland.txt")
+    # splitter = BookPlainText("tests/resources/alice_adventure_in_wonderland.txt")
+    splitter = BookPlainText("tests/resources/sherlock_holmes.txt")
     print(
         splitter.meta,
         splitter.text[splitter.book_start : 1024],

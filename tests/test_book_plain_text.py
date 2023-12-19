@@ -51,3 +51,9 @@ def test_no_special_end(mock_page_splitter):
     pages = list(splitter.pages())
     assert len(pages) == 2
     len(pages[0]) == 30
+
+
+def test_chapter_pattern(mock_page_splitter, chapter_pattern):
+    splitter = BookPlainText(StringIO(f"aa{chapter_pattern}34"))
+    list(splitter.pages())
+    assert splitter.headings[0] == (chapter_pattern.replace("\n", " ").strip(), "1:2")
