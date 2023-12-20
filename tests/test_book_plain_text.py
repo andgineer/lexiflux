@@ -56,4 +56,16 @@ def test_no_special_end(mock_page_splitter):
 def test_chapter_pattern(mock_page_splitter, chapter_pattern):
     splitter = BookPlainText(StringIO(f"aa{chapter_pattern}34"))
     list(splitter.pages())
+    assert len(splitter.headings) == 1, f"chapter_pattern: {chapter_pattern}"
     assert splitter.headings[0] == (chapter_pattern.replace("\n", " ").strip(), "1:2")
+
+
+def test_wrong_chapter_pattern(mock_page_splitter, wrong_chapter_pattern):
+    splitter = BookPlainText(StringIO(f"aa{wrong_chapter_pattern}34"))
+    list(splitter.pages())
+    assert len(splitter.headings) == 0, f"chapter_pattern: {wrong_chapter_pattern}"
+
+
+# def test_word_num(mock_page_splitter, sentence_6_words):
+#     splitter = BookPlainText(StringIO(""))
+#     assert splitter.get_word_num(sentence_6_words, len(sentence_6_words)) == 6

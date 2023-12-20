@@ -106,8 +106,8 @@ class BookPlainText:
             if headings := self.get_headings(
                 self.text[start + self.PAGE_MIN_LENGTH : end], page_num
             ):
-                end = self.PAGE_MIN_LENGTH + int(
-                    headings[0][1].split(":")[1]
+                end = (
+                    start + self.PAGE_MIN_LENGTH + int(headings[0][1].split(":")[1])
                 )  # pos from first heading
 
             page_text = self.normalize(self.text[start:end])
@@ -117,14 +117,23 @@ class BookPlainText:
             assert end > start
             start = end
 
+    def get_word_num(self, text: str, pos: int) -> int:
+        """Get word number at the given position."""
+        return len(re.findall(r"\b(?!\s*<br\s*/?>\s*)\w+\b", text[:pos], re.UNICODE)) + 1
+
     def get_headings(self, page_text: str, page_num: int) -> List[Tuple[str, str]]:
         """Detect chapter headings in the text."""
         patterns = self.prepare_heading_patterns()
         headings: List[Tuple[str, str]] = []
         for pattern in patterns:
             if match := pattern.search(page_text):
+                # todo: calculate word number on the match
+
                 headings.append(
-                    (match.group().replace("<br/>", " ").strip(), f"{page_num}:{match.start()}")
+                    (
+                        match.group().replace("<br/>", " ").strip(),
+                        f"{page_num}:{self.get_word_num(page_text, match.start())}",
+                    )
                 )
                 break
         return headings
@@ -198,24 +207,33 @@ class BookPlainText:
         ) + ordinal_number_words_by_tens_list
         ordinal_word = "(the )?(" + "|".join(ordinal_number_words_list) + ")"
         enumerators = rf"({arabic_numerals}|{roman_numerals}|{number_word}|{ordinal_word})"
-        delimiter = rf"(\.|{space}?){space}*"
-        chapter_name = r"[\w \t '`\"’\?!:\/-]{1,120}"
+        chapter_name = r"[\w \t '`\"\.’\?!:\/-]{1,120}"
         name_line = rf"{line_sep}{space}*{chapter_name}{space}*"
 
         templ_key_word = (
             rf"(chapter|glava|глава){space}+"
-            rf"({enumerators}{delimiter})?({space}+{chapter_name}|{name_line})?"
+            rf"({enumerators}(\.|{space}){space}*)?({space}*{chapter_name})?({name_line})?"
         )
         templ_numbered = (
-            rf"({arabic_numerals}|{roman_numerals}){delimiter}({chapter_name}|{name_line})?"
+            rf"({arabic_numerals}|{roman_numerals})\.{space}*({chapter_name})?({name_line})?"
+        )
+        templ_numbered_dbl_empty_line = (
+            rf"({arabic_numerals}|{roman_numerals})"
+            rf"(\.|{space}){space}*({chapter_name})?({name_line})?{line_sep}"
         )
 
         return [
             re.compile(
-                f"{line_start}{templ_key_word}{line_sep}{line_sep}", re.IGNORECASE | re.UNICODE
+                f"{line_start}{line_sep}{templ_key_word}{line_sep}{line_sep}",
+                re.IGNORECASE | re.UNICODE,
             ),
             re.compile(
-                f"{line_start}{templ_numbered}{line_sep}{line_sep}", re.IGNORECASE | re.UNICODE
+                f"{line_start}{line_sep}{templ_numbered}{line_sep}{line_sep}",
+                re.IGNORECASE | re.UNICODE,
+            ),
+            re.compile(
+                f"{line_start}{line_sep}{templ_numbered_dbl_empty_line}{line_sep}{line_sep}",
+                re.IGNORECASE | re.UNICODE,
             ),
         ]
 
