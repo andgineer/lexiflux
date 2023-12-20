@@ -5,7 +5,7 @@
 | Name                                |    Stmts |     Miss |   Cover |   Missing |
 |------------------------------------ | -------: | -------: | ------: | --------: |
 | lexiflux/apps.py                    |       14 |       14 |      0% |      2-27 |
-| lexiflux/ebook/book\_plain\_text.py |      119 |       19 |     84% |38-39, 109, 224, 241, 257-266, 272-280 |
+| lexiflux/ebook/book\_plain\_text.py |      121 |       19 |     84% |38-39, 109, 242, 259, 275-284, 290-298 |
 | lexiflux/models.py                  |       78 |       78 |      0% |     2-162 |
 | lexiflux/settings.py                |        0 |        0 |    100% |           |
 | lexiflux/signals.py                 |       13 |       13 |      0% |      2-27 |
@@ -13,7 +13,7 @@
 | lexiflux/translation.py             |       18 |       18 |      0% |      2-31 |
 | lexiflux/urls.py                    |        3 |        3 |      0% |       2-6 |
 | lexiflux/views.py                   |       65 |       65 |      0% |     2-137 |
-|                           **TOTAL** |  **310** |  **210** | **32%** |           |
+|                           **TOTAL** |  **312** |  **210** | **33%** |           |
 
 
 ## Setup coverage badge
