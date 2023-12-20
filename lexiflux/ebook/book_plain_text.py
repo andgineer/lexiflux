@@ -85,7 +85,7 @@ class BookPlainText:
     @staticmethod
     def normalize(text: str) -> str:
         """Make later processing more simple."""
-        text = re.sub(r"\r?\n", "<br/>", text)
+        text = re.sub(r"\r?\n", " <br/> ", text)
         text = re.sub(r"\r", "", text)
         text = re.sub(r"[ \t]+", " ", text)
         return text
@@ -119,7 +119,8 @@ class BookPlainText:
 
     def get_word_num(self, text: str, pos: int) -> int:
         """Get word number at the given position."""
-        return len(re.findall(r"\b(?!\s*<br\s*/?>\s*)\w+\b", text[:pos], re.UNICODE)) + 1
+        ignore_words = ["<br/>", "<br>", "<br />", "<br/ >", "<br / >", "<br / >"]
+        return sum(1 for word in re.split(r"\s", text[:pos]) if word not in ignore_words)
 
     def get_headings(self, page_text: str, page_num: int) -> List[Tuple[str, str]]:
         """Detect chapter headings in the text."""
@@ -132,7 +133,7 @@ class BookPlainText:
                 headings.append(
                     (
                         match.group().replace("<br/>", " ").strip(),
-                        f"{page_num}:{self.get_word_num(page_text, match.start())}",
+                        f"{page_num}:{self.get_word_num(page_text, match.start() + 1)}",
                     )
                 )
                 break
@@ -143,8 +144,8 @@ class BookPlainText:
         # Form 1: Chapter I, Chapter 1, Chapter the First, CHAPTER 1
         # Ways of enumerating chapters, e.g.
         space = r"[ \t]"
-        line_sep = rf"{space}*(\r?\n|<br\/>)"
-        line_start = rf"{space}*(^|\r?\n|<br\/>)"
+        line_sep = rf"{space}*(\r?\n|{space}*<br\/>{space}*)"
+        line_start = rf"{space}*(^|\r?\n|{space}*<br\/>{space}*)"
         arabic_numerals = r"\d+"
         roman_numerals = "(?=[MDCLXVI])M{0,3}(CM|CD|D?C{0,3})(XC|XL|L?X{0,3})(IX|IV|V?I{0,3})"
         number_words_by_tens_list = [
@@ -225,15 +226,15 @@ class BookPlainText:
         return [
             re.compile(
                 f"{line_start}{line_sep}{templ_key_word}{line_sep}{line_sep}",
-                re.IGNORECASE | re.UNICODE,
+                re.IGNORECASE,
             ),
             re.compile(
                 f"{line_start}{line_sep}{templ_numbered}{line_sep}{line_sep}",
-                re.IGNORECASE | re.UNICODE,
+                re.IGNORECASE,
             ),
             re.compile(
                 f"{line_start}{line_sep}{templ_numbered_dbl_empty_line}{line_sep}{line_sep}",
-                re.IGNORECASE | re.UNICODE,
+                re.IGNORECASE,
             ),
         ]
 

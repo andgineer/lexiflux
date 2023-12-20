@@ -12,7 +12,7 @@ import pytest
         "\n\nCHAPTER twenty two. WINTER\n\n",
         "\n\nCHAPTER last inline\nunderline\n\n",
         "\n\nI. A SCANDAL IN BOHEMIA\n \n",
-        "\n\nV. \nThe Five Orange Pips\n\n",
+        "\n\nV.\nПет наранчиних сjеменки\n\n",
     ],)
 def chapter_pattern(request):
     return request.param
