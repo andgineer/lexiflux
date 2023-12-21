@@ -2,18 +2,19 @@
 
 [Full report](https://htmlpreview.github.io/?https://github.com/andgineer/lexiflux/blob/python-coverage-comment-action-data/htmlcov/index.html)
 
-| Name                                |    Stmts |     Miss |   Cover |   Missing |
-|------------------------------------ | -------: | -------: | ------: | --------: |
-| lexiflux/apps.py                    |       14 |       14 |      0% |      2-27 |
-| lexiflux/ebook/book\_plain\_text.py |      122 |       19 |     84% |38-39, 109, 243, 260, 276-285, 291-299 |
-| lexiflux/models.py                  |       78 |       78 |      0% |     2-162 |
-| lexiflux/settings.py                |        0 |        0 |    100% |           |
-| lexiflux/signals.py                 |       13 |       13 |      0% |      2-27 |
-| lexiflux/tests.py                   |        0 |        0 |    100% |           |
-| lexiflux/translation.py             |       18 |       18 |      0% |      2-31 |
-| lexiflux/urls.py                    |        3 |        3 |      0% |       2-6 |
-| lexiflux/views.py                   |       65 |       65 |      0% |     2-137 |
-|                           **TOTAL** |  **313** |  **210** | **33%** |           |
+| Name                                   |    Stmts |     Miss |   Cover |   Missing |
+|--------------------------------------- | -------: | -------: | ------: | --------: |
+| lexiflux/apps.py                       |       14 |        0 |    100% |           |
+| lexiflux/ebook/book\_plain\_text.py    |      169 |       30 |     82% |56-67, 186, 320, 337, 353-362, 368-376, 381-389 |
+| lexiflux/language/google\_languages.py |       12 |        0 |    100% |           |
+| lexiflux/language/translation.py       |       35 |       20 |     43% |17-21, 26, 32-34, 39, 50-59, 63 |
+| lexiflux/models.py                     |       72 |       15 |     79% |22, 32, 59, 63, 68, 72, 83, 101, 131-141, 145 |
+| lexiflux/settings.py                   |        0 |        0 |    100% |           |
+| lexiflux/signals.py                    |       13 |        3 |     77% | 18-19, 27 |
+| lexiflux/tests.py                      |        0 |        0 |    100% |           |
+| lexiflux/urls.py                       |        3 |        3 |      0% |       2-6 |
+| lexiflux/views.py                      |       65 |       65 |      0% |     2-138 |
+|                              **TOTAL** |  **383** |  **136** | **64%** |           |
 
 
 ## Setup coverage badge
