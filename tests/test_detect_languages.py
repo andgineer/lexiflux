@@ -3,6 +3,7 @@ import itertools
 import pytest
 from unittest.mock import patch, mock_open
 from lexiflux.ebook.book_plain_text import BookPlainText  # Replace with the actual module name
+from lexiflux.models import Language
 
 
 @pytest.fixture
@@ -35,6 +36,9 @@ def test_get_random_words(book_plain_text):
 @pytest.mark.django_db
 @patch('lexiflux.ebook.book_plain_text.detect_language')
 def test_detect_language(mock_detect_language, book_plain_text):
+    Language.objects.create(name='English2', google_code='en2', epub_code='eng')
+    Language.objects.create(name='Bosnian2', google_code='bs2', epub_code='bos')
+
     # majority in first 3 tries
     mock_detect_language.side_effect = itertools.cycle(['en', 'en', 'fr'])
     assert book_plain_text.detect_language() == 'en'
