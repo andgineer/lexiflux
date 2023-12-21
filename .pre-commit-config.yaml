@@ -46,7 +46,7 @@ repos:
           ]
 
   - repo: https://github.com/psf/black
-    rev: 23.11.0
+    rev: 23.12.0
     hooks:
       - id: black
         name: Fixes formatting
@@ -100,12 +100,11 @@ repos:
       - id: pylint
         name: Pylint
         entry: |
-          bash -c 'PYTHONPATH=. DJANGO_SETTINGS_MODULE=core.settings \
-          pylint \
+          bash -c 'pylint \
           --max-line-length=99 \
           --ignore-imports=yes \
           --load-plugins=pylint_django \
-          --django-settings-module=lexiflux.settings \
+          --django-settings-module=core.settings \
           "$@"' --
         files: \.py$
         language: python

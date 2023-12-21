@@ -7,7 +7,6 @@ from django.db import models
 from django.utils import timezone
 
 from core.models import CustomUser
-from lexiflux.ebook.book_plain_text import BookPlainText
 
 
 class Language(models.Model):  # type: ignore
@@ -67,13 +66,6 @@ class Book(models.Model):  # type: ignore
     def current_reading_by_count(self) -> int:
         """Return the number of users currently reading this book."""
         return self.current_readers.count()  # type: ignore
-
-    def import_plain_text(self, text: str) -> None:
-        """Import plain text into the book."""
-        splitter = BookPlainText(text)
-        pages = splitter.pages()
-        for i, page_content in enumerate(pages, start=1):
-            BookPage.objects.create(book=self, number=i, content=page_content)
 
     def __str__(self) -> str:
         """Return the string representation of a Book."""

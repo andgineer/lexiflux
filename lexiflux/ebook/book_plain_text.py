@@ -1,6 +1,11 @@
 """Import a plain text file into Lexiflux."""
+import random
 import re
+from collections import Counter
 from typing import IO, Any, Dict, Iterator, List, Optional, Tuple, Union
+
+from lexiflux.language.translation import detect_language, find_language
+from lexiflux.models import Book, BookPage, Language
 
 
 class MetadataField:  # pylint: disable=too-few-public-methods
@@ -24,6 +29,10 @@ class BookPlainText:
     CHAPTER_HEADER_DISTANCE = 300  # Minimum character distance between chapter headers
     GUTENBERG_ENDING_SIZE = 30 * 1024  # Maximum size of the Gutenberg licence text
     GUTENBERG_START_SIZE = 1024  # Minimum size of the Gutenberg preamble
+    JUNK_TEXT_BEGIN_PERCENT = 5
+    JUNK_TEXT_END_PERCENT = 5
+    assert JUNK_TEXT_END_PERCENT + JUNK_TEXT_BEGIN_PERCENT < 100
+    WORD_ESTIMATED_LENGTH = 30
 
     def __init__(
         self, file_path: Union[str, IO[str]], languages: Optional[List[str]] = None
@@ -41,6 +50,74 @@ class BookPlainText:
             self.text = file_path.read()
         self.book_end = self.cut_gutenberg_ending()
         self.book_start = self.parse_gutenberg_header()
+
+    def detect_meta(self) -> None:
+        """Detect book metadata."""
+        if language_value := self.meta.get(MetadataField.LANGUAGE):
+            if language_name := find_language(
+                name=language_value, google_code=language_value, epub_code=language_value
+            ):
+                # Update the language to its name in case it was found by code
+                self.meta["LANGUAGE"] = language_name
+                print(f"Language '{language_name}'.")
+                return
+        if not self.meta.get(MetadataField.LANGUAGE):
+            # Detect language if not found
+            self.meta[MetadataField.LANGUAGE] = self.detect_language()
+            print(f"Language '{self.meta[MetadataField.LANGUAGE]}' detected.")
+
+    def get_random_words(self, words_num: int = 15) -> str:
+        """Get random words from the book."""
+        expected_words_length = self.WORD_ESTIMATED_LENGTH * words_num * 2
+        start_index = int(len(self.text) * self.JUNK_TEXT_BEGIN_PERCENT / 100)
+        end_index = min(
+            len(self.text),
+            int(len(self.text) * (100 - self.JUNK_TEXT_END_PERCENT) / 100) - expected_words_length,
+        )
+
+        start = random.randint(start_index, max(start_index, end_index))
+        fragment = self.text[start : start + expected_words_length]
+        # Skip the first word in case it's partially cut off
+        return " ".join(re.split(r"\s", fragment)[1 : words_num + 1])
+
+    @staticmethod
+    def get_language_group(lang: str) -> str:
+        """Define language similarity groups."""
+        lang_groups = {"group:bs-hr-sr": {"bs", "hr", "sr"}}
+        return next(
+            (group_name for group_name, group_langs in lang_groups.items() if lang in group_langs),
+            lang,
+        )
+
+    def detect_language(self) -> str:
+        """Detect language of the book.
+
+        Returns lang code.
+        """
+        languages = [detect_language(self.get_random_words()) for _ in range(3)]
+
+        # If no clear majority, try additional random fragments
+        attempts = 0
+        while attempts < 10 and len(set(map(self.get_language_group, languages))) > 1:
+            random_fragment = self.get_random_words()
+            languages.append(detect_language(random_fragment))
+            attempts += 1
+
+        # Count languages considering similarity groups
+        lang_counter = Counter(map(self.get_language_group, languages))
+
+        # Find the most common language group
+        most_common_lang, _ = lang_counter.most_common(1)[0]
+
+        # If the group consists of similar languages, find the most common individual language
+        if most_common_lang.startswith("group:"):  # found lang group, should select just one lang
+            result = Counter(
+                [lang for lang in languages if self.get_language_group(lang) == most_common_lang]
+            ).most_common(1)[0][0]
+        else:
+            result = most_common_lang
+
+        return result  # type: ignore
 
     def find_nearest_page_end_match(
         self, page_start_index: int, pattern: re.Pattern[str]
@@ -284,6 +361,19 @@ class BookPlainText:
                     header_end = max(header_end, match.end())
             return header_end
         return 0
+
+
+def import_plain_text(text: str) -> None:
+    """Import plain text into the book."""
+    book = BookPlainText(text)
+    pages = book.pages()
+    book_instance = Book.objects.create(
+        title=book.meta.get(MetadataField.TITLE, "Unknown Title"),
+        author=book.meta.get(MetadataField.AUTHOR, "Unknown Author"),
+        language=Language.objects.get_or_create(book.meta[MetadataField.LANGUAGE])[0],
+    )
+    for i, page_content in enumerate(pages, start=1):
+        BookPage.objects.create(book=book_instance, number=i, content=page_content)
 
 
 if __name__ == "__main__":

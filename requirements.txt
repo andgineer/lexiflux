@@ -24,7 +24,7 @@ django==5.0
     # via
     #   -r requirements.in
     #   django-allauth
-django-allauth==0.58.2
+django-allauth==0.59.0
     # via -r requirements.in
 django-widget-tweaks==1.5.0
     # via -r requirements.in
@@ -32,7 +32,7 @@ ebooklib==0.18
     # via -r requirements.in
 idna==3.6
     # via requests
-lxml==4.9.3
+lxml==4.9.4
     # via ebooklib
 oauthlib==3.2.2
     # via requests-oauthlib

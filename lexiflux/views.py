@@ -5,8 +5,9 @@ from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import render
 from django.template.loader import render_to_string
 
+from lexiflux.language.translation import get_translator
+
 from .models import Book, BookPage, ReaderProfile, ReadingProgress
-from .translation import get_translator
 
 
 @login_required  # type: ignore
