@@ -109,7 +109,16 @@ class BookPlainText:
 
         # If no clear majority, try additional random fragments
         attempts = 0
-        while attempts < 10 and len(set(map(self.get_language_group, languages))) > 1:
+        while attempts < 10:
+            lang_counter = Counter(map(self.get_language_group, languages))
+            most_common_lang, most_common_count = lang_counter.most_common(1)[0]
+
+            # Check if the most common language group count is more than the sum of other counts
+            if most_common_count > sum(
+                count for lang, count in lang_counter.items() if lang != most_common_lang
+            ):
+                break
+
             random_fragment = self.get_random_words()
             languages.append(detect_language(random_fragment))
             attempts += 1
@@ -232,7 +241,7 @@ class BookPlainText:
         # Form 1: Chapter I, Chapter 1, Chapter the First, CHAPTER 1
         # Ways of enumerating chapters, e.g.
         space = r"[ \t]"
-        line_sep = rf"{space}*(\r?\n|{space}*<br\/>{space}*)"
+        line_sep = rf"{space}*(\r?\n||\u2028|\u2029|{space}*<br\/>{space}*)"
         line_start = rf"{space}*(^|\r?\n|{space}*<br\/>{space}*)"
         arabic_numerals = r"\d+"
         roman_numerals = "(?=[MDCLXVI])M{0,3}(CM|CD|D?C{0,3})(XC|XL|L?X{0,3})(IX|IV|V?I{0,3})"
@@ -300,7 +309,7 @@ class BookPlainText:
         name_line = rf"{line_sep}{space}*{chapter_name}{space}*"
 
         templ_key_word = (
-            rf"(chapter|glava|глава){space}+"
+            rf"(chapter|glava|глава|часть|том){space}+"
             rf"({enumerators}(\.|{space}){space}*)?({space}*{chapter_name})?({name_line})?"
         )
         templ_numbered = (
@@ -310,7 +319,7 @@ class BookPlainText:
             rf"({arabic_numerals}|{roman_numerals})"
             rf"(\.|{space}){space}*({chapter_name})?({name_line})?{line_sep}"
         )
-
+        # todo may be we should extract only titles with names?
         return [
             re.compile(
                 f"{line_start}{line_sep}{templ_key_word}{line_sep}{line_sep}",
