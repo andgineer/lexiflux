@@ -1,4 +1,5 @@
 """Translation module."""
+import logging
 import os
 from functools import lru_cache
 from typing import Optional
@@ -7,6 +8,8 @@ from deep_translator import GoogleTranslator, single_detection
 from django.db.models import Q
 
 from lexiflux.models import Book, Language, ReaderProfile
+
+log = logging.getLogger()
 
 
 class Translator:  # pylint: disable=too-few-public-methods
@@ -36,7 +39,14 @@ def get_translator(book_id: str, user_id: str) -> Translator:
 
 def detect_language(text: str) -> str:
     """Detect language."""
-    return single_detection(text, api_key=os.getenv("DETECTLANGUAGE_API_KEY"))  # type: ignore
+    log.debug("Fragment: %s", text)
+    try:
+        result = single_detection(text, api_key=os.getenv("DETECTLANGUAGE_API_KEY"))
+        log.debug("Detected language: %s", result)
+        return result  # type: ignore
+    except Exception as exc:  # pylint: disable=broad-except
+        log.error("Failed to detect language: %s", exc)
+        return "en"
 
 
 def find_language(

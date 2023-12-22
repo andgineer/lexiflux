@@ -1,4 +1,5 @@
 """Import a plain text file into Lexiflux."""
+import logging
 import random
 import re
 from collections import Counter
@@ -6,6 +7,8 @@ from typing import IO, Any, Dict, Iterator, List, Optional, Tuple, Union
 
 from lexiflux.language.translation import detect_language, find_language
 from lexiflux.models import Book, BookPage, Language
+
+log = logging.getLogger()
 
 
 class MetadataField:  # pylint: disable=too-few-public-methods
@@ -48,8 +51,11 @@ class BookPlainText:
                 self.text = file.read()
         else:
             self.text = file_path.read()
-        self.book_end = self.cut_gutenberg_ending()
+
         self.book_start = self.parse_gutenberg_header()
+        self.book_end = self.cut_gutenberg_ending()
+
+        self.detect_meta()
 
     def detect_meta(self) -> None:
         """Detect book metadata."""
@@ -59,23 +65,28 @@ class BookPlainText:
             ):
                 # Update the language to its name in case it was found by code
                 self.meta["LANGUAGE"] = language_name
-                print(f"Language '{language_name}'.")
                 return
         if not self.meta.get(MetadataField.LANGUAGE):
             # Detect language if not found
             self.meta[MetadataField.LANGUAGE] = self.detect_language()
-            print(f"Language '{self.meta[MetadataField.LANGUAGE]}' detected.")
+            log.debug("Language '%s' detected.", self.meta[MetadataField.LANGUAGE])
 
     def get_random_words(self, words_num: int = 15) -> str:
         """Get random words from the book."""
         expected_words_length = self.WORD_ESTIMATED_LENGTH * words_num * 2
-        start_index = int(len(self.text) * self.JUNK_TEXT_BEGIN_PERCENT / 100)
-        end_index = min(
-            len(self.text),
-            int(len(self.text) * (100 - self.JUNK_TEXT_END_PERCENT) / 100) - expected_words_length,
+        start_index = int(len(self.text) * self.JUNK_TEXT_BEGIN_PERCENT / 100) + self.book_start
+        end_index = (
+            int(
+                self.book_start
+                + (self.book_end - self.book_start) * (100 - self.JUNK_TEXT_END_PERCENT) / 100
+            )
+            - expected_words_length
         )
+        if end_index <= self.book_start:
+            end_index = self.book_end
 
         start = random.randint(start_index, max(start_index, end_index))
+        log.debug("Random words start: %s, [%s, %s]", start, start_index, end_index)
         fragment = self.text[start : start + expected_words_length]
         # Skip the first word in case it's partially cut off
         return " ".join(re.split(r"\s", fragment)[1 : words_num + 1])
@@ -374,18 +385,3 @@ def import_plain_text(text: str) -> None:
     )
     for i, page_content in enumerate(pages, start=1):
         BookPage.objects.create(book=book_instance, number=i, content=page_content)
-
-
-if __name__ == "__main__":
-    # splitter = BookPlainText("tests/resources/alice_adventure_in_wonderland.txt")
-    splitter = BookPlainText("tests/resources/sherlock_holmes.txt")
-    print(
-        splitter.meta,
-        splitter.text[splitter.book_start : 1024],
-        splitter.text[splitter.book_end - 100 : splitter.book_end],
-    )
-    for page in splitter.pages():
-        pass
-    print(splitter.headings)
-    # for page_content in splitter.pages():
-    #     print(page_content)

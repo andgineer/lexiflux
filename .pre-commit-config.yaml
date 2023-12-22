@@ -100,7 +100,7 @@ repos:
       - id: pylint
         name: Pylint
         entry: |
-          bash -c 'pylint \
+          bash -c 'PYTHONPATH=. pylint \
           --max-line-length=99 \
           --ignore-imports=yes \
           --load-plugins=pylint_django \

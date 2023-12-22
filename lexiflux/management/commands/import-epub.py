@@ -14,4 +14,4 @@ class Command(BaseCommand):
             import_book_from_epub(file_path)
             self.stdout.write(self.style.SUCCESS(f'Successfully imported book from "{file_path}"'))
         except Exception as e:
-            raise CommandError(f'Error importing book: {e}')
+            raise CommandError(f'Error importing book from {file_path}: {e}')

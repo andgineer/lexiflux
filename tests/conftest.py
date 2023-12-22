@@ -1,8 +1,9 @@
+import itertools
+
 import pytest
 import os
-
-
-os.environ["DJANGO_SETTINGS_MODULE"] = "core.settings"
+from unittest.mock import mock_open, patch
+from lexiflux.ebook.book_plain_text import BookPlainText
 
 
 @pytest.fixture(
@@ -36,3 +37,19 @@ def wrong_chapter_pattern(request):
 )
 def sentence_6_words(request):
     return request.param
+
+
+@pytest.fixture
+def book_plain_text():
+    # Mock the file reading part
+    with patch("builtins.open", mock_open(
+            read_data=" ".join([f"Word{i}" for i in range(1, 1000)])
+    )):
+        return BookPlainText("dummy_path")
+
+
+@pytest.fixture(autouse=True)
+def mock_detect_language():
+    with patch('lexiflux.language.translation.single_detection') as mock:
+        mock.side_effect = itertools.cycle(['en', 'en', 'fr'])
+        yield mock
