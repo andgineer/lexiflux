@@ -41,9 +41,15 @@ def detect_language(text: str) -> str:
     """Detect language."""
     log.debug("Fragment: %s", text)
     try:
-        result = single_detection(text, api_key=os.getenv("DETECTLANGUAGE_API_KEY"))
+        result = single_detection(text, api_key=os.environ["DETECTLANGUAGE_API_KEY"])
         log.debug("Detected language: %s", result)
         return result  # type: ignore
+    except KeyError:
+        log.error(
+            "Please get you API Key at https://detectlanguage.com/documentation"
+            " and set it to env var DETECTLANGUAGE_API_KEY"
+        )
+        return "en"
     except Exception as exc:  # pylint: disable=broad-except
         log.error("Failed to detect language: %s", exc)
         return "en"

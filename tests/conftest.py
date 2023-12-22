@@ -52,4 +52,6 @@ def book_plain_text():
 def mock_detect_language():
     with patch('lexiflux.language.translation.single_detection') as mock:
         mock.side_effect = itertools.cycle(['en', 'en', 'fr'])
-        yield mock
+        with patch.dict(os.environ, {"DETECTLANGUAGE_API_KEY": 'fake-key'}):
+            yield mock
+
