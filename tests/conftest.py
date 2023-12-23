@@ -33,7 +33,7 @@ def wrong_chapter_pattern(request):
 
 @pytest.fixture(
     scope="function",
-    params=["Hello 123 <br/> word/123 123-<word>\n<br> and last!"]
+    params=["Hello 123 <br/> word/123 123-<word>\n<br/> and last!"]
 )
 def sentence_6_words(request):
     return request.param
@@ -41,10 +41,22 @@ def sentence_6_words(request):
 
 @pytest.fixture
 def book_plain_text():
-    # Mock the file reading part
-    with patch("builtins.open", mock_open(
-            read_data=" ".join([f"Word{i}" for i in range(1, 1000)])
-    )):
+    # Create a sample data string
+    sample_data = " ".join([f"Word{i}" for i in range(1, 1000)])
+
+    # Convert sample data to bytes with an encoding, e.g., UTF-8
+    sample_data_bytes = sample_data.encode('utf-8')
+
+    # Custom mock open function to handle different modes
+    def custom_open(file, mode='r', encoding=None):
+        if 'b' in mode:
+            return mock_open(read_data=sample_data_bytes).return_value
+        else:
+            # Decode the data if a specific encoding is provided
+            decoded_data = sample_data_bytes.decode(encoding)
+            return mock_open(read_data=decoded_data).return_value
+
+    with patch("builtins.open", new_callable=lambda: custom_open):
         return BookPlainText("dummy_path")
 
 

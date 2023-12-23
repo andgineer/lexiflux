@@ -12,6 +12,8 @@ certifi==2023.11.17
     # via requests
 cffi==1.16.0
     # via cryptography
+chardet==5.2.0
+    # via -r requirements.in
 charset-normalizer==3.3.2
     # via requests
 cryptography==41.0.7

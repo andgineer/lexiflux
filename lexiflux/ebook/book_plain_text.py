@@ -5,6 +5,8 @@ import re
 from collections import Counter
 from typing import IO, Any, Dict, Iterator, List, Optional, Tuple, Union
 
+from chardet.universaldetector import UniversalDetector
+
 from lexiflux.language.translation import detect_language, find_language
 from lexiflux.models import Book, BookPage, Language
 
@@ -40,15 +42,18 @@ class BookPlainText:
     def __init__(
         self, file_path: Union[str, IO[str]], languages: Optional[List[str]] = None
     ) -> None:
-        """Initialize."""
+        """Initialize.
+
+        If file_path is a string, it is treated as a path to a file and we try to detect encoding.
+        If file_path is a file object, we assume it was opened with correct encoding.
+        """
         self.meta: Dict[str, Any] = {}
         self.headings: List[Tuple[str, str]] = []
         if languages is None:
             languages = ["en", "sr"]
         self.languages = languages
         if isinstance(file_path, str):
-            with open(file_path, "r", encoding="utf8") as file:
-                self.text = file.read()
+            self.text = self.read_file(file_path)
         else:
             self.text = file_path.read()
 
@@ -56,6 +61,21 @@ class BookPlainText:
         self.book_end = self.cut_gutenberg_ending()
 
         self.detect_meta()
+
+    def read_file(self, file_path: str) -> str:
+        """Read file with detecting correct encoding."""
+        detector = UniversalDetector()
+        with open(file_path, "rb") as file:
+            for line in file:
+                detector.feed(line)
+                if detector.done:
+                    break
+        detector.close()
+        log.debug("CharDet: %s", detector.result)
+        encoding = detector.result["encoding"]
+
+        with open(file_path, "r", encoding=encoding) as f:
+            return f.read()
 
     def detect_meta(self) -> None:
         """Detect book metadata."""
@@ -182,7 +202,7 @@ class BookPlainText:
     @staticmethod
     def normalize(text: str) -> str:
         """Make later processing more simple."""
-        text = re.sub(r"\r?\n", " <br/> ", text)
+        text = re.sub(r"(\r?\n|\u2028|\u2029)", " <br/> ", text)
         text = re.sub(r"\r", "", text)
         text = re.sub(r"[ \t]+", " ", text)
         return text
@@ -216,7 +236,7 @@ class BookPlainText:
 
     def get_word_num(self, text: str, pos: int) -> int:
         """Get word number at the given position."""
-        ignore_words = ["<br/>", "<br>", "<br />", "<br/ >", "<br / >", "<br / >"]
+        ignore_words = ["<br/>"]
         return sum(1 for word in re.split(r"\s", text[:pos]) if word not in ignore_words)
 
     def get_headings(self, page_text: str, page_num: int) -> List[Tuple[str, str]]:
@@ -241,7 +261,7 @@ class BookPlainText:
         # Form 1: Chapter I, Chapter 1, Chapter the First, CHAPTER 1
         # Ways of enumerating chapters, e.g.
         space = r"[ \t]"
-        line_sep = rf"{space}*(\r?\n||\u2028|\u2029|{space}*<br\/>{space}*)"
+        line_sep = rf"{space}*(\r?\n|\u2028|\u2029|{space}*<br\/>{space}*)"
         line_start = rf"{space}*(^|\r?\n|{space}*<br\/>{space}*)"
         arabic_numerals = r"\d+"
         roman_numerals = "(?=[MDCLXVI])M{0,3}(CM|CD|D?C{0,3})(XC|XL|L?X{0,3})(IX|IV|V?I{0,3})"
