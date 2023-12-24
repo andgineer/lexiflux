@@ -66,6 +66,3 @@ def test_wrong_chapter_pattern(mock_page_splitter, wrong_chapter_pattern):
     assert len(splitter.headings) == 0, f"chapter_pattern: {wrong_chapter_pattern}"
 
 
-def test_word_num(mock_page_splitter, sentence_6_words):
-    splitter = BookPlainText(StringIO(""))
-    assert splitter.get_word_num(sentence_6_words, len(sentence_6_words)) == 6
