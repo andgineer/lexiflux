@@ -24,7 +24,7 @@ class MetadataField:  # pylint: disable=too-few-public-methods
     CREDITS = "credits"
 
 
-class BookPlainText:
+class BookPlainText:  # pylint: disable=too-many-instance-attributes
     """Import ebook from plain text."""
 
     PAGE_LENGTH_TARGET = 3000  # Target page length in characters
@@ -62,6 +62,18 @@ class BookPlainText:
         self.book_end = self.cut_gutenberg_ending()
 
         self.detect_meta()
+
+    def set_page_target(self, target_length: int, error_tolerance: int) -> None:
+        """Set book page target length and error tolerance."""
+        assert 0 < error_tolerance < 1
+        self.PAGE_LENGTH_TARGET = target_length  # pylint: disable=invalid-name
+        self.PAGE_LENGTH_ERROR_TOLERANCE = error_tolerance  # pylint: disable=invalid-name
+        self.PAGE_MIN_LENGTH = int(  # pylint: disable=invalid-name
+            self.PAGE_LENGTH_TARGET * (1 - self.PAGE_LENGTH_ERROR_TOLERANCE)
+        )
+        self.PAGE_MAX_LENGTH = int(  # pylint: disable=invalid-name
+            self.PAGE_LENGTH_TARGET * (1 + self.PAGE_LENGTH_ERROR_TOLERANCE)
+        )
 
     def read_file(self, file_path: str) -> str:
         """Read file with detecting correct encoding."""
@@ -161,7 +173,7 @@ class BookPlainText:
         return result  # type: ignore
 
     def find_nearest_page_end_match(
-        self, page_start_index: int, pattern: re.Pattern[str]
+        self, page_start_index: int, pattern: re.Pattern[str], return_start: bool = False
     ) -> Optional[int]:
         """Find the nearest regex match around expected end of page.
 
@@ -177,7 +189,10 @@ class BookPlainText:
             page_start_index + int(self.PAGE_MIN_LENGTH),
             self.book_start,
         )
-        ends = [match.end() for match in pattern.finditer(self.text, start_pos, end_pos)]
+        ends = [
+            match.start() if return_start else match.end()
+            for match in pattern.finditer(self.text, start_pos, end_pos)
+        ]
         return (
             min(ends, key=lambda x: abs(x - page_start_index + self.PAGE_LENGTH_TARGET))
             if ends
@@ -187,18 +202,20 @@ class BookPlainText:
     def find_nearest_page_end(self, page_start_index: int) -> int:
         """Find the nearest page end."""
         patterns = [  # sorted by priority
-            re.compile(r"\r?\n(\s*\r?\n)+", re.UNICODE),  # Paragraph end
-            re.compile(r"[^\s.!?]*\w[^\s.!?]*[.!?]\s", re.UNICODE),  # Sentence end
-            re.compile(r"\w+\b", re.UNICODE),  # Word end
+            re.compile(r"(\r?\n|\u2028|\u2029)(\s*(\r?\n|\u2028|\u2029))+"),  # Paragraph end
+            re.compile(r"(\r?\n|\u2028|\u2029)"),  # Line end
+            re.compile(r"[^\s.!?]*\w[^\s.!?]*[.!?]\s"),  # Sentence end
+            re.compile(r"\w+\b"),  # Word end
         ]
 
-        for pattern in patterns:
-            if nearest_page_end := self.find_nearest_page_end_match(page_start_index, pattern):
-                # nearest_page_end = self.adjust_heading(page_start_index, nearest_page_end)
+        for pattern_idx, pattern in enumerate(patterns):
+            if nearest_page_end := self.find_nearest_page_end_match(
+                page_start_index, pattern, return_start=pattern_idx < 2
+            ):
                 return nearest_page_end
 
         # If no suitable end found, return the maximum allowed length
-        return min(self.book_end, page_start_index + self.PAGE_LENGTH_TARGET)
+        return min(page_start_index + self.book_end, page_start_index + self.PAGE_LENGTH_TARGET)
 
     @staticmethod
     def normalize(text: str) -> str:
@@ -224,10 +241,10 @@ class BookPlainText:
 
             # shift end if found heading near the end
             if headings := heading_finder.get_headings(
-                self.text[start + self.PAGE_MIN_LENGTH : end], page_num
+                self.text[start + self.PAGE_MIN_LENGTH : end] + "\n\n", page_num
             ):
                 end = (
-                    start + self.PAGE_MIN_LENGTH + int(headings[0][1].split(":")[1])
+                    start + self.PAGE_MIN_LENGTH + int(headings[0][1].split(":")[1]) - 1
                 )  # pos from first heading
 
             page_text = self.normalize(self.text[start:end])

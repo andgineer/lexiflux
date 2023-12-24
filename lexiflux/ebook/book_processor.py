@@ -7,7 +7,11 @@ class BookProcessor:
     """Book processor."""
 
     def get_headings(self, page_text: str, page_num: int) -> List[Tuple[str, str]]:
-        """Detect chapter headings in the text."""
+        """Detect chapter headings in the text.
+
+        Return headings as a list of tuples (heading, position).
+        Position: page_num:char_num:word_num
+        """
         patterns = self.prepare_heading_patterns()
         headings: List[Tuple[str, str]] = []
         for pattern in patterns:
@@ -17,7 +21,10 @@ class BookProcessor:
                 headings.append(
                     (
                         match.group().replace("<br/>", " ").strip(),
-                        f"{page_num}:{self.get_word_num(page_text, match.start() + 1)}",
+                        (
+                            f"{page_num}:{match.start()}:"
+                            f"{self.get_word_num(page_text, match.start() + 1)}"
+                        ),
                     )
                 )
                 break
@@ -29,7 +36,6 @@ class BookProcessor:
         # Ways of enumerating chapters, e.g.
         space = r"[ \t]"
         line_sep = rf"{space}*(\r?\n|\u2028|\u2029|{space}*<br\/>{space}*)"
-        line_start = rf"{space}*(^|\r?\n|{space}*<br\/>{space}*)"
         arabic_numerals = r"\d+"
         roman_numerals = "(?=[MDCLXVI])M{0,3}(CM|CD|D?C{0,3})(XC|XL|L?X{0,3})(IX|IV|V?I{0,3})"
         number_words_by_tens_list = [
@@ -109,15 +115,15 @@ class BookProcessor:
         # todo may be we should extract only titles with names?
         return [
             re.compile(
-                f"{line_start}{line_sep}{templ_key_word}{line_sep}{line_sep}",
+                f"{line_sep}{line_sep}{templ_key_word}{line_sep}{line_sep}",
                 re.IGNORECASE,
             ),
             re.compile(
-                f"{line_start}{line_sep}{templ_numbered}{line_sep}{line_sep}",
+                f"{line_sep}{line_sep}{templ_numbered}{line_sep}{line_sep}",
                 re.IGNORECASE,
             ),
             re.compile(
-                f"{line_start}{line_sep}{templ_numbered_dbl_empty_line}{line_sep}{line_sep}",
+                f"{line_sep}{line_sep}{templ_numbered_dbl_empty_line}{line_sep}{line_sep}",
                 re.IGNORECASE,
             ),
         ]
