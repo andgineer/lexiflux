@@ -1,6 +1,6 @@
 """Book processor module."""
 import re
-from typing import List, Tuple
+from typing import List, Optional, Tuple
 
 
 class BookProcessor:
@@ -128,7 +128,9 @@ class BookProcessor:
             ),
         ]
 
-    def get_word_num(self, text: str, pos: int) -> int:
-        """Get word number at the given position."""
+    def get_word_num(self, text: str, end: Optional[int] = None) -> int:
+        """Get word number up to the given position."""
+        if end is None:
+            end = len(text)
         ignore_words = ["<br/>"]
-        return sum(1 for word in re.split(r"\s", text[:pos]) if word not in ignore_words)
+        return sum(1 for word in re.split(r"\s", text[:end]) if word not in ignore_words)

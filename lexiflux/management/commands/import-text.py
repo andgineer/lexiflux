@@ -40,8 +40,7 @@ class Command(BaseCommand):
                 splitter.text[splitter.book_end - 100: splitter.book_end],
             )
             splitter.meta[MetadataField.LANGUAGE] = ""
-            splitter.detect_meta()
-            print(splitter.meta)
+            print(splitter.detect_language())
             for page in splitter.pages():
                 pass
             print(splitter.headings)

@@ -39,6 +39,11 @@ class BookPlainText:  # pylint: disable=too-many-instance-attributes
     JUNK_TEXT_END_PERCENT = 5
     assert JUNK_TEXT_END_PERCENT + JUNK_TEXT_BEGIN_PERCENT < 100
     WORD_ESTIMATED_LENGTH = 30
+    MIN_RANDOM_WORDS = 3
+
+    book_start: int
+    book_end: int
+    meta: Dict[str, Any]
 
     def __init__(
         self, file_path: Union[str, IO[str]], languages: Optional[List[str]] = None
@@ -48,20 +53,29 @@ class BookPlainText:  # pylint: disable=too-many-instance-attributes
         If file_path is a string, it is treated as a path to a file and we try to detect encoding.
         If file_path is a file object, we assume it was opened with correct encoding.
         """
-        self.meta: Dict[str, Any] = {}
         self.headings: List[Tuple[str, str]] = []
-        if languages is None:
-            languages = ["en", "sr"]
-        self.languages = languages
+        self.languages = ["en", "sr"] if languages is None else languages
         if isinstance(file_path, str):
             self.text = self.read_file(file_path)
         else:
             self.text = file_path.read()
 
-        self.book_start = self.parse_gutenberg_header()
-        self.book_end = self.cut_gutenberg_ending()
+        self.meta, self.book_start, self.book_end = self.detect_meta()
+        self.meta[MetadataField.LANGUAGE] = self.get_language()
 
-        self.detect_meta()
+    def detect_meta(self) -> Tuple[Dict[str, Any], int, int]:
+        """Try to detect book meta and text.
+
+        Extract meta if it is present.
+        Trim meta text from the beginning and end of the book text.
+        Return: meta, start, end
+        """
+        meta, start = self.parse_gutenberg_header()
+        end = self.cut_gutenberg_ending()
+        if start > end:
+            start = 0
+            end = len(self.text)
+        return meta, start, end
 
     def set_page_target(self, target_length: int, error_tolerance: int) -> None:
         """Set book page target length and error tolerance."""
@@ -90,19 +104,18 @@ class BookPlainText:  # pylint: disable=too-many-instance-attributes
         with open(file_path, "r", encoding=encoding) as f:
             return f.read()
 
-    def detect_meta(self) -> None:
-        """Detect book metadata."""
+    def get_language(self) -> str:
+        """Get language from meta or detect from the book text."""
         if language_value := self.meta.get(MetadataField.LANGUAGE):
             if language_name := find_language(
                 name=language_value, google_code=language_value, epub_code=language_value
             ):
                 # Update the language to its name in case it was found by code
-                self.meta["LANGUAGE"] = language_name
-                return
-        if not self.meta.get(MetadataField.LANGUAGE):
-            # Detect language if not found
-            self.meta[MetadataField.LANGUAGE] = self.detect_language()
-            log.debug("Language '%s' detected.", self.meta[MetadataField.LANGUAGE])
+                return language_name  # type: ignore
+        # Detect language if not found in meta
+        language_name = self.detect_language()
+        log.debug("Language '%s' detected.", language_name)
+        return language_name  # type: ignore
 
     def get_random_words(self, words_num: int = 15) -> str:
         """Get random words from the book."""
@@ -122,7 +135,11 @@ class BookPlainText:  # pylint: disable=too-many-instance-attributes
         log.debug("Random words start: %s, [%s, %s]", start, start_index, end_index)
         fragment = self.text[start : start + expected_words_length]
         # Skip the first word in case it's partially cut off
-        return " ".join(re.split(r"\s", fragment)[1 : words_num + 1])
+        words = re.split(r"\s", fragment)[1 : words_num + 1]
+        if len(words) < words_num and len(words) < self.MIN_RANDOM_WORDS:
+            # probably not a text so just return string
+            words = [fragment[: self.WORD_ESTIMATED_LENGTH * words_num]]
+        return " ".join(words)
 
     @staticmethod
     def get_language_group(lang: str) -> str:
@@ -133,7 +150,7 @@ class BookPlainText:  # pylint: disable=too-many-instance-attributes
             lang,
         )
 
-    def detect_language(self) -> str:
+    def detect_language(self) -> Optional[str]:
         """Detect language of the book.
 
         Returns lang code.
@@ -170,7 +187,9 @@ class BookPlainText:  # pylint: disable=too-many-instance-attributes
         else:
             result = most_common_lang
 
-        return result  # type: ignore
+        if language_name := find_language(name=result, google_code=result, epub_code=result):
+            return language_name  # type: ignore
+        return None
 
     def find_nearest_page_end_match(
         self, page_start_index: int, pattern: re.Pattern[str], return_start: bool = False
@@ -268,8 +287,11 @@ class BookPlainText:  # pylint: disable=too-many-instance-attributes
                 return index
         return len(self.text)
 
-    def parse_gutenberg_header(self) -> int:
-        """For books from Project Gutenberg cut off licence."""
+    def parse_gutenberg_header(self) -> Tuple[Dict[str, Any], int]:
+        """For books from Project Gutenberg cut off licence and extract meta.
+
+        Return meta, header_end.
+        """
         header = self.text[: self.GUTENBERG_START_SIZE]
         header_signature_pattern = r"^[\uFEFF\s]*The Project Gutenberg eBook"
         header_patterns = {
@@ -281,6 +303,7 @@ class BookPlainText:  # pylint: disable=too-many-instance-attributes
         }
         header_end_pattern = r"\*\*\* START OF THE PROJECT GUTENBERG EBOOK[^*\n]* \*\*\*"
         if signature := re.search(header_signature_pattern, header):
+            meta = {}
             if match := re.search(header_end_pattern, header):
                 header_end = match.end()
                 header = header[:header_end]
@@ -288,10 +311,10 @@ class BookPlainText:  # pylint: disable=too-many-instance-attributes
                 header_end = signature.end()
             for field, pattern in header_patterns.items():
                 if match := re.search(pattern, header):
-                    self.meta[field] = match[1]
+                    meta[field] = match[1]
                     header_end = max(header_end, match.end())
-            return header_end
-        return 0
+            return meta, header_end
+        return {}, 0
 
 
 def import_plain_text(text: str) -> None:
