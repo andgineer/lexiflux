@@ -9,7 +9,6 @@ from chardet.universaldetector import UniversalDetector
 
 from lexiflux.ebook.book_processor import BookProcessor
 from lexiflux.language.translation import detect_language, find_language
-from lexiflux.models import Book, BookPage, Language
 
 log = logging.getLogger()
 
@@ -269,6 +268,7 @@ class BookPlainText:  # pylint: disable=too-many-instance-attributes
             page_text = self.normalize(self.text[start:end])
             if headings := heading_finder.get_headings(page_text, page_num):
                 self.headings.extend(headings)
+            # todo: remove <br/> from the end of the page and shift headings position accordingly
             yield page_text
             assert end > start
             start = end
@@ -315,16 +315,3 @@ class BookPlainText:  # pylint: disable=too-many-instance-attributes
                     header_end = max(header_end, match.end())
             return meta, header_end
         return {}, 0
-
-
-def import_plain_text(text: str) -> None:
-    """Import plain text into the book."""
-    book = BookPlainText(text)
-    pages = book.pages()
-    book_instance = Book.objects.create(
-        title=book.meta.get(MetadataField.TITLE, "Unknown Title"),
-        author=book.meta.get(MetadataField.AUTHOR, "Unknown Author"),
-        language=Language.objects.get_or_create(book.meta[MetadataField.LANGUAGE])[0],
-    )
-    for i, page_content in enumerate(pages, start=1):
-        BookPage.objects.create(book=book_instance, number=i, content=page_content)
