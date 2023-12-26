@@ -7,7 +7,7 @@ from lexiflux.models import Book, BookPage, Author, Language
 def validate_log_level(level_name):
     level = logging.getLevelName(level_name.upper())
     if not isinstance(level, int):
-        valid_levels = [name for name, value in logging._levelToName.items() if isinstance(value, str)]
+        valid_levels = [name for name in logging._levelToName.values()]
         raise CommandError(f"Invalid log level '{level_name}'. Valid options are: {', '.join(valid_levels)}")
     return level
 

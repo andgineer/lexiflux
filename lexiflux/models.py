@@ -152,3 +152,7 @@ class ReadingProgress(models.Model):  # type: ignore
         """Meta class for ReadingProgress."""
 
         unique_together = ("reader", "book")
+
+
+# todo: Reading history: for each reader I want history of hist navigation inside each book:
+#  page number, time, word id
