@@ -36,13 +36,19 @@ class Book(models.Model):  # type: ignore
     """A book containing multiple pages."""
 
     PRIVATE = "private"
-    SHARED = "shared"
     PUBLIC = "public"
     VISIBILITY_CHOICES = [
         (PRIVATE, "Private"),
-        (SHARED, "Shared"),
         (PUBLIC, "Public"),
     ]
+
+    owner = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="owned_books",
+    )
 
     visibility = models.CharField(max_length=10, choices=VISIBILITY_CHOICES, default=PRIVATE)
     shared_with = models.ManyToManyField(
