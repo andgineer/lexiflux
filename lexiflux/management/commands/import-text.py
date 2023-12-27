@@ -2,6 +2,7 @@ import logging
 from django.core.management.base import BaseCommand, CommandError
 from lexiflux.ebook.book_plain_text import BookPlainText, MetadataField
 from lexiflux.models import Book, BookPage, Author, Language
+from core.models import CustomUser
 
 
 def validate_log_level(level_name):
@@ -19,12 +20,20 @@ class Command(BaseCommand):
         parser.add_argument('file_path', type=str, help='Path to the plain text file to import')
         parser.add_argument('--loglevel', type=str, help='Logging level for the command', default='INFO')
         parser.add_argument('--db-loglevel', type=str, help='Logging level for Django ORM', default='INFO')
+        parser.add_argument(
+            '--owner',
+            type=str,
+            help='Owner email for the book (optional). See "list-users" command for a list of users',
+            default=None
+        )
+        # todo: search owners by regex and show found if more than one
 
 
     def handle(self, *args, **options):
         file_path = options['file_path']
         log_level = validate_log_level(options['loglevel'])
         db_log_level = validate_log_level(options['db_loglevel'])
+        owner_email = options['owner']
 
         # Configure Django logging level
         logging.basicConfig(level=log_level)
@@ -58,6 +67,22 @@ class Command(BaseCommand):
                     number=i,
                     content=page_content
                 )
+
+            book_instance.set_toc({"headings": book_processor.headings})
+
+            if owner_email:
+                # If owner email is provided, set the owner and make visibility PRIVATE
+                owner_user = CustomUser.objects.filter(email=owner_email).first()
+                if owner_user:
+                    book_instance.owner = owner_user
+                    book_instance.visibility = Book.PRIVATE
+                else:
+                    raise CommandError(f'Error importing book: User with email "{owner_email}" not found')
+            else:
+                # If no owner is provided, make the book publicly available
+                book_instance.visibility = Book.PUBLIC
+
+            book_instance.save()
 
             self.stdout.write(self.style.SUCCESS(f'Successfully imported book "{book_title}" ({author_name}, {language}) from "{file_path}"'))
         except Exception as e:
