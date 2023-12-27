@@ -9,7 +9,7 @@
 | lexiflux/ebook/book\_processor.py      |       34 |        0 |    100% |           |
 | lexiflux/language/google\_languages.py |       12 |        0 |    100% |           |
 | lexiflux/language/translation.py       |       47 |       16 |     66% |20-24, 29, 35-37, 47-55, 79 |
-| lexiflux/models.py                     |       72 |       15 |     79% |22, 32, 59, 63, 68, 72, 83, 101, 131-141, 145 |
+| lexiflux/models.py                     |       72 |       15 |     79% |22, 32, 65, 69, 74, 78, 89, 107, 137-147, 151 |
 | lexiflux/settings.py                   |        0 |        0 |    100% |           |
 | lexiflux/signals.py                    |       13 |        3 |     77% | 18-19, 27 |
 | lexiflux/tests.py                      |        0 |        0 |    100% |           |
