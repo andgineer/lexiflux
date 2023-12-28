@@ -1,16 +1,16 @@
 .HELP: shell  ## Django shell
 shell:
-	python manage.py shell
+	./manage shell
 
 .HELP: migrate  ## Migrate DB to current models
 migrate:
-	python manage.py makemigrations lexiflux
-	python manage.py makemigrations core
-	python manage.py migrate
+	./manage makemigrations lexiflux
+	./manage makemigrations core
+	./manage migrate
 
 .HELP: pages  ## Create random book with random pages
 pages:
-	python manage.py add-pages
+	./manage add-pages
 
 .HELP: init-db  ## KILL Database and reinit new one
 init-db: kill-db migrate admin pages
@@ -25,7 +25,7 @@ admin:
 
 .HELP: run  ## Run local server
 run:
-	python manage.py runserver
+	./manage runserver
 
 .HELP: reqs  ## Upgrade requirements including pre-commit
 reqs:

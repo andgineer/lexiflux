@@ -126,8 +126,11 @@ class ReadingPos(models.Model):  # type: ignore
     page_number = models.PositiveIntegerField()
     top_word_id = models.PositiveIntegerField()
     last_read_time = models.DateTimeField(default=timezone.now)
-
-    # todo: add latest reading point
+    latest_reading_point = models.CharField(
+        max_length=50,
+        default="0:0",
+        help_text="Stores the latest reading point as 'page_number:top_word_id'",
+    )
 
     @classmethod
     def update_user_pos(
@@ -148,6 +151,16 @@ class ReadingPos(models.Model):  # type: ignore
             progress.page_number = page_number
             progress.top_word_id = top_word_id
             progress.last_read_time = timezone.now()
+
+            # Check and update the latest reading point
+            current_latest_page, current_latest_word = map(
+                int, progress.latest_reading_point.split(":")
+            )
+            if page_number > current_latest_page or (
+                page_number == current_latest_page and top_word_id > current_latest_word
+            ):
+                progress.latest_reading_point = f"{page_number}:{top_word_id}"
+
             progress.save()
 
     class Meta:
