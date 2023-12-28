@@ -9,13 +9,13 @@
 | lexiflux/ebook/book\_processor.py      |       34 |        0 |    100% |           |
 | lexiflux/language/google\_languages.py |       12 |        0 |    100% |           |
 | lexiflux/language/translation.py       |       47 |       16 |     66% |20-24, 29, 35-37, 47-55, 79 |
-| lexiflux/models.py                     |       75 |       14 |     81% |22, 32, 58, 62, 67, 71, 82, 100, 137-151 |
+| lexiflux/models.py                     |       79 |       17 |     78% |22, 32, 58, 62, 67, 71, 82, 100, 140-164 |
 | lexiflux/settings.py                   |        0 |        0 |    100% |           |
 | lexiflux/signals.py                    |       13 |        3 |     77% | 18-19, 27 |
 | lexiflux/tests.py                      |        0 |        0 |    100% |           |
 | lexiflux/urls.py                       |        3 |        3 |      0% |       2-6 |
 | lexiflux/views.py                      |       74 |       74 |      0% |     2-155 |
-|                              **TOTAL** |  **437** |  **132** | **70%** |           |
+|                              **TOTAL** |  **441** |  **135** | **69%** |           |
 
 
 ## Setup coverage badge
