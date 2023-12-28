@@ -24,4 +24,4 @@ def save_user_profile(
     sender: Any, instance: Any, **kwargs: Any  # pylint: disable=unused-argument
 ) -> None:
     """Save a profile for a new user."""
-    instance.readerprofile.save()
+    instance.reader_profile.save()

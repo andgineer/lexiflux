@@ -4,7 +4,7 @@ shell:
 
 .HELP: migrate  ## Migrate DB to current models
 migrate:
-	python manage.py makemigrations
+	python manage.py makemigrations lexiflux
 	python manage.py makemigrations core
 	python manage.py migrate
 

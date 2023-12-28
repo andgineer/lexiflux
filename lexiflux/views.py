@@ -2,12 +2,14 @@
 from django.contrib.auth.decorators import login_required
 from django.db import models
 from django.http import HttpRequest, HttpResponse, JsonResponse
-from django.shortcuts import render
+from django.shortcuts import get_object_or_404, render
 from django.template.loader import render_to_string
+from django.utils import timezone
+from django.views.decorators.http import require_POST
 
 from lexiflux.language.translation import get_translator
 
-from .models import Book, BookPage, ReaderProfile, ReadingProgress
+from .models import Book, BookPage, ReaderProfile, ReadingHistory, ReadingPos
 
 
 @login_required  # type: ignore
@@ -70,7 +72,7 @@ def position(request: HttpRequest) -> HttpResponse:
     except (TypeError, ValueError, KeyError):
         return HttpResponse("Invalid or missing parameters", status=400)
 
-    ReadingProgress.update_user_progress(
+    ReadingPos.update_user_pos(
         user=request.user, book_id=book_id, page_number=page_number, top_word_id=top_word
     )
     return HttpResponse(status=200)
@@ -109,7 +111,7 @@ def library(request: HttpRequest) -> HttpResponse:
     reader_profile, _ = ReaderProfile.objects.get_or_create(user=request.user)
 
     books = (
-        Book.objects.filter(models.Q(shared_with=request.user) | models.Q(visibility=Book.PUBLIC))
+        Book.objects.filter(models.Q(shared_with=request.user) | models.Q(public=True))
         .annotate(
             last_read_time=models.Max(
                 "readingprogress__last_read_time",
@@ -123,16 +125,31 @@ def library(request: HttpRequest) -> HttpResponse:
     return render(request, "library.html", {"books": books})
 
 
-def import_book(request: HttpRequest) -> HttpResponse:
-    """Import a book."""
-    if request.method == "POST":
-        text = request.POST.get("text")
-        title = request.POST.get("title")
-        author_id = request.POST.get("author_id")  # Assuming author_id is provided
+@login_required  # type: ignore
+@require_POST
+def add_to_history(request):
+    """Add the position to History."""
+    user = request.user
 
-        book = Book.objects.create(title=title, author_id=author_id)
-        book.import_text(text)
+    book_id = request.POST.get("book_id")
+    page_number = request.POST.get("page_number")
+    top_word_id = request.POST.get("top_word_id")
 
-        return HttpResponse("Book imported successfully")
+    try:
+        book_id = int(book_id)
+        page_number = int(page_number)
+        top_word_id = int(top_word_id)
+    except (TypeError, ValueError):
+        return JsonResponse({"error": "Invalid input"}, status=400)
 
-    return HttpResponse("Invalid request", status=400)
+    book = get_object_or_404(Book, id=book_id)
+
+    ReadingHistory.objects.create(
+        user=user,
+        book=book,
+        page_number=page_number,
+        top_word_id=top_word_id,
+        read_time=timezone.now(),
+    )
+
+    return JsonResponse({"message": "Reading history added successfully"})

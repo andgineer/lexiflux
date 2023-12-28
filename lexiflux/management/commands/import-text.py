@@ -75,12 +75,12 @@ class Command(BaseCommand):
                 owner_user = CustomUser.objects.filter(email=owner_email).first()
                 if owner_user:
                     book_instance.owner = owner_user
-                    book_instance.visibility = Book.PRIVATE
+                    book_instance.public = False
                 else:
                     raise CommandError(f'Error importing book: User with email "{owner_email}" not found')
             else:
                 # If no owner is provided, make the book publicly available
-                book_instance.visibility = Book.PUBLIC
+                book_instance.public = True
 
             book_instance.save()
 

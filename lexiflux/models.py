@@ -35,13 +35,6 @@ class Author(models.Model):  # type: ignore
 class Book(models.Model):  # type: ignore
     """A book containing multiple pages."""
 
-    PRIVATE = "private"
-    PUBLIC = "public"
-    VISIBILITY_CHOICES = [
-        (PRIVATE, "Private"),
-        (PUBLIC, "Public"),
-    ]
-
     owner = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
@@ -50,7 +43,7 @@ class Book(models.Model):  # type: ignore
         related_name="owned_books",
     )
 
-    visibility = models.CharField(max_length=10, choices=VISIBILITY_CHOICES, default=PRIVATE)
+    public = models.BooleanField(default=False)
     shared_with = models.ManyToManyField(
         settings.AUTH_USER_MODEL, blank=True, related_name="shared_books"
     )
@@ -110,55 +103,71 @@ class BookPage(models.Model):  # type: ignore
 class ReaderProfile(models.Model):  # type: ignore
     """A reader profile."""
 
-    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="reader_profile"
+    )
     current_book = models.ForeignKey(
         Book, on_delete=models.SET_NULL, null=True, blank=True, related_name="current_readers"
     )
     native_language = models.ForeignKey(Language, on_delete=models.SET_NULL, null=True)
 
 
-class ReadingProgress(models.Model):  # type: ignore
-    """A reading progress."""
+class ReadingPos(models.Model):  # type: ignore
+    """A reading position.
 
-    reader = models.ForeignKey(
-        ReaderProfile, on_delete=models.CASCADE, related_name="reading_progresses"
+    In History we store our breadcrumbs, so user can "undo" jumps by TOC or annotations.
+    In position we store current reading position that may be not stored in History.
+    """
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="reading_pos"
     )
-    book = models.ForeignKey(Book, on_delete=models.CASCADE)
+    book = models.ForeignKey("Book", on_delete=models.CASCADE)
     page_number = models.PositiveIntegerField()
-    top_word_id = models.PositiveIntegerField()  # Assuming word ID is an integer
-
+    top_word_id = models.PositiveIntegerField()
     last_read_time = models.DateTimeField(default=timezone.now)
 
+    # todo: add latest reading point
+
     @classmethod
-    def update_user_progress(
+    def update_user_pos(
         cls, user: CustomUser, book_id: int, page_number: int, top_word_id: int
     ) -> None:
         """Update user reading progress."""
-        reader_profile, _ = ReaderProfile.objects.get_or_create(user=user)
-
-        # We search using user&book only but this is not enough to create a new record.
-        # Thus we cannot use get_or_create.
-        reading_progress = cls.objects.filter(
-            reader=reader_profile, book_id=book_id
-        ).first() or cls(reader=reader_profile, book_id=book_id)
-        reading_progress.page_number = page_number
-        reading_progress.top_word_id = top_word_id
-        reading_progress.last_read_time = timezone.now()
-        reading_progress.save()
-
-    def get_books_ordered_by_last_read(self) -> models.QuerySet[Book]:
-        """Return books ordered by last read time."""
-        return (
-            Book.objects.filter(reading_progresses__reader=self)
-            .annotate(last_read_time=models.Max("reading_progresses__last_read_time"))
-            .order_by("-last_read_time")
+        progress, created = cls.objects.get_or_create(
+            user=user,
+            book_id=book_id,
+            defaults={
+                "page_number": page_number,
+                "top_word_id": top_word_id,
+                "last_read_time": timezone.now(),
+            },
         )
+
+        if not created:
+            progress.page_number = page_number
+            progress.top_word_id = top_word_id
+            progress.last_read_time = timezone.now()
+            progress.save()
 
     class Meta:
         """Meta class for ReadingProgress."""
 
-        unique_together = ("reader", "book")
+        unique_together = ("user", "book")
 
 
-# todo: Reading history: for each reader I want history of hist navigation inside each book:
-#  page number, time, word id
+class ReadingHistory(models.Model):  # type: ignore
+    """Model to store each reading session's details for a user."""
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="reading_history"
+    )
+    book = models.ForeignKey("Book", on_delete=models.CASCADE)
+    page_number = models.PositiveIntegerField()
+    top_word_id = models.PositiveIntegerField()
+    read_time = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        """Meta class for ReadingHistory."""
+
+        ordering = ["-read_time"]
