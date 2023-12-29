@@ -14,8 +14,8 @@
 | lexiflux/signals.py                    |       13 |        3 |     77% | 18-19, 27 |
 | lexiflux/tests.py                      |        0 |        0 |    100% |           |
 | lexiflux/urls.py                       |        3 |        3 |      0% |       2-6 |
-| lexiflux/views.py                      |       74 |       74 |      0% |     2-155 |
-|                              **TOTAL** |  **441** |  **135** | **69%** |           |
+| lexiflux/views.py                      |      103 |      103 |      0% |     2-209 |
+|                              **TOTAL** |  **470** |  **164** | **65%** |           |
 
 
 ## Setup coverage badge
