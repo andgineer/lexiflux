@@ -22,7 +22,7 @@
                 </div>
                 <div class="list-group">
                     {% for book in books %}
-                        <a href="{% url 'book_detail' book.id %}" class="list-group-item list-group-item-action">
+                        <a href="{% url 'book' book.id %}" class="list-group-item list-group-item-action">
                             {{ book.title }} by {{ book.author.name }}
                         </a>
                     {% empty %}

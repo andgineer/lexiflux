@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+
+{% block content %}
+  <h1>{{ book.title }}</h1>
+  <p>Author: {{ book.author.name }}</p>
+  <p>Language: {{ book.language.name }}</p>
+  <!-- Add more details as needed -->
+
+  <!-- Display pages if you want -->
+  <!--
+  <div>
+    <h2>Pages</h2>
+    {% for page in book.pages.all %}
+      <p>Page {{ page.number }}: {{ page.content }}</p>
+    {% endfor %}
+  </div>
+  -->
+
+{% endblock %}

@@ -10,4 +10,5 @@ urlpatterns = [
     path("position", views.position, name="position"),
     path("translate", views.translate, name="translate"),
     path("profile/", views.profile, name="profile"),
+    path("book/<int:book_id>/", views.view_book, name="book"),
 ]

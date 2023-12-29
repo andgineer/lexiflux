@@ -12,8 +12,12 @@ migrate:
 pages:
 	./manage add-pages
 
+.HELP: alice  ## Import Alice in Wonderland
+alice:
+	./manage.py import-text tests/resources/alice_adventure_in_wonderland.txt
+
 .HELP: init-db  ## KILL Database and reinit new one
-init-db: kill-db migrate admin pages
+init-db: kill-db migrate admin alice
 
 .HELP: kill-db  ## KILL Database
 kill-db:
