@@ -9,6 +9,6 @@ urlpatterns = [
     path("page", views.page, name="page"),
     path("position", views.position, name="position"),
     path("translate", views.translate, name="translate"),
-    path("profile/", views.profile, name="profile"),
-    path("book/<int:book_id>/", views.view_book, name="book"),
+    path("profile", views.profile, name="profile"),
+    path("book", views.view_book, name="book"),
 ]

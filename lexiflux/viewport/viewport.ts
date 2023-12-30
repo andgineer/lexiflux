@@ -192,7 +192,7 @@ export function resizeWordsContainer(): void {
 
 export function loadPage(pageNumber: number): Promise<void> {
     return new Promise((resolve, reject) => {
-        fetch('/page?page-num=' + pageNumber)
+        fetch('/page?book-id=' + bookId + '&page-num=' + pageNumber)
             .then(response => {
                 if (!response.ok) {
                     throw new Error('Network response was not ok');

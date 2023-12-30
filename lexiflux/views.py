@@ -23,10 +23,19 @@ def can_see_book(user: CustomUser, book: Book) -> bool:
 def reader(request: HttpRequest) -> HttpResponse:
     """Render book."""
     book_id = request.GET.get("book-id", 1)
-    page_number = request.GET.get("page-num", 1)
+    book = get_object_or_404(Book, id=book_id)
+    if not can_see_book(request.user, book):
+        return HttpResponse(status=403)
+
+    page_number = request.GET.get("page-num")
+
+    if not page_number:
+        reading_position = ReadingPos.objects.filter(book=book, user=request.user).first()
+        page_number = reading_position.page_number if reading_position else 1
+
+    print("book_id", book_id, "page_number", page_number)
     book_page = BookPage.objects.get(book_id=book_id, number=page_number)
-    if not can_see_book(request.user, book_page.book):
-        return HttpResponse(status=403)  # Forbidden
+
     return render(
         request,
         "reader.html",
@@ -192,8 +201,9 @@ def add_to_history(request):
 
 
 @login_required  # type: ignore
-def view_book(request: HttpRequest, book_id: int) -> HttpResponse:
+def view_book(request: HttpRequest) -> HttpResponse:
     """Book detail page."""
+    book_id = request.GET.get("book_id")
     book = get_object_or_404(Book, id=book_id)
 
     if not can_see_book(request.user, book):
