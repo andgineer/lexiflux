@@ -203,7 +203,7 @@ def add_to_history(request):
 @login_required  # type: ignore
 def view_book(request: HttpRequest) -> HttpResponse:
     """Book detail page."""
-    book_id = request.GET.get("book_id")
+    book_id = request.GET.get("book-id")
     book = get_object_or_404(Book, id=book_id)
 
     if not can_see_book(request.user, book):
