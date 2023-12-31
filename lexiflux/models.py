@@ -1,12 +1,25 @@
 """Models for the lexiflux app."""
 import json
+import re
 from typing import Any, Dict
 
 from django.conf import settings
 from django.db import models
 from django.utils import timezone
+from transliterate import get_available_language_codes, translit
 
 from core.models import CustomUser
+
+
+def split_into_words(text: str) -> list[str]:
+    """Regular expression pattern to match words (ignores punctuation and spaces)."""
+    stop_words = {"the"}
+    pattern = re.compile(r"\b\w+\b")
+    return [
+        word.lower()
+        for word in pattern.findall(text)
+        if word.lower() not in stop_words and len(word) > 2
+    ]
 
 
 class Language(models.Model):  # type: ignore
@@ -43,6 +56,7 @@ class Book(models.Model):  # type: ignore
         related_name="owned_books",
     )
 
+    code = models.CharField(max_length=100, unique=True)
     public = models.BooleanField(default=False)
     shared_with = models.ManyToManyField(
         settings.AUTH_USER_MODEL, blank=True, related_name="shared_books"
@@ -65,6 +79,30 @@ class Book(models.Model):  # type: ignore
     def current_reading_by_count(self) -> int:
         """Return the number of users currently reading this book."""
         return self.current_readers.count()  # type: ignore
+
+    def generate_unique_book_code(self) -> str:
+        """Generate a unique book code."""
+        code = (
+            "-".join(split_into_words(self.title)[:2])
+            + "-"
+            + split_into_words(self.author.name)[-1]
+        )
+        if self.language.google_code in get_available_language_codes():
+            code = translit(code, self.language.google_code, reversed=True)
+
+        unique_code = code
+        counter = 1
+        while Book.objects.filter(code=unique_code).exists():
+            unique_code = f"{code}-{counter}"
+            counter += 1
+
+        return unique_code
+
+    def save(self, *args: Any, **kwargs: Any) -> None:
+        """Generate book code."""
+        if not self.code:
+            self.code = self.generate_unique_book_code()
+        super().save(*args, **kwargs)
 
     def __str__(self) -> str:
         """Return the string representation of a Book."""

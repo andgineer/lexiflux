@@ -84,7 +84,12 @@ class Command(BaseCommand):
 
             book_instance.save()
 
-            self.stdout.write(self.style.SUCCESS(f'Successfully imported book "{book_title}" ({author_name}, {language}) from "{file_path}"'))
+            self.stdout.write(
+                self.style.SUCCESS(
+                    f'Successfully imported book "{book_title}" ({author_name}, '
+                    f'{language}) from "{file_path}", code: {book_instance.code}'
+                )
+            )
         except Exception as e:
             raise CommandError(f'Error importing book from {file_path}: {e}')
 

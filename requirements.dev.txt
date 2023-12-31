@@ -29,7 +29,7 @@ distlib==0.3.8
     # via virtualenv
 docopt==0.6.2
     # via coveralls
-faker==21.0.0
+faker==22.0.0
     # via -r requirements.dev.in
 filelock==3.13.1
     # via virtualenv

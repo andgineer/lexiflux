@@ -26,6 +26,7 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 SITE_ID = 1
+APPEND_SLASH = False
 LOGIN_URL = 'login'
 LOGIN_REDIRECT_URL = 'reader'
 LOGOUT_REDIRECT_URL = 'login'

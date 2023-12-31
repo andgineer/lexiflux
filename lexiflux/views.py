@@ -3,7 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
 from django.db import models
 from django.http import HttpRequest, HttpResponse, JsonResponse
-from django.shortcuts import get_object_or_404, render
+from django.shortcuts import get_object_or_404, redirect, render
 from django.template.loader import render_to_string
 from django.utils import timezone
 from django.views.decorators.http import require_POST
@@ -14,27 +14,40 @@ from lexiflux.language.translation import get_translator
 from .models import Book, BookPage, ReadingHistory, ReadingPos
 
 
+def redirect_to_reader(request: HttpRequest) -> HttpResponse:
+    """Redirect to the 'reader' view."""
+    return redirect("reader")
+
+
 def can_see_book(user: CustomUser, book: Book) -> bool:
     """Check if the user can see the book."""
     return user.is_superuser or book.owner == user or user in book.shared_with.all() or book.public
 
 
 @login_required  # type: ignore
-def reader(request: HttpRequest) -> HttpResponse:
-    """Render book."""
-    book_id = request.GET.get("book-id", 1)
-    book = get_object_or_404(Book, id=book_id)
+def reader(request: HttpRequest, book_code=None) -> HttpResponse:
+    """Open the book in reader.
+
+    If the book code not given open the latest book.
+    """
+    if book_code is None:
+        if reading_position := ReadingPos.objects.filter(user=request.user).first():
+            book_code = reading_position.book.code
+        else:
+            return redirect("library")  # the user had not read any book yet
+
+    book = get_object_or_404(Book, code=book_code)
     if not can_see_book(request.user, book):
         return HttpResponse(status=403)
 
-    page_number = request.GET.get("page-num")
+    page_number = request.GET.get("page", None)
 
-    if not page_number:
+    if page_number is None:
         reading_position = ReadingPos.objects.filter(book=book, user=request.user).first()
         page_number = reading_position.page_number if reading_position else 1
 
-    print("book_id", book_id, "page_number", page_number)
-    book_page = BookPage.objects.get(book_id=book_id, number=page_number)
+    print("book_code", book_code, "page_number", page_number)
+    book_page = BookPage.objects.get(book=book, number=page_number)
 
     return render(
         request,

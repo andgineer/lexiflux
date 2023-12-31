@@ -34,7 +34,7 @@ ebooklib==0.18
     # via -r requirements.in
 idna==3.6
     # via requests
-lxml==4.9.4
+lxml==5.0.0
     # via ebooklib
 oauthlib==3.2.2
     # via requests-oauthlib
@@ -54,10 +54,14 @@ requests==2.31.0
 requests-oauthlib==1.3.1
     # via django-allauth
 six==1.16.0
-    # via ebooklib
+    # via
+    #   ebooklib
+    #   transliterate
 soupsieve==2.5
     # via beautifulsoup4
 sqlparse==0.4.4
     # via django
+transliterate==1.10.2
+    # via -r requirements.in
 urllib3==2.1.0
     # via requests

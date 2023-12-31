@@ -23,7 +23,7 @@
                 <div class="list-group">
                        {% for book in books %}
                             <div class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
-                                <a href="{% url 'reader' %}?book-id={{ book.id }}">{{ book.title }} by {{ book.author.name }}</a>
+                                <a href="{% url 'read_the_book' book.code %}">{{ book.title }} by {{ book.author.name }}</a>
                                 <button onclick="location.href='{% url 'book' %}?book-id={{ book.id }}'" class="btn btn-secondary">
                                     <i class="bi bi-gear-fill"></i>
                                 </button>
