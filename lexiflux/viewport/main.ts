@@ -1,55 +1,51 @@
-import {
-    loadPage,
-    findViewport,
-    renderWordsContainer,
-    reportReadingPosition,
-    initializeVariables,
-    getPageNum,
-    getTotalWords,
-    getTopWord,
-    getBookId,
-    getLastAddedWordIndex,
-    getWordsContainer,
-    getWordSpans,
-} from './viewport';
+import * as viewport from './viewport';
+
+// to make it available in HTML page
+(window as any).goToPage = goToPage;
 
 import { log } from './utils';
 
 let resizeTimeout: NodeJS.Timeout;
 let clickTimeout: NodeJS.Timeout | null = null;
 
+async function goToPage(pageNum: number, topWord: number): Promise<void> {
+        await viewport.loadPage(pageNum);
+        viewport.renderWordsContainer(topWord);
+        reInitDom();
+}
+
 async function handlePrevButtonClick(): Promise<void> {
-    if (getTopWord() === 0) {
-        if (getPageNum() === 1) {
+    if (viewport.getTopWord() === 0) {
+        if (viewport.getPageNum() === 1) {
             return;
         }
-        await loadPage(getPageNum() - 1);
-        findViewport(getTotalWords() - 1);
+        await viewport.loadPage(viewport.getPageNum() - 1);
+        viewport.findViewport(viewport.getTotalWords() - 1);
         reInitDom();
-        reportReadingPosition();
+        viewport.reportReadingPosition();
     } else {
-        findViewport(getTopWord() - 1);
-        reportReadingPosition();
+        viewport.findViewport(viewport.getTopWord() - 1);
+        viewport.reportReadingPosition();
     }
 }
 
 async function handleNextButtonClick(): Promise<void> {
-    let lastWordIndex: number = getLastAddedWordIndex();
-    if (lastWordIndex >= getTotalWords() - 1) {
-        await loadPage(getPageNum() + 1);
-        renderWordsContainer(0);
+    let lastWordIndex: number = viewport.getLastAddedWordIndex();
+    if (lastWordIndex >= viewport.getTotalWords() - 1) {
+        await viewport.loadPage(viewport.getPageNum() + 1);
+        viewport.renderWordsContainer(0);
         reInitDom();
-        reportReadingPosition();
+        viewport.reportReadingPosition();
     } else {
-        renderWordsContainer(lastWordIndex + 1);
-        reportReadingPosition();
+        viewport.renderWordsContainer(lastWordIndex + 1);
+        viewport.reportReadingPosition();
     }
 }
 
 function handleResize(): void {
     clearTimeout(resizeTimeout);
     resizeTimeout = setTimeout(() => {
-        renderWordsContainer();
+        viewport.renderWordsContainer();
     }, 150);
 }
 
@@ -78,7 +74,7 @@ function sendTranslationRequest(selectedText: string, range: Range, selectedWord
         console.error('Sidebar element not found');
       }
       createAndReplaceTranslationSpan(selectedText, data.translatedText, selectedWordSpans);
-      renderWordsContainer();
+      viewport.renderWordsContainer();
     })
     .catch(error => {
       console.error('Error during translation:', error);
@@ -103,13 +99,13 @@ function createAndReplaceTranslationSpan(selectedText: string, translatedText: s
   translationSpan.appendChild(translationDiv);
   translationSpan.appendChild(textDiv);
 
-  getWordsContainer().insertBefore(translationSpan, firstWordSpan);
-  const wordSpans = getWordSpans();
+  viewport.getWordsContainer().insertBefore(translationSpan, firstWordSpan);
+  const wordSpans = viewport.getWordSpans();
   wordSpans.splice(wordSpans.indexOf(firstWordSpan), 0, translationSpan);
 
   // Remove the original word spans
   selectedWordSpans.forEach(span => {
-    getWordsContainer().removeChild(span);
+    viewport.getWordsContainer().removeChild(span);
   });
 
   selectedWordSpans.forEach(span => {
@@ -155,13 +151,13 @@ function restoreOriginalSpans(translationSpan: HTMLElement): void {
     const originalSpans = Array.from(tempContainer.childNodes).filter(node => node.nodeType === Node.ELEMENT_NODE) as HTMLElement[];
 
     // Update the wordSpans array
-    const wordSpans = getWordSpans();
+    const wordSpans = viewport.getWordSpans();
     const index = wordSpans.indexOf(translationSpan);
     if (index !== -1) {
         wordSpans.splice(index, 1); // Remove the translation span
         wordSpans.splice(index, 0, ...originalSpans); // Insert the original word spans
     }
-    renderWordsContainer();
+    viewport.renderWordsContainer();
   }
 }
 
@@ -291,7 +287,7 @@ function reInitDom(): void {
         nextButton.addEventListener('click', handleNextButtonClick);
     }
 
-    const wordsContainer = getWordsContainer();
+    const wordsContainer = viewport.getWordsContainer();
     if (wordsContainer) {
         wordsContainer.removeEventListener('mouseup', handleMouseUpEvent);
         wordsContainer.addEventListener('mouseup', handleMouseUpEvent);
@@ -311,16 +307,16 @@ window.addEventListener('resize', handleResize);
 
 document.body.addEventListener('htmx:configRequest', (event: Event) => {
     let detail = (event as CustomEvent).detail;
-    detail.parameters['page-num'] = getPageNum();
-    detail.parameters['book-id'] = getBookId();
-    detail.parameters['top-word'] = getTopWord();
+    detail.parameters['page-num'] = viewport.getPageNum();
+    detail.parameters['book-id'] = viewport.getBookId();
+    detail.parameters['top-word'] = viewport.getTopWord();
 });
 
 document.addEventListener('DOMContentLoaded', () => {
-    initializeVariables();
-    let pageNum = getPageNum();
-    loadPage(pageNum).then(() => {
-        renderWordsContainer(0);
+    viewport.initializeVariables();
+    let pageNum = viewport.getPageNum();
+    viewport.loadPage(pageNum).then(() => {
+        viewport.renderWordsContainer(0);
         reInitDom();
     }).catch((error: Error) => {
         console.error('Failed to load page:', error);

@@ -1,5 +1,4 @@
 import { log, suppressRedraw, resumeRedraw } from './utils';
-
 export let bookId: string = '';
 export let pageNum: number = 0;
 

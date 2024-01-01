@@ -1,4 +1,5 @@
 const path = require('path');
+const TerserPlugin = require('terser-webpack-plugin');
 
 module.exports = {
   entry: './lexiflux/viewport/main.ts',
@@ -19,6 +20,19 @@ module.exports = {
         }
       }
     ]
+  },
+  optimization: {
+    minimizer: [
+      new TerserPlugin({
+        terserOptions: {
+          // mangle: false, // Disable name mangling
+          mangle: {
+            // List of function names to preserve from minification
+            keep_fnames: ['goToPage'],
+          },
+        },
+      }),
+    ],
   },
   mode: 'production' // 'development' for non-minified output
 };

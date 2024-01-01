@@ -18,5 +18,8 @@
   "scripts": {
     "test": "jest",
     "build": "webpack"
+  },
+  "dependencies": {
+    "terser-webpack-plugin": "^5.3.10"
   }
 }

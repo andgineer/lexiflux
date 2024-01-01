@@ -10,8 +10,7 @@
                 <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownMenuButton">
                     {% for toc_item in book.toc %}
                         <li>
-                            <a class="dropdown-item" href="#">{{ toc_item.0 }}</a>
-{#                            todo add link to load the page#}
+                            <a class="dropdown-item" href="#" onclick="goToPage({{ toc_item.1 }}, {{ toc_item.2 }})">{{ toc_item.0 }}</a>
                         </li>
                     {% endfor %}
                 </ul>
