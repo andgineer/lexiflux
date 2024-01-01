@@ -6,25 +6,20 @@ from typing import List, Optional, Tuple
 class BookProcessor:
     """Book processor."""
 
-    def get_headings(self, page_text: str, page_num: int) -> List[Tuple[str, str]]:
+    def get_headings(self, page_text: str, page_num: int) -> List[Tuple[str, int, int]]:
         """Detect chapter headings in the text.
 
-        Return headings as a list of tuples (heading, position).
-        Position: page_num:char_num:word_num
+        Return headings as a list of tuples (heading, page, word).
         """
         patterns = self.prepare_heading_patterns()
-        headings: List[Tuple[str, str]] = []
+        headings: List[Tuple[str, int, int]] = []
         for pattern in patterns:
             if match := pattern.search(page_text):
-                # todo: calculate word number on the match
-
                 headings.append(
                     (
                         match.group().replace("<br/>", " ").strip(),
-                        (
-                            f"{page_num}:{match.start()}:"
-                            f"{self.get_word_num(page_text, match.start() + 1)}"
-                        ),
+                        page_num,
+                        self.get_word_num(page_text, match.start() + 1),
                     )
                 )
                 break

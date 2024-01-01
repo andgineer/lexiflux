@@ -1,19 +1,52 @@
 {% extends 'base.html' %}
 
 {% block content %}
-  <h1>{{ book.title }}</h1>
-  <p>Author: {{ book.author.name }}</p>
-  <p>Language: {{ book.language.name }}</p>
-  <!-- Add more details as needed -->
-
-  <!-- Display pages if you want -->
-  <!--
-  <div>
-    <h2>Pages</h2>
-    {% for page in book.pages.all %}
-      <p>Page {{ page.number }}: {{ page.content }}</p>
-    {% endfor %}
+<div class="row">
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-body">
+        <h1 class="card-title">{{ book.title }}</h1>
+        <p class="card-text">Author: {{ book.author.name }}</p>
+        <p class="card-text">Language: {{ book.language.name }}</p>
+        <p class="card-text">Code: {{ book.code }}</p>
+        <p class="card-text">Public: {{ book.public }}</p>
+        <p class="card-text">Current Reading Count: {{ book.current_reading_by_count }}</p>
+      </div>
+    </div>
   </div>
-  -->
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-header">
+        Table of Contents
+      </div>
+      <div class="card-body" style="height: 200px; overflow-y: scroll; border: 1px solid #000;">
+        <table class="table table-striped" id="toc-table">
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  window.bookTOC = {{ book.toc|safe }};
+
+  let jsonArray = window.bookTOC;
+  let container = document.getElementById('toc-table');
+
+  jsonArray.forEach((item) => {
+    let headingElement = document.createElement('tr');
+    let headingTitleElement = document.createElement('td');
+    let pageInfoElement = document.createElement('td');
+
+    headingTitleElement.textContent = item[0];
+    pageInfoElement.textContent = item[1];  // page number
+
+    pageInfoElement.className = 'text-end';  // Bootstrap class to align to the right
+
+    headingElement.appendChild(headingTitleElement);
+    headingElement.appendChild(pageInfoElement);
+    container.appendChild(headingElement);
+  });
+</script>
 
 {% endblock %}

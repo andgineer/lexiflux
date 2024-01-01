@@ -52,7 +52,7 @@ class BookPlainText:  # pylint: disable=too-many-instance-attributes
         If file_path is a string, it is treated as a path to a file and we try to detect encoding.
         If file_path is a file object, we assume it was opened with correct encoding.
         """
-        self.headings: List[Tuple[str, str]] = []
+        self.headings: List[Tuple[str, int, int]] = []
         self.languages = ["en", "sr"] if languages is None else languages
         if isinstance(file_path, str):
             self.text = self.read_file(file_path)
@@ -261,14 +261,12 @@ class BookPlainText:  # pylint: disable=too-many-instance-attributes
             if headings := heading_finder.get_headings(
                 self.text[start + self.PAGE_MIN_LENGTH : end] + "\n\n", page_num
             ):
-                end = (
-                    start + self.PAGE_MIN_LENGTH + int(headings[0][1].split(":")[1]) - 1
-                )  # pos from first heading
+                end = start + self.PAGE_MIN_LENGTH + headings[0][1] - 1  # pos from first heading
 
             page_text = self.normalize(self.text[start:end])
             if headings := heading_finder.get_headings(page_text, page_num):
                 self.headings.extend(headings)
-            # todo: remove <br/> from the end of the page and shift headings position accordingly
+            # todo: remove <br/> from the start of the page
             yield page_text
             assert end > start
             start = end
