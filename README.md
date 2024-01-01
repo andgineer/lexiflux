@@ -5,7 +5,7 @@
 | Name                                   |    Stmts |     Miss |   Cover |   Missing |
 |--------------------------------------- | -------: | -------: | ------: | --------: |
 | lexiflux/apps.py                       |       14 |        0 |    100% |           |
-| lexiflux/ebook/book\_plain\_text.py    |      165 |       22 |     87% |75-76, 81-87, 109-113, 191, 264, 287, 306-316 |
+| lexiflux/ebook/book\_plain\_text.py    |      165 |       22 |     87% |75-76, 81-87, 109-113, 191, 264, 285, 304-314 |
 | lexiflux/ebook/book\_processor.py      |       34 |        0 |    100% |           |
 | lexiflux/language/google\_languages.py |       12 |        0 |    100% |           |
 | lexiflux/language/translation.py       |       47 |       16 |     66% |20-24, 29, 35-37, 47-55, 79 |
