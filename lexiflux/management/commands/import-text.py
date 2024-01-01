@@ -68,7 +68,7 @@ class Command(BaseCommand):
                     content=page_content
                 )
 
-            book_instance.set_toc(book_processor.headings)
+            book_instance.toc = book_processor.headings
 
             if owner_email:
                 # If owner email is provided, set the owner and make visibility PRIVATE

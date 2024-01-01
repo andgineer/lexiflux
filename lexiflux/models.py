@@ -65,15 +65,19 @@ class Book(models.Model):  # type: ignore
     title = models.CharField(max_length=200)
     author = models.ForeignKey(Author, on_delete=models.CASCADE)
     language = models.ForeignKey(Language, on_delete=models.SET_NULL, null=True)
-    toc = models.TextField(null=True, blank=True, default="{}")
+    toc_json = models.TextField(null=True, blank=True, default="{}")
 
-    def set_toc(self, context_dict: Dict[str, Any]) -> None:
-        """Set the context as a serialized JSON string."""
-        self.toc = json.dumps(context_dict)
+    @property
+    def toc(self) -> Dict[str, Any]:
+        """Property to automatically convert 'toc_json' to/from Python objects."""
+        if self.toc_json:
+            return json.loads(self.toc_json)  # type: ignore
+        return {}
 
-    def get_toc(self) -> Dict[str, Any]:
-        """Get the context as a Python dictionary."""
-        return json.loads(self.toc)  # type: ignore
+    @toc.setter
+    def toc(self, value: Dict[str, Any]) -> None:
+        """Set 'toc_json' when 'TOC' is updated."""
+        self.toc_json = json.dumps(value)
 
     @property
     def current_reading_by_count(self) -> int:
@@ -99,7 +103,7 @@ class Book(models.Model):  # type: ignore
         return unique_code
 
     def save(self, *args: Any, **kwargs: Any) -> None:
-        """Generate book code."""
+        """Generate book code and convert TOC."""
         if not self.code:
             self.code = self.generate_unique_book_code()
         super().save(*args, **kwargs)

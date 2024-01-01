@@ -4,7 +4,17 @@
         <div class="container-fluid">
             {% include 'hamburger.html' with current_page='reader' %}
             <div class="text-truncate">
-                {{ book.title }}
+                <button class="btn btn-link dropdown-toggle" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-expanded="false">
+                    {{ book.title }}
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownMenuButton">
+                    {% for toc_item in book.toc %}
+                        <li>
+                            <a class="dropdown-item" href="#">{{ toc_item.0 }}</a>
+{#                            todo add link to load the page#}
+                        </li>
+                    {% endfor %}
+                </ul>
             </div>
         </div>
     </nav>
