@@ -217,11 +217,16 @@ export function loadPage(pageNumber: number): Promise<void> {
                 bookId = data.data.bookId;
 
                 wordSpans = data.data.words.map((word: string, index: number) => {
-                    let wordSpan = document.createElement('span');
-                    wordSpan.id = 'word-' + index;
-                    wordSpan.className = 'word';
-                    wordSpan.innerHTML = ' ' + word;
-                    return wordSpan;
+                    let wordElement;
+                    if (word === '<br/>') {
+                        wordElement = document.createElement('br');
+                    } else {
+                        wordElement = document.createElement('span');
+                        wordElement.id = 'word-' + index;
+                        wordElement.className = 'word';
+                        wordElement.innerHTML = ' ' + word;
+                    }
+                    return wordElement;
                 });
 
                 resolve();
