@@ -82,7 +82,7 @@ def test_chapter_pattern(mock_page100_splitter, chapter_pattern):
     splitter = BookPlainText(StringIO(f"aa{chapter_pattern}34"))
     pages = list(splitter.pages())
     assert len(splitter.headings) == 1, f"chapter_pattern: {chapter_pattern}"
-    assert splitter.headings[0] == (chapter_pattern.replace("\n", "   ").strip(), "1:2:2")
+    assert splitter.headings[0] == (chapter_pattern.replace("\n", "   ").strip(), 1, 2)
 
 
 @pytest.mark.django_db
