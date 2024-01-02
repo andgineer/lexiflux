@@ -4,7 +4,7 @@ import {
   renderWordsContainer,
   getTotalWords,
   getTopWord,
-  // ... other functions you want to test
+  findLastVisibleWord, getWordSpans, getWordsContainer,
 } from '../../lexiflux/viewport/viewport';
 
 describe('viewport.js tests', () => {
@@ -46,5 +46,70 @@ describe('viewport.js tests', () => {
     });
   });
 
-  // Add more tests for other functions as needed
+  describe('findLastVisibleWord', () => {
+    it('should find the last visible word in the container', () => {
+      // Setup
+      const container = getWordsContainer();
+      if (!container) {
+        throw new Error('Container not found');
+      }
+      const testWords = ['word1', 'word2', 'word3', 'word4', 'word5'];
+      testWords.forEach((word, index) => {
+        const span = document.createElement('span');
+        span.id = `word-${index}`;
+        span.textContent = word;
+        container.appendChild(span);
+      });
+
+      const wordSpans = getWordSpans();
+      wordSpans.length = 0; // Clear the array
+      Array.from(container.children).forEach(child => {
+        if (child instanceof HTMLElement) {
+          wordSpans.push(child);
+        }
+      });
+
+      const containerSize = 60;
+      Object.defineProperty(container, 'getBoundingClientRect', {
+        value: () => ({
+          top: 0,
+          bottom: containerSize,
+          left: 0,
+          right: 100,
+          width: 100,
+          height: containerSize,
+          x: 0,
+          y: 0
+        })
+      });
+
+      const spans = Array.from(container.children);
+      spans.forEach(span => {
+        if (span.id.match(/^word-\d+$/)) {
+          const index = parseInt(span.id.split('-')[1]);
+          let mockRect = {
+            top: 0,
+            bottom: 0,  // for some reason mocking wordsContainer does not work thus we set 0 to pass as visible
+          };
+          if (index > 2) {
+            // Words after 'word-2' are outside the visible area
+            mockRect = {
+              top: containerSize + (index - 3) * 20,
+              bottom: containerSize + (index - 2) * 20,
+            };
+          }
+          Object.defineProperty(span, 'getBoundingClientRect', {
+            value: () => mockRect
+          });
+        }
+      });
+
+      // Test
+      const lastWord = findLastVisibleWord();
+      expect(lastWord).not.toBeNull();
+      expect(lastWord!.id).toBe('word-2')
+
+    });  // it
+  }); // findLastVisibleWord
+
 });

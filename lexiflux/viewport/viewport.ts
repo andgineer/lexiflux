@@ -5,7 +5,7 @@ export let pageNum: number = 0;
 
 let wordsContainer = getWordsContainer()
 
-let wordSpans: HTMLElement[] = [];
+let wordSpans: HTMLElement[] = [];  // todo: we do not need wordSpans, just max word ID
 let totalWords: number = 0;
 
 let topWord: number = 0;
@@ -251,6 +251,36 @@ export function reportReadingPosition(): void {
         })
         .catch(error => console.error('Error:', error));
 }
+
+export function findLastVisibleWord(): HTMLElement | null {
+    let low = topWord; // Assume topWord is the index of the first word in the wordsContainer
+    let high = wordSpans.length - 1;
+    let lastVisible = null;
+
+    while (low <= high) {
+        let mid = Math.floor((low + high) / 2);
+        let midWord = wordSpans[mid];
+
+        if (isElementVisibleInContainer(midWord, wordsContainer)) {
+            lastVisible = midWord; // Mid word is visible, so it could be the last visible word
+            low = mid + 1; // Move the search to the upper half
+        } else {
+            high = mid - 1; // Move the search to the lower half
+        }
+    }
+
+    return lastVisible;
+}
+
+function isElementVisibleInContainer(element: HTMLElement, container: HTMLElement): boolean {
+    const elementRect = element.getBoundingClientRect();
+    const containerRect = container.getBoundingClientRect();
+
+    // Check if the element is within the container's visible bounds
+    return elementRect.bottom <= containerRect.bottom &&
+           elementRect.top >= containerRect.top;
+}
+
 
 export function getBookId(): string {
     return bookId;
