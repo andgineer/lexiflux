@@ -47,26 +47,22 @@ describe('viewport.js tests', () => {
   });
 
   describe('findLastVisibleWord', () => {
-    it('should find the last visible word in the container', () => {
-      // Setup
+    type MockRectFunction = (id: string) => { top: number; bottom: number; left?: number; right?: number; width?: number; height?: number };
+
+    function setupTestEnvironment(mockRectFn: MockRectFunction) {
+      // Common setup function
       const container = getWordsContainer();
       if (!container) {
         throw new Error('Container not found');
       }
+
+      // Create and append test words to the container
       const testWords = ['word1', 'word2', 'word3', 'word4', 'word5'];
       testWords.forEach((word, index) => {
         const span = document.createElement('span');
         span.id = `word-${index}`;
         span.textContent = word;
         container.appendChild(span);
-      });
-
-      const wordSpans = getWordSpans();
-      wordSpans.length = 0; // Clear the array
-      Array.from(container.children).forEach(child => {
-        if (child instanceof HTMLElement) {
-          wordSpans.push(child);
-        }
       });
 
       const containerSize = 60;
@@ -86,30 +82,59 @@ describe('viewport.js tests', () => {
       const spans = Array.from(container.children);
       spans.forEach(span => {
         if (span.id.match(/^word-\d+$/)) {
-          const index = parseInt(span.id.split('-')[1]);
-          let mockRect = {
-            top: 0,
-            bottom: 0,  // for some reason mocking wordsContainer does not work thus we set 0 to pass as visible
-          };
-          if (index > 2) {
-            // Words after 'word-2' are outside the visible area
-            mockRect = {
-              top: containerSize + (index - 3) * 20,
-              bottom: containerSize + (index - 2) * 20,
-            };
-          }
           Object.defineProperty(span, 'getBoundingClientRect', {
-            value: () => mockRect
+            value: () => mockRectFn(span.id)
           });
         }
+      });
+
+      const wordSpans = getWordSpans();
+      wordSpans.length = 0; // Clear the array
+      spans.forEach(child => {
+        if (child instanceof HTMLElement) {
+          wordSpans.push(child);
+        }
+      });
+    }
+
+    it('should find the last visible word in the container', () => {
+      setupTestEnvironment((id: string) => {
+        const index = parseInt(id.split('-')[1]);
+        let mockRect = { top: 0, bottom: 0 }; // Default mock rect
+        if (index > 2) {
+          mockRect = { top: 1000, bottom: 1020 }; // Outside the visible area for words after 'word-2'
+        }
+        return mockRect;
       });
 
       // Test
       const lastWord = findLastVisibleWord();
       expect(lastWord).not.toBeNull();
-      expect(lastWord!.id).toBe('word-2')
+      if (!lastWord) {
+        throw new Error('lastWord is null');
+      }
+      expect(lastWord.id).toBe('word-2');
+    });
 
-    });  // it
+    it('should return the last word if all words are visible', () => {
+      setupTestEnvironment(() => ({ top: 0, bottom: 0, left: 0, right: 0, width: 0, height: 0 }));
+
+      // Test
+      const lastWord = findLastVisibleWord();
+      expect(lastWord).not.toBeNull();
+      if (!lastWord) {
+        throw new Error('lastWord is null');
+      }
+      expect(lastWord.id).toBe('word-4');
+    });
+
+    it('should return null if all words are outside the visible area', () => {
+      setupTestEnvironment(() => ({ top: 1000, bottom: 1020, left: 0, right: 0, width: 0, height: 0 }));
+
+      // Test
+      const lastWord = findLastVisibleWord();
+      expect(lastWord).toBeNull();
+    });
   }); // findLastVisibleWord
 
 });

@@ -111,6 +111,7 @@ function createAndReplaceTranslationSpan(selectedText: string, translatedText: s
   selectedWordSpans.forEach(span => {
     const index = wordSpans.indexOf(span);
     if (index !== -1) {
+        // todo: just set invisible and save IDs in translation span to restore visibility
         wordSpans.splice(index, 1); // Remove the original word span
     }
   });
