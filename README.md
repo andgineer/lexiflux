@@ -11,7 +11,7 @@
 | lexiflux/language/translation.py       |       47 |       16 |     66% |20-24, 29, 35-37, 47-55, 79 |
 | lexiflux/models.py                     |      104 |       34 |     67% |16-18, 35, 45, 73-75, 80, 85, 89-103, 107-109, 113, 124, 142, 182-206 |
 | lexiflux/settings.py                   |        0 |        0 |    100% |           |
-| lexiflux/signals.py                    |       13 |        3 |     77% | 18-19, 27 |
+| lexiflux/signals.py                    |       13 |        3 |     77% | 21-22, 32 |
 | lexiflux/tests.py                      |        0 |        0 |    100% |           |
 | lexiflux/urls.py                       |        3 |        3 |      0% |       2-6 |
 | lexiflux/views.py                      |      114 |      114 |      0% |     2-232 |
