@@ -281,6 +281,62 @@ function isElementVisibleInContainer(element: HTMLElement, container: HTMLElemen
            elementRect.top >= containerRect.top;
 }
 
+function cutHtml(html, startingId) {
+  const startingElement = html.querySelector(`#${startingId}`);
+  if (!startingElement) {
+    console.error(`Element with ID ${startingId} not found`);
+    return null;
+  }
+
+  // Clone the ancestors and reconstruct the hierarchy
+  return cloneAndReconstruct(startingElement);
+}
+
+function cloneAndReconstruct(element) {
+  if (!element.parentElement) {
+    // Clone the element if it has no parent (it's a top-level element)
+    return element.cloneNode(true);
+  }
+
+  // Clone the parent node without its children (shallow clone)
+  const parentClone = element.parentElement.cloneNode(false);
+
+  // Clone the current element (deep clone)
+  const elementClone = element.cloneNode(true);
+  parentClone.appendChild(elementClone);
+
+  // Recursively process and append the cloned parent
+  const ancestorClone = cloneAndReconstruct(element.parentElement);
+  ancestorClone.appendChild(parentClone);
+
+  return ancestorClone;
+}
+
+// Use a Bootstrap Container with Overflow Hidden:
+// 1) Place HTML content inside a Bootstrap container and set the CSS to hide overflow.
+// This will hide the scrollbars.
+//
+// 2) Find the First Element Below the Visible Area:
+// Determine which element should be at the top after scrolling.
+//
+// 3) Scroll to That Element: Adjust the container's .scrollTop to the top position
+// of the identified element.
+//
+//   const currentScroll = container.scrollTop;
+//   const containerHeight = container.clientHeight;
+//
+//   // Find the first element that will be on top after scrolling
+//   const allElements = Array.from(container.querySelectorAll('*')); // Select all child elements
+//   const nextTopElement = allElements.find(element => {
+//     const rect = element.getBoundingClientRect();
+//     const relativeTop = rect.top + currentScroll;
+//     return relativeTop > currentScroll + containerHeight;
+//   });
+//
+//   if (nextTopElement) {
+//     // Scroll the container to put nextTopElement at the top
+//     container.scrollTop = nextTopElement.offsetTop;
+//   }
 
 export function getBookId(): string {
     return bookId;
