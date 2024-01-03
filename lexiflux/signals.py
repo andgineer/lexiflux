@@ -12,7 +12,10 @@ User = get_user_model()
 
 @receiver(post_save, sender=User)  # type: ignore
 def create_user_profile(
-    sender: Any, instance: Any, created: Any, **kwargs: Any  # pylint: disable=unused-argument
+    sender: Any,  # pylint: disable=unused-argument
+    instance: Any,
+    created: Any,
+    **kwargs: Any,
 ) -> None:  # pylint: disable=unused-argument
     """Create a profile for a new user."""
     if created:
@@ -21,7 +24,9 @@ def create_user_profile(
 
 @receiver(post_save, sender=User)  # type: ignore
 def save_user_profile(
-    sender: Any, instance: Any, **kwargs: Any  # pylint: disable=unused-argument
+    sender: Any,  # pylint: disable=unused-argument
+    instance: Any,
+    **kwargs: Any,
 ) -> None:
     """Save a profile for a new user."""
     instance.reader_profile.save()

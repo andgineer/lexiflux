@@ -79,7 +79,9 @@ def import_book_from_epub(epub_file_path: str) -> None:
             )
             content = item.get_body_content().decode("utf-8")  # Decoding from bytes to string
             BookPage.objects.create(
-                book=book_instance, number=index + 1, content=content  # Page number
+                book=book_instance,
+                number=index + 1,
+                content=content,  # Page number
             )
 
     print(f"Book pages: {book_instance.pages.count()}")
