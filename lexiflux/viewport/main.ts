@@ -10,43 +10,18 @@ let clickTimeout: NodeJS.Timeout | null = null;
 
 async function goToPage(pageNum: number, topWord: number): Promise<void> {
         await viewport.loadPage(pageNum);
-        viewport.renderWordsContainer(topWord);
+        viewport.fillWordsContainer(topWord);
         reInitDom();
 }
 
 async function handlePrevButtonClick(): Promise<void> {
-    if (viewport.getTopWord() === 0) {
-        if (viewport.getPageNum() === 1) {
-            return;
-        }
-        await viewport.loadPage(viewport.getPageNum() - 1);
-        viewport.findViewport(viewport.getTotalWords() - 1);
-        reInitDom();
-        viewport.reportReadingPosition();
-    } else {
-        viewport.findViewport(viewport.getTopWord() - 1);
-        viewport.reportReadingPosition();
-    }
+    // no need to check for negative scroll top, it will be handled by the browser
+    viewport.getBookPageScroller().scrollTop -= viewport.getBookPageScroller().clientHeight;
 }
 
 async function handleNextButtonClick(): Promise<void> {
-    let lastWordIndex: number = viewport.getLastAddedWordIndex();
-    if (lastWordIndex >= viewport.getTotalWords() - 1) {
-        await viewport.loadPage(viewport.getPageNum() + 1);
-        viewport.renderWordsContainer(0);
-        reInitDom();
-        viewport.reportReadingPosition();
-    } else {
-        viewport.renderWordsContainer(lastWordIndex + 1);
-        viewport.reportReadingPosition();
-    }
-}
-
-function handleResize(): void {
-    clearTimeout(resizeTimeout);
-    resizeTimeout = setTimeout(() => {
-        viewport.renderWordsContainer();
-    }, 150);
+    // no need to check for too large scroll top, it will be handled by the browser
+    viewport.getBookPageScroller().scrollTop += viewport.getBookPageScroller().clientHeight;
 }
 
 interface TranslationResponse {
@@ -74,7 +49,6 @@ function sendTranslationRequest(selectedText: string, range: Range, selectedWord
         console.error('Sidebar element not found');
       }
       createAndReplaceTranslationSpan(selectedText, data.translatedText, selectedWordSpans);
-      viewport.renderWordsContainer();
     })
     .catch(error => {
       console.error('Error during translation:', error);
@@ -158,7 +132,6 @@ function restoreOriginalSpans(translationSpan: HTMLElement): void {
         wordSpans.splice(index, 1); // Remove the translation span
         wordSpans.splice(index, 0, ...originalSpans); // Insert the original word spans
     }
-    viewport.renderWordsContainer();
   }
 }
 
@@ -304,8 +277,6 @@ function reInitDom(): void {
     }
 }
 
-window.addEventListener('resize', handleResize);
-
 document.body.addEventListener('htmx:configRequest', (event: Event) => {
     let detail = (event as CustomEvent).detail;
     detail.parameters['page-num'] = viewport.getPageNum();
@@ -317,7 +288,7 @@ document.addEventListener('DOMContentLoaded', () => {
     viewport.initializeVariables();
     let pageNum = viewport.getPageNum();
     viewport.loadPage(pageNum).then(() => {
-        viewport.renderWordsContainer(0);
+        viewport.fillWordsContainer(0);
         reInitDom();
     }).catch((error: Error) => {
         console.error('Failed to load page:', error);

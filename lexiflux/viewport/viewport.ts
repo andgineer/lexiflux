@@ -1,4 +1,8 @@
 import { log, suppressRedraw, resumeRedraw } from './utils';
+
+const pageBookScrollerId = 'book-page-scroller';
+const wordsContainerId = 'words-container';
+
 export let bookId: string = '';
 export let pageNum: number = 0;
 
@@ -10,14 +14,22 @@ let totalWords: number = 0;
 
 let topWord: number = 0;
 let lastTopWord: number | undefined;
-let lastAddedWordIndex: number = 0;
 
 export function getWordsContainer(): HTMLElement {
-    const container = document.getElementById('words-container');
+    const container = document.getElementById(wordsContainerId);
     if (!container) {
-        throw new Error("Failed to find the 'words-container' element.");
+        throw new Error(`Failed to find the words-container (id=${wordsContainerId}).`);
     }
     return container as HTMLElement;
+}
+
+
+export function getBookPageScroller(): HTMLElement {
+    const pageScroller = document.getElementById(pageBookScrollerId);
+    if (!pageScroller) {
+        throw new Error(`Could not find page scroller (id=${pageBookScrollerId}).`);
+    }
+    return pageScroller as HTMLElement;
 }
 
 export function initializeVariables(): void {
@@ -26,167 +38,25 @@ export function initializeVariables(): void {
     console.log('bookId:', bookId, 'pageNum:', pageNum);
 }
 
-export function wordsInViewport(): number {
-    let containerRect = wordsContainer.getBoundingClientRect();
-    let lastVisibleWordIndex = lastAddedWordIndex;
-    let visibleWordsNum = lastVisibleWordIndex - topWord + 1;
-    log('Visible words:', visibleWordsNum);
-
-    let lastWordElement = document.getElementById('word-' + lastVisibleWordIndex);
-    let bottomGapInLines: number = 0;
-
-    if (lastWordElement) {
-        let lastWordRect = lastWordElement.getBoundingClientRect();
-        let lineHeight = lastWordRect.height;
-        let spaceAtBottom = containerRect.bottom - lastWordRect.bottom;
-        bottomGapInLines = spaceAtBottom / lineHeight;
-        log('bottomGapInLines:', bottomGapInLines);
+export function findViewport(targetLastWord?: number): number {
+  // find targetLastWord top coordinate
+  const word = document.getElementById('word-' + targetLastWord);
+    if (!word) {
+        return 0;
     }
-
-    if (!lastWordElement || bottomGapInLines > 1.5) {
-        renderWordsContainer(0);
-        lastVisibleWordIndex = lastAddedWordIndex;
-        visibleWordsNum = lastVisibleWordIndex + 1;
-        renderWordsContainer(topWord);
-        log('Visible words after re-fill:', visibleWordsNum);
-    }
-
-    return visibleWordsNum === 0 ? 1 : visibleWordsNum;
-}
-
-export function findViewport(targetLastWord?: number): number | undefined {
-    targetLastWord = targetLastWord === undefined ? topWord - 1 : targetLastWord;
-    let high = targetLastWord - 1;
-    suppressRedraw(wordsContainer);
-
-    try {
-        let low = Math.max(0, topWord - wordsInViewport() * 2);
-        renderWordsContainer(low);
-        let lastVisibleWord = lastAddedWordIndex;
-
-        if (lastVisibleWord === targetLastWord) {
-            return low;
-        } else if (lastVisibleWord > targetLastWord) {
-            low = 0;
-        }
-
-        let viewportTopWord = binarySearchForTopWord(low, high, targetLastWord);
-        renderWordsContainer(viewportTopWord);
-
-        if (lastAddedWordIndex === targetLastWord) {
-            log('try squeeze more words in the viewport');
-            for (let i = viewportTopWord; i >= 0; i--) {
-                renderWordsContainer(i);
-                if (lastAddedWordIndex === targetLastWord) {
-                    viewportTopWord = i;
-                } else {
-                    renderWordsContainer(viewportTopWord);
-                    return viewportTopWord;
-                }
-            }
-        } else {
-            log('shift viewport till the target is visible');
-            for (let i = viewportTopWord; i >= 0; i--) {
-                renderWordsContainer(i);
-                if (lastAddedWordIndex >= targetLastWord) {
-                    viewportTopWord = i;
-                } else {
-                    renderWordsContainer(viewportTopWord);
-                    return viewportTopWord;
-                }
-            }
-        }
-    } finally {
-        resumeRedraw(wordsContainer);
-    }
-}
-
-export function binarySearchForTopWord(low: number, high: number, targetLastWord: number): number {
-    log('Searching for topWord:', targetLastWord, `between`, low, high);
-
-    while (low < high) {
-        let mid = Math.floor((low + high) / 2);
-        suppressRedraw(wordsContainer);
-        renderWordsContainer(mid);
-        resumeRedraw(wordsContainer);
-
-        let lastVisibleWord = lastAddedWordIndex;
-        log('mid:', mid, 'lastVisibleWord:', lastVisibleWord, 'low:', low, 'high:', high);
-
-        if (lastVisibleWord < targetLastWord) {
-            low = mid + 1;
-        } else if (lastVisibleWord >= targetLastWord) {
-            high = mid;
-        }
-    }
-
-    return low;
-}
-
-export function renderWordsContainer(newTopWord?: number): void {
-    suppressRedraw(wordsContainer);
-
-    try {
-        newTopWord = newTopWord === undefined ? topWord : newTopWord;
-        if (lastTopWord !== newTopWord) {
-            fillWordsContainer(newTopWord);
-        } else {
-            resizeWordsContainer();
-        }
-    } finally {
-        resumeRedraw(wordsContainer);
-    }
+  return word.getBoundingClientRect().top;
 }
 
 export function fillWordsContainer(startWordIndex: number): void {
     topWord = startWordIndex;
     lastTopWord = topWord;
-    let containerRect = wordsContainer.getBoundingClientRect();
 
     wordsContainer.innerHTML = '';
-
-    for (let i = startWordIndex; i < wordSpans.length; i++) {
+    for (let i = 0; i < wordSpans.length; i++) {
         wordsContainer.appendChild(wordSpans[i]);
-        let wordRect = wordSpans[i].getBoundingClientRect();
-        if (wordRect.bottom > containerRect.bottom) {
-            wordsContainer.removeChild(wordSpans[i]);
-            break;
-        }
-        lastAddedWordIndex = i;
-    }
-    log('fillWordsContainer from', startWordIndex, 'lastAddedWordIndex:', lastAddedWordIndex);
-}
-
-export function resizeWordsContainer(): void {
-    let containerRect = wordsContainer.getBoundingClientRect();
-    let oldLastAddedWordIndex = lastAddedWordIndex;
-
-    let lastWordRect = wordSpans[lastAddedWordIndex]?.getBoundingClientRect();
-    if (lastWordRect && lastWordRect.bottom <= containerRect.bottom) {
-        for (let i = lastAddedWordIndex + 1; i < wordSpans.length; i++) {
-            wordsContainer.appendChild(wordSpans[i]);
-            let wordRect = wordSpans[i].getBoundingClientRect();
-            if (wordRect.bottom > containerRect.bottom) {
-                wordsContainer.removeChild(wordSpans[i]);
-                break;
-            }
-            lastAddedWordIndex = i;
-        }
-    } else {
-        while (lastAddedWordIndex > topWord) {
-            let wordRect = wordSpans[lastAddedWordIndex]?.getBoundingClientRect();
-            if (wordRect && wordRect.bottom > containerRect.bottom) {
-                wordsContainer.removeChild(wordSpans[lastAddedWordIndex]);
-                lastAddedWordIndex--;
-            } else {
-                break;
-            }
-        }
     }
 
-    if (oldLastAddedWordIndex !== lastAddedWordIndex) {
-        log('resizeWordsContainer', lastAddedWordIndex - oldLastAddedWordIndex);
-    }
+    getBookPageScroller().scrollTop = findViewport(startWordIndex);
 }
 
 export function loadPage(pageNumber: number): Promise<void> {
@@ -252,92 +122,6 @@ export function reportReadingPosition(): void {
         .catch(error => console.error('Error:', error));
 }
 
-export function findLastVisibleWord(): HTMLElement | null {
-    let low = topWord; // Assume topWord is the index of the first word in the wordsContainer
-    let high = wordSpans.length - 1;
-    let lastVisible = null;
-
-    while (low <= high) {
-        let mid = Math.floor((low + high) / 2);
-        let midWord = wordSpans[mid];
-
-        if (isElementVisibleInContainer(midWord, wordsContainer)) {
-            lastVisible = midWord; // Mid word is visible, so it could be the last visible word
-            low = mid + 1; // Move the search to the upper half
-        } else {
-            high = mid - 1; // Move the search to the lower half
-        }
-    }
-
-    return lastVisible;
-}
-
-function isElementVisibleInContainer(element: HTMLElement, container: HTMLElement): boolean {
-    const elementRect = element.getBoundingClientRect();
-    const containerRect = container.getBoundingClientRect();
-
-    // Check if the element is within the container's visible bounds
-    return elementRect.bottom <= containerRect.bottom &&
-           elementRect.top >= containerRect.top;
-}
-
-function cutHtml(html, startingId) {
-  const startingElement = html.querySelector(`#${startingId}`);
-  if (!startingElement) {
-    console.error(`Element with ID ${startingId} not found`);
-    return null;
-  }
-
-  // Clone the ancestors and reconstruct the hierarchy
-  return cloneAndReconstruct(startingElement);
-}
-
-function cloneAndReconstruct(element) {
-  if (!element.parentElement) {
-    // Clone the element if it has no parent (it's a top-level element)
-    return element.cloneNode(true);
-  }
-
-  // Clone the parent node without its children (shallow clone)
-  const parentClone = element.parentElement.cloneNode(false);
-
-  // Clone the current element (deep clone)
-  const elementClone = element.cloneNode(true);
-  parentClone.appendChild(elementClone);
-
-  // Recursively process and append the cloned parent
-  const ancestorClone = cloneAndReconstruct(element.parentElement);
-  ancestorClone.appendChild(parentClone);
-
-  return ancestorClone;
-}
-
-// Use a Bootstrap Container with Overflow Hidden:
-// 1) Place HTML content inside a Bootstrap container and set the CSS to hide overflow.
-// This will hide the scrollbars.
-//
-// 2) Find the First Element Below the Visible Area:
-// Determine which element should be at the top after scrolling.
-//
-// 3) Scroll to That Element: Adjust the container's .scrollTop to the top position
-// of the identified element.
-//
-//   const currentScroll = container.scrollTop;
-//   const containerHeight = container.clientHeight;
-//
-//   // Find the first element that will be on top after scrolling
-//   const allElements = Array.from(container.querySelectorAll('*')); // Select all child elements
-//   const nextTopElement = allElements.find(element => {
-//     const rect = element.getBoundingClientRect();
-//     const relativeTop = rect.top + currentScroll;
-//     return relativeTop > currentScroll + containerHeight;
-//   });
-//
-//   if (nextTopElement) {
-//     // Scroll the container to put nextTopElement at the top
-//     container.scrollTop = nextTopElement.offsetTop;
-//   }
-
 export function getBookId(): string {
     return bookId;
 }
@@ -352,10 +136,6 @@ export function getTopWord(): number {
 
 export function getTotalWords(): number {
     return totalWords;
-}
-
-export function getLastAddedWordIndex(): number {
-    return lastAddedWordIndex;
 }
 
 export function getWordSpans(): HTMLElement[] {
