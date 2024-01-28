@@ -4,24 +4,28 @@ import * as viewport from './viewport';
 (window as any).goToPage = goToPage;
 
 import { log } from './utils';
+import {getFistVisibleWord} from "./viewport";
 
 let resizeTimeout: NodeJS.Timeout;
 let clickTimeout: NodeJS.Timeout | null = null;
 
 async function goToPage(pageNum: number, topWord: number): Promise<void> {
-        await viewport.loadPage(pageNum);
-        viewport.fillWordsContainer(topWord);
+        await viewport.loadPage(pageNum, topWord);
         reInitDom();
 }
 
 async function handlePrevButtonClick(): Promise<void> {
     // no need to check for negative scroll top, it will be handled by the browser
     viewport.getBookPageScroller().scrollTop -= viewport.getBookPageScroller().clientHeight;
+    viewport.setTopWord(getFistVisibleWord());
+    viewport.reportReadingPosition();
 }
 
 async function handleNextButtonClick(): Promise<void> {
     // no need to check for too large scroll top, it will be handled by the browser
     viewport.getBookPageScroller().scrollTop += viewport.getBookPageScroller().clientHeight;
+    viewport.setTopWord(getFistVisibleWord());
+    viewport.reportReadingPosition();
 }
 
 interface TranslationResponse {
@@ -287,8 +291,7 @@ document.body.addEventListener('htmx:configRequest', (event: Event) => {
 document.addEventListener('DOMContentLoaded', () => {
     viewport.initializeVariables();
     let pageNum = viewport.getPageNum();
-    viewport.loadPage(pageNum).then(() => {
-        viewport.fillWordsContainer(0);
+    viewport.loadPage(pageNum, 0).then(() => {
         reInitDom();
     }).catch((error: Error) => {
         console.error('Failed to load page:', error);
