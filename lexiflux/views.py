@@ -62,9 +62,13 @@ def reader(request: HttpRequest, book_code=None) -> HttpResponse:
 
 @login_required  # type: ignore
 def page(request: HttpRequest) -> HttpResponse:
-    """Book page."""
+    """Book page.
+
+    In addition to book and page num should include top word id to save the position.
+    """
     book_id = request.GET.get("book-id", 1)
     page_number = request.GET.get("page-num", 1)
+    position(request)  # Update the reading position
     try:
         book_page = BookPage.objects.get(book_id=book_id, number=page_number)
     except BookPage.DoesNotExist:

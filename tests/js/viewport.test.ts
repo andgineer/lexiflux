@@ -2,7 +2,7 @@ import {
   initializeVariables,
   findViewport,
   getTotalWords,
-  getTopWord,
+  getFistVisibleWord,
   getWordSpans, getWordsContainer,
 } from '../../lexiflux/viewport/viewport';
 
@@ -20,8 +20,6 @@ describe('viewport.js tests', () => {
   describe('initializeVariables', () => {
     it('should initialize variables based on DOM elements', () => {
       expect(getTotalWords()).toBe(0);
-      expect(getTopWord()).toBe(0);
-      // Add more assertions based on what initializeVariables does
     });
   });
 
@@ -93,7 +91,7 @@ describe('viewport.js tests', () => {
       });
     }
 
-    it('should find the last visible word in the container', () => {
+    it('should find the first visible word in the container', () => {
       setupTestEnvironment((id: string) => {
         const index = parseInt(id.split('-')[1]);
         let mockRect = { top: 0, bottom: 0 }; // Default mock rect
@@ -104,31 +102,31 @@ describe('viewport.js tests', () => {
       });
 
       // Test
-      const lastWord = findLastVisibleWord();
-      expect(lastWord).not.toBeNull();
-      if (!lastWord) {
+      const firstWord = getFistVisibleWord();
+      expect(firstWord).not.toBeNull();
+      if (!firstWord) {
         throw new Error('lastWord is null');
       }
-      expect(lastWord.id).toBe('word-2');
+      expect(firstWord).toBe(2);
     });
 
     it('should return the last word if all words are visible', () => {
       setupTestEnvironment(() => ({ top: 0, bottom: 0, left: 0, right: 0, width: 0, height: 0 }));
 
       // Test
-      const lastWord = findLastVisibleWord();
+      const lastWord = getFistVisibleWord();
       expect(lastWord).not.toBeNull();
       if (!lastWord) {
         throw new Error('lastWord is null');
       }
-      expect(lastWord.id).toBe('word-4');
+      expect(lastWord).toBe(4);
     });
 
     it('should return null if all words are outside the visible area', () => {
       setupTestEnvironment(() => ({ top: 1000, bottom: 1020, left: 0, right: 0, width: 0, height: 0 }));
 
       // Test
-      const lastWord = findLastVisibleWord();
+      const lastWord = getFistVisibleWord();
       expect(lastWord).toBeNull();
     });
   }); // findLastVisibleWord

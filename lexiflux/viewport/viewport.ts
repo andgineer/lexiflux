@@ -14,9 +14,6 @@ let pageScroller = getBookPageScroller();
 let wordSpans: HTMLElement[] = [];  // todo: we do not need wordSpans, just max word ID
 let totalWords: number = 0;
 
-let topWord: number = 0;
-let lastTopWord: number | undefined;
-
 export function getWordsContainer(): HTMLElement {
     const container = document.getElementById(wordsContainerId);
     if (!container) {
@@ -57,9 +54,8 @@ export function findViewport(targetLastWord?: number): number {
 }
 
 export function fillWordsContainer(startWordIndex: number): void {
-    topWord = startWordIndex;
-    lastTopWord = topWord;
-
+    // Fill the words container with the words from the page
+    // Set the scrollTop to the top of the word with startWordIndex
     wordsContainer.innerHTML = '';
     for (let i = 0; i < wordSpans.length; i++) {
         wordsContainer.appendChild(wordSpans[i]);
@@ -74,7 +70,7 @@ export function fillWordsContainer(startWordIndex: number): void {
 
 export function loadPage(pageNumber: number, topWord: number = 0): Promise<void> {
     return new Promise((resolve, reject) => {
-        fetch('/page?book-id=' + bookId + '&page-num=' + pageNumber)
+        fetch('/page?book-id=' + bookId + '&page-num=' + pageNumber + '&top-word=' + topWord)
             .then(response => {
                 if (!response.ok) {
                     throw new Error('Network response was not ok');
@@ -94,7 +90,6 @@ export function loadPage(pageNumber: number, topWord: number = 0): Promise<void>
 
                 wordsContainer = getWordsContainer()
                 totalWords = data.data.words.length;
-                lastTopWord = undefined;
                 pageNum = parseInt(data.data.pageNum);
                 bookId = data.data.bookId;
 
@@ -187,7 +182,7 @@ export function getFistVisibleWord(): number {
 }
 
 export function reportReadingPosition(): void {
-    let url = `/position?top-word=${topWord}&book-id=${bookId}&page-num=${pageNum}`;
+    let url = `/position?top-word=${getFistVisibleWord()}&book-id=${bookId}&page-num=${pageNum}`;
     fetch(url)
         .then(response => {
             if (!response.ok) {
@@ -207,14 +202,6 @@ export function getBookId(): string {
 
 export function getPageNum(): number {
     return pageNum;
-}
-
-export function getTopWord(): number {
-    return topWord;
-}
-
-export function setTopWord(newTopWord: number) {
-    topWord = newTopWord;
 }
 
 export function getTotalWords(): number {
