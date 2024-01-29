@@ -41,6 +41,8 @@ export function getBookPageScroller(): HTMLElement {
 export function initializeVariables(): void {
     bookId = document.body.getAttribute('data-book-id') || '';
     pageNum = parseInt(document.body.getAttribute('data-page-number') || '0');
+    wordsContainer = getWordsContainer();
+    pageScroller = getBookPageScroller();
     console.log('bookId:', bookId, 'pageNum:', pageNum);
 }
 
