@@ -6,13 +6,13 @@ const topNavbarId = 'top-navbar';
 
 export let bookId: string = '';
 export let pageNum: number = 0;
+export let totalWords: number = 0;
+export let wordSpans: HTMLElement[] = [];  // todo: we do not need wordSpans, just max word ID
 
 
 let wordsContainer = getWordsContainer()
 let pageScroller = getBookPageScroller();
 
-let wordSpans: HTMLElement[] = [];  // todo: we do not need wordSpans, just max word ID
-let totalWords: number = 0;
 
 export function getWordsContainer(): HTMLElement {
     const container = document.getElementById(wordsContainerId);
@@ -198,18 +198,3 @@ export function reportReadingPosition(): void {
         .catch(error => console.error('Error:', error));
 }
 
-export function getBookId(): string {
-    return bookId;
-}
-
-export function getPageNum(): number {
-    return pageNum;
-}
-
-export function getTotalWords(): number {
-    return totalWords;
-}
-
-export function getWordSpans(): HTMLElement[] {
-    return wordSpans;
-}

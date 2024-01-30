@@ -1,12 +1,11 @@
 import * as viewport from './viewport';
+import {log} from './utils';
+
+const CLICK_TIMEOUT_MS = 200;
 
 // to make it available in HTML page
 (window as any).goToPage = goToPage;
 
-import { log } from './utils';
-import {getFistVisibleWord} from "./viewport";
-
-let resizeTimeout: NodeJS.Timeout;
 let clickTimeout: NodeJS.Timeout | null = null;
 
 async function goToPage(pageNum: number, topWord: number): Promise<void> {
@@ -76,7 +75,7 @@ function createAndReplaceTranslationSpan(selectedText: string, translatedText: s
   translationSpan.appendChild(textDiv);
 
   viewport.getWordsContainer().insertBefore(translationSpan, firstWordSpan);
-  const wordSpans = viewport.getWordSpans();
+  const {wordSpans} = viewport;
   wordSpans.splice(wordSpans.indexOf(firstWordSpan), 0, translationSpan);
 
   // Remove the original word spans
@@ -128,7 +127,7 @@ function restoreOriginalSpans(translationSpan: HTMLElement): void {
     const originalSpans = Array.from(tempContainer.childNodes).filter(node => node.nodeType === Node.ELEMENT_NODE) as HTMLElement[];
 
     // Update the wordSpans array
-    const wordSpans = viewport.getWordSpans();
+    const {wordSpans} = viewport;
     const index = wordSpans.indexOf(translationSpan);
     if (index !== -1) {
         wordSpans.splice(index, 1); // Remove the translation span
@@ -152,7 +151,7 @@ function handleWordContainerClick(event: MouseEvent): void {
             clickTimeout = setTimeout(() => {
                 handleWordClick(event);
                 clickTimeout = null;
-            }, 200); // 200 ms delay
+            }, CLICK_TIMEOUT_MS); // 200 ms delay
         }
     }
 }
@@ -280,15 +279,14 @@ function reInitDom(): void {
 }
 
 document.body.addEventListener('htmx:configRequest', (event: Event) => {
-    let detail = (event as CustomEvent).detail;
-    detail.parameters['page-num'] = viewport.getPageNum();
-    detail.parameters['book-id'] = viewport.getBookId();
+    const detail = (event as CustomEvent).detail;
+    detail.parameters['page-num'] = viewport.pageNum;
+    detail.parameters['book-id'] = viewport.bookId;
 });
 
 document.addEventListener('DOMContentLoaded', () => {
     viewport.initializeVariables();
-    let pageNum = viewport.getPageNum();
-    viewport.loadPage(pageNum, 0).then(() => {
+    viewport.loadPage(viewport.pageNum, 0).then(() => {
         reInitDom();
     }).catch((error: Error) => {
         console.error('Failed to load page:', error);

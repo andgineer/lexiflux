@@ -1,9 +1,9 @@
 import {
   initializeVariables,
   findViewport,
-  getTotalWords,
+  totalWords,
   getFistVisibleWord,
-  getWordSpans, getWordsContainer, getTopNavbar,
+  wordSpans, getWordsContainer, getTopNavbar,
 } from '../../lexiflux/viewport/viewport';
 
 
@@ -61,7 +61,6 @@ describe('viewport.js tests', () => {
         }
       });
 
-      const wordSpans = getWordSpans();
       wordSpans.length = 0; // Clear the array
       spans.forEach(child => {
         if (child instanceof HTMLElement) {
@@ -72,7 +71,7 @@ describe('viewport.js tests', () => {
 
   describe('initializeVariables', () => {
     it('should initialize variables based on DOM elements', () => {
-      expect(getTotalWords()).toBe(0);
+      expect(totalWords).toBe(0);
     });
   });
 
