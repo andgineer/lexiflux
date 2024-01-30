@@ -1,11 +1,4 @@
-import {
-  initializeVariables,
-  findViewport,
-  totalWords,
-  getFistVisibleWord,
-  wordSpans, getWordsContainer, getTopNavbar,
-} from '../../lexiflux/viewport/viewport';
-
+import { viewport } from '../../lexiflux/viewport/viewport';
 
 type MockRectFunction = (id: string) => {
   // Get word ID and return its bounding client rect
@@ -14,29 +7,30 @@ type MockRectFunction = (id: string) => {
   left?: number;
   right?: number;
   width?: number;
-  height?: number
+  height?: number;
 };
 
 let mockWordsRect: MockRectFunction;
 
 describe('viewport.js tests', () => {
   beforeAll(() => {
-      const container = getWordsContainer();
-      if (!container) {
-        throw new Error('Container not found');
-      }
+    viewport.initializeVariables();
 
-      mockWordsRect = () => ({ top: 0, bottom: 0, left: 0, right: 0, width: 0, height: 0 });
+    const container = viewport.getWordsContainer();
+    if (!container) {
+      throw new Error('Container not found');
+    }
 
+    mockWordsRect = () => ({top: 0, bottom: 0, left: 0, right: 0, width: 0, height: 0});
 
-      // Create and append test words to the container
-      const testWords = ['word1', 'word2', 'word3', 'word4', 'word5'];
-      testWords.forEach((word, index) => {
-        const span = document.createElement('span');
-        span.id = `word-${index}`;
-        span.textContent = word;
-        container.appendChild(span);
-      });
+    // Create and append test words to the container
+    const testWords = ['word1', 'word2', 'word3', 'word4', 'word5'];
+    testWords.forEach((word, index) => {
+      const span = document.createElement('span');
+      span.id = `word-${index}`;
+      span.textContent = word;
+      container.appendChild(span);
+    });
 
       const containerSize = 60;
       Object.defineProperty(container, 'getBoundingClientRect', {
@@ -61,35 +55,32 @@ describe('viewport.js tests', () => {
         }
       });
 
-      wordSpans.length = 0; // Clear the array
+      viewport.wordSpans.length = 0; // Clear the array
       spans.forEach(child => {
         if (child instanceof HTMLElement) {
-          wordSpans.push(child);
+          viewport.wordSpans.push(child);
         }
       });
   });
 
   describe('initializeVariables', () => {
     it('should initialize variables based on DOM elements', () => {
-      expect(totalWords).toBe(0);
+      expect(viewport.totalWords).toBe(0);
     });
   });
 
   describe('findViewport', () => {
     it('should find the correct viewport', () => {
-      // This test will depend on how findViewport is implemented
-      // and what it's supposed to do
-      const result = findViewport(10);
+      const result = viewport.findViewport(10);
       expect(result).toBeDefined();
     });
   });
 
   describe('findFirstVisibleWord', () => {
-
     it('words up to word-2 are visible, so the first visible word is the very first one', () => {
       mockWordsRect = (id: string) => {
         const index = parseInt(id.split('-')[1]);
-        const top = getTopNavbar().getBoundingClientRect().height;
+        const top = viewport.getTopNavbar().getBoundingClientRect().height;
         let mockRect = { top: top, bottom: top }; // Default mock rect
         if (index > 2) {
           mockRect = { top: 1000, bottom: 1020 }; // Words after 'word-2' are lower visible area
@@ -97,7 +88,7 @@ describe('viewport.js tests', () => {
         return mockRect;
       };
 
-      const firstWord = getFistVisibleWord();
+      const firstWord = viewport.getFirstVisibleWord();
       expect(firstWord).not.toBeNull();
       expect(firstWord).toBe(0);
     });
@@ -105,7 +96,7 @@ describe('viewport.js tests', () => {
     it('words from word-2 to word-4 are visible', () => {
       mockWordsRect = (id: string) => {
         const index = parseInt(id.split('-')[1]);
-        const top = getTopNavbar().getBoundingClientRect().height;
+        const top = viewport.getTopNavbar().getBoundingClientRect().height;
         let mockRect = { top: top, bottom: top }; // Default mock rect
         if (index < 2) {
           mockRect = { top: -1000, bottom: -1020 }; // Words before 'word-2' are upper visible area
@@ -115,17 +106,16 @@ describe('viewport.js tests', () => {
         return mockRect;
       };
 
-      const firstWord = getFistVisibleWord();
+      const firstWord = viewport.getFirstVisibleWord();
       expect(firstWord).not.toBeNull();
       expect(firstWord).toBe(2);
     });
 
     it('should return 0 if all words are outside the visible area', () => {
-      mockWordsRect = (id: string) => ({ top: 1000, bottom: 1020, left: 0, right: 0, width: 0, height: 0 });
+      mockWordsRect = (id: string) => ({top: 1000, bottom: 1020, left: 0, right: 0, width: 0, height: 0});
 
-      const lastWord = getFistVisibleWord();
+      const lastWord = viewport.getFirstVisibleWord();
       expect(lastWord).toBe(0);
     });
   });
-
 });

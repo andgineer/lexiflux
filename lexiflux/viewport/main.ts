@@ -1,4 +1,4 @@
-import * as viewport from './viewport';
+import { viewport } from './viewport';
 import {log} from './utils';
 
 const CLICK_TIMEOUT_MS = 200;
