@@ -67,7 +67,7 @@ def page(request: HttpRequest) -> HttpResponse:
     In addition to book and page num should include top word id to save the position.
     """
     book_id = request.GET.get("book-id", 1)
-    page_number = request.GET.get("page-num", 1)
+    page_number = request.GET.get("book-page-num", 1)
     position(request)  # Update the reading position
     try:
         book_page = BookPage.objects.get(book_id=book_id, number=page_number)
@@ -104,7 +104,7 @@ def position(request: HttpRequest) -> HttpResponse:
     """Read position changed."""
     try:
         book_id = int(request.GET.get("book-id"))
-        page_number = int(request.GET.get("page-num"))
+        page_number = int(request.GET.get("book-page-num"))
         top_word = int(request.GET.get("top-word", 0))
     except (TypeError, ValueError, KeyError):
         return HttpResponse("Invalid or missing parameters", status=400)

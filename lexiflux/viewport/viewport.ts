@@ -13,6 +13,10 @@ export class Viewport {
     wordsContainer: HTMLElement;
     pageScroller: HTMLElement;
 
+    topWord: number = 0; // the first visible word index
+    lineHeight: number = 0; // average line height
+
+
     constructor() {
         this.wordsContainer = this.getWordsContainer();
         this.pageScroller = this.getBookPageScroller();
@@ -44,7 +48,7 @@ export class Viewport {
 
     public initializeVariables(): void {
         this.bookId = document.body.getAttribute('data-book-id') || '';
-        this.pageNum = parseInt(document.body.getAttribute('data-page-number') || '0');
+        this.pageNum = parseInt(document.body.getAttribute('data-book-page-number') || '0');
         this.wordsContainer = this.getWordsContainer();
         this.pageScroller = this.getBookPageScroller();
         console.log('bookId:', this.bookId, 'pageNum:', this.pageNum);
@@ -76,7 +80,7 @@ export class Viewport {
 
     public loadPage(pageNumber: number, topWord: number = 0): Promise<void> {
         return new Promise((resolve, reject) => {
-            fetch('/page?book-id=' + this.bookId + '&page-num=' + pageNumber + '&top-word=' + topWord)
+            fetch('/page?book-id=' + this.bookId + '&book-page-num=' + pageNumber + '&top-word=' + topWord)
                 .then(response => {
                     if (!response.ok) {
                         throw new Error('Network response was not ok');
@@ -125,7 +129,12 @@ export class Viewport {
         });
     }
 
-    private binarySearchVisibleWord(low: number, high: number): number {
+    private binarySearchVisibleWord(
+        low: number,
+        high: number,
+        totalHeight: {value: number},
+        wordCount: {value: number}
+    ): number {
         // Look for any visible word in the container - first that we find
         const containerHeight = this.wordsContainer.getBoundingClientRect().height;
         const containerTop = this.getTopNavbar().getBoundingClientRect().height;
@@ -139,6 +148,8 @@ export class Viewport {
                 return low;
             }
             let rect = word.getBoundingClientRect();
+            totalHeight.value += rect.height;
+            wordCount.value++;
             log('low:', low, 'high:', high, 'mid:', mid, 'rect:', rect.top, rect.bottom);
 
             if ((rect.top >= containerTop) && (rect.bottom <= containerHeight)) {
@@ -159,7 +170,9 @@ export class Viewport {
         log('Searching for the first visible word');
 
         // first find any visible word - this is the upper bound in search for the first visible word
-        let high = this.binarySearchVisibleWord(0, this.wordSpans.length);
+        let totalHeight = {value: 0};  // accumulate statistics to
+        let wordCount = {value: 0};    // calculate average line height
+        let high = this.binarySearchVisibleWord(0, this.wordSpans.length, totalHeight, wordCount);
         log('found high bound:', high);
         let low = 0;
         const containerHeight = this.wordsContainer.getBoundingClientRect().height;
@@ -175,6 +188,8 @@ export class Viewport {
                 return low;
             }
             let rect = word.getBoundingClientRect();
+            totalHeight.value += rect.height;
+            wordCount.value++;
             log('low:', low, 'high:', high, 'mid:', mid, 'top:', rect.top);
 
             if (rect.top < containerTop) {
@@ -183,12 +198,17 @@ export class Viewport {
                 high = mid;
             }
         }
+         // Calculate and save the average line height
+        // todo: clear from spikes
+        if (wordCount.value > 0) {
+            this.lineHeight = totalHeight.value / wordCount.value;
+        }
         log('return low:', low);
         return low;
     }
 
     public reportReadingPosition(): void {
-        let url = `/position?top-word=${this.getFirstVisibleWord()}&book-id=${this.bookId}&page-num=${this.pageNum}`;
+        let url = `/position?top-word=${this.getFirstVisibleWord()}&book-id=${this.bookId}&book-page-num=${this.pageNum}`;
         fetch(url)
             .then(response => {
                 if (!response.ok) {

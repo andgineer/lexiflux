@@ -14,15 +14,29 @@ async function goToPage(pageNum: number, topWord: number): Promise<void> {
 }
 
 async function handlePrevButtonClick(): Promise<void> {
-    // no need to check for negative scroll top, it will be handled by the browser
-    viewport.getBookPageScroller().scrollTop -= viewport.getBookPageScroller().clientHeight;
-    viewport.reportReadingPosition();
+    if (viewport.getBookPageScroller().scrollTop === 0) {
+        if (viewport.pageNum === 1) {
+            return;
+        }
+        await viewport.loadPage(viewport.pageNum - 1, 0);
+        reInitDom();
+        viewport.getBookPageScroller().scrollTop = viewport.wordsContainer.getBoundingClientRect().height - viewport.getBookPageScroller().clientHeight;
+    } else {
+        // no need to check for negative scroll top, it will be handled by the browser
+        viewport.getBookPageScroller().scrollTop -= viewport.getBookPageScroller().clientHeight - viewport.lineHeight;
+        viewport.reportReadingPosition();
+    }
 }
 
 async function handleNextButtonClick(): Promise<void> {
-    // no need to check for too large scroll top, it will be handled by the browser
-    viewport.getBookPageScroller().scrollTop += viewport.getBookPageScroller().clientHeight;
-    viewport.reportReadingPosition();
+    if (viewport.wordSpans[viewport.wordSpans.length - 1].getBoundingClientRect().bottom <= viewport.getBookPageScroller().getBoundingClientRect().bottom) {
+        await viewport.loadPage(viewport.pageNum + 1, 0);
+        reInitDom();
+    } else {
+        // no need to check for too large scroll top, it will be handled by the browser
+        viewport.getBookPageScroller().scrollTop += viewport.getBookPageScroller().clientHeight - viewport.lineHeight;
+        viewport.reportReadingPosition();
+    }
 }
 
 interface TranslationResponse {
@@ -280,7 +294,7 @@ function reInitDom(): void {
 
 document.body.addEventListener('htmx:configRequest', (event: Event) => {
     const detail = (event as CustomEvent).detail;
-    detail.parameters['page-num'] = viewport.pageNum;
+    detail.parameters['book-page-num'] = viewport.pageNum;
     detail.parameters['book-id'] = viewport.bookId;
 });
 

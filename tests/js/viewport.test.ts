@@ -112,10 +112,11 @@ describe('viewport.js tests', () => {
     });
 
     it('should return 0 if all words are outside the visible area', () => {
-      mockWordsRect = (id: string) => ({top: 1000, bottom: 1020, left: 0, right: 0, width: 0, height: 0});
+      mockWordsRect = (id: string) => ({top: 1000, bottom: 1020, left: 0, right: 0, width: 0, height: 20});
 
       const lastWord = viewport.getFirstVisibleWord();
       expect(lastWord).toBe(0);
+      expect(viewport.lineHeight).toBe(20);
     });
   });
 });
