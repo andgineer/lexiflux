@@ -54,24 +54,21 @@ export class Viewport {
         console.log('bookId:', this.bookId, 'pageNum:', this.pageNum);
     }
 
-    public findViewport(targetLastWord?: number): number {
+    public getWordTop(wordId: number = 0): number {
         // find targetLastWord top coordinate
-        const word = document.getElementById('word-' + targetLastWord);
-        if (!word) {
-            return 0;
-        }
-        return word.getBoundingClientRect().top - this.getTopNavbar().getBoundingClientRect().height;
+        const word = document.getElementById('word-' + wordId);
+        return word ? word.getBoundingClientRect().top - this.getTopNavbar().getBoundingClientRect().height : 0;
     }
 
     public fillWordsContainer(startWordIndex: number): void {
-        // Fill the words container with the words from the page
-        // Set the scrollTop to the top of the word with startWordIndex
+        // Fill the words container with the words from wordSpans.
+        // Set the scrollTop to the top of the word with startWordIndex if it is not 0, otherwise set it to 0.
         this.wordsContainer.innerHTML = '';
         for (let i = 0; i < this.wordSpans.length; i++) {
             this.wordsContainer.appendChild(this.wordSpans[i]);
         }
         if (startWordIndex > 0) {
-            this.pageScroller.scrollTop = this.findViewport(startWordIndex);
+            this.pageScroller.scrollTop = this.getWordTop(startWordIndex);
             console.log('scrollTop:', this.pageScroller.scrollTop);
         } else {
             this.pageScroller.scrollTop = 0;
@@ -208,6 +205,7 @@ export class Viewport {
     }
 
     public reportReadingPosition(): void {
+        // Determine the first visible word and report to the server the reading position
         let url = `/position?top-word=${this.getFirstVisibleWord()}&book-id=${this.bookId}&book-page-num=${this.pageNum}`;
         fetch(url)
             .then(response => {
@@ -221,7 +219,35 @@ export class Viewport {
             })
             .catch(error => console.error('Error:', error));
     }
+    
+    public async scrollUp(): Promise<void> {
+        // Scroll one viewport up
+        if (this.pageScroller.scrollTop === 0) {
+            if (this.pageNum === 1) {
+                return;
+            }
+            await this.loadPage(this.pageNum - 1, 0);
+            this.pageScroller.scrollTop = this.wordsContainer.getBoundingClientRect().height - this.pageScroller.clientHeight;
+        } else {
+            // no need to check for negative scroll top, it will be handled by the browser
+            log('***** scrollTop:', this.pageScroller.scrollTop, 'clientHeight-lineHeight:', this.pageScroller.clientHeight - this.lineHeight);
+            this.pageScroller.scrollTop -= this.pageScroller.clientHeight - this.lineHeight;
+            this.reportReadingPosition();
+        }
+    }
+
+    public async scrollDown(): Promise<void> {
+        // Scroll one viewport down
+        if (this.wordSpans[this.wordSpans.length - 1].getBoundingClientRect().bottom <= this.pageScroller.getBoundingClientRect().bottom) {
+            await this.loadPage(this.pageNum + 1, 0);
+        } else {
+            // no need to check for too large scroll top, it will be handled by the browser
+            this.pageScroller.scrollTop += this.pageScroller.clientHeight - this.lineHeight;
+            this.reportReadingPosition();
+        }
+    }
 }
+
 
 // Global instance of the Viewport class
 export const viewport = new Viewport();
