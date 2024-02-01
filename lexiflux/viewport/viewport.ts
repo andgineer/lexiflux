@@ -11,7 +11,6 @@ export class Viewport {
     wordSpans: HTMLElement[] = [];
 
     wordsContainer: HTMLElement;
-    pageScroller: HTMLElement;
 
     topWord: number = 0; // the first visible word index
     lineHeight: number = 0; // average line height
@@ -19,7 +18,6 @@ export class Viewport {
 
     constructor() {
         this.wordsContainer = this.getWordsContainer();
-        this.pageScroller = this.getBookPageScroller();
     }
 
     public getWordsContainer(): HTMLElement {
@@ -50,7 +48,6 @@ export class Viewport {
         this.bookId = document.body.getAttribute('data-book-id') || '';
         this.pageNum = parseInt(document.body.getAttribute('data-book-page-number') || '0');
         this.wordsContainer = this.getWordsContainer();
-        this.pageScroller = this.getBookPageScroller();
         console.log('bookId:', this.bookId, 'pageNum:', this.pageNum);
     }
 
@@ -68,10 +65,10 @@ export class Viewport {
             this.wordsContainer.appendChild(this.wordSpans[i]);
         }
         if (startWordIndex > 0) {
-            this.pageScroller.scrollTop = this.getWordTop(startWordIndex);
-            console.log('scrollTop:', this.pageScroller.scrollTop);
+            this.getBookPageScroller().scrollTop = this.getWordTop(startWordIndex);
+            console.log('scrollTop:', this.getBookPageScroller().scrollTop);
         } else {
-            this.pageScroller.scrollTop = 0;
+            this.getBookPageScroller().scrollTop = 0;
         }
     }
 
@@ -222,27 +219,30 @@ export class Viewport {
     
     public async scrollUp(): Promise<void> {
         // Scroll one viewport up
-        if (this.pageScroller.scrollTop === 0) {
+        if (this.getBookPageScroller().scrollTop === 0) {
             if (this.pageNum === 1) {
                 return;
             }
             await this.loadPage(this.pageNum - 1, 0);
-            this.pageScroller.scrollTop = this.wordsContainer.getBoundingClientRect().height - this.pageScroller.clientHeight;
+            this.getBookPageScroller().scrollTop = this.wordsContainer.getBoundingClientRect().height - this.getBookPageScroller().clientHeight;
+            this.reportReadingPosition();
         } else {
             // no need to check for negative scroll top, it will be handled by the browser
-            log('***** scrollTop:', this.pageScroller.scrollTop, 'clientHeight-lineHeight:', this.pageScroller.clientHeight - this.lineHeight);
-            this.pageScroller.scrollTop -= this.pageScroller.clientHeight - this.lineHeight;
+            log('***** scrollTop:', this.getBookPageScroller().scrollTop, 'clientHeight-lineHeight:', this.getBookPageScroller().clientHeight - this.lineHeight);
+            this.getBookPageScroller().scrollTop -= this.getBookPageScroller().clientHeight - this.lineHeight;
             this.reportReadingPosition();
         }
     }
 
     public async scrollDown(): Promise<void> {
         // Scroll one viewport down
-        if (this.wordSpans[this.wordSpans.length - 1].getBoundingClientRect().bottom <= this.pageScroller.getBoundingClientRect().bottom) {
+        if (this.wordSpans[this.wordSpans.length - 1].getBoundingClientRect().bottom <= this.getBookPageScroller().getBoundingClientRect().bottom) {
             await this.loadPage(this.pageNum + 1, 0);
+            this.reportReadingPosition();
         } else {
             // no need to check for too large scroll top, it will be handled by the browser
-            this.pageScroller.scrollTop += this.pageScroller.clientHeight - this.lineHeight;
+            this.getBookPageScroller().scrollTop += this.getBookPageScroller().clientHeight - this.lineHeight;
+            log('***** scrollTop:', this.getBookPageScroller().scrollTop, 'clientHeight,lineHeight:', this.getBookPageScroller().clientHeight, this.lineHeight);
             this.reportReadingPosition();
         }
     }

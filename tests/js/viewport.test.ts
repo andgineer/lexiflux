@@ -124,9 +124,9 @@ describe('viewport.js tests', () => {
 
   describe('scroll', () => {
     beforeEach(() => {
-      viewport.pageScroller.scrollTop = 100;
+      viewport.getBookPageScroller().scrollTop = 100;
       // mock readonly clientHeight
-      Object.defineProperty(viewport.pageScroller, 'clientHeight', {
+      Object.defineProperty(viewport.getBookPageScroller(), 'clientHeight', {
         value: 100,
         writable: true
       });
