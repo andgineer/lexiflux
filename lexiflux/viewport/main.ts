@@ -283,7 +283,6 @@ document.body.addEventListener('htmx:configRequest', (event: Event) => {
 });
 
 document.addEventListener('DOMContentLoaded', () => {
-    viewport.initializeVariables();
     viewport.loadPage(viewport.pageNum, 0).then(() => {
         reInitDom();
     }).catch((error: Error) => {

@@ -14,7 +14,7 @@ let mockWordRect: MockRectFunction;
 
 describe('viewport.js tests', () => {
   beforeAll(() => {
-    viewport.initializeVariables();
+    viewport.domChanged();
 
     const container = viewport.getWordsContainer();
     if (!container) {
