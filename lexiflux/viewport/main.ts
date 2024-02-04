@@ -73,20 +73,10 @@ function createAndReplaceTranslationSpan(selectedText: string, translatedText: s
   translationSpan.appendChild(textDiv);
 
   viewport.getWordsContainer().insertBefore(translationSpan, firstWordSpan);
-  const {wordSpans} = viewport;
-  wordSpans.splice(wordSpans.indexOf(firstWordSpan), 0, translationSpan);
 
   // Remove the original word spans
   selectedWordSpans.forEach(span => {
     viewport.getWordsContainer().removeChild(span);
-  });
-
-  selectedWordSpans.forEach(span => {
-    const index = wordSpans.indexOf(span);
-    if (index !== -1) {
-        // todo: just set invisible and save IDs in translation span to restore visibility
-        wordSpans.splice(index, 1); // Remove the original word span
-    }
   });
 }
 
@@ -123,14 +113,6 @@ function restoreOriginalSpans(translationSpan: HTMLElement): void {
     tempContainer = document.createElement('div');
     tempContainer.innerHTML = originalHtml;
     const originalSpans = Array.from(tempContainer.childNodes).filter(node => node.nodeType === Node.ELEMENT_NODE) as HTMLElement[];
-
-    // Update the wordSpans array
-    const {wordSpans} = viewport;
-    const index = wordSpans.indexOf(translationSpan);
-    if (index !== -1) {
-        wordSpans.splice(index, 1); // Remove the translation span
-        wordSpans.splice(index, 0, ...originalSpans); // Insert the original word spans
-    }
   }
 }
 

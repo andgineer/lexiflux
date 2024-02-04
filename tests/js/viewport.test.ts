@@ -1,5 +1,7 @@
 import { viewport } from '../../lexiflux/viewport/viewport';
 
+declare const numberOfWords: number;
+
 type MockRectFunction = (id: string) => {
   // Get word ID and return its bounding client rect
   top: number;
@@ -10,64 +12,49 @@ type MockRectFunction = (id: string) => {
   height?: number;
 };
 
-let mockWordRect: MockRectFunction;
+let mockWordRectFunc: MockRectFunction;
+let lastWordId = `word-${numberOfWords - 1}`;
+
+const container = viewport.getWordsContainer();
+if (!container) {
+  throw new Error('Container not found');
+}
+
+const containerSize = 60;
+const containerRect: DOMRect = {
+  top: 0,
+  bottom: containerSize,
+  left: 0,
+  right: 100,
+  width: 100,
+  height: containerSize,
+  x: 0,
+  y: 0,
+  toJSON: () => {
+  }, // Adding the toJSON method to satisfy TypeScript
+};
+const mockContainerRectFunc = (): DOMRect => containerRect;
+
+Object.defineProperty(viewport.wordsContainer, 'getBoundingClientRect', {
+  value: () => mockContainerRectFunc
+});
+
+const defaultWordRect: DOMRect = {top: 0, bottom: 0, left: 0, right: 0, width: 0, height: 0, x: 0, y: 0, toJSON: () =>{}};
+mockWordRectFunc = () => defaultWordRect;
+const spans = Array.from(container.children);
+spans.forEach(span => {
+  if (span.id.match(/^word-\d+$/)) {
+    Object.defineProperty(span, 'getBoundingClientRect', {
+      value: () => mockWordRectFunc(span.id)
+    });
+  }
+});
+viewport.domChanged();
 
 describe('viewport.js tests', () => {
-  beforeAll(() => {
-    viewport.domChanged();
-
-    const container = viewport.getWordsContainer();
-    if (!container) {
-      throw new Error('Container not found');
-    }
-
-    // Create and append test words to the container
-    const testWords = ['word1', 'word2', 'word3', 'word4', 'word5'];
-    testWords.forEach((word, index) => {
-      const span = document.createElement('span');
-      span.id = `word-${index}`;
-      span.textContent = word;
-      container.appendChild(span);
-    });
-
-    const containerSize = 60;
-    const mockContainerRect = (): DOMRect => ({
-      top: 0,
-      bottom: containerSize,
-      left: 0,
-      right: 100,
-      width: 100,
-      height: containerSize,
-      x: 0,
-      y: 0,
-      toJSON: () => {}, // Adding the toJSON method to satisfy TypeScript
-    });
-
-    Object.defineProperty(viewport.wordsContainer, 'getBoundingClientRect', {
-      value: () => mockContainerRect
-    });
-
-    mockWordRect = () => ({top: 0, bottom: 0, left: 0, right: 0, width: 0, height: 0});
-    const spans = Array.from(container.children);
-    spans.forEach(span => {
-      if (span.id.match(/^word-\d+$/)) {
-        Object.defineProperty(span, 'getBoundingClientRect', {
-          value: () => mockWordRect(span.id)
-        });
-      }
-    });
-
-    viewport.wordSpans.length = 0; // Clear the array
-    spans.forEach(child => {
-      if (child instanceof HTMLElement) {
-        viewport.wordSpans.push(child);
-      }
-    });
-  });  // beforeAll
-
   describe('initializeVariables', () => {
     it('should initialize variables based on DOM elements', () => {
-      expect(viewport.totalWords).toBe(0);
+      expect(viewport.totalWords).toBe(numberOfWords);
     });
   });
 
@@ -80,7 +67,7 @@ describe('viewport.js tests', () => {
 
   describe('findFirstVisibleWord', () => {
     it('words up to word-2 are visible, so the first visible word is the very first one', () => {
-      mockWordRect = (id: string) => {
+      mockWordRectFunc = (id: string) => {
         const index = parseInt(id.split('-')[1]);
         const top = viewport.getTopNavbar().getBoundingClientRect().height;
         let mockRect = { top: top, bottom: top }; // Default mock rect
@@ -96,7 +83,7 @@ describe('viewport.js tests', () => {
     });
 
     it('words from word-2 to word-4 are visible', () => {
-      mockWordRect = (id: string) => {
+      mockWordRectFunc = (id: string) => {
         const index = parseInt(id.split('-')[1]);
         const top = viewport.getTopNavbar().getBoundingClientRect().height;
         let mockRect = { top: top, bottom: top }; // Default mock rect
@@ -114,7 +101,7 @@ describe('viewport.js tests', () => {
     });
 
     it('should return 0 if all words are outside the visible area', () => {
-      mockWordRect = (id: string) => ({top: 1000, bottom: 1020, left: 0, right: 0, width: 0, height: 20});
+      mockWordRectFunc = (id: string) => ({top: 1000, bottom: 1020, left: 0, right: 0, width: 0, height: 20});
 
       const lastWord = viewport.getFirstVisibleWord();
       expect(lastWord).toBe(0);
@@ -144,7 +131,7 @@ describe('viewport.js tests', () => {
 
       const loadPageSpy = jest.spyOn(viewport, 'loadPage');
       await viewport.scrollUp();
-      expect(loadPageSpy).toHaveBeenCalledWith(1, 0); // Expect to load the previous page
+      expect(loadPageSpy).toHaveBeenCalledWith(1, undefined); // Expect to load the previous page
       loadPageSpy.mockRestore();
     });
 
@@ -159,11 +146,23 @@ describe('viewport.js tests', () => {
 
     it('scrollDown: should scroll down within the same page if not at the bottom', async () => {
       // Mock the bottom of the last wordSpan to simulate not being at the bottom
-      const mockBottom = viewport.getBookPageScroller().getBoundingClientRect().bottom + 100;
-      Object.defineProperty(viewport.wordSpans[viewport.wordSpans.length - 1], 'getBoundingClientRect', {
-        value: () => ({ bottom: mockBottom }),
-        configurable: true,
-      });
+      mockWordRectFunc = (id: string) => {
+        let wordRect: DOMRect = defaultWordRect;
+        if (id === lastWordId) { // Words after 'word-2' are lower visible area
+          wordRect = {
+            top: 0,
+            bottom: viewport.getBookPageScroller().getBoundingClientRect().bottom + 100,
+            left: 0,
+            right: 0,
+            width: 0,
+            height: 0,
+            x: 0,
+            y: 0,
+            toJSON: () =>{}
+          }
+        }
+        return wordRect;
+      };
 
       const initialScrollTop = viewport.getBookPageScroller().scrollTop;
       await viewport.scrollDown();
@@ -172,11 +171,23 @@ describe('viewport.js tests', () => {
 
     it('scrollDown: should load the next page if at the bottom', async () => {
       // Simulate the last word being within the viewport to trigger loading the next page
-      const mockBottom = viewport.getBookPageScroller().getBoundingClientRect().bottom - 1;
-      Object.defineProperty(viewport.wordSpans[viewport.wordSpans.length - 1], 'getBoundingClientRect', {
-        value: () => ({ bottom: mockBottom }),
-        configurable: true,
-      });
+      mockWordRectFunc = (id: string) => {
+        let wordRect: DOMRect = defaultWordRect;
+        if (id === lastWordId) { // Words after 'word-2' are lower visible area
+          wordRect = {
+            top: 0,
+            bottom: viewport.getBookPageScroller().getBoundingClientRect().bottom - 1,
+            left: 0,
+            right: 0,
+            width: 0,
+            height: 0,
+            x: 0,
+            y: 0,
+            toJSON: () =>{}
+          }
+        }
+        return wordRect;
+      };
 
       viewport.pageNum = 1; // Current page
       const loadPageSpy = jest.spyOn(viewport, 'loadPage');

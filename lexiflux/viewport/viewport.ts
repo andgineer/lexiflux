@@ -1,4 +1,4 @@
-import {log} from './utils';
+import {log, getElement} from './utils';
 
 export class Viewport {
     static pageBookScrollerId = 'book-page-scroller';
@@ -8,10 +8,10 @@ export class Viewport {
     bookId: string;
     pageNum: number;
     totalWords: number = 0;
-    wordSpans: HTMLElement[] = [];
 
     wordsContainer: HTMLElement;
     bookPageScroller: HTMLElement;
+    wordsContainerTopMargin: number;
 
     topWord: number = 0; // the first visible word index
     lineHeight: number = 0; // average line height
@@ -20,62 +20,57 @@ export class Viewport {
     constructor() {
         this.wordsContainer = this.getWordsContainer();
         this.bookPageScroller = this.getBookPageScroller();
+        this.wordsContainerTopMargin = getElement(Viewport.topNavbarId).getBoundingClientRect().height;
         this.bookId = document.body.getAttribute('data-book-id') || '';
         this.pageNum = parseInt(document.body.getAttribute('data-book-page-number') || '0');
     }
 
     public getWordsContainer(): HTMLElement {
-        const container = document.getElementById(Viewport.wordsContainerId);
-        if (!container) {
-            throw new Error(`Failed to find the words container (id=${Viewport.wordsContainerId}).`);
-        }
-        return container as HTMLElement;
+        return getElement(Viewport.wordsContainerId);
+    }
+
+    public getWordsContainerHeight(): number {
+        return this.wordsContainer.getBoundingClientRect().height;
     }
 
     public getTopNavbar(): HTMLElement {
-        const container = document.getElementById(Viewport.topNavbarId);
-        if (!container) {
-            throw new Error(`Failed to find the top navbar (id=${Viewport.topNavbarId}).`);
-        }
-        return container as HTMLElement;
+        return getElement(Viewport.topNavbarId);
     }
 
     public getBookPageScroller(): HTMLElement {
-        const pageScroller = document.getElementById(Viewport.pageBookScrollerId);
-        if (!pageScroller) {
-            throw new Error(`Could not find page scroller (id=${Viewport.pageBookScrollerId}).`);
+        return getElement(Viewport.pageBookScrollerId);
+    }
+
+    public calculateTotalWords(): number {
+        // Calculate the number of words by counting word elements within the wordsContainer
+        const wordElements = this.wordsContainer.querySelectorAll('.word');
+        return  wordElements.length;
+    }
+
+    public word(index: number): HTMLElement {
+        const result = document.getElementById(`word-${index}`);
+        if (!result) {
+            throw new Error(`Could not find word ${index}.`);
         }
-        return pageScroller as HTMLElement;
+        return result as HTMLElement;
     }
 
     public domChanged(): void {
         this.wordsContainer = this.getWordsContainer();
         this.bookPageScroller = this.getBookPageScroller();
-        console.log('domChanged: bookId:', this.bookId, 'pageNum:', this.pageNum);
+        this.wordsContainerTopMargin = this.getTopNavbar().getBoundingClientRect().height;
+        this.totalWords = this.calculateTotalWords();
+        console.log('domChanged: bookId:', this.bookId, 'pageNum:', this.pageNum, 'totalWords:', this.totalWords, 'wordsContainerHeight:', this.getWordsContainerHeight());
     }
 
     public getWordTop(wordId: number = 0): number {
         // find targetLastWord top coordinate
         const word = document.getElementById('word-' + wordId);
-        return word ? word.getBoundingClientRect().top - this.getTopNavbar().getBoundingClientRect().height : 0;
+        return word ? word.getBoundingClientRect().top - this.wordsContainerTopMargin : 0;
     }
 
-    public fillWordsContainer(startWordIndex: number): void {
-        // Fill the words container with the words from wordSpans.
-        // Set the scrollTop to the top of the word with startWordIndex if it is not 0, otherwise set it to 0.
-        this.wordsContainer.innerHTML = '';
-        for (let i = 0; i < this.wordSpans.length; i++) {
-            this.wordsContainer.appendChild(this.wordSpans[i]);
-        }
-        if (startWordIndex > 0) {
-            this.bookPageScroller.scrollTop = this.getWordTop(startWordIndex);
-            console.log('scrollTop:', this.bookPageScroller.scrollTop);
-        } else {
-            this.bookPageScroller.scrollTop = 0;
-        }
-    }
-
-    public loadPage(pageNumber: number, topWord: number = 0): Promise<void> {
+    public loadPage(pageNumber: number, topWord: number | undefined = 0): Promise<void> {
+        // if topWord is undefined you should call reportReadingPosition() by yourself
         return new Promise((resolve, reject) => {
             fetch('/page?book-id=' + this.bookId + '&book-page-num=' + pageNumber + '&top-word=' + topWord)
                 .then(response => {
@@ -99,24 +94,20 @@ export class Viewport {
 
                     this.bookId = data.data.bookId;
                     this.pageNum = parseInt(data.data.pageNum);
-                    this.totalWords = data.data.words.length;
+                    this.totalWords = this.calculateTotalWords();
+                    log(`Total words: ${this.totalWords}, topWord: ${topWord}`);
 
-                    let wordCounter = 0;
-                    this.wordSpans = data.data.words.map((word: string) => {
-                        let wordElement;
-                        if (word === '<br/>') {
-                            wordElement = document.createElement('br');
+                    if (topWord != undefined) {
+                        this.topWord = topWord;
+                        if (topWord > 0) {
+                            this.bookPageScroller.scrollTop = this.getWordTop(topWord);
+                            log('scrollTop:', this.bookPageScroller.scrollTop);
                         } else {
-                            wordElement = document.createElement('span');
-                            wordElement.id = 'word-' + wordCounter;
-                            wordElement.className = 'word';
-                            wordElement.innerHTML = ' ' + word;
-                            wordCounter++;
+                            this.bookPageScroller.scrollTop = 0;
                         }
-                        return wordElement;
-                    });
+                        this.reportReadingPosition();
+                    }
 
-                    this.fillWordsContainer(topWord);
                     resolve();
                 })
                 .catch(error => {
@@ -133,13 +124,13 @@ export class Viewport {
         wordCount: {value: number}
     ): number {
         // Look for any visible word in the container - first that we find
-        const containerHeight = this.wordsContainer.getBoundingClientRect().height;
-        const containerTop = this.getTopNavbar().getBoundingClientRect().height;
+        const containerHeight = this.getWordsContainerHeight();
+        const containerTop = this.wordsContainerTopMargin;
         log('Searching for visible word between', low, high, 'container rect:', containerTop, containerHeight);
 
         while (low < high) {
             let mid = Math.floor((low + high) / 2);
-            let word = document.getElementById('word-' + mid);
+            let word = this.word(mid);
             if (!word) {
                 log('logical error: word not found:', mid);
                 return low;
@@ -169,11 +160,11 @@ export class Viewport {
         // first find any visible word - this is the upper bound in search for the first visible word
         let totalHeight = {value: 0};  // accumulate statistics to
         let wordCount = {value: 0};    // calculate average line height
-        let high = this.binarySearchVisibleWord(0, this.wordSpans.length, totalHeight, wordCount);
+        let high = this.binarySearchVisibleWord(0, this.totalWords, totalHeight, wordCount);
         log('found high bound:', high);
         let low = 0;
-        const containerHeight = this.wordsContainer.getBoundingClientRect().height;
-        const containerTop = this.getTopNavbar().getBoundingClientRect().height;
+        const containerHeight = this.getWordsContainerHeight();
+        const containerTop = this.wordsContainerTopMargin;
         log('container:', containerTop, containerHeight);
 
         // look for first visible word using binary search
@@ -226,8 +217,9 @@ export class Viewport {
             if (this.pageNum === 1) {
                 return;
             }
-            await this.loadPage(this.pageNum - 1, 0);
-            this.bookPageScroller.scrollTop = this.wordsContainer.getBoundingClientRect().height - this.bookPageScroller.clientHeight;
+            await this.loadPage(this.pageNum - 1, undefined);
+            // Scroll to the bottom of the page
+            this.bookPageScroller.scrollTop = this.getWordsContainerHeight() - this.bookPageScroller.clientHeight;
             this.reportReadingPosition();
         } else {
             // no need to check for negative scroll top, it will be handled by the browser
@@ -239,9 +231,8 @@ export class Viewport {
 
     public async scrollDown(): Promise<void> {
         // Scroll one viewport down
-        if (this.wordSpans[this.wordSpans.length - 1].getBoundingClientRect().bottom <= this.bookPageScroller.getBoundingClientRect().bottom) {
+        if (this.word(this.totalWords - 1).getBoundingClientRect().bottom <= this.bookPageScroller.getBoundingClientRect().bottom) {
             await this.loadPage(this.pageNum + 1, 0);
-            this.reportReadingPosition();
         } else {
             // no need to check for too large scroll top, it will be handled by the browser
             this.bookPageScroller.scrollTop += this.bookPageScroller.clientHeight - this.lineHeight;

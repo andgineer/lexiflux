@@ -6,21 +6,10 @@ export function log(...args: any[]): void {
     }
 }
 
-let redrawSuppressCount = 0;
-
-export function suppressRedraw(container: HTMLElement): void {
-    if (redrawSuppressCount === 0) {
-        container.style.visibility = 'hidden';
+export function getElement(id: string): HTMLElement {
+    const result = document.getElementById(id);
+    if (!result) {
+        throw new Error(`Could not find element (id=${id}).`);
     }
-    redrawSuppressCount++;
-}
-
-export function resumeRedraw(container: HTMLElement): void {
-    redrawSuppressCount--;
-    if (redrawSuppressCount === 0) {
-        container.style.visibility = 'visible';
-    } else if (redrawSuppressCount < 0) {
-        console.error('Mismatched calls to suppressRedraw and resumeRedraw');
-        redrawSuppressCount = 0; // Reset to prevent further errors
-    }
+    return result as HTMLElement;
 }

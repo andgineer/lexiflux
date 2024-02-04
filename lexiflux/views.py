@@ -14,6 +14,21 @@ from lexiflux.language.translation import get_translator
 from .models import Book, BookPage, ReadingHistory, ReadingPos
 
 
+def render_page(content: str) -> str:
+    """Render the page."""
+    words = content.split()  # Split the content into words
+    spanned_words = []
+    word_index = 0
+    for word in words:
+        if word == "<br/>":
+            spanned_words.append("<br/>")
+        else:
+            spanned_word = f'<span id="word-{word_index}" class="word">{word}</span>'
+            spanned_words.append(spanned_word)
+            word_index += 1
+    return " ".join(spanned_words)
+
+
 def redirect_to_reader(request: HttpRequest) -> HttpResponse:
     """Redirect to the 'reader' view."""
     return redirect("reader")
@@ -75,14 +90,14 @@ def page(request: HttpRequest) -> HttpResponse:
         return HttpResponse(f"error: Page {page_number} not found", status=500)
     if not can_see_book(request.user, book_page.book):
         return HttpResponse(status=403)  # Forbidden
-    words = book_page.content.split(" ")
-    print(book_id, page_number, "words", len(words))
+    page_html = render_page(book_page.content)
+    print(book_id, page_number)
     rendered_html = render_to_string(
         "page.html",
         {
             "book": book_page.book,
             "page": book_page,
-            "words": words,
+            "pageHtml": page_html,
         },
         request,
     )
@@ -93,7 +108,6 @@ def page(request: HttpRequest) -> HttpResponse:
             "data": {
                 "bookId": book_id,
                 "pageNum": page_number,
-                "words": words,
             },
         }
     )

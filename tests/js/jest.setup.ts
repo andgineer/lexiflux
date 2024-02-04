@@ -2,6 +2,30 @@ import fetchMock from 'jest-fetch-mock';
 
 fetchMock.enableMocks();
 
+const mockHtmx = { process: jest.fn() };
+
+declare global {
+  var htmx: typeof mockHtmx;
+  var numberOfWords: number;
+}
+global.htmx = mockHtmx;
+global.numberOfWords = 5;
+
+let wordSpans = "";
+for (let i = 0; i < global.numberOfWords; i++) {
+    wordSpans += `<span id='word-${i}' class='word'>word${i}</span>`;
+}
+
+global.document.body.innerHTML = `
+<div id="top-navbar"></div>
+<div id="book-page-scroller">  
+  <div id="words-container">
+  ${wordSpans}
+  </div>
+</div>
+<div id="book" data-book-id="123" data-book-page-number="1" data-click-word-url="/click-word"></div>
+`;
+
 beforeEach(() => {
   // Clear all mocks before each test
   fetchMock.resetMocks();
@@ -23,11 +47,11 @@ beforeEach(() => {
       return {
         status: 200,
         body: JSON.stringify({
-          html: '<div>Mocked page content</div>',
+          html: global.document.body.innerHTML,
           data: {
             bookId: '123',
             pageNum: '1',
-            words: ['mock', 'page', 'content'],
+            pageHtml: wordSpans,
           },
         }),
       };
@@ -42,20 +66,5 @@ beforeEach(() => {
   });
 });
 
-const mockHtmx = { process: jest.fn() };
 
-declare global {
-  var htmx: typeof mockHtmx;
-}
 
-global.document.body.innerHTML = `
-<div id="top-navbar"></div>
-<div id="book-page-scroller">  
-  <div id="words-container"></div>
-</div>
-<div id="book" data-book-id="123" data-book-page-number="1" data-click-word-url="/click-word"></div>
-`;
-
-global.htmx = mockHtmx;
-
-export {};
