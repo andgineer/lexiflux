@@ -124,9 +124,9 @@ export class Viewport {
         wordCount: {value: number}
     ): number {
         // Look for any visible word in the container - first that we find
-        const containerHeight = this.getWordsContainerHeight();  // todo: we should compare with the scroller bottom
+        const containerBottom = this.bookPageScroller.getBoundingClientRect().bottom;
         const containerTop = this.wordsContainerTopMargin;
-        log('Searching for visible word between', low, high, 'container rect:', containerTop, containerHeight);
+        log('Searching for visible word between', low, high, 'container rect:', containerTop, containerBottom);
 
         while (low < high) {
             let mid = Math.floor((low + high) / 2);
@@ -140,7 +140,7 @@ export class Viewport {
             wordCount.value++;
             log('low:', low, 'high:', high, 'mid:', mid, 'rect:', rect.top, rect.bottom);
 
-            if ((rect.top >= containerTop) && (rect.bottom <= containerHeight)) {
+            if ((rect.top >= containerTop) && (rect.bottom <= containerBottom)) {
                 return mid;
             }
             if (rect.top < containerTop) {
