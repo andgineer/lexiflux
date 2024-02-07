@@ -58,7 +58,6 @@ function createAndReplaceTranslationSpan(selectedText: string, translatedText: s
 
     translationSpan.appendChild(translationDiv);
     translationSpan.appendChild(textDiv);
-
     viewport.getWordsContainer().insertBefore(translationSpan, firstWordSpan);
 
     // Remove the original word spans
