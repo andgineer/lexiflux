@@ -24,7 +24,7 @@ function sendTranslationRequest(selectedText: string, range: Range, selectedWord
       if (sidebar) {
         sidebar.innerHTML = data.article; // Set innerHTML only if sidebar is not null
       } else {
-        console.error('Sidebar element not found');
+        log('Sidebar element not found');
       }
       createAndReplaceTranslationSpan(selectedText, data.translatedText, selectedWordSpans);
     })
@@ -33,31 +33,39 @@ function sendTranslationRequest(selectedText: string, range: Range, selectedWord
     });
 }
 
+function ensureVisible(element: HTMLSpanElement) {
+    // if the element is not visible, scroll to it
+    if (element.getBoundingClientRect().bottom > viewport.bookPageScroller.getBoundingClientRect().bottom) {
+        viewport.bookPageScroller.scrollTop += element.getBoundingClientRect().bottom - viewport.bookPageScroller.getBoundingClientRect().bottom;
+    }
+}
+
 function createAndReplaceTranslationSpan(selectedText: string, translatedText: string, selectedWordSpans: HTMLElement[]): void {
-  let firstWordSpan = selectedWordSpans[0];
-  let translationSpan = document.createElement('span');
-  translationSpan.dataset.originalHtml = selectedWordSpans.map(span => span.outerHTML).join('');
-  translationSpan.className = 'translation-span';
-  translationSpan.id = 'translation-' + firstWordSpan.id;
+    let firstWordSpan = selectedWordSpans[0];
+    let translationSpan = document.createElement('span');
+    translationSpan.dataset.originalHtml = selectedWordSpans.map(span => span.outerHTML).join('');
+    translationSpan.className = 'translation-span';
+    translationSpan.id = 'translation-' + firstWordSpan.id;
 
-  let translationDiv = document.createElement('div');
-  translationDiv.className = 'translation-text';
-  translationDiv.textContent = translatedText;
+    let translationDiv = document.createElement('div');
+    translationDiv.className = 'translation-text';
+    translationDiv.textContent = translatedText;
 
-  let textDiv = document.createElement('div');
-  textDiv.className = 'text';
-  // Update to include original HTML instead of just text
-  textDiv.innerHTML = selectedWordSpans.map(span => span.outerHTML).join('&nbsp;');
+    let textDiv = document.createElement('div');
+    textDiv.className = 'text';
+    // Update to include original HTML instead of just text
+    textDiv.innerHTML = selectedWordSpans.map(span => span.outerHTML).join('&nbsp;');
 
-  translationSpan.appendChild(translationDiv);
-  translationSpan.appendChild(textDiv);
+    translationSpan.appendChild(translationDiv);
+    translationSpan.appendChild(textDiv);
 
-  viewport.getWordsContainer().insertBefore(translationSpan, firstWordSpan);
+    viewport.getWordsContainer().insertBefore(translationSpan, firstWordSpan);
 
-  // Remove the original word spans
-  selectedWordSpans.forEach(span => {
-    viewport.getWordsContainer().removeChild(span);
-  });
+    // Remove the original word spans
+    selectedWordSpans.forEach(span => {
+        viewport.getWordsContainer().removeChild(span);
+    });
+    ensureVisible(translationSpan);
 }
 
 export { sendTranslationRequest, createAndReplaceTranslationSpan, TranslationResponse };

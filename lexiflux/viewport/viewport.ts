@@ -124,7 +124,7 @@ export class Viewport {
         wordCount: {value: number}
     ): number {
         // Look for any visible word in the container - first that we find
-        const containerHeight = this.getWordsContainerHeight();
+        const containerHeight = this.getWordsContainerHeight();  // todo: we should compare with the scroller bottom
         const containerTop = this.wordsContainerTopMargin;
         log('Searching for visible word between', low, high, 'container rect:', containerTop, containerHeight);
 

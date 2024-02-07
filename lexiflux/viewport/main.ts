@@ -1,6 +1,6 @@
 import { viewport } from './viewport';
 import {log} from './utils';
-import { sendTranslationRequest, createAndReplaceTranslationSpan } from './translate';
+import { sendTranslationRequest } from './translate';
 
 const CLICK_TIMEOUT_MS = 200;
 
