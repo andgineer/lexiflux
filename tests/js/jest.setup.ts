@@ -18,13 +18,34 @@ for (let i = 0; i < global.numberOfWords; i++) {
 
 global.document.body.innerHTML = `
 <div id="top-navbar"></div>
-<div id="book-page-scroller">  
+<div id="book-page-scroller" style="height: 500px;">  
   <div id="words-container">
   ${wordSpans}
   </div>
 </div>
 <div id="book" data-book-id="123" data-book-page-number="1" data-click-word-url="/click-word"></div>
 `;
+
+import {viewport} from "../../lexiflux/viewport/viewport";  // load the module only after the DOM is set up
+
+const containerHeight = 60;
+const containerRect: DOMRect = {
+  top: 0,
+  bottom: containerHeight,
+  left: 0,
+  right: 100,
+  width: 100,
+  height: containerHeight,
+  x: 0,
+  y: 0,
+  toJSON: () => {
+  }, // Adding the toJSON method to satisfy TypeScript
+};
+const mockContainerRectFunc = (): DOMRect => containerRect;
+
+Object.defineProperty(viewport.wordsContainer, 'getBoundingClientRect', {
+  value: () => mockContainerRectFunc
+});
 
 beforeEach(() => {
   // Clear all mocks before each test

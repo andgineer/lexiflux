@@ -20,25 +20,6 @@ if (!container) {
   throw new Error('Container not found');
 }
 
-const containerSize = 60;
-const containerRect: DOMRect = {
-  top: 0,
-  bottom: containerSize,
-  left: 0,
-  right: 100,
-  width: 100,
-  height: containerSize,
-  x: 0,
-  y: 0,
-  toJSON: () => {
-  }, // Adding the toJSON method to satisfy TypeScript
-};
-const mockContainerRectFunc = (): DOMRect => containerRect;
-
-Object.defineProperty(viewport.wordsContainer, 'getBoundingClientRect', {
-  value: () => mockContainerRectFunc
-});
-
 const defaultWordRect: DOMRect = {top: 0, bottom: 0, left: 0, right: 0, width: 0, height: 0, x: 0, y: 0, toJSON: () =>{}};
 mockWordRectFunc = () => defaultWordRect;
 const spans = Array.from(container.children);
