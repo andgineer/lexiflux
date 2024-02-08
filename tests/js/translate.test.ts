@@ -15,11 +15,13 @@ describe('translate.ts', () => {
     const mockGetWordsContainer = jest.fn().mockImplementation(() => ({
         insertBefore: mockInsertBefore,
         removeChild: mockRemoveChild,
+        getBoundingClientRect: jest.fn(() => ({ bottom: 200 })),
     }));
 
     const mockBookPageScroller = {
         scrollTop: 100,
-        getBoundingClientRect: jest.fn(() => ({ bottom: 200 })),
+        clientHeight: 500,
+        getBoundingClientRect: jest.fn(() => ({ bottom: 600 })),
     };
 
     jest.mock('../../lexiflux/viewport/viewport', () => ({
@@ -45,8 +47,7 @@ describe('translate.ts', () => {
 
     // Check if fetch was called correctly
     expect(fetchMock).toHaveBeenCalledWith('/translate?text=test');
-    // Check if translation was added
-    // expect(viewport.getWordsContainer().insertBefore).toHaveBeenCalledWith(expect.any(HTMLSpanElement), selectedWordSpans[0]);
+    // todo: Check if translation was added
   });
 
   // todo: more tests here for other functionalities like
