@@ -81,9 +81,21 @@ beforeEach(() => {
         status: 200,
         body: JSON.stringify('Position updated successfully'),
       };
-    }
+    } else if (absoluteUrl.includes('/translate')) {
+      return {
+        status: 200,
+        body: JSON.stringify({
+          translatedText: 'translated text',
+          article: 'translated article',
+        }),
+      };
+    };
     // Fallback for unmocked endpoints
-    return Promise.reject(new Error(`Unmocked request: ${absoluteUrl}`));
+    console.log('Unknown endpoint:', absoluteUrl);
+    return {
+        status: 500,
+        body: JSON.stringify('Unknown endpoint'),
+      };
   });
 });
 

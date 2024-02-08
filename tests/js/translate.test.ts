@@ -17,33 +17,12 @@ Object.defineProperty(viewport.bookPageScroller, 'getBoundingClientRect', {
     }),
 });
 
+jest.spyOn(viewport.getWordsContainer(), 'insertBefore')
+  .mockImplementation((node, child) => node);
+jest.spyOn(viewport.getWordsContainer(), 'removeChild')
+  .mockImplementation((child) => child);
+
 describe('translate.ts', () => {
-    beforeEach(() => {
-        // Reset fetch mocks and DOM changes before each test
-        fetchMock.resetMocks();
-
-        // Explicitly mock insertBefore and removeChild as jest.fn()
-        const mockInsertBefore = jest.fn();
-        const mockRemoveChild = jest.fn();
-
-        const mockGetWordsContainer = jest.fn().mockImplementation(() => ({
-            insertBefore: mockInsertBefore,
-            removeChild: mockRemoveChild,
-            getBoundingClientRect: jest.fn(() => ({ bottom: 200 })),
-        }));
-
-        const mockBookPageScroller = {
-            scrollTop: 100,
-            clientHeight: 500,
-            getBoundingClientRect: jest.fn(() => ({ bottom: 600 })),
-        };
-
-        jest.mock('../../lexiflux/viewport/viewport', () => ({
-            getWordsContainer: mockGetWordsContainer,
-            bookPageScroller: mockBookPageScroller,
-        }));
-    });
-
     it('ensures translated text is visible', async () => {
         // Setup the scenario where the translated text would be out of view initially
         const initialScrollTop = viewport.bookPageScroller.scrollTop;
@@ -52,36 +31,71 @@ describe('translate.ts', () => {
         spanElement.id = 'word-1';
         spanElement.textContent = 'original text';
         const selectedWordSpans = [spanElement];
-        viewport.wordsContainer.appendChild(selectedWordSpans[0]);
         createAndReplaceTranslationSpan('original text', translatedText, selectedWordSpans);
 
         // Assert the page was scrolled to make the translation visible
         expect(viewport.bookPageScroller.scrollTop).toBeGreaterThan(initialScrollTop);
     });
 
-  it('sends a translation request and updates the sidebar on success', async () => {
-    // Mock successful fetch response
-    fetchMock.mockResponseOnce(JSON.stringify({
-      translatedText: 'translated text',
-      article: 'translated article',
-    }));
-
+  it('sends a translation request and creates and replaces translation span correctly', async () => {
     // Mock selected text and elements
     const selectedText = 'test';
     const range = document.createRange(); // Mock range if needed
-    const selectedWordSpans = [document.createElement('span')];
+    let spanElement = document.createElement('span');
+    spanElement.id = 'word-1';
+    spanElement.textContent = 'original text';
+    const selectedWordSpans = [spanElement];
     viewport.getWordsContainer().insertBefore(selectedWordSpans[0], null);
 
     await sendTranslationRequest(selectedText, range, selectedWordSpans);
 
     // Check if fetch was called correctly
     expect(fetchMock).toHaveBeenCalledWith('/translate?text=test');
-    // todo: Check if translation was added
+    // Check if translation was added
+    expect(viewport.getWordsContainer().insertBefore).toHaveBeenCalled();
+    // Assert the original word spans were removed
+    expect(viewport.getWordsContainer().removeChild).toHaveBeenCalledWith(selectedWordSpans[0]);
   });
 
-  // todo: more tests here for other functionalities like
-  // - Testing ensureVisible logic
-  // - Testing createAndReplaceTranslationSpan function directly with mocked inputs
-  // - Error cases, e.g., what happens when the sidebar doesn't exist or fetch fails
+  it('handles missing sidebar gracefully', async () => {
+    document.body.innerHTML = ''; // Simulate missing sidebar
+    const selectedText = 'test';
+    const range = document.createRange();
+    const selectedWordSpans = [document.createElement('span')];
+
+    await sendTranslationRequest(selectedText, range, selectedWordSpans);
+
+    // Expect no errors thrown, can also check for specific log output if necessary
+    expect(fetchMock).toHaveBeenCalled();
+  });
+
+  it('handles fetch failure gracefully', async () => {
+    fetchMock.resetMocks();
+    fetchMock.mockRejectOnce(new Error('Network failure'));
+    const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+
+
+    const selectedText = 'test';
+    const range = document.createRange();
+    const selectedWordSpans = [document.createElement('span')];
+
+    sendTranslationRequest(selectedText, range, selectedWordSpans);
+
+    // Since sendTranslationRequest does not return a promise, we cannot directly await it.
+    // However, we can wait for the next tick to allow any promises within sendTranslationRequest to resolve/reject.
+    return new Promise<void>((resolve) => {
+        setTimeout(() => {
+            expect(consoleSpy).toHaveBeenCalledWith(
+                expect.stringContaining('Error during translation:'),
+                expect.objectContaining({ message: expect.stringContaining('Network failure') })
+            );
+            consoleSpy.mockRestore(); // Clean up the spy
+            resolve(); // Correct usage when the promise is typed as Promise<void>
+        }, 0); // Use 0 ms delay to schedule for the next tick
+    });
+
+
+  });
+
 });
 
