@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-    <title>Coverage for lexiflux/ebook/book_base.py: 91%</title>
+    <title>Coverage for lexiflux/ebook/book_base.py: 89%</title>
     <link rel="icon" sizes="32x32" href="favicon_32.png">
     <link rel="stylesheet" href="style.css" type="text/css">
     <script type="text/javascript" src="coverage_html.js" defer></script>
@@ -12,7 +12,7 @@
     <div class="content">
         <h1>
             <span class="text">Coverage for </span><b>lexiflux/ebook/book_base.py</b>:
-            <span class="pc_cov">91%</span>
+            <span class="pc_cov">89%</span>
         </h1>
         <aside id="help_panel_wrapper">
             <input id="help_panel_state" type="checkbox">
@@ -54,9 +54,9 @@
             </div>
         </aside>
         <h2>
-            <span class="text">45 statements &nbsp;</span>
+            <span class="text">46 statements &nbsp;</span>
             <button type="button" class="run button_toggle_run" value="run" data-shortcut="r" title="Toggle lines run">41<span class="text"> run</span></button>
-            <button type="button" class="mis show_mis button_toggle_mis" value="mis" data-shortcut="m" title="Toggle lines missing">4<span class="text"> missing</span></button>
+            <button type="button" class="mis show_mis button_toggle_mis" value="mis" data-shortcut="m" title="Toggle lines missing">5<span class="text"> missing</span></button>
             <button type="button" class="exc show_exc button_toggle_exc" value="exc" data-shortcut="x" title="Toggle lines excluded">0<span class="text"> excluded</span></button>
         </h2>
         <p class="text">
@@ -65,7 +65,7 @@
             <a id="nextFileLink" class="nav" href="d_a5feceb8b1f4fde1_book_epub_py.html">&#xbb; next</a>
             &nbsp; &nbsp; &nbsp;
             <a class="nav" href="https://coverage.readthedocs.io/en/7.4.1">coverage.py v7.4.1</a>,
-            created at 2024-02-09 12:57 +0000
+            created at 2024-02-09 15:49 +0000
         </p>
         <aside class="hidden">
             <button type="button" class="button_next_chunk" data-shortcut="j"/>
@@ -166,11 +166,12 @@
     <p class="pln"><span class="n"><a id="t84" href="#t84">84</a></span><span class="t">                <span class="nam">name</span><span class="op">=</span><span class="nam">language_value</span><span class="op">,</span> <span class="nam">google_code</span><span class="op">=</span><span class="nam">language_value</span><span class="op">,</span> <span class="nam">epub_code</span><span class="op">=</span><span class="nam">language_value</span>&nbsp;</span><span class="r"></span></p>
     <p class="pln"><span class="n"><a id="t85" href="#t85">85</a></span><span class="t">            <span class="op">)</span><span class="op">:</span>&nbsp;</span><span class="r"></span></p>
     <p class="pln"><span class="n"><a id="t86" href="#t86">86</a></span><span class="t">                <span class="com"># Update the language to its name in case it was found by code</span>&nbsp;</span><span class="r"></span></p>
-    <p class="mis show_mis"><span class="n"><a id="t87" href="#t87">87</a></span><span class="t">                <span class="key">return</span> <span class="nam">language_name</span>  <span class="com"># type: ignore</span>&nbsp;</span><span class="r"></span></p>
-    <p class="pln"><span class="n"><a id="t88" href="#t88">88</a></span><span class="t">        <span class="com"># Detect language if not found in meta</span>&nbsp;</span><span class="r"></span></p>
-    <p class="run"><span class="n"><a id="t89" href="#t89">89</a></span><span class="t">        <span class="nam">language_name</span> <span class="op">=</span> <span class="nam">self</span><span class="op">.</span><span class="nam">detect_language</span><span class="op">(</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
-    <p class="run"><span class="n"><a id="t90" href="#t90">90</a></span><span class="t">        <span class="nam">log</span><span class="op">.</span><span class="nam">debug</span><span class="op">(</span><span class="str">"Language '%s' detected."</span><span class="op">,</span> <span class="nam">language_name</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
-    <p class="run"><span class="n"><a id="t91" href="#t91">91</a></span><span class="t">        <span class="key">return</span> <span class="nam">language_name</span>  <span class="com"># type: ignore</span>&nbsp;</span><span class="r"></span></p>
+    <p class="mis show_mis"><span class="n"><a id="t87" href="#t87">87</a></span><span class="t">                <span class="nam">log</span><span class="op">.</span><span class="nam">debug</span><span class="op">(</span><span class="str">"Language '%s' found in meta."</span><span class="op">,</span> <span class="nam">language_name</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
+    <p class="mis show_mis"><span class="n"><a id="t88" href="#t88">88</a></span><span class="t">                <span class="key">return</span> <span class="nam">language_name</span>  <span class="com"># type: ignore</span>&nbsp;</span><span class="r"></span></p>
+    <p class="pln"><span class="n"><a id="t89" href="#t89">89</a></span><span class="t">        <span class="com"># Detect language if not found in meta</span>&nbsp;</span><span class="r"></span></p>
+    <p class="run"><span class="n"><a id="t90" href="#t90">90</a></span><span class="t">        <span class="nam">language_name</span> <span class="op">=</span> <span class="nam">self</span><span class="op">.</span><span class="nam">detect_language</span><span class="op">(</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
+    <p class="run"><span class="n"><a id="t91" href="#t91">91</a></span><span class="t">        <span class="nam">log</span><span class="op">.</span><span class="nam">debug</span><span class="op">(</span><span class="str">"Language '%s' detected."</span><span class="op">,</span> <span class="nam">language_name</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
+    <p class="run"><span class="n"><a id="t92" href="#t92">92</a></span><span class="t">        <span class="key">return</span> <span class="nam">language_name</span>  <span class="com"># type: ignore</span>&nbsp;</span><span class="r"></span></p>
 </main>
 <footer>
     <div class="content">
@@ -180,7 +181,7 @@
             <a id="nextFileLink" class="nav" href="d_a5feceb8b1f4fde1_book_epub_py.html">&#xbb; next</a>
             &nbsp; &nbsp; &nbsp;
             <a class="nav" href="https://coverage.readthedocs.io/en/7.4.1">coverage.py v7.4.1</a>,
-            created at 2024-02-09 12:57 +0000
+            created at 2024-02-09 15:49 +0000
         </p>
     </div>
 </footer>
