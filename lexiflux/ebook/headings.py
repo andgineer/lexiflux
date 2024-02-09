@@ -1,10 +1,14 @@
-"""Book processor module."""
+"""Detect headings."""
+import logging
 import re
 from typing import List, Optional, Tuple
 
 
-class BookProcessor:
-    """Book processor."""
+log = logging.getLogger()
+
+
+class HeadingDetector:
+    """Detect headings."""
 
     def get_headings(self, page_text: str, page_num: int) -> List[Tuple[str, int, int]]:
         """Detect chapter headings in the text.

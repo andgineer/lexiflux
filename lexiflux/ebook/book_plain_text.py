@@ -2,28 +2,16 @@
 import logging
 import random
 import re
-from collections import Counter
 from typing import IO, Any, Dict, Iterator, List, Optional, Tuple, Union
 
 from chardet.universaldetector import UniversalDetector
-
-from lexiflux.ebook.book_processor import BookProcessor
-from lexiflux.language.translation import detect_language, find_language
+from lexiflux.ebook.book_base import MetadataField, BookBase
+from lexiflux.ebook.headings import HeadingDetector
 
 log = logging.getLogger()
 
 
-class MetadataField:  # pylint: disable=too-few-public-methods
-    """Book metadata fields."""
-
-    TITLE = "title"
-    AUTHOR = "author"
-    RELEASED = "released"
-    LANGUAGE = "language"
-    CREDITS = "credits"
-
-
-class BookPlainText:  # pylint: disable=too-many-instance-attributes
+class BookPlainText(BookBase):  # pylint: disable=too-many-instance-attributes
     """Import ebook from plain text."""
 
     PAGE_LENGTH_TARGET = 3000  # Target page length in characters
@@ -42,7 +30,6 @@ class BookPlainText:  # pylint: disable=too-many-instance-attributes
 
     book_start: int
     book_end: int
-    meta: Dict[str, Any]
 
     def __init__(
         self, file_path: Union[str, IO[str]], languages: Optional[List[str]] = None
@@ -103,19 +90,6 @@ class BookPlainText:  # pylint: disable=too-many-instance-attributes
         with open(file_path, "r", encoding=encoding) as f:
             return f.read()
 
-    def get_language(self) -> str:
-        """Get language from meta or detect from the book text."""
-        if language_value := self.meta.get(MetadataField.LANGUAGE):
-            if language_name := find_language(
-                name=language_value, google_code=language_value, epub_code=language_value
-            ):
-                # Update the language to its name in case it was found by code
-                return language_name  # type: ignore
-        # Detect language if not found in meta
-        language_name = self.detect_language()
-        log.debug("Language '%s' detected.", language_name)
-        return language_name  # type: ignore
-
     def get_random_words(self, words_num: int = 15) -> str:
         """Get random words from the book."""
         expected_words_length = self.WORD_ESTIMATED_LENGTH * words_num * 2
@@ -139,56 +113,6 @@ class BookPlainText:  # pylint: disable=too-many-instance-attributes
             # probably not a text so just return string
             words = [fragment[: self.WORD_ESTIMATED_LENGTH * words_num]]
         return " ".join(words)
-
-    @staticmethod
-    def get_language_group(lang: str) -> str:
-        """Define language similarity groups."""
-        lang_groups = {"group:bs-hr-sr": {"bs", "hr", "sr"}}
-        return next(
-            (group_name for group_name, group_langs in lang_groups.items() if lang in group_langs),
-            lang,
-        )
-
-    def detect_language(self) -> Optional[str]:
-        """Detect language of the book.
-
-        Returns lang code.
-        """
-        languages = [detect_language(self.get_random_words()) for _ in range(3)]
-
-        # If no clear majority, try additional random fragments
-        attempts = 0
-        while attempts < 10:
-            lang_counter = Counter(map(self.get_language_group, languages))
-            most_common_lang, most_common_count = lang_counter.most_common(1)[0]
-
-            # Check if the most common language group count is more than the sum of other counts
-            if most_common_count > sum(
-                count for lang, count in lang_counter.items() if lang != most_common_lang
-            ):
-                break
-
-            random_fragment = self.get_random_words()
-            languages.append(detect_language(random_fragment))
-            attempts += 1
-
-        # Count languages considering similarity groups
-        lang_counter = Counter(map(self.get_language_group, languages))
-
-        # Find the most common language group
-        most_common_lang, _ = lang_counter.most_common(1)[0]
-
-        # If the group consists of similar languages, find the most common individual language
-        if most_common_lang.startswith("group:"):  # found lang group, should select just one lang
-            result = Counter(
-                [lang for lang in languages if self.get_language_group(lang) == most_common_lang]
-            ).most_common(1)[0][0]
-        else:
-            result = most_common_lang
-
-        if language_name := find_language(name=result, google_code=result, epub_code=result):
-            return language_name  # type: ignore
-        return None
 
     def find_nearest_page_end_match(
         self, page_start_index: int, pattern: re.Pattern[str], return_start: bool = False
@@ -248,7 +172,7 @@ class BookPlainText:  # pylint: disable=too-many-instance-attributes
 
         Also clear headings and recollect them during pages generation.
         """
-        heading_finder = BookProcessor()
+        heading_detector = HeadingDetector()
 
         start = self.book_start
         self.headings = []
@@ -258,13 +182,13 @@ class BookPlainText:  # pylint: disable=too-many-instance-attributes
             end = self.find_nearest_page_end(start)
 
             # shift end if found heading near the end
-            if headings := heading_finder.get_headings(
+            if headings := heading_detector.get_headings(
                 self.text[start + self.PAGE_MIN_LENGTH : end] + "\n\n", page_num
             ):
                 end = start + self.PAGE_MIN_LENGTH + headings[0][1] - 1  # pos from first heading
 
             page_text = self.normalize(self.text[start:end])
-            if headings := heading_finder.get_headings(page_text, page_num):
+            if headings := heading_detector.get_headings(page_text, page_num):
                 self.headings.extend(headings)
             # todo: remove <br/> from the start of the page
             yield page_text
