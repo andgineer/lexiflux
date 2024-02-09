@@ -84,6 +84,7 @@ class BookBase:
                 name=language_value, google_code=language_value, epub_code=language_value
             ):
                 # Update the language to its name in case it was found by code
+                log.debug("Language '%s' found in meta.", language_name)
                 return language_name  # type: ignore
         # Detect language if not found in meta
         language_name = self.detect_language()
