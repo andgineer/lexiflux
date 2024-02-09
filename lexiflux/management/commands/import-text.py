@@ -19,7 +19,7 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument('file_path', type=str, help='Path to the plain text file to import')
         parser.add_argument('-l', '--loglevel', type=str, help='Logging level for the command', default='INFO')
-        parser.add_argument('-d', '--db-loglevel', type=str, help='Logging level for Django ORM', default='INFO')
+        parser.add_argument('--ld', '--db-loglevel', dest='db_loglevel', type=str, help='Logging level for Django ORM', default='INFO')
         parser.add_argument(
             '--owner',
             type=str,
