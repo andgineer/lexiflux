@@ -1,9 +1,13 @@
 """Book base class for importing books from different formats."""
 import logging
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, List, Tuple, Iterator
 from collections import Counter
-from lexiflux.language.translation import detect_language, find_language
 
+from django.core.management import CommandError
+
+from core.models import CustomUser
+from lexiflux.language.translation import detect_language, find_language
+from lexiflux.models import Book, Author, Language, BookPage
 
 log = logging.getLogger()
 
@@ -21,6 +25,7 @@ class MetadataField:  # pylint: disable=too-few-public-methods
 class BookBase:
     """Base class for importing books from different formats."""
 
+    headings: List[Tuple[str, int, int]] = []
     meta: Dict[str, Any]
 
     @staticmethod
@@ -34,6 +39,13 @@ class BookBase:
 
     def get_random_words(self, words_num: int = 15) -> str:
         """Get random words from the book."""
+        raise NotImplementedError
+
+    def pages(self) -> Iterator[str]:
+        """Split a text into pages of approximately equal length.
+
+        Also clear headings and recollect them during pages generation.
+        """
         raise NotImplementedError
 
     def detect_language(self) -> Optional[str]:
@@ -90,3 +102,33 @@ class BookBase:
         language_name = self.detect_language()
         log.debug("Language '%s' detected.", language_name)
         return language_name  # type: ignore
+
+
+def import_book(book_processor: BookBase, owner_email: str) -> Book:
+    """Import a book from a file."""
+    author_name = book_processor.meta.get(MetadataField.AUTHOR, "Unknown Author")
+    author, _ = Author.objects.get_or_create(name=author_name)
+
+    language_code = book_processor.meta.get(MetadataField.LANGUAGE, "Unknown Language")
+    language, _ = Language.objects.get_or_create(name=language_code)
+
+    book_title = book_processor.meta.get(MetadataField.TITLE, "Unknown Title")
+    book_instance = Book.objects.create(title=book_title, author=author, language=language)
+
+    # Iterate over pages and save them
+    for i, page_content in enumerate(book_processor.pages(), start=1):
+        BookPage.objects.create(book=book_instance, number=i, content=page_content)
+
+    book_instance.toc = book_processor.headings
+
+    if owner_email:
+        if not (owner_user := CustomUser.objects.filter(email=owner_email).first()):
+            raise CommandError(f'Error importing book: User with email "{owner_email}" not found')
+        book_instance.owner = owner_user
+        book_instance.public = False
+    else:
+        # If no owner is provided in CLI, make the book publicly available
+        book_instance.public = True
+
+    book_instance.save()
+    return book_instance  # type: ignore

@@ -39,7 +39,6 @@ class BookPlainText(BookBase):  # pylint: disable=too-many-instance-attributes
         If file_path is a string, it is treated as a path to a file and we try to detect encoding.
         If file_path is a file object, we assume it was opened with correct encoding.
         """
-        self.headings: List[Tuple[str, int, int]] = []
         self.languages = ["en", "sr"] if languages is None else languages
         if isinstance(file_path, str):
             self.text = self.read_file(file_path)

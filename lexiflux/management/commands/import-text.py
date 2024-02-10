@@ -1,23 +1,13 @@
-"""Django management command to import a book from a plain text file."""  # pylint: disable=invalid-name
+"""Django management command to import a book from a plain text file."""  # pylint: disable=invalid-name,duplicate-code
 import argparse
 import logging
 from typing import Any
 
 from django.core.management.base import BaseCommand, CommandError
-from lexiflux.ebook.book_plain_text import BookPlainText, MetadataField
-from lexiflux.models import Book, BookPage, Author, Language
-from core.models import CustomUser
 
-
-def validate_log_level(level_name: str) -> int:
-    """Validate the log level and return the corresponding integer value."""
-    level = logging.getLevelName(level_name.upper())
-    if not isinstance(level, int):
-        valid_levels = list(logging._levelToName.values())  # pylint: disable=protected-access
-        raise CommandError(
-            f"Invalid log level '{level_name}'. Valid options are: {', '.join(valid_levels)}"
-        )
-    return level
+from lexiflux.ebook.book_base import import_book
+from lexiflux.ebook.book_plain_text import BookPlainText
+from lexiflux.utils import validate_log_level
 
 
 class Command(BaseCommand):  # type: ignore
@@ -59,47 +49,11 @@ class Command(BaseCommand):  # type: ignore
         logging.getLogger("django.db.backends").setLevel(db_log_level)
 
         try:
-            # Process the book using BookPlainText
-            book_processor = BookPlainText(file_path)
-
-            # Create or get the author object
-            author_name = book_processor.meta.get(MetadataField.AUTHOR, "Unknown Author")
-            author, _ = Author.objects.get_or_create(name=author_name)
-
-            # Create or get the language object
-            language_code = book_processor.meta.get(MetadataField.LANGUAGE, "Unknown Language")
-            language, _ = Language.objects.get_or_create(name=language_code)
-
-            # Create the book object
-            book_title = book_processor.meta.get(MetadataField.TITLE, "Unknown Title")
-            book_instance = Book.objects.create(title=book_title, author=author, language=language)
-
-            # Iterate over pages and save them
-            for i, page_content in enumerate(book_processor.pages(), start=1):
-                BookPage.objects.create(book=book_instance, number=i, content=page_content)
-
-            book_instance.toc = book_processor.headings
-
-            if owner_email:
-                # If owner email is provided, set the owner and make visibility PRIVATE
-                owner_user = CustomUser.objects.filter(email=owner_email).first()
-                if owner_user:
-                    book_instance.owner = owner_user
-                    book_instance.public = False
-                else:
-                    raise CommandError(
-                        f'Error importing book: User with email "{owner_email}" not found'
-                    )
-            else:
-                # If no owner is provided, make the book publicly available
-                book_instance.public = True
-
-            book_instance.save()
-
+            book = import_book(BookPlainText(file_path), owner_email)
             self.stdout.write(
                 self.style.SUCCESS(
-                    f'Successfully imported book "{book_title}" ({author_name}, '
-                    f'{language}) from "{file_path}", code: {book_instance.code}'
+                    f'Successfully imported book "{book.title}" ({book.author}, '
+                    f'{book.language}) from "{file_path}", code: {book.code}'
                 )
             )
         except Exception as e:
