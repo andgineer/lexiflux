@@ -1,43 +1,61 @@
+"""Django management command to import a book from a plain text file."""  # pylint: disable=invalid-name
+import argparse
 import logging
+from typing import Any
+
 from django.core.management.base import BaseCommand, CommandError
 from lexiflux.ebook.book_plain_text import BookPlainText, MetadataField
 from lexiflux.models import Book, BookPage, Author, Language
 from core.models import CustomUser
 
 
-def validate_log_level(level_name):
+def validate_log_level(level_name: str) -> int:
+    """Validate the log level and return the corresponding integer value."""
     level = logging.getLevelName(level_name.upper())
     if not isinstance(level, int):
-        valid_levels = [name for name in logging._levelToName.values()]
-        raise CommandError(f"Invalid log level '{level_name}'. Valid options are: {', '.join(valid_levels)}")
+        valid_levels = list(logging._levelToName.values())  # pylint: disable=protected-access
+        raise CommandError(
+            f"Invalid log level '{level_name}'. Valid options are: {', '.join(valid_levels)}"
+        )
     return level
 
 
-class Command(BaseCommand):
-    help = 'Imports a book from an plain text file'
+class Command(BaseCommand):  # type: ignore
+    """Import a book from a plain text file."""
 
-    def add_arguments(self, parser):
-        parser.add_argument('file_path', type=str, help='Path to the plain text file to import')
-        parser.add_argument('-l', '--loglevel', type=str, help='Logging level for the command', default='INFO')
-        parser.add_argument('--ld', '--db-loglevel', dest='db_loglevel', type=str, help='Logging level for Django ORM', default='INFO')
+    help = "Imports a book from an plain text file"
+
+    def add_arguments(self, parser: argparse.ArgumentParser) -> None:
+        parser.add_argument("file_path", type=str, help="Path to the plain text file to import")
         parser.add_argument(
-            '--owner',
+            "-l", "--loglevel", type=str, help="Logging level for the command", default="INFO"
+        )
+        parser.add_argument(
+            "--ld",
+            "--db-loglevel",
+            dest="db_loglevel",
             type=str,
-            help='Owner email for the book (optional). See "list-users" command for a list of users',
-            default=None
+            help="Logging level for Django ORM",
+            default="INFO",
+        )
+        parser.add_argument(
+            "--owner",
+            type=str,
+            help="""Owner`s email for the book (optional).
+ See "list-users" command for a list of users""",
+            default=None,
         )
         # todo: search owners by regex and show found if more than one
 
-
-    def handle(self, *args, **options):
-        file_path = options['file_path']
-        log_level = validate_log_level(options['loglevel'])
-        db_log_level = validate_log_level(options['db_loglevel'])
-        owner_email = options['owner']
+    def handle(self, *args: Any, **options: Any) -> None:  # pylint: disable=too-many-locals
+        file_path = options["file_path"]
+        log_level = validate_log_level(options["loglevel"])
+        db_log_level = validate_log_level(options["db_loglevel"])
+        owner_email = options["owner"]
 
         # Configure Django logging level
         logging.basicConfig(level=log_level)
-        logging.getLogger('django').setLevel(log_level)
+        logging.getLogger("django").setLevel(log_level)
         logging.getLogger("django.db.backends").setLevel(db_log_level)
 
         try:
@@ -54,19 +72,11 @@ class Command(BaseCommand):
 
             # Create the book object
             book_title = book_processor.meta.get(MetadataField.TITLE, "Unknown Title")
-            book_instance = Book.objects.create(
-                title=book_title,
-                author=author,
-                language=language
-            )
+            book_instance = Book.objects.create(title=book_title, author=author, language=language)
 
             # Iterate over pages and save them
             for i, page_content in enumerate(book_processor.pages(), start=1):
-                BookPage.objects.create(
-                    book=book_instance,
-                    number=i,
-                    content=page_content
-                )
+                BookPage.objects.create(book=book_instance, number=i, content=page_content)
 
             book_instance.toc = book_processor.headings
 
@@ -77,7 +87,9 @@ class Command(BaseCommand):
                     book_instance.owner = owner_user
                     book_instance.public = False
                 else:
-                    raise CommandError(f'Error importing book: User with email "{owner_email}" not found')
+                    raise CommandError(
+                        f'Error importing book: User with email "{owner_email}" not found'
+                    )
             else:
                 # If no owner is provided, make the book publicly available
                 book_instance.public = True
@@ -91,5 +103,4 @@ class Command(BaseCommand):
                 )
             )
         except Exception as e:
-            raise CommandError(f'Error importing book from {file_path}: {e}')
-
+            raise CommandError(f"Error importing book from {file_path}: {e}") from e
