@@ -68,7 +68,7 @@ class Book(models.Model):  # type: ignore
     toc_json = models.TextField(null=True, blank=True, default="{}")
 
     @property
-    def toc(self) -> Dict[str, Any]:
+    def toc(self) -> Dict[str, Any]:  # todo: toc should be List
         """Property to automatically convert 'toc_json' to/from Python objects."""
         if self.toc_json:
             return json.loads(self.toc_json)  # type: ignore

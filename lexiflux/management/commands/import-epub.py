@@ -4,7 +4,9 @@ import logging
 from typing import Any
 
 from django.core.management.base import BaseCommand, CommandError
-from lexiflux.ebook.book_epub import import_book_from_epub
+
+from lexiflux.ebook.book_base import import_book
+from lexiflux.ebook.book_epub import BookEpub
 from lexiflux.utils import validate_log_level
 
 
@@ -39,7 +41,7 @@ class Command(BaseCommand):  # type: ignore
         file_path = options["file_path"]
         log_level = validate_log_level(options["loglevel"])
         db_log_level = validate_log_level(options["db_loglevel"])
-        # owner_email = options["owner"]
+        owner_email = options["owner"]
 
         # Configure Django logging level
         logging.basicConfig(level=log_level)
@@ -47,7 +49,12 @@ class Command(BaseCommand):  # type: ignore
         logging.getLogger("django.db.backends").setLevel(db_log_level)
 
         try:
-            import_book_from_epub(file_path)
-            self.stdout.write(self.style.SUCCESS(f'Successfully imported book from "{file_path}"'))
+            book = import_book(BookEpub(file_path), owner_email)
+            self.stdout.write(
+                self.style.SUCCESS(
+                    f'Successfully imported book "{book.title}" ({book.author}, '
+                    f'{book.language}) from "{file_path}", code: {book.code}'
+                )
+            )
         except Exception as e:
             raise CommandError(f"Error importing book from {file_path}: {e}") from e

@@ -1,9 +1,76 @@
 """Import an EPUB file into the database."""
-from typing import Any, Iterable, List
+import logging
+from typing import Any, Iterable, List, Optional, Tuple, Dict, Iterator
 
 from ebooklib import ITEM_DOCUMENT, epub
 
-from lexiflux.models import Author, Book, BookPage, Language
+from lexiflux.ebook.book_base import BookBase, MetadataField
+
+
+log = logging.getLogger()
+
+
+class BookEpub(BookBase):
+    """Import ebook from EPUB."""
+
+    book_start: int
+    book_end: int
+
+    def __init__(self, file_path: str, languages: Optional[List[str]] = None) -> None:
+        """Initialize.
+
+        file_path - a path to a file with EPUB.
+        """
+        self.languages = ["en", "sr"] if languages is None else languages
+        self.epub = epub.read_epub(file_path)
+
+        self.meta, self.book_start, self.book_end = self.detect_meta()
+        self.meta[MetadataField.LANGUAGE] = self.get_language()
+        self.headings = extract_toc(self.epub.toc)
+        log.debug("Headings: %s", self.headings)
+
+    def detect_meta(self) -> Tuple[Dict[str, Any], int, int]:
+        """Try to detect book meta and text.
+
+        Extract meta if it is present.
+        Trim meta text from the beginning and end of the book text.
+        Return: meta, start, end
+        """
+        meta = {}
+        meta[MetadataField.TITLE] = (
+            self.epub.get_metadata("DC", "title")[0][0]
+            if self.epub.get_metadata("DC", "title")
+            else "Unknown Title"
+        )
+        authors = self.epub.get_metadata("DC", "creator")
+        meta[MetadataField.AUTHOR] = authors[0][0] if authors else "Unknown Author"
+        language_metadata = self.epub.get_metadata("DC", "language")
+        meta[MetadataField.LANGUAGE] = (
+            language_metadata[0][0] if language_metadata else self.get_language()
+        )
+        return meta, 0, -1  #  todo: detect start/finish of the book
+
+    def pages(self) -> Iterator[str]:
+        """Split a text into pages of approximately equal length.
+
+        Also clear headings and recollect them during pages generation.
+        """
+        for spine_id in self.epub.spine:
+            item: epub.EpubItem = self.epub.get_item_with_id(spine_id[0])
+            if item.get_type() == ITEM_DOCUMENT:
+                log.debug(
+                    "Processing page: %s, name = %s, type = %s, id = %s, file_name = %s",
+                    spine_id[0],
+                    item.get_name(),
+                    item.get_type(),
+                    item.get_id(),
+                    item.file_name,
+                )
+                yield item.get_body_content().decode("utf-8")
+
+    def get_random_words(self, words_num: int = 15) -> str:
+        """Get random words from the book."""
+        raise NotImplementedError  # todo: implement
 
 
 def extract_toc(toc: List[Any]) -> List[Any]:
@@ -28,74 +95,3 @@ def extract_toc(toc: List[Any]) -> List[Any]:
                 item_idx += 1
 
     return result
-
-
-def import_book_from_epub(epub_file_path: str) -> None:
-    """Import a book from an EPUB file."""
-    book_epub = epub.read_epub(epub_file_path)
-
-    # Extract title and author from the EPUB metadata
-    title = (
-        book_epub.get_metadata("DC", "title")[0][0]
-        if book_epub.get_metadata("DC", "title")
-        else "Unknown Title"
-    )
-    authors = book_epub.get_metadata("DC", "creator")
-    author_name = authors[0][0] if authors else "Unknown Author"
-
-    # Create or get the author object
-    author, _ = Author.objects.get_or_create(name=author_name)
-
-    # Extract language from the EPUB metadata
-    language = book_epub.get_metadata("DC", "language")
-    epub_language_code = language[0][0] if language else "en"  # Default to 'en' if not found
-
-    book_instance = Book.objects.create(
-        title=title,
-        author=author,
-        language=Language.objects.get_or_create(epub_code=epub_language_code)[0],
-    )
-    print(
-        f"Created book: {book_instance.title}, {book_instance.author.name}, "
-        f"{book_instance.language.name}"
-    )
-
-    book_toc = extract_toc(book_epub.toc)
-
-    # Iterate through the spine items (usually chapters/pages)
-    for index, spine_id in enumerate(book_epub.spine):
-        item: epub.EpubItem = book_epub.get_item_with_id(spine_id[0])
-        if item.get_type() == ITEM_DOCUMENT:
-            print(
-                f"Processing page: {spine_id[0]}",
-                "name =",
-                item.get_name(),
-                "type =",
-                item.get_type(),
-                "id =",
-                item.get_id(),
-                "file_name =",
-                item.file_name,
-            )
-            content = item.get_body_content().decode("utf-8")  # Decoding from bytes to string
-            BookPage.objects.create(
-                book=book_instance,
-                number=index + 1,
-                content=content,  # Page number
-            )
-
-    print(f"Book pages: {book_instance.pages.count()}")
-    page = book_instance.pages.all()[15]
-    print(f"Book pages: {page.content[:500]}")
-    page = book_instance.pages.all()[16]
-    print(f"Book pages: {page.content[:500]}")
-    book_instance.content = book_toc
-    book_instance.save()
-    print(f"Book TOC: {book_toc}")
-
-
-if __name__ == "__main__":
-    import_book_from_epub(
-        "/Users/ksfj595/shelf/books/Steven King/Ciklus Vukodlaka (323)/Ciklus Vukodlaka"
-        " - Steven King.epub"
-    )

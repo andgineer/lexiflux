@@ -119,6 +119,7 @@ def import_book(book_processor: BookBase, owner_email: str) -> Book:
     for i, page_content in enumerate(book_processor.pages(), start=1):
         BookPage.objects.create(book=book_instance, number=i, content=page_content)
 
+    # must be after page iteration so the headings are collected
     book_instance.toc = book_processor.headings
 
     if owner_email:
