@@ -1,7 +1,7 @@
 """Models for the lexiflux app."""
 import json
 import re
-from typing import Any, Dict
+from typing import Any, TypeAlias, Tuple, List
 
 from django.conf import settings
 from django.db import models
@@ -9,6 +9,10 @@ from django.utils import timezone
 from transliterate import get_available_language_codes, translit
 
 from core.models import CustomUser
+
+
+TocEntry: TypeAlias = Tuple[str, int, int]  # <title>, <page num>, <word on the page num>
+Toc: TypeAlias = List[TocEntry]
 
 
 def split_into_words(text: str) -> list[str]:
@@ -68,14 +72,16 @@ class Book(models.Model):  # type: ignore
     toc_json = models.TextField(null=True, blank=True, default="{}")
 
     @property
-    def toc(self) -> Dict[str, Any]:  # todo: toc should be List
-        """Property to automatically convert 'toc_json' to/from Python objects."""
-        if self.toc_json:
-            return json.loads(self.toc_json)  # type: ignore
-        return {}
+    def toc(self) -> Toc:
+        """Property to automatically convert 'toc_json' to/from Python objects.
+
+        (!) Serialization in JSON will return a list of lists instead of a list of tuples.
+        We could convert them back here, but it has no practical benefit
+        """
+        return json.loads(self.toc_json) if self.toc_json else []  # type: ignore
 
     @toc.setter
-    def toc(self, value: Dict[str, Any]) -> None:
+    def toc(self, value: Toc) -> None:
         """Set 'toc_json' when 'TOC' is updated."""
         self.toc_json = json.dumps(value)
 

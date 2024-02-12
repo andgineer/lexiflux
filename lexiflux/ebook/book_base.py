@@ -1,6 +1,6 @@
 """Book base class for importing books from different formats."""
 import logging
-from typing import Any, Dict, Optional, List, Tuple, Iterator
+from typing import Any, Dict, Optional, Iterator
 from collections import Counter
 
 from django.core.management import CommandError
@@ -8,6 +8,7 @@ from django.core.management import CommandError
 from core.models import CustomUser
 from lexiflux.language.translation import detect_language, find_language
 from lexiflux.models import Book, Author, Language, BookPage
+from lexiflux.models import Toc
 
 log = logging.getLogger()
 
@@ -25,7 +26,7 @@ class MetadataField:  # pylint: disable=too-few-public-methods
 class BookBase:
     """Base class for importing books from different formats."""
 
-    headings: List[Tuple[str, int, int]] = []
+    toc: Toc = []
     meta: Dict[str, Any]
 
     @staticmethod
@@ -120,7 +121,7 @@ def import_book(book_processor: BookBase, owner_email: str) -> Book:
         BookPage.objects.create(book=book_instance, number=i, content=page_content)
 
     # must be after page iteration so the headings are collected
-    book_instance.toc = book_processor.headings
+    book_instance.toc = book_processor.toc
 
     if owner_email:
         if not (owner_user := CustomUser.objects.filter(email=owner_email).first()):
