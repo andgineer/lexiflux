@@ -174,7 +174,7 @@ class BookPlainText(BookBase):  # pylint: disable=too-many-instance-attributes
         heading_detector = HeadingDetector()
 
         start = self.book_start
-        self.headings = []
+        self.toc = []
         page_num = 0
         while start < self.book_end:
             page_num += 1
@@ -188,7 +188,7 @@ class BookPlainText(BookBase):  # pylint: disable=too-many-instance-attributes
 
             page_text = self.normalize(self.text[start:end])
             if headings := heading_detector.get_headings(page_text, page_num):
-                self.headings.extend(headings)
+                self.toc.extend(headings)
             # todo: remove <br/> from the start of the page
             yield page_text
             assert end > start

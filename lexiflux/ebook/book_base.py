@@ -122,6 +122,7 @@ def import_book(book_processor: BookBase, owner_email: str) -> Book:
 
     # must be after page iteration so the headings are collected
     book_instance.toc = book_processor.toc
+    log.debug("TOC: %s", book_instance.toc)
 
     if owner_email:
         if not (owner_user := CustomUser.objects.filter(email=owner_email).first()):
