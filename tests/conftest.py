@@ -2,7 +2,9 @@ import itertools
 
 import pytest
 import os
-from unittest.mock import mock_open, patch
+from unittest.mock import mock_open, patch, MagicMock
+
+from lexiflux.ebook.book_base import BookBase
 from lexiflux.ebook.book_plain_text import BookPlainText
 
 
@@ -67,3 +69,16 @@ def mock_detect_language():
         with patch.dict(os.environ, {"DETECTLANGUAGE_API_KEY": 'fake-key'}):
             yield mock
 
+
+@pytest.fixture
+def book_processor_mock():
+    """Fixture to create a mock of the BookBase class."""
+    book_processor = MagicMock(spec=BookBase)
+    book_processor.pages.return_value = ["Page 1 content", "Page 2 content"]
+    book_processor.meta = {
+        'title': 'Test Book',
+        'author': 'Test Author',
+        'language': 'English'
+    }
+    book_processor.toc = []
+    return book_processor
