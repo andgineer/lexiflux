@@ -5,20 +5,20 @@
 | Name                                   |    Stmts |     Miss |   Cover |   Missing |
 |--------------------------------------- | -------: | -------: | ------: | --------: |
 | lexiflux/apps.py                       |       14 |        0 |    100% |           |
-| lexiflux/ebook/book\_base.py           |       72 |        8 |     89% |43, 50, 91, 96-101, 130-131 |
-| lexiflux/ebook/book\_epub.py           |       57 |       57 |      0% |     2-123 |
-| lexiflux/ebook/book\_plain\_text.py    |      126 |       19 |     85% |61-62, 67-73, 187, 208, 227-237 |
+| lexiflux/ebook/book\_base.py           |       72 |        5 |     93% |43, 50, 91, 130-131 |
+| lexiflux/ebook/book\_epub.py           |       57 |       24 |     58% |25-35, 44-56, 63-79, 84, 101, 104-106 |
+| lexiflux/ebook/book\_plain\_text.py    |      126 |        9 |     93% |61-62, 67-73, 187, 232 |
 | lexiflux/ebook/headings.py             |       36 |        0 |    100% |           |
 | lexiflux/language/google\_languages.py |       12 |        0 |    100% |           |
 | lexiflux/language/translation.py       |       47 |       16 |     66% |20-24, 29, 35-37, 47-55, 79 |
-| lexiflux/models.py                     |      104 |       32 |     69% |20-22, 39, 49, 81, 86, 91, 95-109, 113-115, 119, 130, 148, 188-212 |
+| lexiflux/models.py                     |      104 |       18 |     83% |39, 49, 91, 101, 106-107, 119, 130, 148, 188-212 |
 | lexiflux/settings.py                   |        0 |        0 |    100% |           |
 | lexiflux/signals.py                    |       13 |        3 |     77% | 21-22, 32 |
 | lexiflux/tests.py                      |        0 |        0 |    100% |           |
 | lexiflux/urls.py                       |        3 |        3 |      0% |       2-6 |
 | lexiflux/utils.py                      |        8 |        0 |    100% |           |
 | lexiflux/views.py                      |      126 |      126 |      0% |     2-250 |
-|                              **TOTAL** |  **618** |  **264** | **57%** |           |
+|                              **TOTAL** |  **618** |  **204** | **67%** |           |
 
 
 ## Setup coverage badge
