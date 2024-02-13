@@ -3,6 +3,7 @@ from unittest.mock import patch, MagicMock, call, ANY
 from lexiflux.ebook.book_base import import_book
 from lexiflux.models import Author, Book, Language, BookPage, CustomUser
 from django.core.management import CommandError
+from lexiflux.ebook.book_plain_text import BookPlainText
 
 
 @patch('lexiflux.models.Author.objects.get_or_create')
@@ -86,3 +87,30 @@ def test_import_book_nonexistent_owner_email(
         import_book(book_processor_mock, 'nonexistent@example.com')
 
     assert 'User with email "nonexistent@example.com" not found' in str(exc_info.value)
+
+
+@pytest.mark.django_db
+def test_import_plain_text():
+    book = import_book(BookPlainText('tests/resources/alice_adventure_in_wonderland.txt'), '')
+    assert book.title == "Alice's Adventures in Wonderland"
+    assert book.author.name == 'Lewis Carroll'
+    assert book.language.name == 'English'
+    assert book.public is True
+    assert book.pages.count() == 61
+    with open('tests/resources/alice_1st_page.txt', 'r', encoding="utf8") as f:
+        assert book.pages.first().content == f.read()
+    expected_toc = [
+        ['CHAPTER I.   Down the Rabbit-Hole', 1, 86],
+        ['CHAPTER II.   The Pool of Tears', 6, 34],
+        ['CHAPTER III.   A Caucus-Race and a Long Tale', 10, 135],
+        ['CHAPTER IV.   The Rabbit Sends in a Little Bill', 14, 100],
+        ['CHAPTER V.   Advice from a Caterpillar', 19, 264],
+        ['CHAPTER VI.   Pig and Pepper', 24, 264],
+        ['CHAPTER VII.   A Mad Tea-Party', 30, 169],
+        ['CHAPTER VIII.   The Queen’s Croquet-Ground', 35, 400],
+        ['CHAPTER IX.   The Mock Turtle’s Story', 41, 236],
+        ['CHAPTER X.   The Lobster Quadrille', 46, 346],
+        ['CHAPTER XI.   Кто украл the Tarts?', 51, 275],
+        ['CHAPTER XII.   Alice’s Evidence', 56, 2],
+    ]
+    assert book.toc == expected_toc
