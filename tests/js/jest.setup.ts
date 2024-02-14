@@ -76,10 +76,10 @@ beforeEach(() => {
           },
         }),
       };
-    } else if (absoluteUrl.includes('/position')) {
+    } else if (absoluteUrl.includes('/location')) {
       return {
         status: 200,
-        body: JSON.stringify('Position updated successfully'),
+        body: JSON.stringify('Location updated successfully'),
       };
     } else if (absoluteUrl.includes('/translate')) {
       return {

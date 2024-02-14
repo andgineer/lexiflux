@@ -105,7 +105,7 @@ export class Viewport {
                         } else {
                             this.bookPageScroller.scrollTop = 0;
                         }
-                        this.reportReadingPosition();
+                        this.reportReadingLocation();
                     }
 
                     resolve();
@@ -195,9 +195,9 @@ export class Viewport {
         return low;
     }
 
-    public reportReadingPosition(): void {
-        // Determine the first visible word and report to the server the reading position
-        let url = `/position?top-word=${this.getFirstVisibleWord()}&book-id=${this.bookId}&book-page-num=${this.pageNum}`;
+    public reportReadingLocation(): void {
+        // Determine the first visible word and report to the server the reading location
+        let url = `/location?top-word=${this.getFirstVisibleWord()}&book-id=${this.bookId}&book-page-num=${this.pageNum}`;
         fetch(url)
             .then(response => {
                 if (!response.ok) {
@@ -220,12 +220,12 @@ export class Viewport {
             await this.loadPage(this.pageNum - 1, undefined);
             // Scroll to the bottom of the page
             this.bookPageScroller.scrollTop = this.getWordsContainerHeight() - this.bookPageScroller.clientHeight;
-            this.reportReadingPosition();
+            this.reportReadingLocation();
         } else {
             // no need to check for negative scroll top, it will be handled by the browser
             log('***** scrollTop:', this.bookPageScroller.scrollTop, 'clientHeight-lineHeight:', this.bookPageScroller.clientHeight - this.lineHeight);
             this.bookPageScroller.scrollTop -= this.bookPageScroller.clientHeight - this.lineHeight;
-            this.reportReadingPosition();
+            this.reportReadingLocation();
         }
     }
 
@@ -237,7 +237,7 @@ export class Viewport {
             // no need to check for too large scroll top, it will be handled by the browser
             this.bookPageScroller.scrollTop += this.bookPageScroller.clientHeight - this.lineHeight;
             log('***** scrollTop:', this.bookPageScroller.scrollTop, 'clientHeight,lineHeight:', this.bookPageScroller.clientHeight, this.lineHeight);
-            this.reportReadingPosition();
+            this.reportReadingLocation();
         }
     }
 }

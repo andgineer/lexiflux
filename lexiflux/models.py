@@ -160,56 +160,57 @@ class ReaderProfile(models.Model):  # type: ignore
     native_language = models.ForeignKey(Language, on_delete=models.SET_NULL, null=True)
 
 
-class ReadingPos(models.Model):  # type: ignore
-    """A reading position.
+class ReadingLoc(models.Model):  # type: ignore
+    """A reading location.
 
-    In History we store our breadcrumbs, so user can "undo" jumps by TOC or annotations.
-    In position we store current reading position that may be not stored in History.
+    Current reading location and the furthest reading location in the book.
     """
 
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="reading_pos"
     )
     book = models.ForeignKey("Book", on_delete=models.CASCADE)
-    page_number = models.PositiveIntegerField()
-    top_word_id = models.PositiveIntegerField()
-    last_read_time = models.DateTimeField(default=timezone.now)
-    latest_reading_point = models.CharField(
-        max_length=50,
-        default="0:0",
-        help_text="Stores the latest reading point as 'page_number:top_word_id'",
+    page_number = models.PositiveIntegerField(help_text="Page number currently being read")
+    word = models.PositiveIntegerField(help_text="Last word read on the current reading page")
+    updated = models.DateTimeField(default=timezone.now)
+    furthest_reading_page = models.PositiveIntegerField(
+        default=0,
+        help_text="Stores the furthest reading page number",
+    )
+    furthest_reading_word = models.PositiveIntegerField(
+        default=0,
+        help_text="Stores the furthest reading top word on the furthest page",
     )
 
     @classmethod
-    def update_user_pos(
+    def update_reading_location(
         cls, user: CustomUser, book_id: int, page_number: int, top_word_id: int
     ) -> None:
         """Update user reading progress."""
-        progress, created = cls.objects.get_or_create(
+        location, created = cls.objects.get_or_create(
             user=user,
             book_id=book_id,
             defaults={
                 "page_number": page_number,
-                "top_word_id": top_word_id,
-                "last_read_time": timezone.now(),
+                "word": top_word_id,
+                "updated": timezone.now(),
             },
         )
 
         if not created:
-            progress.page_number = page_number
-            progress.top_word_id = top_word_id
-            progress.last_read_time = timezone.now()
+            location.page_number = page_number
+            location.word = top_word_id
+            location.updated = timezone.now()
 
             # Check and update the latest reading point
-            current_latest_page, current_latest_word = map(
-                int, progress.latest_reading_point.split(":")
-            )
-            if page_number > current_latest_page or (
-                page_number == current_latest_page and top_word_id > current_latest_word
+            if page_number > location.furthest_reading_page or (
+                page_number == location.furthest_reading_page
+                and top_word_id > location.furthest_reading_page
             ):
-                progress.latest_reading_point = f"{page_number}:{top_word_id}"
+                location.furthest_reading_page = page_number
+                location.furthest_reading_word = top_word_id
 
-            progress.save()
+            location.save()
 
     class Meta:
         """Meta class for ReadingProgress."""

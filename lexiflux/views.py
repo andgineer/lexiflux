@@ -11,7 +11,7 @@ from django.views.decorators.http import require_POST
 from core.models import CustomUser
 from lexiflux.language.translation import get_translator
 
-from .models import Book, BookPage, ReadingHistory, ReadingPos
+from .models import Book, BookPage, ReadingHistory, ReadingLoc
 
 
 def render_page(content: str) -> str:
@@ -46,8 +46,8 @@ def reader(request: HttpRequest, book_code=None) -> HttpResponse:
     If the book code not given open the latest book.
     """
     if book_code is None:
-        if reading_position := ReadingPos.objects.filter(user=request.user).first():
-            book_code = reading_position.book.code
+        if reading_location := ReadingLoc.objects.filter(user=request.user).first():
+            book_code = reading_location.book.code
         else:
             return redirect("library")  # the user had not read any book yet
 
@@ -58,8 +58,8 @@ def reader(request: HttpRequest, book_code=None) -> HttpResponse:
     page_number = request.GET.get("page", None)
 
     if page_number is None:
-        reading_position = ReadingPos.objects.filter(book=book, user=request.user).first()
-        page_number = reading_position.page_number if reading_position else 1
+        reading_location = ReadingLoc.objects.filter(book=book, user=request.user).first()
+        page_number = reading_location.page_number if reading_location else 1
 
     print("book_code", book_code, "page_number", page_number)
     book_page = BookPage.objects.get(book=book, number=page_number)
@@ -79,11 +79,11 @@ def reader(request: HttpRequest, book_code=None) -> HttpResponse:
 def page(request: HttpRequest) -> HttpResponse:
     """Book page.
 
-    In addition to book and page num should include top word id to save the position.
+    In addition to book and page num should include top word id to save the location.
     """
     book_id = request.GET.get("book-id", 1)
     page_number = request.GET.get("book-page-num", 1)
-    position(request)  # Update the reading position
+    location(request)  # Update the reading location
     try:
         book_page = BookPage.objects.get(book_id=book_id, number=page_number)
     except BookPage.DoesNotExist:
@@ -114,8 +114,8 @@ def page(request: HttpRequest) -> HttpResponse:
 
 
 @login_required  # type: ignore
-def position(request: HttpRequest) -> HttpResponse:
-    """Read position changed."""
+def location(request: HttpRequest) -> HttpResponse:
+    """Read location changed."""
     try:
         book_id = int(request.GET.get("book-id"))
         page_number = int(request.GET.get("book-page-num"))
@@ -126,7 +126,7 @@ def position(request: HttpRequest) -> HttpResponse:
     if not can_see_book(request.user, Book.objects.get(id=book_id)):
         return HttpResponse(status=403)  # Forbidden
 
-    ReadingPos.update_user_pos(
+    ReadingLoc.update_reading_location(
         user=request.user, book_id=book_id, page_number=page_number, top_word_id=top_word
     )
     return HttpResponse(status=200)
@@ -175,11 +175,11 @@ def library(request: HttpRequest) -> HttpResponse:
 
     books_query = (
         books_query.annotate(
-            latest_reading_time=models.Max(
-                "readingpos__last_read_time", filter=models.Q(readingpos__user=request.user)
+            updated=models.Max(
+                "readingloc__updated", filter=models.Q(readingloc__user=request.user)
             )
         )
-        .order_by("-latest_reading_time", "title")
+        .order_by("-updated", "title")
         .distinct()
     )
 
@@ -202,7 +202,7 @@ def library(request: HttpRequest) -> HttpResponse:
 @login_required  # type: ignore
 @require_POST
 def add_to_history(request):
-    """Add the position to History."""
+    """Add the location to History."""
     user = request.user
 
     book_id = request.POST.get("book_id")
