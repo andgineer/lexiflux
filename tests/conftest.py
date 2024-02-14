@@ -6,6 +6,9 @@ from unittest.mock import mock_open, patch, MagicMock
 
 from lexiflux.ebook.book_base import BookBase
 from lexiflux.ebook.book_plain_text import BookPlainText
+from django.contrib.auth import get_user_model
+from django.urls import reverse
+from lexiflux.models import Author, Language, Book, BookPage
 
 
 @pytest.fixture(
@@ -83,3 +86,36 @@ def book_processor_mock():
     }
     book_processor.toc = []
     return book_processor
+
+
+@pytest.fixture
+def user(db):
+    User = get_user_model()
+    return User.objects.create_user(username='testuser', password='12345')
+
+
+@pytest.fixture
+def author(db):
+    return Author.objects.create(name="Lewis Carroll")
+
+
+@pytest.fixture
+def book(db, user, author):
+    language = Language.objects.get(name="English")
+    book = Book.objects.create(
+        title="Alice in Wonderland",
+        author=author,
+        language=language,
+        code='some-book-code',
+        owner=user
+    )
+
+    # Create BookPage instances for the book
+    for i in range(1, 6):  # Create 5 pages as an example
+        BookPage.objects.create(
+            book=book,
+            number=i,
+            content=f"Content of page {i}"
+        )
+
+    return book
