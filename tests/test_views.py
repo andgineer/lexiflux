@@ -2,7 +2,10 @@ import pytest
 from django.contrib.auth import get_user_model
 from django.urls import reverse
 from django.test import Client
-from lexiflux.models import ReadingLoc
+from pytest_django.asserts import assertTemplateUsed
+
+from lexiflux.models import ReadingLoc, ReadingHistory
+
 
 @pytest.mark.django_db
 def test_location_view_updates_reading_location_successfully(client, user, book):
@@ -53,3 +56,60 @@ def test_location_view_enforces_access_control(client, user, book):
     })
 
     assert response.status_code == 403, "User should not be able to update reading location for a book they don't have access to"
+
+
+@pytest.mark.django_db
+def test_add_to_history_success(client, user, book):
+    client.force_login(user)
+    data = {
+        'book_id': book.id,
+        'page_number': 1,
+        'top_word_id': 100
+    }
+    response = client.post(reverse('history'), data)
+
+    assert response.status_code == 200
+    assert ReadingHistory.objects.filter(user=user, book=book).exists()
+    assert response.json() == {"message": "Reading history added successfully"}
+
+
+@pytest.mark.django_db
+def test_add_to_history_invalid_input(client, user):
+    client.force_login(user)
+    response = client.post(reverse('history'),
+                           {'book_id': 'abc', 'page_number': 'xyz', 'top_word_id': 'invalid'})
+
+    assert response.status_code == 400
+    assert response.json() == {"error": "Invalid input"}
+
+
+@pytest.mark.django_db
+def test_view_book_success(client, user, book):
+    client.force_login(user)
+    response = client.get(reverse('book'), {'book-id': book.id})
+
+    assert response.status_code == 200
+    assert 'book' in response.context
+    assert response.context['book'].id == book.id
+    assertTemplateUsed(response, 'book.html')
+
+
+@pytest.mark.django_db
+def test_view_book_access_denied(client, book):
+    # Assuming another_user does not have access to the book
+    another_user = get_user_model().objects.create_user('another_user', 'another@example.com', 'password')
+    client.force_login(another_user)
+    response = client.get(reverse('book'), {'book-id': book.id})
+
+    assert response.status_code == 403
+
+
+@pytest.mark.django_db
+def test_profile_view_success(client, user):
+    client.force_login(user)
+
+    response = client.get(reverse('profile'))
+
+    assert response.status_code == 200
+
+    assertTemplateUsed(response, 'profile.html')
