@@ -6,7 +6,6 @@ from . import views
 urlpatterns = [
     path("", views.redirect_to_reader, name="redirect_to_reader"),
     path("reader", views.reader, name="reader"),
-    path("reader/<str:book_code>/", views.reader, name="read_the_book"),
     path("library", views.library, name="library"),
     path("page", views.page, name="page"),
     path("location", views.location, name="location"),

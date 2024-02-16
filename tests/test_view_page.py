@@ -8,20 +8,20 @@ from lexiflux.views import render_page
 def test_page_view_retrieves_book_page_successfully(client, user, book):
     client.force_login(user)
     page_number = 1
-    response = client.get(reverse('page'), {'book-id': book.id, 'book-page-num': page_number})
+    response = client.get(reverse('page') + f'?book-code={book.code}&book-page-number={page_number}')
 
     assert response.status_code == 200
     assert 'html' in response.json()
     assert 'data' in response.json()
-    assert response.json()['data']['bookId'] == str(book.id)
-    assert response.json()['data']['pageNum'] == str(page_number)
+    assert response.json()['data']['bookCode'] == book.code
+    assert response.json()['data']['pageNumber'] == page_number
 
 
 @pytest.mark.django_db
 def test_page_view_handles_nonexistent_book_page(client, user, book):
     client.force_login(user)
     non_existent_page_number = 100
-    response = client.get(reverse('page'), {'book-id': book.id, 'book-page-num': non_existent_page_number})
+    response = client.get(reverse('page') + f'?book-code={book.code}&book-page-number={non_existent_page_number}')
 
     assert response.status_code == 500
     print(response.content.decode())
@@ -35,7 +35,7 @@ def test_page_view_respects_access_control(client, user, book):
     client.force_login(another_user)
 
     page_number = 1
-    response = client.get(reverse('page'), {'book-id': book.id, 'book-page-num': page_number})
+    response = client.get(reverse('page') + f'?book-code={book.code}&book-page-number={page_number}')
 
     # Expect a 403 Forbidden response since 'another_user' should not have access to 'book'
     assert response.status_code == 403

@@ -1,4 +1,5 @@
 """Vies for the Lexiflux app."""
+
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
 from django.db import models
@@ -40,26 +41,33 @@ def can_see_book(user: CustomUser, book: Book) -> bool:
 
 
 @login_required  # type: ignore
-def reader(request: HttpRequest, book_code=None) -> HttpResponse:
+def reader(request: HttpRequest) -> HttpResponse:
     """Open the book in reader.
 
     If the book code not given open the latest book.
     """
-    if book_code is None:
-        if reading_location := ReadingLoc.objects.filter(user=request.user).first():
-            book_code = reading_location.book.code
-        else:
-            return redirect("library")  # the user had not read any book yet
+    book_code = request.GET.get("book-code")
+    page_number = request.GET.get("book-page-number")
+    book = Book.objects.filter(code=book_code).first() if book_code else None
+    if not book:
+        if book_code:
+            print(f"Book {book_code} not found")
+        if not (reading_location := ReadingLoc.objects.filter(user=request.user).first()):
+            return redirect("library")  # Redirect if the user has no reading history
 
-    book = get_object_or_404(Book, code=book_code)
+        book = reading_location.book
+        book_code = book.code  # Update book_code to be used in the response
+        page_number = reading_location.page_number
+    # Security check to ensure the user is authorized to view the book
     if not can_see_book(request.user, book):
-        return HttpResponse(status=403)
+        return HttpResponse("Forbidden", status=403)
 
-    page_number = request.GET.get("page", None)
-
-    if page_number is None:
+    if not page_number:
+        # if the book-code is provided but book-page-number is not: first page or last read page
         reading_location = ReadingLoc.objects.filter(book=book, user=request.user).first()
         page_number = reading_location.page_number if reading_location else 1
+    else:
+        page_number = int(page_number)  # Ensure page_number is an integer
 
     print("book_code", book_code, "page_number", page_number)
     book_page = BookPage.objects.get(book=book, number=page_number)
@@ -81,17 +89,26 @@ def page(request: HttpRequest) -> HttpResponse:
 
     In addition to book and page num should include top word id to save the location.
     """
-    book_id = request.GET.get("book-id", 1)
-    page_number = request.GET.get("book-page-num", 1)
-    location(request)  # Update the reading location
+    book_code = request.GET.get("book-code")
+    page_number = request.GET.get("book-page-number")
     try:
-        book_page = BookPage.objects.get(book_id=book_id, number=page_number)
-    except BookPage.DoesNotExist:
-        return HttpResponse(f"error: Page {page_number} not found", status=500)
+        page_number = int(page_number)
+        book_page = BookPage.objects.filter(book__code=book_code, number=page_number).first()
+        if not book_page:
+            raise BookPage.DoesNotExist
+    except (BookPage.DoesNotExist, ValueError):
+        return HttpResponse(
+            f"error: Page {page_number} not found in book '{book_code}'", status=500
+        )
+    # check access
     if not can_see_book(request.user, book_page.book):
-        return HttpResponse(status=403)  # Forbidden
+        return HttpResponse(status=403)
+
+    # Update the reading location
+    location(request)
+
     page_html = render_page(book_page.content)
-    print(book_id, page_number)
+    print(book_code, page_number)
     rendered_html = render_to_string(
         "page.html",
         {
@@ -106,8 +123,8 @@ def page(request: HttpRequest) -> HttpResponse:
         {
             "html": rendered_html,
             "data": {
-                "bookId": book_id,
-                "pageNum": page_number,
+                "bookCode": book_code,
+                "pageNumber": page_number,
             },
         }
     )
@@ -117,17 +134,20 @@ def page(request: HttpRequest) -> HttpResponse:
 def location(request: HttpRequest) -> HttpResponse:
     """Read location changed."""
     try:
-        book_id = int(request.GET.get("book-id"))
-        page_number = int(request.GET.get("book-page-num"))
+        book_code = request.GET.get("book-code")
+        page_number = int(request.GET.get("book-page-number"))
         top_word = int(request.GET.get("top-word", 0))
+        if not book_code:
+            raise ValueError("book-code is missing")
     except (TypeError, ValueError, KeyError):
         return HttpResponse("Invalid or missing parameters", status=400)
 
-    if not can_see_book(request.user, Book.objects.get(id=book_id)):
+    book = Book.objects.get(code=book_code)
+    if not can_see_book(request.user, book):
         return HttpResponse(status=403)  # Forbidden
 
     ReadingLoc.update_reading_location(
-        user=request.user, book_id=book_id, page_number=page_number, top_word_id=top_word
+        user=request.user, book_id=book.id, page_number=page_number, top_word_id=top_word
     )
     return HttpResponse(status=200)
 
@@ -136,15 +156,12 @@ def location(request: HttpRequest) -> HttpResponse:
 def translate(request: HttpRequest) -> HttpResponse:
     """Translate text."""
     print("Translating text")
-    text = request.GET.get("text", 1)  # todo: None
-    book_id = request.GET.get("book-id", 1)  # todo: None
+    text = request.GET.get("text")
+    book_code = request.GET.get("book-code")
     user_id = request.user.id
 
-    # if not book_id:
-    #     return JsonResponse({"error": "Book ID is required"}, status=400)
-
     print("Translating", text)
-    translator = get_translator(book_id, user_id)
+    translator = get_translator(book_code, user_id)
     print("Translator", translator)
     translated = translator.translate(text)
     print("Translated", translated)
@@ -234,17 +251,14 @@ def add_to_history(request):
 @login_required  # type: ignore
 def view_book(request: HttpRequest) -> HttpResponse:
     """Book detail page."""
-    book_id = request.GET.get("book-id")
-    book = get_object_or_404(Book, id=book_id)
+    book_code = request.GET.get("book-code")
+    book = get_object_or_404(Book, code=book_code)
 
     if not can_see_book(request.user, book):
         return HttpResponse(status=403)  # Forbidden
 
-    # Additional details like pages, author, etc., can be added here
     context = {
         "book": book,
-        # 'pages': book.pages.all(),  # Uncomment if you want to show pages
-        # 'author': book.author,  # Uncomment if you want to show author details
     }
 
     return render(request, "book.html", context)

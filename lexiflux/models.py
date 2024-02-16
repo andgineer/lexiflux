@@ -1,7 +1,7 @@
 """Models for the lexiflux app."""
 import json
 import re
-from typing import Any, TypeAlias, Tuple, List
+from typing import TypeAlias, Tuple, List, Any
 
 from django.conf import settings
 from django.db import models
@@ -10,6 +10,7 @@ from transliterate import get_available_language_codes, translit
 
 from core.models import CustomUser
 
+BOOK_CODE_LENGTH = 100
 
 TocEntry: TypeAlias = Tuple[str, int, int]  # <title>, <page num>, <word on the page num>
 Toc: TypeAlias = List[TocEntry]
@@ -60,7 +61,7 @@ class Book(models.Model):  # type: ignore
         related_name="owned_books",
     )
 
-    code = models.CharField(max_length=100, unique=True)
+    code = models.CharField(max_length=BOOK_CODE_LENGTH, unique=True)
     public = models.BooleanField(default=False)
     shared_with = models.ManyToManyField(
         settings.AUTH_USER_MODEL, blank=True, related_name="shared_books"
@@ -92,14 +93,19 @@ class Book(models.Model):  # type: ignore
 
     def generate_unique_book_code(self) -> str:
         """Generate a unique book code."""
-        code = (
+        code = (  # two words from title and last word of the author name (presumable last name)
             "-".join(split_into_words(self.title)[:2])
             + "-"
             + split_into_words(self.author.name)[-1]
         )
+        # Transliterate the code to latin chars if the language is supported
         if self.language.google_code in get_available_language_codes():
             code = translit(code, self.language.google_code, reversed=True)
 
+        # reserving 3 chars for the delimiter and two-digits counter in case the name is not unique
+        code = code[: BOOK_CODE_LENGTH - 3]
+
+        # Check if the code is unique, if not, append a counter
         unique_code = code
         counter = 1
         while Book.objects.filter(code=unique_code).exists():
@@ -109,9 +115,14 @@ class Book(models.Model):  # type: ignore
         return unique_code
 
     def save(self, *args: Any, **kwargs: Any) -> None:
-        """Generate book code and convert TOC."""
-        if not self.code:
+        if self.pk:  # Checks if the object already exists in the database
+            original = Book.objects.get(pk=self.pk)
+            if original.code:  # Checks if the original object has a code
+                self.code = original.code  # Prevents the code from being changed
+        elif not self.code:
+            # This is a new object, so generate a unique code if it doesn't have one yet
             self.code = self.generate_unique_book_code()
+
         super().save(*args, **kwargs)
 
     def __str__(self) -> str:

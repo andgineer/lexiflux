@@ -30,9 +30,9 @@ class Translator:  # pylint: disable=too-few-public-methods
 
 
 @lru_cache(maxsize=128)
-def get_translator(book_id: str, user_id: str) -> Translator:
+def get_translator(book_code: str, user_id: str) -> Translator:
     """Get translator."""
-    book = Book.objects.get(id=book_id)
+    book = Book.objects.get(code=book_code)
     profile = ReaderProfile.objects.get(user_id=user_id)
     return Translator(book, profile)
 

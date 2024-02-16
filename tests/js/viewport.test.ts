@@ -108,7 +108,7 @@ describe('viewport.js tests', () => {
 
     it('scrollUp: should load the previous page if at the top and not on the first page', async () => {
       viewport.getBookPageScroller().scrollTop = 0; // Simulate being at the top
-      viewport.pageNum = 2; // Not the first page
+      viewport.pageNumber = 2; // Not the first page
 
       const loadPageSpy = jest.spyOn(viewport, 'loadPage');
       await viewport.scrollUp();
@@ -118,7 +118,7 @@ describe('viewport.js tests', () => {
 
     it('scrollUp: should do nothing if at the top and on the first page', async () => {
       viewport.getBookPageScroller().scrollTop = 0; // Simulate being at the top
-      viewport.pageNum = 1; // The first page
+      viewport.pageNumber = 1; // The first page
 
       const scrollTopBefore = viewport.getBookPageScroller().scrollTop;
       await viewport.scrollUp();
@@ -170,7 +170,7 @@ describe('viewport.js tests', () => {
         return wordRect;
       };
 
-      viewport.pageNum = 1; // Current page
+      viewport.pageNumber = 1; // Current page
       const loadPageSpy = jest.spyOn(viewport, 'loadPage');
       await viewport.scrollDown();
       expect(loadPageSpy).toHaveBeenCalledWith(2, 0); // Expect to load the next page

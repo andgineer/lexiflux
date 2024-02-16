@@ -23,7 +23,7 @@ global.document.body.innerHTML = `
   ${wordSpans}
   </div>
 </div>
-<div id="book" data-book-id="123" data-book-page-number="1" data-click-word-url="/click-word"></div>
+<div id="book" data-book-code="alice-adventures-carroll" data-book-page-number="1" data-click-word-url="/click-word"></div>
 `;
 
 import {viewport} from "../../lexiflux/viewport/viewport";  // load the module only after the DOM is set up
@@ -70,8 +70,8 @@ beforeEach(() => {
         body: JSON.stringify({
           html: global.document.body.innerHTML,
           data: {
-            bookId: '123',
-            pageNum: '1',
+            bookCode: 'alice-adventures-carroll',
+            pageNumber: 1,
             pageHtml: wordSpans,
           },
         }),

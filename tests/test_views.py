@@ -15,12 +15,12 @@ def test_location_view_updates_reading_location_successfully(client, user, book)
     top_word = 10
 
     response = client.get(reverse('location'), {
-        'book-id': book_id,
-        'book-page-num': page_number,
+        'book-code': book.code,
+        'book-page-number': page_number,
         'top-word': top_word
     })
 
-    assert response.status_code == 200
+    assert response.status_code == 200, f"Failed to update reading location: {response.content}"
     assert ReadingLoc.objects.filter(
         user=user,
         book_id=book_id,
@@ -33,9 +33,9 @@ def test_location_view_updates_reading_location_successfully(client, user, book)
 def test_location_view_handles_invalid_parameters(client, user):
     client.force_login(user)
 
-    # Intentionally omitting 'book-page-num' to trigger a 400 error
+    # Intentionally omitting 'book-page-number' to trigger a 400 error
     response = client.get(reverse('location'), {
-        'book-id': 'invalid',
+        'book-code': 'invalid',
         'top-word': 'not-an-int'
     })
 
@@ -50,12 +50,12 @@ def test_location_view_enforces_access_control(client, user, book):
     client.force_login(another_user)
 
     response = client.get(reverse('location'), {
-        'book-id': book.id,
-        'book-page-num': 1,
+        'book-code': book.code,
+        'book-page-number': 1,
         'top-word': 10
     })
 
-    assert response.status_code == 403, "User should not be able to update reading location for a book they don't have access to"
+    assert response.status_code == 403, f"User should not be able to update reading location for a book they don't have access to: {response.content}"
 
 
 @pytest.mark.django_db
@@ -86,7 +86,7 @@ def test_add_to_history_invalid_input(client, user):
 @pytest.mark.django_db
 def test_view_book_success(client, user, book):
     client.force_login(user)
-    response = client.get(reverse('book'), {'book-id': book.id})
+    response = client.get(reverse('book'), {'book-code': book.code})
 
     assert response.status_code == 200
     assert 'book' in response.context
@@ -99,7 +99,7 @@ def test_view_book_access_denied(client, book):
     # Assuming another_user does not have access to the book
     another_user = get_user_model().objects.create_user('another_user', 'another@example.com', 'password')
     client.force_login(another_user)
-    response = client.get(reverse('book'), {'book-id': book.id})
+    response = client.get(reverse('book'), {'book-code': book.code})
 
     assert response.status_code == 403
 

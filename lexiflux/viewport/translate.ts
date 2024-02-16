@@ -9,7 +9,7 @@ interface TranslationResponse {
 
 function sendTranslationRequest(selectedText: string, range: Range, selectedWordSpans: HTMLElement[]): void {
   const encodedText = encodeURIComponent(selectedText);
-  const url = `/translate?text=${encodedText}`;
+  const url = `/translate?text=${encodedText}&book-code=${viewport.bookCode}`;
 
   fetch(url)
     .then(response => {

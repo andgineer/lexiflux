@@ -5,8 +5,8 @@ export class Viewport {
     static wordsContainerId = 'words-container';
     static topNavbarId = 'top-navbar';
 
-    bookId: string;
-    pageNum: number;
+    bookCode: string;
+    pageNumber: number;
     totalWords: number = 0;
 
     wordsContainer: HTMLElement;
@@ -21,8 +21,9 @@ export class Viewport {
         this.wordsContainer = this.getWordsContainer();
         this.bookPageScroller = this.getBookPageScroller();
         this.wordsContainerTopMargin = getElement(Viewport.topNavbarId).getBoundingClientRect().height;
-        this.bookId = document.body.getAttribute('data-book-id') || '';
-        this.pageNum = parseInt(document.body.getAttribute('data-book-page-number') || '0');
+        this.bookCode = document.body.getAttribute('data-book-code') || '';
+        this.pageNumber = parseInt(document.body.getAttribute('data-book-page-number') || '0');
+        log(`Viewport constructor: bookCode: ${this.bookCode}, pageNumber: ${this.pageNumber}`);
     }
 
     public getWordsContainer(): HTMLElement {
@@ -60,7 +61,7 @@ export class Viewport {
         this.bookPageScroller = this.getBookPageScroller();
         this.wordsContainerTopMargin = this.getTopNavbar().getBoundingClientRect().height;
         this.totalWords = this.calculateTotalWords();
-        console.log('domChanged: bookId:', this.bookId, 'pageNum:', this.pageNum, 'totalWords:', this.totalWords, 'wordsContainerHeight:', this.getWordsContainerHeight());
+        log('domChanged: bookCode:', this.bookCode, 'pageNum:', this.pageNumber, 'totalWords:', this.totalWords, 'wordsContainerHeight:', this.getWordsContainerHeight());
     }
 
     public getWordTop(wordId: number = 0): number {
@@ -72,7 +73,7 @@ export class Viewport {
     public loadPage(pageNumber: number, topWord: number | undefined = 0): Promise<void> {
         // if topWord is undefined you should call reportReadingPosition() by yourself
         return new Promise((resolve, reject) => {
-            fetch('/page?book-id=' + this.bookId + '&book-page-num=' + pageNumber + '&top-word=' + topWord)
+            fetch('/page?book-code=' + this.bookCode + '&book-page-number=' + pageNumber + '&top-word=' + topWord)
                 .then(response => {
                     if (!response.ok) {
                         throw new Error('Network response was not ok');
@@ -92,8 +93,8 @@ export class Viewport {
                     bookElement.innerHTML = data.html;
                     this.domChanged();
 
-                    this.bookId = data.data.bookId;
-                    this.pageNum = parseInt(data.data.pageNum);
+                    this.bookCode = data.data.bookCode;
+                    this.pageNumber = parseInt(data.data.pageNumber);
                     this.totalWords = this.calculateTotalWords();
                     log(`Total words: ${this.totalWords}, topWord: ${topWord}`);
 
@@ -197,7 +198,7 @@ export class Viewport {
 
     public reportReadingLocation(): void {
         // Determine the first visible word and report to the server the reading location
-        let url = `/location?top-word=${this.getFirstVisibleWord()}&book-id=${this.bookId}&book-page-num=${this.pageNum}`;
+        let url = `/location?top-word=${this.getFirstVisibleWord()}&book-code=${this.bookCode}&book-page-number=${this.pageNumber}`;
         fetch(url)
             .then(response => {
                 if (!response.ok) {
@@ -214,10 +215,10 @@ export class Viewport {
     public async scrollUp(): Promise<void> {
         // Scroll one viewport up
         if (this.bookPageScroller.scrollTop === 0) {
-            if (this.pageNum === 1) {
+            if (this.pageNumber === 1) {
                 return;
             }
-            await this.loadPage(this.pageNum - 1, undefined);
+            await this.loadPage(this.pageNumber - 1, undefined);
             // Scroll to the bottom of the page
             this.bookPageScroller.scrollTop = this.getWordsContainerHeight() - this.bookPageScroller.clientHeight;
             this.reportReadingLocation();
@@ -232,7 +233,7 @@ export class Viewport {
     public async scrollDown(): Promise<void> {
         // Scroll one viewport down
         if (this.word(this.totalWords - 1).getBoundingClientRect().bottom <= this.bookPageScroller.getBoundingClientRect().bottom) {
-            await this.loadPage(this.pageNum + 1, 0);
+            await this.loadPage(this.pageNumber + 1, 0);
         } else {
             // no need to check for too large scroll top, it will be handled by the browser
             this.bookPageScroller.scrollTop += this.bookPageScroller.clientHeight - this.lineHeight;

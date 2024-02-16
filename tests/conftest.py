@@ -8,7 +8,7 @@ from lexiflux.ebook.book_base import BookBase
 from lexiflux.ebook.book_plain_text import BookPlainText
 from django.contrib.auth import get_user_model
 from django.urls import reverse
-from lexiflux.models import Author, Language, Book, BookPage
+from lexiflux.models import Author, Language, Book, BookPage, ReaderProfile
 
 
 @pytest.fixture(
@@ -119,3 +119,4 @@ def book(db, user, author):
         )
 
     return book
+

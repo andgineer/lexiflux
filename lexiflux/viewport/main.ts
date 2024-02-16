@@ -205,12 +205,12 @@ function reInitDom(): void {
 
 document.body.addEventListener('htmx:configRequest', (event: Event) => {
     const detail = (event as CustomEvent).detail;
-    detail.parameters['book-page-num'] = viewport.pageNum;
-    detail.parameters['book-id'] = viewport.bookId;
+    detail.parameters['book-page-number'] = viewport.pageNumber;
+    detail.parameters['book-code'] = viewport.bookCode;
 });
 
 document.addEventListener('DOMContentLoaded', () => {
-    viewport.loadPage(viewport.pageNum, 0).then(() => {
+    viewport.loadPage(viewport.pageNumber, 0).then(() => {
         reInitDom();
     }).catch((error: Error) => {
         console.error('Failed to load page:', error);
