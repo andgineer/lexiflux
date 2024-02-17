@@ -75,5 +75,5 @@ def find_language(
     return language.name if language else None
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
     print(detect_language("Dobar dan!"))
