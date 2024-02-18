@@ -18,7 +18,11 @@ class Command(BaseCommand):  # type: ignore
     def add_arguments(self, parser: argparse.ArgumentParser) -> None:
         parser.add_argument("file_path", type=str, help="Path to the plain text file to import")
         parser.add_argument(
-            "-l", "--loglevel", type=str, help="Logging level for the command", default="INFO"
+            "-l",
+            "--loglevel",
+            type=str,
+            help="Logging level for the command",
+            default="INFO",
         )
         parser.add_argument(
             "--ld",

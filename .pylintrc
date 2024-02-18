@@ -1,3 +1,6 @@
+[FORMAT]
+max-line-length=99
+
 [MESSAGES CONTROL]
 # globally disable pylint checks (comma separated)
 disable=

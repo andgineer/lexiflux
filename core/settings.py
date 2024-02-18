@@ -10,6 +10,7 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
 from pathlib import Path
+from typing import List
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -24,15 +25,15 @@ SECRET_KEY = "django-insecure-(qy1)@^p*1x^l$ayy@(t-5cym8y5a#8e0jrlr2v#sprhv)cei#
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS: List[str] = []
 SITE_ID = 1
 APPEND_SLASH = False
-LOGIN_URL = 'login'
-LOGIN_REDIRECT_URL = 'reader'
-LOGOUT_REDIRECT_URL = 'login'
+LOGIN_URL = "login"
+LOGIN_REDIRECT_URL = "reader"
+LOGOUT_REDIRECT_URL = "login"
 
-AUTH_USER_MODEL = 'core.CustomUser'
-AUTHENTICATION_BACKENDS = ['core.backends.CustomUserBackend']
+AUTH_USER_MODEL = "core.CustomUser"
+AUTHENTICATION_BACKENDS = ["core.backends.CustomUserBackend"]
 
 
 # Application definition
@@ -44,15 +45,15 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    'django.contrib.sites',
-    'allauth',
-    'allauth.account',
-    'allauth.socialaccount',
+    "django.contrib.sites",
+    "allauth",
+    "allauth.account",
+    "allauth.socialaccount",
     # Include providers as needed
-    'allauth.socialaccount.providers.google',
-    'allauth.socialaccount.providers.apple',
-    'widget_tweaks',
-    'core',
+    "allauth.socialaccount.providers.google",
+    "allauth.socialaccount.providers.apple",
+    "widget_tweaks",
+    "core",
     "lexiflux",
 ]
 
@@ -62,10 +63,10 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
-    'allauth.account.middleware.AccountMiddleware',
+    "allauth.account.middleware.AccountMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    'django.middleware.gzip.GZipMiddleware',
+    "django.middleware.gzip.GZipMiddleware",
 ]
 
 ROOT_URLCONF = "core.urls"
@@ -142,19 +143,19 @@ STATIC_URL = "static/"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    'handlers': {
-        'console': {
-            'level': 'DEBUG',
-            'class': 'logging.StreamHandler',
+    "version": 1,
+    "disable_existing_loggers": False,
+    "handlers": {
+        "console": {
+            "level": "DEBUG",
+            "class": "logging.StreamHandler",
         },
     },
-    'loggers': {
-        'django': {
-            'handlers': ['console'],
-            'level': 'INFO',
-            'propagate': True,
+    "loggers": {
+        "django": {
+            "handlers": ["console"],
+            "level": "INFO",
+            "propagate": True,
         },
     },
 }

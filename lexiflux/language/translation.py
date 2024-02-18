@@ -56,7 +56,9 @@ def detect_language(text: str) -> str:
 
 
 def find_language(
-    name: Optional[str] = None, google_code: Optional[str] = None, epub_code: Optional[str] = None
+    name: Optional[str] = None,
+    google_code: Optional[str] = None,
+    epub_code: Optional[str] = None,
 ) -> Optional[str]:
     """Find language.
 

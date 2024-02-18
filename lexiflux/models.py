@@ -166,7 +166,11 @@ class ReaderProfile(models.Model):  # type: ignore
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="reader_profile"
     )
     current_book = models.ForeignKey(
-        Book, on_delete=models.SET_NULL, null=True, blank=True, related_name="current_readers"
+        Book,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="current_readers",
     )
     native_language = models.ForeignKey(Language, on_delete=models.SET_NULL, null=True)
 
@@ -233,7 +237,9 @@ class ReadingHistory(models.Model):  # type: ignore
     """Model to store each reading session's details for a user."""
 
     user = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="reading_history"
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="reading_history",
     )
     book = models.ForeignKey("Book", on_delete=models.CASCADE)
     page_number = models.PositiveIntegerField()

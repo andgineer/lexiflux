@@ -24,7 +24,7 @@ urlpatterns = [
     path("", include("lexiflux.urls")),
     path("admin/", admin.site.urls),
     path("accounts/login/", CustomLoginView.as_view(), name="login"),
-    path('accounts/logout/', LogoutView.as_view(next_page='login'), name='logout'),
+    path("accounts/logout/", LogoutView.as_view(next_page="login"), name="logout"),
     path("accounts/signup/", SignUpView.as_view(), name="signup"),
     path("accounts/", include("django.contrib.auth.urls")),
 ]
