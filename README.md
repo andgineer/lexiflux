@@ -11,7 +11,7 @@
 | lexiflux/ebook/headings.py             |       36 |        0 |    100% |           |
 | lexiflux/language/google\_languages.py |       12 |        0 |    100% |           |
 | lexiflux/language/translation.py       |       45 |        0 |    100% |           |
-| lexiflux/models.py                     |      111 |       15 |     86% |40, 50, 103, 112-113, 130, 141, 159, 212-224 |
+| lexiflux/models.py                     |      111 |       15 |     86% |40, 50, 103, 112-113, 130, 141, 159, 216-228 |
 | lexiflux/settings.py                   |        0 |        0 |    100% |           |
 | lexiflux/signals.py                    |       13 |        0 |    100% |           |
 | lexiflux/tests.py                      |        0 |        0 |    100% |           |
