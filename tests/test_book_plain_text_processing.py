@@ -1,6 +1,7 @@
 import pytest
 from io import StringIO
 from lexiflux.ebook.book_plain_text import BookPlainText
+from lexiflux.ebook.page_splitter import PageSplitter
 
 
 @pytest.fixture
@@ -14,19 +15,19 @@ def mock_page100_splitter():
 
 
 def mock_book_plain_text(page_length: int):
-    original_target = BookPlainText.PAGE_LENGTH_TARGET
+    original_target = PageSplitter.PAGE_LENGTH_TARGET
     set_book_page_length(page_length)
     yield
     set_book_page_length(original_target)
 
 
 def set_book_page_length(page_length):
-    BookPlainText.PAGE_LENGTH_TARGET = page_length  # Mocked target length for testing
-    BookPlainText.PAGE_LENGTH_ERROR_TOLERANCE = 0.5
-    BookPlainText.PAGE_MIN_LENGTH = int(
-        BookPlainText.PAGE_LENGTH_TARGET * (1 - BookPlainText.PAGE_LENGTH_ERROR_TOLERANCE))
-    BookPlainText.PAGE_MAX_LENGTH = int(
-        BookPlainText.PAGE_LENGTH_TARGET * (1 + BookPlainText.PAGE_LENGTH_ERROR_TOLERANCE))
+    PageSplitter.PAGE_LENGTH_TARGET = page_length  # Mocked target length for testing
+    PageSplitter.PAGE_LENGTH_ERROR_TOLERANCE = 0.5
+    PageSplitter.PAGE_MIN_LENGTH = int(
+        PageSplitter.PAGE_LENGTH_TARGET * (1 - PageSplitter.PAGE_LENGTH_ERROR_TOLERANCE))
+    PageSplitter.PAGE_MAX_LENGTH = int(
+        PageSplitter.PAGE_LENGTH_TARGET * (1 + PageSplitter.PAGE_LENGTH_ERROR_TOLERANCE))
 
 
 @pytest.mark.django_db

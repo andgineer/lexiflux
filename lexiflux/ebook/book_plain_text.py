@@ -7,6 +7,7 @@ from typing import IO, Any, Dict, Iterator, List, Optional, Tuple, Union
 from chardet.universaldetector import UniversalDetector
 from lexiflux.ebook.book_base import MetadataField, BookBase
 from lexiflux.ebook.headings import HeadingDetector
+from lexiflux.ebook.page_splitter import PageSplitter
 
 log = logging.getLogger()
 
@@ -14,11 +15,6 @@ log = logging.getLogger()
 class BookPlainText(BookBase):  # pylint: disable=too-many-instance-attributes
     """Import ebook from plain text."""
 
-    PAGE_LENGTH_TARGET = 3000  # Target page length in characters
-    PAGE_LENGTH_ERROR_TOLERANCE = 0.25  # Tolerance for page length error
-    assert 0 < PAGE_LENGTH_ERROR_TOLERANCE < 1
-    PAGE_MIN_LENGTH = int(PAGE_LENGTH_TARGET * (1 - PAGE_LENGTH_ERROR_TOLERANCE))
-    PAGE_MAX_LENGTH = int(PAGE_LENGTH_TARGET * (1 + PAGE_LENGTH_ERROR_TOLERANCE))
     CHAPTER_HEADER_DISTANCE = 300  # Minimum character distance between chapter headers
     GUTENBERG_ENDING_SIZE = 30 * 1024  # Maximum size of the Gutenberg licence text
     GUTENBERG_START_SIZE = 1024  # Minimum size of the Gutenberg preamble
@@ -62,18 +58,6 @@ class BookPlainText(BookBase):  # pylint: disable=too-many-instance-attributes
             end = len(self.text)
         return meta, start, end
 
-    def set_page_target(self, target_length: int, error_tolerance: int) -> None:
-        """Set book page target length and error tolerance."""
-        assert 0 < error_tolerance < 1
-        self.PAGE_LENGTH_TARGET = target_length  # pylint: disable=invalid-name
-        self.PAGE_LENGTH_ERROR_TOLERANCE = error_tolerance  # pylint: disable=invalid-name
-        self.PAGE_MIN_LENGTH = int(  # pylint: disable=invalid-name
-            self.PAGE_LENGTH_TARGET * (1 - self.PAGE_LENGTH_ERROR_TOLERANCE)
-        )
-        self.PAGE_MAX_LENGTH = int(  # pylint: disable=invalid-name
-            self.PAGE_LENGTH_TARGET * (1 + self.PAGE_LENGTH_ERROR_TOLERANCE)
-        )
-
     def read_file(self, file_path: str) -> str:
         """Read file with detecting correct encoding."""
         detector = UniversalDetector()
@@ -113,51 +97,6 @@ class BookPlainText(BookBase):  # pylint: disable=too-many-instance-attributes
             words = [fragment[: self.WORD_ESTIMATED_LENGTH * words_num]]
         return " ".join(words)
 
-    def find_nearest_page_end_match(
-        self, page_start_index: int, pattern: re.Pattern[str], return_start: bool = False
-    ) -> Optional[int]:
-        """Find the nearest regex match around expected end of page.
-
-        In no such match in the vicinity, return None.
-        Calculate the vicinity based on the expected PAGE_LENGTH_TARGET
-        and PAGE_LENGTH_ERROR_TOLERANCE.
-        """
-        end_pos = min(
-            page_start_index + int(self.PAGE_MAX_LENGTH),
-            self.book_end,
-        )
-        start_pos = max(
-            page_start_index + int(self.PAGE_MIN_LENGTH),
-            self.book_start,
-        )
-        ends = [
-            match.start() if return_start else match.end()
-            for match in pattern.finditer(self.text, start_pos, end_pos)
-        ]
-        return (
-            min(ends, key=lambda x: abs(x - page_start_index + self.PAGE_LENGTH_TARGET))
-            if ends
-            else None
-        )
-
-    def find_nearest_page_end(self, page_start_index: int) -> int:
-        """Find the nearest page end."""
-        patterns = [  # sorted by priority
-            re.compile(r"(\r?\n|\u2028|\u2029)(\s*(\r?\n|\u2028|\u2029))+"),  # Paragraph end
-            re.compile(r"(\r?\n|\u2028|\u2029)"),  # Line end
-            re.compile(r"[^\s.!?]*\w[^\s.!?]*[.!?]\s"),  # Sentence end
-            re.compile(r"\w+\b"),  # Word end
-        ]
-
-        for pattern_idx, pattern in enumerate(patterns):
-            if nearest_page_end := self.find_nearest_page_end_match(
-                page_start_index, pattern, return_start=pattern_idx < 2
-            ):
-                return nearest_page_end
-
-        # If no suitable end found, return the maximum allowed length
-        return min(page_start_index + self.book_end, page_start_index + self.PAGE_LENGTH_TARGET)
-
     @staticmethod
     def normalize(text: str) -> str:
         """Make later processing more simple."""
@@ -171,6 +110,7 @@ class BookPlainText(BookBase):  # pylint: disable=too-many-instance-attributes
 
         Also clear headings and recollect them during pages generation.
         """
+        page_splitter = PageSplitter(self.text, self.book_start, self.book_end)
         heading_detector = HeadingDetector()
 
         start = self.book_start
@@ -178,13 +118,15 @@ class BookPlainText(BookBase):  # pylint: disable=too-many-instance-attributes
         page_num = 0
         while start < self.book_end:
             page_num += 1
-            end = self.find_nearest_page_end(start)
+            end = page_splitter.find_nearest_page_end(start)
 
             # shift end if found heading near the end
             if headings := heading_detector.get_headings(
-                self.text[start + self.PAGE_MIN_LENGTH : end] + "\n\n", page_num
+                self.text[start + page_splitter.PAGE_MIN_LENGTH : end] + "\n\n", page_num
             ):
-                end = start + self.PAGE_MIN_LENGTH + headings[0][1] - 1  # pos from first heading
+                end = (
+                    start + page_splitter.PAGE_MIN_LENGTH + headings[0][1] - 1
+                )  # pos from first heading
 
             page_text = self.normalize(self.text[start:end])
             if headings := heading_detector.get_headings(page_text, page_num):
