@@ -60,6 +60,7 @@ class PageSplitter:
         """Find the nearest page end."""
         patterns = [  # sorted by priority
             re.compile(r"(\r?\n|\u2028|\u2029)(\s*(\r?\n|\u2028|\u2029))+"),  # Paragraph end
+            re.compile(r"<\/?p>"),  # HTML paragraph end
             re.compile(r"(\r?\n|\u2028|\u2029)"),  # Line end
             re.compile(r"[^\s.!?]*\w[^\s.!?]*[.!?]\s"),  # Sentence end
             re.compile(r"\w+\b"),  # Word end
@@ -69,7 +70,22 @@ class PageSplitter:
             if nearest_page_end := self.find_nearest_page_end_match(
                 page_start_index, pattern, return_start=pattern_idx < 2
             ):
+                nearest_page_end = self.handle_p_tag_split(page_start_index, nearest_page_end)
                 return nearest_page_end
 
         # If no suitable end found, return the maximum allowed length
         return min(page_start_index + self.end, page_start_index + self.PAGE_LENGTH_TARGET)
+
+    def handle_p_tag_split(self, page_start_index: int, nearest_page_end: int) -> int:
+        """Find the position of the last closing </p> tag before the split."""
+        last_open_p_tag_pos = self.text.find("<p", page_start_index, nearest_page_end)
+        last_close_p_tag_pos = self.text.rfind("</p>", page_start_index, nearest_page_end)
+
+        if last_open_p_tag_pos != -1 and (
+            last_close_p_tag_pos == -1 or last_close_p_tag_pos < last_open_p_tag_pos
+        ):
+            # Split <p> between pages
+            self.text = f"{self.text[:nearest_page_end]}</p><p>{self.text[nearest_page_end:]}"
+            nearest_page_end += len("</p>")
+
+        return nearest_page_end

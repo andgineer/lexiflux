@@ -48,14 +48,14 @@ def test_sentence_end_priority(mock_page_splitter):
     text = "a" * 29 + " aaa" + ". " + 'b' * 5 + " next  sentence.\n"
     splitter = BookPlainText(StringIO(text))
     pages = list(splitter.pages())
-    assert len(pages) == 3
+    assert len(pages) == 2
     assert "a" * 29 + " aaa" + ". " == pages[0]
 
     # now no sentence - will split nearer to target by words
     text = "a" * 29 + " aaa" + "  " + 'b' * 5 + " next  sentence.\n"
     splitter = BookPlainText(StringIO(text))
     pages = list(splitter.pages())
-    assert len(pages) == 3
+    assert len(pages) == 2
     assert "a" * 29 == pages[0]
 
 
@@ -98,10 +98,24 @@ def test_pages_shift_if_heading(mock_page_splitter):
     chapter_pattern = "\n\nCHAPTER VII.\n\n"
     splitter = BookPlainText(StringIO("a"*16 + chapter_pattern))
     pages = list(splitter.pages())
-    assert len(pages) == 3
+    assert len(pages) == 2
     assert pages[0] == "a"*16
 
     splitter = BookPlainText(StringIO("a" * 20 + "aa\n\n" + "d" * 21 + "\n\n34"))
     pages = list(splitter.pages())
     assert len(pages) == 3
     assert pages[0] == "a" * 20 + "aa"
+
+
+@pytest.mark.django_db
+def test_split_inside_p_tag(mock_page_splitter):
+    # Text contains a long paragraph that should be split inside the <p> tag
+    text = "<p>" + "a" * 60 + "</p>" + "b" * 30
+    splitter = BookPlainText(StringIO(text))
+    pages = list(splitter.pages())
+
+    # Assert that the split is inside the <p> tag
+    print(pages)
+    assert len(pages) == 3
+    assert pages[0].endswith("</p>")
+    assert pages[1].startswith("<p>")

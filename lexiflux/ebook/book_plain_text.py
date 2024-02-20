@@ -122,13 +122,13 @@ class BookPlainText(BookBase):  # pylint: disable=too-many-instance-attributes
 
             # shift end if found heading near the end
             if headings := heading_detector.get_headings(
-                self.text[start + page_splitter.PAGE_MIN_LENGTH : end] + "\n\n", page_num
+                page_splitter.text[start + page_splitter.PAGE_MIN_LENGTH : end] + "\n\n", page_num
             ):
                 end = (
                     start + page_splitter.PAGE_MIN_LENGTH + headings[0][1] - 1
                 )  # pos from first heading
 
-            page_text = self.normalize(self.text[start:end])
+            page_text = self.normalize(page_splitter.text[start:end])
             if headings := heading_detector.get_headings(page_text, page_num):
                 self.toc.extend(headings)
             # todo: remove <br/> from the start of the page
