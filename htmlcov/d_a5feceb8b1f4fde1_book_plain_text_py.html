@@ -65,7 +65,7 @@
             <a id="nextFileLink" class="nav" href="d_a5feceb8b1f4fde1_headings_py.html">&#xbb; next</a>
             &nbsp; &nbsp; &nbsp;
             <a class="nav" href="https://coverage.readthedocs.io/en/7.4.1">coverage.py v7.4.1</a>,
-            created at 2024-02-19 08:00 +0000
+            created at 2024-02-20 08:10 +0000
         </p>
         <aside class="hidden">
             <button type="button" class="button_next_chunk" data-shortcut="j"/>
@@ -204,13 +204,13 @@
     <p class="pln"><span class="n"><a id="t122" href="#t122">122</a></span><span class="t">&nbsp;</span><span class="r"></span></p>
     <p class="pln"><span class="n"><a id="t123" href="#t123">123</a></span><span class="t">            <span class="com"># shift end if found heading near the end</span>&nbsp;</span><span class="r"></span></p>
     <p class="run"><span class="n"><a id="t124" href="#t124">124</a></span><span class="t">            <span class="key">if</span> <span class="nam">headings</span> <span class="op">:=</span> <span class="nam">heading_detector</span><span class="op">.</span><span class="nam">get_headings</span><span class="op">(</span>&nbsp;</span><span class="r"></span></p>
-    <p class="pln"><span class="n"><a id="t125" href="#t125">125</a></span><span class="t">                <span class="nam">self</span><span class="op">.</span><span class="nam">text</span><span class="op">[</span><span class="nam">start</span> <span class="op">+</span> <span class="nam">page_splitter</span><span class="op">.</span><span class="nam">PAGE_MIN_LENGTH</span> <span class="op">:</span> <span class="nam">end</span><span class="op">]</span> <span class="op">+</span> <span class="str">"\n\n"</span><span class="op">,</span> <span class="nam">page_num</span>&nbsp;</span><span class="r"></span></p>
+    <p class="pln"><span class="n"><a id="t125" href="#t125">125</a></span><span class="t">                <span class="nam">page_splitter</span><span class="op">.</span><span class="nam">text</span><span class="op">[</span><span class="nam">start</span> <span class="op">+</span> <span class="nam">page_splitter</span><span class="op">.</span><span class="nam">PAGE_MIN_LENGTH</span> <span class="op">:</span> <span class="nam">end</span><span class="op">]</span> <span class="op">+</span> <span class="str">"\n\n"</span><span class="op">,</span> <span class="nam">page_num</span>&nbsp;</span><span class="r"></span></p>
     <p class="pln"><span class="n"><a id="t126" href="#t126">126</a></span><span class="t">            <span class="op">)</span><span class="op">:</span>&nbsp;</span><span class="r"></span></p>
     <p class="mis show_mis"><span class="n"><a id="t127" href="#t127">127</a></span><span class="t">                <span class="nam">end</span> <span class="op">=</span> <span class="op">(</span>&nbsp;</span><span class="r"></span></p>
     <p class="pln"><span class="n"><a id="t128" href="#t128">128</a></span><span class="t">                    <span class="nam">start</span> <span class="op">+</span> <span class="nam">page_splitter</span><span class="op">.</span><span class="nam">PAGE_MIN_LENGTH</span> <span class="op">+</span> <span class="nam">headings</span><span class="op">[</span><span class="num">0</span><span class="op">]</span><span class="op">[</span><span class="num">1</span><span class="op">]</span> <span class="op">-</span> <span class="num">1</span>&nbsp;</span><span class="r"></span></p>
     <p class="pln"><span class="n"><a id="t129" href="#t129">129</a></span><span class="t">                <span class="op">)</span>  <span class="com"># pos from first heading</span>&nbsp;</span><span class="r"></span></p>
     <p class="pln"><span class="n"><a id="t130" href="#t130">130</a></span><span class="t">&nbsp;</span><span class="r"></span></p>
-    <p class="run"><span class="n"><a id="t131" href="#t131">131</a></span><span class="t">            <span class="nam">page_text</span> <span class="op">=</span> <span class="nam">self</span><span class="op">.</span><span class="nam">normalize</span><span class="op">(</span><span class="nam">self</span><span class="op">.</span><span class="nam">text</span><span class="op">[</span><span class="nam">start</span><span class="op">:</span><span class="nam">end</span><span class="op">]</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
+    <p class="run"><span class="n"><a id="t131" href="#t131">131</a></span><span class="t">            <span class="nam">page_text</span> <span class="op">=</span> <span class="nam">self</span><span class="op">.</span><span class="nam">normalize</span><span class="op">(</span><span class="nam">page_splitter</span><span class="op">.</span><span class="nam">text</span><span class="op">[</span><span class="nam">start</span><span class="op">:</span><span class="nam">end</span><span class="op">]</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
     <p class="run"><span class="n"><a id="t132" href="#t132">132</a></span><span class="t">            <span class="key">if</span> <span class="nam">headings</span> <span class="op">:=</span> <span class="nam">heading_detector</span><span class="op">.</span><span class="nam">get_headings</span><span class="op">(</span><span class="nam">page_text</span><span class="op">,</span> <span class="nam">page_num</span><span class="op">)</span><span class="op">:</span>&nbsp;</span><span class="r"></span></p>
     <p class="run"><span class="n"><a id="t133" href="#t133">133</a></span><span class="t">                <span class="nam">self</span><span class="op">.</span><span class="nam">toc</span><span class="op">.</span><span class="nam">extend</span><span class="op">(</span><span class="nam">headings</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
     <p class="pln"><span class="n"><a id="t134" href="#t134">134</a></span><span class="t">            <span class="com"># todo: remove &lt;br/> from the start of the page</span>&nbsp;</span><span class="r"></span></p>
@@ -269,7 +269,7 @@
             <a id="nextFileLink" class="nav" href="d_a5feceb8b1f4fde1_headings_py.html">&#xbb; next</a>
             &nbsp; &nbsp; &nbsp;
             <a class="nav" href="https://coverage.readthedocs.io/en/7.4.1">coverage.py v7.4.1</a>,
-            created at 2024-02-19 08:00 +0000
+            created at 2024-02-20 08:10 +0000
         </p>
     </div>
 </footer>

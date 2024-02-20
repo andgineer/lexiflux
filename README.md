@@ -9,7 +9,7 @@
 | lexiflux/ebook/book\_epub.py           |       57 |       24 |     58% |25-35, 44-56, 63-79, 84, 101, 104-106 |
 | lexiflux/ebook/book\_plain\_text.py    |      106 |        4 |     96% |57-58, 127, 174 |
 | lexiflux/ebook/headings.py             |       36 |        0 |    100% |           |
-| lexiflux/ebook/page\_splitter.py       |       29 |        5 |     83% |     22-28 |
+| lexiflux/ebook/page\_splitter.py       |       37 |        5 |     86% |     22-28 |
 | lexiflux/language/google\_languages.py |       12 |        0 |    100% |           |
 | lexiflux/language/translation.py       |       45 |        0 |    100% |           |
 | lexiflux/models.py                     |      111 |       15 |     86% |40, 50, 103, 112-113, 130, 141, 159, 216-228 |
@@ -19,7 +19,7 @@
 | lexiflux/urls.py                       |        3 |        0 |    100% |           |
 | lexiflux/utils.py                      |        8 |        0 |    100% |           |
 | lexiflux/views.py                      |      138 |        7 |     95% |35, 54, 63, 141, 211-212, 238 |
-|                              **TOTAL** |  **644** |   **60** | **91%** |           |
+|                              **TOTAL** |  **652** |   **60** | **91%** |           |
 
 
 ## Setup coverage badge
