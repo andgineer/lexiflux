@@ -96,10 +96,16 @@ def test_wrong_chapter_pattern(mock_page_splitter, wrong_chapter_pattern):
 @pytest.mark.django_db
 def test_pages_shift_if_heading(mock_page_splitter):
     chapter_pattern = "\n\nCHAPTER VII.\n\n"
-    splitter = BookPlainText(StringIO("a"*16 + chapter_pattern))
+    splitter = BookPlainText(StringIO("a"*16 + chapter_pattern + " " + "aaa"))
+    pages = list(splitter.pages())
+    assert len(pages) == 3
+    assert pages[0] == "a"*16
+
+    splitter = BookPlainText(StringIO("a"*16 + "\n123 aaaaaaaa\n" + "aaa"))
     pages = list(splitter.pages())
     assert len(pages) == 2
-    assert pages[0] == "a"*16
+    assert pages[0] == "a"*16 + " <br/> "
+    assert pages[1] == "123 aaaaaaaa <br/> aaa"
 
     splitter = BookPlainText(StringIO("a" * 20 + "aa\n\n" + "d" * 21 + "\n\n34"))
     pages = list(splitter.pages())
