@@ -1,3 +1,5 @@
+unexport CONDA_PREFIX  # if conda is installed, it will mess with the virtual env
+
 .HELP: shell  ## Django shell
 shell:
 	./manage shell
@@ -35,8 +37,7 @@ run:
 reqs:
 	pre-commit autoupdate
 	bash ./scripts/compile_requirements.sh
-	pip install -r requirements.dev.txt
-	pip install -r requirements.txt
+	uv pip install -r requirements.dev.txt
 
 .HELP: sql  ## sqlite3
 sql:
