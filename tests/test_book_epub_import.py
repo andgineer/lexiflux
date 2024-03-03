@@ -1,7 +1,7 @@
 import pytest
 from ebooklib import epub
 
-from lexiflux.ebook.book_epub import flatten_list, extract_headings, BookEpub, href_hierarchy
+from lexiflux.ebook.book_epub import flatten_list, extract_headings, BookEpub, href_hierarchy, clean_html
 from lexiflux.ebook.book_base import import_book
 
 
@@ -89,3 +89,27 @@ def test_epub_import_href_hierarchy():
         }
     }
     assert href_hierarchy(input_dict) == expected_output
+
+
+def test_clean_html_removes_head():
+    input_html = "<html><head><title>Test</title></head><body><p>Hello, world!</p></body></html>"
+    expected_output = "<p>Hello, world!</p>"
+    assert clean_html(input_html) == expected_output
+
+
+def test_clean_html_unwraps_tags():
+    input_html = "<html><body><span><p>Hello, world!</p></span></body></html>"
+    expected_output = "<p>Hello, world!</p>"
+    assert clean_html(input_html) == expected_output
+
+
+def test_clean_html_removes_attributes():
+    input_html = '<div class="test"><p style="color: red;">Hello, world!</p></div>'
+    expected_output = "<div><p>Hello, world!</p></div>"
+    assert clean_html(input_html) == expected_output
+
+
+def test_clean_html_handles_empty_input():
+    input_html = ""
+    expected_output = ""
+    assert clean_html(input_html) == expected_output

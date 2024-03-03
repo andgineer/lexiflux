@@ -1,8 +1,10 @@
 """Import an EPUB file into the database."""
+
 import logging
 from collections import defaultdict
 from typing import Any, Iterable, List, Optional, Tuple, Dict, Iterator
 
+from bs4 import BeautifulSoup
 from ebooklib import ITEM_DOCUMENT, epub
 
 from lexiflux.ebook.book_base import BookBase, MetadataField
@@ -78,11 +80,12 @@ class BookEpub(BookBase):
                 )
                 # todo: split epub item to pages
                 page_num += 1
+                item_content = clean_html(item.get_body_content().decode("utf-8"))
                 if item.file_name in self.heading_hrefs:
                     header_anchors = self.heading_hrefs[item.file_name]
                     if "#" in header_anchors:
                         self.toc.append((header_anchors["#"], page_num, 0))
-                yield item.get_body_content().decode("utf-8")
+                yield item_content
                 # todo: detect headings inside pages text and store them in self._detected_toc
         #  set self._detected_toc as TOC if epab.toc too small
 
@@ -142,3 +145,23 @@ def href_hierarchy(input_dict: Dict[str, str]) -> Dict[str, Dict[str, str]]:
         anchor = f"#{parts[1]}" if len(parts) > 1 else "#"
         result[page][anchor] = value
     return result
+
+
+def clean_html(input_html: str) -> str:
+    """Clean HTML from tags and attributes."""
+    soup = BeautifulSoup(input_html, "html.parser")
+
+    # 1) Completely remove <head> tags
+    for head in soup.find_all("head"):
+        head.decompose()
+
+    # 2) Remove <body>, <html>, and <span> tags but keep their content
+    for tag in ["body", "html", "span"]:
+        for match in soup.find_all(tag):
+            match.unwrap()
+
+    # 3) Remove all attributes from <p> and <div> tags
+    for tag in soup.find_all(["p", "div"]):
+        tag.attrs = {}  # type: ignore
+
+    return str(soup)
