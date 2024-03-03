@@ -1,4 +1,5 @@
 """Utility functions for the Django commands."""
+
 import logging
 
 from django.core.management import CommandError

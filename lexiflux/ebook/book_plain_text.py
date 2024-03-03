@@ -1,4 +1,5 @@
 """Import a plain text file into Lexiflux."""
+
 import logging
 import random
 import re

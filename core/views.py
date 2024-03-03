@@ -1,4 +1,5 @@
 """Views for the core app."""
+
 from typing import Any
 
 from django.http import HttpRequest, HttpResponse

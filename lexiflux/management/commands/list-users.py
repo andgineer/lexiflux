@@ -1,4 +1,5 @@
 """Management command to list users."""  # pylint: disable=invalid-name
+
 import argparse
 from typing import Any
 

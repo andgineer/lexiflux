@@ -1,4 +1,5 @@
 """Split text into pages"""
+
 import re
 from typing import Optional
 

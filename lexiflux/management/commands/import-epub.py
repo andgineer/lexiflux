@@ -1,4 +1,5 @@
 """Django management command to import a book from an EPUB file."""  # pylint: disable=invalid-name
+
 import argparse
 import logging
 from typing import Any

@@ -1,4 +1,5 @@
 """Django Custom User Backend"""
+
 from typing import Optional, Any
 
 from django.contrib.auth.backends import ModelBackend

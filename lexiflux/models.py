@@ -1,4 +1,5 @@
 """Models for the lexiflux app."""
+
 import json
 import re
 from typing import TypeAlias, Tuple, List, Any

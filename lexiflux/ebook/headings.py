@@ -1,4 +1,5 @@
 """Detect headings."""
+
 import logging
 import re
 from typing import List, Optional, Tuple

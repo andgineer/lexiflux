@@ -1,4 +1,5 @@
 """Fill the database with languages from Google Translate."""
+
 import json
 
 from ..models import Language  # type: ignore  # pylint: disable=relative-beyond-top-level

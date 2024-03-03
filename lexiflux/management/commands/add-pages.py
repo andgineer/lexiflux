@@ -1,4 +1,5 @@
 """Django management command to add pages to a book."""  # pylint: disable=invalid-name
+
 import argparse
 from typing import Any
 

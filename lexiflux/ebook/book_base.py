@@ -1,4 +1,5 @@
 """Book base class for importing books from different formats."""
+
 import logging
 from typing import Any, Dict, Optional, Iterator
 from collections import Counter

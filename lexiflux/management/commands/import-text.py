@@ -1,4 +1,5 @@
 """Django management command to import a book from a plain text file."""  # pylint: disable=invalid-name,duplicate-code
+
 import argparse
 import logging
 from typing import Any
