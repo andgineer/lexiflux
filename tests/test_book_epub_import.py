@@ -1,6 +1,8 @@
+import pytest
 from ebooklib import epub
 
-from lexiflux.ebook.book_epub import flatten_list, extract_headings
+from lexiflux.ebook.book_epub import flatten_list, extract_headings, BookEpub, href_hierarchy
+from lexiflux.ebook.book_base import import_book
 
 
 def test_flatten_list_single_level():
@@ -46,4 +48,44 @@ def test_extract_headings_with_sections_and_subchapters():
     ]
     assert extract_headings(epub_toc) == expected
 
-# todo: e2e import-epub
+@pytest.mark.django_db
+def test_import_epub_e2e():
+    book = import_book(BookEpub('tests/resources/genius.epub'), '')
+    assert book.title == "The Genius"
+    assert book.author.name == 'Theodore Dreiser'
+    assert book.language.name == 'English'
+    assert book.public is True
+    assert book.pages.count() == 111
+    with open('tests/resources/genius_1st_page.txt', 'r', encoding="utf8") as f:
+        assert book.pages.first().content == f.read()
+    expected_toc = [
+        ['CHAPTER I.   Down the Rabbit-Hole', 1, 86],
+        ['CHAPTER II.   The Pool of Tears', 6, 34],
+        ['CHAPTER III.   A Caucus-Race and a Long Tale', 10, 135],
+        ['CHAPTER IV.   The Rabbit Sends in a Little Bill', 14, 100],
+        ['CHAPTER V.   Advice from a Caterpillar', 19, 264],
+        ['CHAPTER VI.   Pig and Pepper', 24, 264],
+        ['CHAPTER VII.   A Mad Tea-Party', 30, 169],
+        ['CHAPTER VIII.   The Queen’s Croquet-Ground', 35, 400],
+        ['CHAPTER IX.   The Mock Turtle’s Story', 41, 236],
+        ['CHAPTER X.   The Lobster Quadrille', 46, 346],
+        ['CHAPTER XI.   Кто украл the Tarts?', 51, 275],
+        ['CHAPTER XII.   Alice’s Evidence', 56, 2],
+    ]
+    # assert book.toc == expected_toc
+
+
+def test_epub_import_href_hierarchy():
+    input_dict = {
+        'title.xml': 'Title',
+        'main2.xml': 'Part 1 - YOUTH.Chapter 1',
+        'main2.xml#anchor': 'Part 1 - YOUTH.Chapter 2'
+    }
+    expected_output = {
+        'title.xml': {"#": 'Title'},
+        'main2.xml': {
+            "#": 'Part 1 - YOUTH.Chapter 1',
+            "#anchor": 'Part 1 - YOUTH.Chapter 2'
+        }
+    }
+    assert href_hierarchy(input_dict) == expected_output

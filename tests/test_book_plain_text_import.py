@@ -90,7 +90,7 @@ def test_import_book_nonexistent_owner_email(
 
 
 @pytest.mark.django_db
-def test_import_plain_text():
+def test_import_plain_text_e2e():
     book = import_book(BookPlainText('tests/resources/alice_adventure_in_wonderland.txt'), '')
     assert book.title == "Alice's Adventures in Wonderland"
     assert book.author.name == 'Lewis Carroll'

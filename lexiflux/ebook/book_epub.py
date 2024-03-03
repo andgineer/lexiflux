@@ -1,5 +1,6 @@
 """Import an EPUB file into the database."""
 import logging
+from collections import defaultdict
 from typing import Any, Iterable, List, Optional, Tuple, Dict, Iterator
 
 from ebooklib import ITEM_DOCUMENT, epub
@@ -15,7 +16,7 @@ class BookEpub(BookBase):
 
     book_start: int
     book_end: int
-    heading_hrefs: Dict[str, str]  # map hrefs to headings
+    heading_hrefs: Dict[str, Dict[str, str]]
 
     def __init__(self, file_path: str, languages: Optional[List[str]] = None) -> None:
         """Initialize.
@@ -27,11 +28,13 @@ class BookEpub(BookBase):
 
         self.meta, self.book_start, self.book_end = self.detect_meta()
         self.meta[MetadataField.LANGUAGE] = self.get_language()
-        self.heading_hrefs = {  # reverse href/title in flatten epub headings
-            value: key
-            for heading in flatten_list(extract_headings(self.epub.toc))
-            for key, value in heading.items()
-        }
+        self.heading_hrefs = href_hierarchy(
+            {  # reverse href/title in flatten epub headings
+                value: key
+                for heading in flatten_list(extract_headings(self.epub.toc))
+                for key, value in heading.items()
+            }
+        )
         log.debug("Extracted epub headings: %s", self.heading_hrefs)
 
     def detect_meta(self) -> Tuple[Dict[str, Any], int, int]:
@@ -53,7 +56,7 @@ class BookEpub(BookBase):
         meta[MetadataField.LANGUAGE] = (
             language_metadata[0][0] if language_metadata else self.get_language()
         )
-        return meta, 0, -1  #  todo: detect start/finish of the book
+        return meta, 0, -1  # todo: detect start/finish of the book
 
     def pages(self) -> Iterator[str]:
         """Split a text into pages of approximately equal length.
@@ -61,12 +64,9 @@ class BookEpub(BookBase):
         Also clear headings and recollect them during pages generation.
         """
         self.toc = []
+        page_num = 0
         for spine_id in self.epub.spine:
             item: epub.EpubItem = self.epub.get_item_with_id(spine_id[0])
-            # todo: if we found anchor or item for the heading from self.heading_hrefs,
-            #  add it to the toc and remove from self.heading_hrefs
-            # It will be sorted automatically as we scan pages from beginning to end
-            # May be start with item match and then try to find anchor and fix the entry?
             if item.get_type() == ITEM_DOCUMENT:
                 log.debug(
                     "Processing page: %s, name = %s, type = %s, id = %s, file_name = %s",
@@ -76,8 +76,15 @@ class BookEpub(BookBase):
                     item.get_id(),
                     item.file_name,
                 )
+                # todo: split epub item to pages
+                page_num += 1
+                if item.file_name in self.heading_hrefs:
+                    header_anchors = self.heading_hrefs[item.file_name]
+                    if "#" in header_anchors:
+                        self.toc.append((header_anchors["#"], page_num, 0))
                 yield item.get_body_content().decode("utf-8")
-        # todo: for items left in self.heading_hrefs, do something intelligent?
+                # todo: detect headings inside pages text and store them in self._detected_toc
+        #  set self._detected_toc as TOC if epab.toc too small
 
     def get_random_words(self, words_num: int = 15) -> str:
         """Get random words from the book."""
@@ -121,3 +128,17 @@ def flatten_list(
             else:
                 items.append({new_key: value})
     return items
+
+
+def href_hierarchy(input_dict: Dict[str, str]) -> Dict[str, Dict[str, str]]:
+    """Convert a flat TOC hrefs to a hierarchy.
+
+    result: {"epub item file name": {"": "title", "#anchor-inside-the-file": "sub_title" ...}, ...}
+    """
+    result: Dict[str, Dict[str, str]] = defaultdict(dict)
+    for key, value in input_dict.items():
+        parts = key.split("#")
+        page = parts[0]
+        anchor = f"#{parts[1]}" if len(parts) > 1 else "#"
+        result[page][anchor] = value
+    return result
