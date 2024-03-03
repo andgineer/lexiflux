@@ -12,13 +12,14 @@ on:
 
 jobs:
   build:
-
     strategy:
       matrix:
-        python-version: ["3.10", 3.11]
+        python-version: ["3.10", 3.11, 3.12]
         platform: [ubuntu-latest, macos-latest, windows-latest]
     runs-on: ${{ matrix.platform }}
-
+    env:
+      PRIMARY_PYTHON_VERSION: '3.12'
+      PRIMARY_PLATFORM: 'ubuntu-latest'
     permissions:
       # Gives the action the necessary permissions for publishing new
       # comments in pull requests.
@@ -43,18 +44,18 @@ jobs:
         python -m pytest -vv --junitxml=pytest.xml --cov-report=term-missing:skip-covered --cov=lexiflux tests/
 
     - name: Upload coverage data to coveralls.io
-      if: ${{ matrix.python-version == 3.11 && matrix.platform == 'ubuntu-latest' }}
+      if: ${{ matrix.python-version == PRIMARY_PYTHON_VERSION && matrix.platform == PRIMARY_PLATFORM }}
       run: coveralls --service=github
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Upload Coverage to Codecov
-      if: ${{ matrix.python-version == 3.11 && matrix.platform == 'ubuntu-latest' }}
+      if: ${{ matrix.python-version == PRIMARY_PYTHON_VERSION && matrix.platform == PRIMARY_PLATFORM }}
       uses: codecov/codecov-action@v2
 
     - name: Coverage comment
       id: coverage_comment
-      if: ${{ matrix.python-version == 3.11 && matrix.platform == 'ubuntu-latest' }}
+      if: ${{ matrix.python-version == PRIMARY_PYTHON_VERSION && matrix.platform == PRIMARY_PLATFORM }}
       uses: py-cov-action/python-coverage-comment-action@v3
       with:
         GITHUB_TOKEN: ${{ github.token }}

@@ -4,7 +4,7 @@
 #
 
 VENV_FOLDER="venv"
-PYTHON="python3.11"  # sync with python-version: '3.11' in .github/workflows/docs.yml,static.yml
+PRIMARY_PYTHON_VERSION="3.12"  # sync with python-version .github/workflows/docs.yml&static.yml
 
 RED='\033[1;31m'
 GREEN='\033[1;32m'
@@ -26,7 +26,7 @@ if [[ ! -d ${VENV_FOLDER} ]] ; then
     unset CONDA_PREFIX  # if conda is installed, it will mess with the virtual env
 
     echo -e $CYAN"Creating virtual environment for python in ${VENV_FOLDER}"$NC
-    if uv venv ${VENV_FOLDER} --python=${PYTHON}; then
+    if uv venv ${VENV_FOLDER} --python=python${PRIMARY_PYTHON_VERSION}; then
       START_TIME=$(date +%s)
 
       echo -e $CYAN"creating VENV.."$NC
