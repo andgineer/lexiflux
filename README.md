@@ -6,7 +6,7 @@
 |--------------------------------------- | -------: | -------: | ------: | --------: |
 | lexiflux/apps.py                       |       14 |        0 |    100% |           |
 | lexiflux/ebook/book\_base.py           |       72 |        5 |     93% |43, 50, 91, 130-131 |
-| lexiflux/ebook/book\_epub.py           |       72 |        5 |     93% |91, 108, 111-113 |
+| lexiflux/ebook/book\_epub.py           |       84 |        5 |     94% |94, 111, 114-116 |
 | lexiflux/ebook/book\_plain\_text.py    |      106 |        4 |     96% |57-58, 127, 174 |
 | lexiflux/ebook/headings.py             |       36 |        0 |    100% |           |
 | lexiflux/ebook/page\_splitter.py       |       37 |        5 |     86% |     22-28 |
@@ -19,7 +19,7 @@
 | lexiflux/urls.py                       |        3 |        0 |    100% |           |
 | lexiflux/utils.py                      |        8 |        0 |    100% |           |
 | lexiflux/views.py                      |      138 |        7 |     95% |35, 54, 63, 141, 211-212, 238 |
-|                              **TOTAL** |  **667** |   **41** | **94%** |           |
+|                              **TOTAL** |  **679** |   **41** | **94%** |           |
 
 
 ## Setup coverage badge
