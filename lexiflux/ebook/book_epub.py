@@ -149,19 +149,23 @@ def href_hierarchy(input_dict: Dict[str, str]) -> Dict[str, Dict[str, str]]:
 
 def clean_html(input_html: str) -> str:
     """Clean HTML from tags and attributes."""
-    soup = BeautifulSoup(input_html, "html.parser")
+    try:
+        soup = BeautifulSoup(input_html, "html.parser")
 
-    # 1) Completely remove <head> tags
-    for head in soup.find_all("head"):
-        head.decompose()
+        # 1) Completely remove <head> tags
+        for head in soup.find_all("head"):
+            head.decompose()
 
-    # 2) Remove <body>, <html>, and <span> tags but keep their content
-    for tag in ["body", "html", "span"]:
-        for match in soup.find_all(tag):
-            match.unwrap()
+        # 2) Remove <body>, <html>, and <span> tags but keep their content
+        for tag in ["body", "html", "span"]:
+            for match in soup.find_all(tag):
+                match.unwrap()
 
-    # 3) Remove all attributes from <p> and <div> tags
-    for tag in soup.find_all(["p", "div"]):
-        tag.attrs = {}  # type: ignore
+        # 3) Remove all attributes from <p> and <div> tags
+        for tag in soup.find_all(["p", "div"]):
+            tag.attrs = {}  # type: ignore
 
-    return str(soup)
+        return str(soup)
+    except Exception as e:  # pylint: disable=broad-except
+        log.error("Error cleaning HTML: %s", e)
+        return input_html
