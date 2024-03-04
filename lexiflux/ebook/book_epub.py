@@ -80,7 +80,7 @@ class BookEpub(BookBase):
                 )
                 # todo: split epub item to pages
                 page_num += 1
-                item_content = clean_html(item.get_body_content().decode("utf-8"))
+                item_content = clear_html(item.get_body_content().decode("utf-8"))
                 if item.file_name in self.heading_hrefs:
                     header_anchors = self.heading_hrefs[item.file_name]
                     if "#" in header_anchors:
@@ -147,23 +147,40 @@ def href_hierarchy(input_dict: Dict[str, str]) -> Dict[str, Dict[str, str]]:
     return result
 
 
-def clean_html(input_html: str) -> str:
+def clear_html(
+    input_html: str,
+    tags_to_remove_with_content: Optional[List[str]] = None,
+    tags_to_remove_keeping_content: Optional[List[str]] = None,
+    tags_to_clear_attributes: Optional[List[str]] = None,
+    tag_to_partially_clear_attributes: Optional[Dict[str, List[str]]] = None,
+) -> str:
     """Clean HTML from tags and attributes."""
+    if tags_to_remove_with_content is None:
+        tags_to_remove_with_content = ["head"]
+    if tags_to_remove_keeping_content is None:
+        tags_to_remove_keeping_content = ["body", "html", "span", "div"]
+    if tags_to_clear_attributes is None:
+        tags_to_clear_attributes = ["p", "br", "h1", "h2", "h3", "h4", "h5", "h6"]
+    if tag_to_partially_clear_attributes is None:
+        tag_to_partially_clear_attributes = {"img": ["src", "alt", "style"]}
+
     try:
         soup = BeautifulSoup(input_html, "html.parser")
 
-        # 1) Completely remove <head> tags
-        for head in soup.find_all("head"):
-            head.decompose()
-
-        # 2) Remove <body>, <html>, and <span> tags but keep their content
-        for tag in ["body", "html", "span"]:
+        for tag in tags_to_remove_with_content:
+            for match in soup.find_all(tag):
+                match.decompose()
+        for tag in tags_to_remove_keeping_content:
             for match in soup.find_all(tag):
                 match.unwrap()
-
-        # 3) Remove all attributes from <p> and <div> tags
-        for tag in soup.find_all(["p", "div"]):
+        for tag in soup.find_all(tags_to_clear_attributes):
             tag.attrs = {}  # type: ignore
+        for tag in tag_to_partially_clear_attributes:
+            for match in soup.find_all(tag):
+                match.attrs = {
+                    attr: match.attrs.get(attr, "")
+                    for attr in tag_to_partially_clear_attributes[tag]
+                }
 
         return str(soup)
     except Exception as e:  # pylint: disable=broad-except

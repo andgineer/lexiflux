@@ -1,4 +1,4 @@
 
-<div>
+
 <img alt="Cover" src="images/cover.png" style="height: 100%; max-width: 100%;"/>
-</div>
+
