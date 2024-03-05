@@ -147,26 +147,16 @@ def href_hierarchy(input_dict: Dict[str, str]) -> Dict[str, Dict[str, str]]:
     return result
 
 
-def clear_html(
+def clear_html(  # pylint: disable=dangerous-default-value  # we do not modify it
     input_html: str,
-    tags_to_remove_with_content: Optional[List[str]] = None,
-    tags_to_remove_keeping_content: Optional[List[str]] = None,
-    tags_to_clear_attributes: Optional[List[str]] = None,
-    tag_to_partially_clear_attributes: Optional[Dict[str, List[str]]] = None,
+    tags_to_remove_with_content: Iterable[str] = ("head",),
+    tags_to_remove_keeping_content: Iterable[str] = ("body", "html", "span", "div"),
+    tags_to_clear_attributes: Iterable[str] = ("p", "br", "h1", "h2", "h3", "h4", "h5", "h6"),
+    tag_to_partially_clear_attributes: Dict[str, List[str]] = {"img": ["src", "alt", "style"]},
 ) -> str:
     """Clean HTML from tags and attributes."""
-    if tags_to_remove_with_content is None:
-        tags_to_remove_with_content = ["head"]
-    if tags_to_remove_keeping_content is None:
-        tags_to_remove_keeping_content = ["body", "html", "span", "div"]
-    if tags_to_clear_attributes is None:
-        tags_to_clear_attributes = ["p", "br", "h1", "h2", "h3", "h4", "h5", "h6"]
-    if tag_to_partially_clear_attributes is None:
-        tag_to_partially_clear_attributes = {"img": ["src", "alt", "style"]}
-
     try:
         soup = BeautifulSoup(input_html, "html.parser")
-
         for tag in tags_to_remove_with_content:
             for match in soup.find_all(tag):
                 match.decompose()
