@@ -7,8 +7,7 @@ pytest-django
 coveralls
 faker
 
-# build
-pip-tools
+# build & reqs management
 
 # lint
 pre-commit

@@ -39,7 +39,7 @@ if [[ ! -d ${VENV_FOLDER} ]] ; then
       END_TIME=$(date +%s)
       echo "Environment created in $((END_TIME - $START_TIME)) seconds"
     else
-      echo -e $RED"Error to create virtual env. Do you have Astral's UV installed ( https://pypi.org/project/uv/ )?"$NC
+      echo -e $RED"Error to create virtual env. Do you have Astral's UV installed ( https://github.com/astral-sh/uv )?"$NC
       return 1
     fi
 else
