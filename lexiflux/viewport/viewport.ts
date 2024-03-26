@@ -45,7 +45,7 @@ export class Viewport {
     public calculateTotalWords(): number {
         // Calculate the number of words by counting word elements within the wordsContainer
         const wordElements = this.wordsContainer.querySelectorAll('.word');
-        return  wordElements.length;
+        return wordElements.length;
     }
 
     public word(index: number): HTMLElement {
