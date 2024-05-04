@@ -47,7 +47,7 @@ jobs:
       run: uv pip install -r requirements.dev.txt
 
     - name: Test with pytest without docker
-      run: ${{ env.PYTEST_CMD }} -m 'not docker'"
+      run: "${{ env.PYTEST_CMD }} -m 'not docker'"
 
 # Build with Docker, publishing Allure report, coverage report
   primary-build:
