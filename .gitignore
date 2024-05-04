@@ -1,4 +1,4 @@
-venv
+.venv/
 db.sqlite3
 .idea/
 bundle.js
@@ -8,3 +8,4 @@ bundle.js
 **/.pytest_cache/
 node_modules/
 .mypy_cache/
+allure-results/
