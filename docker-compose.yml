@@ -1,0 +1,50 @@
+version: '3'
+services:
+  allure:
+    image: andgineer/allure
+    command: /bin/sh -c "allure serve -p 80 /allure-results"
+    ports:
+      - "8800:80"
+    volumes:
+      - ${PWD}/allure-results:/allure-results
+
+  chrome:
+    image: seleniarm/node-chromium
+    shm_size: 2gb
+    depends_on:
+      - hub
+    environment:
+      - SE_EVENT_BUS_HOST=hub
+      - SE_EVENT_BUS_PUBLISH_PORT=4442
+      - SE_EVENT_BUS_SUBSCRIBE_PORT=4443
+    network_mode: "host"  # to access localhost with django test server
+
+#  edge:
+#    image: selenium/node-edge:4.8.3-20230404
+#    shm_size: 2gb
+#    depends_on:
+#      - hub
+#    environment:
+#      - SE_EVENT_BUS_HOST=hub
+#      - SE_EVENT_BUS_PUBLISH_PORT=4442
+#      - SE_EVENT_BUS_SUBSCRIBE_PORT=4443
+
+  firefox:
+    image: seleniarm/node-firefox
+    shm_size: 2gb
+    depends_on:
+      - hub
+    environment:
+      - SE_EVENT_BUS_HOST=hub
+      - SE_EVENT_BUS_PUBLISH_PORT=4442
+      - SE_EVENT_BUS_SUBSCRIBE_PORT=4443
+    network_mode: "host"  # to access localhost with django test server
+
+  hub:
+    image: seleniarm/hub
+    container_name: hub
+    ports:
+      - "4442:4442"
+      - "4443:4443"
+      - "4444:4444"
+    network_mode: "host"  # to access localhost with django test server

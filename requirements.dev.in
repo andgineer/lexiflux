@@ -6,6 +6,8 @@ pytest-cov
 pytest-django
 coveralls
 faker
+selenium
+allure-pytest
 
 # build & reqs management
 

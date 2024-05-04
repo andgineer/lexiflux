@@ -51,6 +51,13 @@ get-books:
 js:
 	npm run build
 
+.HELP: test  ## Run tests and create Allure report
+test:
+	-python -m pytest --alluredir=allure-results tests
+	docker-compose run --rm -it allure allure generate /allure-results -o /allure-report --clean
+	docker-compose restart allure
+	open -a 'Google Chrome' http://localhost:8800
+
 .HELP: help  ## Display this message
 help:
 	@grep -E \

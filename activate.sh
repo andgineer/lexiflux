@@ -3,8 +3,8 @@
 # "Set-ups or/and activates development environment"
 #
 
-VENV_FOLDER="venv"
-PRIMARY_PYTHON_VERSION="3.12"  # sync with python-version .github/workflows/docs.yml&static.yml
+VENV_FOLDER=".venv"
+PRIMARY_PYTHON_VERSION="3.12"  # sync with .github/workflows/docs.yml&static.yml
 
 RED='\033[1;31m'
 GREEN='\033[1;32m'
@@ -29,12 +29,9 @@ if [[ ! -d ${VENV_FOLDER} ]] ; then
     if uv venv ${VENV_FOLDER} --python=python${PRIMARY_PYTHON_VERSION}; then
       START_TIME=$(date +%s)
 
-      echo -e $CYAN"creating VENV.."$NC
-      python -m venv  ${VENV_FOLDER}
       . ${VENV_FOLDER}/bin/activate
-      echo -e $CYAN"installing development dependencies.."$NC
-      python -m pip install --upgrade pip
-      python -m pip install -r requirements.dev.txt
+      uv pip install --upgrade pip
+      uv pip install -r requirements.dev.txt
 
       END_TIME=$(date +%s)
       echo "Environment created in $((END_TIME - $START_TIME)) seconds"
@@ -45,11 +42,4 @@ if [[ ! -d ${VENV_FOLDER} ]] ; then
 else
     echo -e $CYAN"Activating virtual environment ..."$NC
     . ${VENV_FOLDER}/bin/activate
-fi
-
-if type conda 2>/dev/null; then
-  echo -e $CYAN"deactivate conda for pure pip VENV.."$NC
-  conda deactivate  # removing all stack if we activated conda for a number of times
-  conda deactivate
-  conda deactivate
 fi
