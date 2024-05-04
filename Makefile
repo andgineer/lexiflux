@@ -53,6 +53,7 @@ js:
 
 .HELP: test  ## Run tests and create Allure report
 test:
+	rm -rf allure-results
 	-python -m pytest --alluredir=allure-results tests
 	docker-compose run --rm -it allure allure generate /allure-results -o /allure-report --clean
 	docker-compose restart allure
