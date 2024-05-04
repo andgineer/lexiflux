@@ -19,6 +19,9 @@ Reading foreign texts with dictionary.
 https://github.com/nidhaloff/deep-translator
 https://github.com/terryyin/translate-python
 
+## Allure test report
+
+* [Allure report](https://andgineer.github.io/lexiflux/builds/tests/)
 
 ## Coverage report
 * [Codecov](https://app.codecov.io/gh/andgineer/lexiflux/tree/main/src%2Fgarmin_daily)
