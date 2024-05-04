@@ -5,21 +5,21 @@
 | Name                                   |    Stmts |     Miss |   Cover |   Missing |
 |--------------------------------------- | -------: | -------: | ------: | --------: |
 | lexiflux/apps.py                       |       14 |        0 |    100% |           |
-| lexiflux/ebook/book\_base.py           |       72 |        7 |     90% |44, 51, 92, 129-132 |
-| lexiflux/ebook/book\_epub.py           |       92 |        9 |     90% |94, 111, 114-116, 162, 176-178 |
+| lexiflux/ebook/book\_base.py           |       72 |        5 |     93% |44, 51, 92, 131-132 |
+| lexiflux/ebook/book\_epub.py           |       92 |        8 |     91% |94, 111, 114-116, 176-178 |
 | lexiflux/ebook/book\_plain\_text.py    |      106 |        4 |     96% |58-59, 128, 175 |
-| lexiflux/ebook/headings.py             |       36 |        1 |     97% |       134 |
+| lexiflux/ebook/headings.py             |       36 |        0 |    100% |           |
 | lexiflux/ebook/page\_splitter.py       |       37 |        5 |     86% |     23-29 |
 | lexiflux/language/google\_languages.py |       12 |        0 |    100% |           |
-| lexiflux/language/translation.py       |       45 |        6 |     87% |     48-56 |
-| lexiflux/models.py                     |      111 |       16 |     86% |41, 51, 93, 104, 113-114, 131, 142, 160, 217-229 |
+| lexiflux/language/translation.py       |       45 |        0 |    100% |           |
+| lexiflux/models.py                     |      111 |       15 |     86% |41, 51, 104, 113-114, 131, 142, 160, 217-229 |
 | lexiflux/settings.py                   |        0 |        0 |    100% |           |
 | lexiflux/signals.py                    |       13 |        0 |    100% |           |
 | lexiflux/tests.py                      |        0 |        0 |    100% |           |
 | lexiflux/urls.py                       |        3 |        0 |    100% |           |
-| lexiflux/utils.py                      |        8 |        5 |     38% |     10-16 |
-| lexiflux/views.py                      |      138 |       32 |     77% |25, 35, 54, 63, 141-143, 147, 176, 211-212, 223-248, 254-264 |
-|                              **TOTAL** |  **687** |   **85** | **88%** |           |
+| lexiflux/utils.py                      |        8 |        0 |    100% |           |
+| lexiflux/views.py                      |      138 |        7 |     95% |35, 54, 63, 141, 211-212, 238 |
+|                              **TOTAL** |  **687** |   **44** | **94%** |           |
 
 
 ## Setup coverage badge
