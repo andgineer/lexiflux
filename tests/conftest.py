@@ -2,6 +2,8 @@ import collections
 import os
 import platform
 
+os.environ["DJANGO_LIVE_TEST_SERVER_ADDRESS"] = "0.0.0.0"
+
 import itertools
 import socket
 from urllib.parse import urlparse
