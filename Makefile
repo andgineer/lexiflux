@@ -59,6 +59,14 @@ test:
 	docker-compose restart allure
 	open -a 'Google Chrome' http://localhost:8800
 
+.HELP: selenium  ## Run selenium tests and create Allure report
+selenium:
+	rm -rf allure-results
+	-python -m pytest --alluredir=allure-results tests -m selenium -s -vv
+	docker-compose run --rm -it allure allure generate /allure-results -o /allure-report --clean
+	docker-compose restart allure
+	open -a 'Google Chrome' http://localhost:8800
+
 .HELP: help  ## Display this message
 help:
 	@grep -E \

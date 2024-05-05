@@ -14,6 +14,7 @@ from tests.conftest import DjangoLiveServer
 
 
 @pytest.mark.docker
+@pytest.mark.selenium
 @pytest.mark.django_db
 def test_viewport_view_book(caplog, client, user, book, django_server: DjangoLiveServer, browser):
     client.force_login(user)

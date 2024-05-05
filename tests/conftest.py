@@ -137,19 +137,28 @@ def browser(request, with_selenium) -> WebDriverAugmented:
     return webdrv
 
 
-def get_host_ip():
+def get_docker_host_ip():
+    """Get the IP address of the host accessible from within Docker containers."""
+    if platform.system() == "Darwin":
+        return "host.docker.internal"
+    elif platform.system() == "Linux":
+        return get_linux_docker_host_ip()
+    else:
+        raise RuntimeError("Unsupported platform")
+
+
+def get_linux_docker_host_ip():
+    """ Determine the IP address accessible from within Docker containers on Linux.
+
+    Get the default gateway address.
+    """
     try:
-        hostname = socket.gethostname()
-        host_ip = socket.gethostbyname(hostname)
+        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
+            s.connect(('8.8.8.8', 1))  # Use a temporary connection to an external IP
+            host_ip = s.getsockname()[0]
         return host_ip
-    except socket.gaierror:
-        # If the hostname cannot be resolved, try getting the IP address directly
-        if platform.system() == "Darwin":
-            # For macOS, use host.docker.internal
-            return "host.docker.internal"
-        else:
-            # For other platforms (like Linux), fallback to localhost
-            return "localhost"
+    except socket.error as e:
+        raise RuntimeError(f"Failed to determine host IP address: {e}") from e
 
 
 DjangoLiveServer = collections.namedtuple('DjangoLiveServer', ['docker_url', 'host_url'])
@@ -159,7 +168,7 @@ DjangoLiveServer = collections.namedtuple('DjangoLiveServer', ['docker_url', 'ho
 def django_server(live_server: LiveServer) -> DjangoLiveServer:
     port = urlparse(live_server.url).port
     yield DjangoLiveServer(
-        docker_url=f"http://{get_host_ip()}:{port}",
+        docker_url=f"http://{get_docker_host_ip()}:{port}",
         host_url=f"http://0.0.0.0:{port}"
     )
 
