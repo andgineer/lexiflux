@@ -42,4 +42,3 @@ def test_viewport_view_book(caplog, client, user, book, django_server: DjangoLiv
     #     EC.text_to_be_present_in_element((By.ID, 'book-page-scroller'), 'This is the second page.')
     # )
 
-    browser.quit()

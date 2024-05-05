@@ -2,6 +2,10 @@ import collections
 import os
 import platform
 
+# Bind Django test server to all network interfaces so Selenium Hub could connect from Docker.
+# For unknown reasons that does not work in pytest.ini so should be here
+# https://github.com/pytest-dev/pytest-django/issues/300
+# strange that DJANGO_SETTINGS_MODULE can be set in pytest.ini
 os.environ["DJANGO_LIVE_TEST_SERVER_ADDRESS"] = "0.0.0.0"
 
 import itertools
@@ -23,6 +27,7 @@ import allure
 from selenium.common.exceptions import WebDriverException
 from selenium.webdriver.chrome.options import Options as ChromeOptions
 from selenium.webdriver.firefox.options import Options as FirefoxOptions
+from selenium.webdriver.edge.options import Options as EdgeOptions
 from selenium.webdriver.chrome.options import Options
 from tests.webdriver_augmented import WebDriverAugmented
 import urllib3.exceptions
@@ -33,15 +38,19 @@ log = logging.getLogger()
 
 CHROME_BROWSER_NAME = 'Chrome'
 FIREFOX_BROWSER_NAME = 'Firefox'
-# EDGE_BROWSER_NAME = 'Edge'  # for the moment no support for Edge: https://github.com/andgineer/e2e-tests/issues/4
+EDGE_BROWSER_NAME = 'Edge'
 
 WEBDRIVER_HOST = 'http://localhost:4444/wd/hub'
 
-test_browsers = [CHROME_BROWSER_NAME, FIREFOX_BROWSER_NAME]  # , EDGE_BROWSER_NAME
+test_browsers = [
+    CHROME_BROWSER_NAME,
+    FIREFOX_BROWSER_NAME,
+    # EDGE_BROWSER_NAME,
+]
 browser_options = {
     CHROME_BROWSER_NAME: ChromeOptions,
     FIREFOX_BROWSER_NAME: FirefoxOptions,
-    # EDGE_BROWSER_NAME: EdgeOptions,
+    EDGE_BROWSER_NAME: EdgeOptions,
 }
 
 
@@ -140,7 +149,10 @@ def browser(request, with_selenium) -> WebDriverAugmented:
 
 
 def get_docker_host_ip():
-    """Get the IP address of the host accessible from within Docker containers."""
+    """Get the IP address of the host accessible from within Docker containers.
+
+    So we can test servers running on the host machine from the Selenium Hub.
+    """
     if platform.system() == "Darwin":
         return "host.docker.internal"
     elif platform.system() == "Linux":

@@ -42,7 +42,6 @@ services:
 
   hub:
     image: seleniarm/hub
-    container_name: hub
     ports:
       - "4442:4442"
       - "4443:4443"
