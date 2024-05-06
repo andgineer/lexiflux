@@ -1,0 +1,4 @@
+CustomUserBackend testuser 12345
+CustomUserBackend True False
+Goto URL: from host http://0.0.0.0:36305/reader?book-code=some-book-code from docker: http://10.1.0.111:36305/reader?book-code=some-book-code
+Opening book some-book-code at page 1 for user testuser
