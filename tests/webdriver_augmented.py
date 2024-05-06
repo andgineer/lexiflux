@@ -7,6 +7,8 @@ from selenium.webdriver.remote.webdriver import WebDriver as RemoteWebDriver
 import time
 import pprint
 import urllib.parse
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 
 
 PAGE_MAX_WAIT_TIME = 20  # second to wait for components
@@ -103,3 +105,20 @@ class WebDriverAugmented(RemoteWebDriver):
             pprint.pformat(clean_log, indent=4)
         )
 
+    @property
+    def visible_texts(self) -> str:
+        """All visible text on the page."""
+        visible_elements = self.find_elements(
+            By.XPATH,
+            "//*[not(self::script) and not(self::style) and normalize-space(.) != '']/parent::*"
+        )
+        return "".join([element.text for element in visible_elements if element.text.strip()])
+
+    @property
+    def error_texts(self) -> str:
+        WebDriverWait(self, 3).until(
+            EC.presence_of_element_located((By.CSS_SELECTOR, ".alert.alert-danger"))
+        )
+
+        error_panels = self.find_elements(By.CSS_SELECTOR, ".alert.alert-danger")
+        return "".join([element.text for element in error_panels if element.text.strip()])

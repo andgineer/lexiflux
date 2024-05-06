@@ -19,12 +19,10 @@ class CustomUserBackend(ModelBackend):  # type: ignore
         **kwargs: Any,
     ) -> Optional[AbstractBaseUser]:
         """Authenticate a user."""
-        print("CustomUserBackend", username, password)
         user_model = get_user_model()
         try:
             user = user_model.objects.get(username=username)
             if user.check_password(password) and (user.is_approved or user.is_superuser):
-                print("CustomUserBackend", user.is_approved, user.is_superuser)
                 return user
         except user_model.DoesNotExist:
             user_model().set_password(password)
