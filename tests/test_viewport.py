@@ -7,7 +7,9 @@ from tests.conftest import USER_PASSWORD
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
-
+@allure.epic('End-to-end (selenium)')
+@allure.feature('Reader')
+@allure.story('Un-approved user cannot access reader view')
 @pytest.mark.docker
 @pytest.mark.selenium
 @pytest.mark.django_db
@@ -27,6 +29,9 @@ def test_upapproved_user_cannot_access_reader_view(browser, user):
     )
 
 
+@allure.epic('End-to-end (selenium)')
+@allure.feature('Reader')
+@allure.story('Reader view')
 @pytest.mark.docker
 @pytest.mark.selenium
 @pytest.mark.django_db
