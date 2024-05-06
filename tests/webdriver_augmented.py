@@ -61,9 +61,11 @@ class WebDriverAugmented(RemoteWebDriver):
         self.host_outer = django_server.host_url
         super().__init__(*args, **kwargs)
 
-    def login(self, user, password):
-        """
-        Perform the login process with the provided user credentials.
+    def login(self, user, password, wait_view="library", wait_seconds=3):
+        """Perform the login process with the provided user credentials.
+
+        Login redirect to reader, but no current book for the newly created user so redirect again to library.
+        This is why the default we wait for "library" after login.
         """
         login_url = self.host + reverse('login')
         self.get(login_url)
@@ -75,12 +77,19 @@ class WebDriverAugmented(RemoteWebDriver):
         password_input.send_keys(password)
         password_input.submit()
 
+        if wait_view:
+            after_login_url = urllib.parse.urljoin(self.host, wait_view)
+            WebDriverWait(self, wait_seconds).until(
+                EC.url_to_be(after_login_url),
+                message=f"Expected to be redirected to the {after_login_url} after login but stuck at {self.current_url}.",
+            )
+
     def goto(self, page: str):
         """
         Open the page (see class Page).
         """
-        url_host = self.host_outer + page
-        url_docker = self.host + page
+        url_host = urllib.parse.urljoin(self.host_outer, page)
+        url_docker = urllib.parse.urljoin(self.host, page)
         print(f"Goto URL: from host {url_host}", f"from docker: {url_docker}")
         if requests.get(url_host).status_code != 200:
             raise AssertionError(

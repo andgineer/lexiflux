@@ -12,7 +12,7 @@ from selenium.webdriver.support import expected_conditions as EC
 @pytest.mark.selenium
 @pytest.mark.django_db
 def test_upapproved_user_cannot_access_reader_view(browser, user):
-    browser.login(user, USER_PASSWORD)
+    browser.login(user, USER_PASSWORD, wait_view=None)
     WebDriverWait(browser, 3).until(
         EC.url_to_be(browser.host + reverse('login')),  # raise TimeoutException if not
         message="Expected to be redirected to login page again after login with unapproved user.",
