@@ -1,0 +1,4 @@
+Translating text
+Translating Hello
+Translator <MagicMock name='get_translator()' id='139932182332240'>
+Translated Hola
