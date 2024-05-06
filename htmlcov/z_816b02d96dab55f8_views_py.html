@@ -65,7 +65,7 @@
             <a id="nextFileLink" class="nav" href="index.html">&#xbb; next</a>
             &nbsp; &nbsp; &nbsp;
             <a class="nav" href="https://coverage.readthedocs.io/en/7.5.1">coverage.py v7.5.1</a>,
-            created at 2024-05-06 04:23 +0000
+            created at 2024-05-06 06:51 +0000
         </p>
         <aside class="hidden">
             <button type="button" class="button_next_chunk" data-shortcut="j"></button>
@@ -151,7 +151,7 @@
     <p class="pln"><span class="n"><a id="t69" href="#t69">69</a></span><span class="t">    <span class="key">else</span><span class="op">:</span>&nbsp;</span><span class="r"></span></p>
     <p class="run"><span class="n"><a id="t70" href="#t70">70</a></span><span class="t">        <span class="nam">page_number</span> <span class="op">=</span> <span class="nam">int</span><span class="op">(</span><span class="nam">page_number</span><span class="op">)</span>  <span class="com"># Ensure page_number is an integer</span>&nbsp;</span><span class="r"></span></p>
     <p class="pln"><span class="n"><a id="t71" href="#t71">71</a></span><span class="t">&nbsp;</span><span class="r"></span></p>
-    <p class="run"><span class="n"><a id="t72" href="#t72">72</a></span><span class="t">    <span class="nam">print</span><span class="op">(</span><span class="str">"book_code"</span><span class="op">,</span> <span class="nam">book_code</span><span class="op">,</span> <span class="str">"page_number"</span><span class="op">,</span> <span class="nam">page_number</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
+    <p class="run"><span class="n"><a id="t72" href="#t72">72</a></span><span class="t">    <span class="nam">print</span><span class="op">(</span><span class="fst">f"</span><span class="fst">Opening book </span><span class="op">{</span><span class="nam">book_code</span><span class="op">}</span><span class="fst"> at page </span><span class="op">{</span><span class="nam">page_number</span><span class="op">}</span><span class="fst"> for user </span><span class="op">{</span><span class="nam">request</span><span class="op">.</span><span class="nam">user</span><span class="op">.</span><span class="nam">username</span><span class="op">}</span><span class="fst">"</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
     <p class="run"><span class="n"><a id="t73" href="#t73">73</a></span><span class="t">    <span class="nam">book_page</span> <span class="op">=</span> <span class="nam">BookPage</span><span class="op">.</span><span class="nam">objects</span><span class="op">.</span><span class="nam">get</span><span class="op">(</span><span class="nam">book</span><span class="op">=</span><span class="nam">book</span><span class="op">,</span> <span class="nam">number</span><span class="op">=</span><span class="nam">page_number</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
     <p class="pln"><span class="n"><a id="t74" href="#t74">74</a></span><span class="t">&nbsp;</span><span class="r"></span></p>
     <p class="run"><span class="n"><a id="t75" href="#t75">75</a></span><span class="t">    <span class="key">return</span> <span class="nam">render</span><span class="op">(</span>&nbsp;</span><span class="r"></span></p>
@@ -190,7 +190,7 @@
     <p class="run"><span class="n"><a id="t108" href="#t108">108</a></span><span class="t">    <span class="nam">location</span><span class="op">(</span><span class="nam">request</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
     <p class="pln"><span class="n"><a id="t109" href="#t109">109</a></span><span class="t">&nbsp;</span><span class="r"></span></p>
     <p class="run"><span class="n"><a id="t110" href="#t110">110</a></span><span class="t">    <span class="nam">page_html</span> <span class="op">=</span> <span class="nam">render_page</span><span class="op">(</span><span class="nam">book_page</span><span class="op">.</span><span class="nam">content</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
-    <p class="run"><span class="n"><a id="t111" href="#t111">111</a></span><span class="t">    <span class="nam">print</span><span class="op">(</span><span class="nam">book_code</span><span class="op">,</span> <span class="nam">page_number</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
+    <p class="run"><span class="n"><a id="t111" href="#t111">111</a></span><span class="t">    <span class="nam">print</span><span class="op">(</span><span class="fst">f"</span><span class="fst">Rendering page </span><span class="op">{</span><span class="nam">page_number</span><span class="op">}</span><span class="fst"> of book </span><span class="op">{</span><span class="nam">book_code</span><span class="op">}</span><span class="fst">"</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
     <p class="run"><span class="n"><a id="t112" href="#t112">112</a></span><span class="t">    <span class="nam">rendered_html</span> <span class="op">=</span> <span class="nam">render_to_string</span><span class="op">(</span>&nbsp;</span><span class="r"></span></p>
     <p class="pln"><span class="n"><a id="t113" href="#t113">113</a></span><span class="t">        <span class="str">"page.html"</span><span class="op">,</span>&nbsp;</span><span class="r"></span></p>
     <p class="pln"><span class="n"><a id="t114" href="#t114">114</a></span><span class="t">        <span class="op">{</span>&nbsp;</span><span class="r"></span></p>
@@ -353,7 +353,7 @@
             <a class="nav" href="index.html">&#xbb; next</a>
             &nbsp; &nbsp; &nbsp;
             <a class="nav" href="https://coverage.readthedocs.io/en/7.5.1">coverage.py v7.5.1</a>,
-            created at 2024-05-06 04:23 +0000
+            created at 2024-05-06 06:51 +0000
         </p>
     </div>
 </footer>
