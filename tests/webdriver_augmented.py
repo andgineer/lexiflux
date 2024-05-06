@@ -1,7 +1,9 @@
 import collections
+from typing import Optional
 
 import requests
 from django.urls import reverse
+from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webdriver import WebDriver as RemoteWebDriver
 import time
@@ -114,11 +116,29 @@ class WebDriverAugmented(RemoteWebDriver):
         )
         return "".join([element.text for element in visible_elements if element.text.strip()])
 
-    @property
-    def error_texts(self) -> str:
-        WebDriverWait(self, 3).until(
-            EC.presence_of_element_located((By.CSS_SELECTOR, ".alert.alert-danger"))
-        )
+    def get_errors_text(self, wait_seconds: Optional[int] = 3, no_errors_exception: bool = True) -> str:
+        """All error text on the page.
+
+        Wait for the error panels to appear if `wait_seconds` is not None.
+        Raise TimeoutException if no error panel appear and `no_errors_exception`.
+        """
+        if wait_seconds is not None:
+            WebDriverWait(self, wait_seconds).until(
+                EC.presence_of_element_located((By.CSS_SELECTOR, ".alert.alert-danger")),
+                message="Expected error panels.",
+            )
 
         error_panels = self.find_elements(By.CSS_SELECTOR, ".alert.alert-danger")
-        return "".join([element.text for element in error_panels if element.text.strip()])
+        if not error_panels and no_errors_exception:
+            raise TimeoutException("No error panels found.")
+        return "".join(panel.text for panel in error_panels if panel.text.strip())
+
+    @property
+    def errors_text(self) -> str:
+        """All error text on the page.
+
+        Wait for the error panels to appear.
+        Raise TimeoutException if no error panel appear.
+        """
+        return self.get_errors_text()
+

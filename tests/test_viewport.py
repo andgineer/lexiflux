@@ -17,7 +17,7 @@ def test_upapproved_user_cannot_access_reader_view(browser, user):
         EC.url_to_be(browser.host + reverse('login')),  # raise TimeoutException if not
         message="Expected to be redirected to login page again after login with unapproved user.",
     )
-    assert "Your account is not approved yet." in browser.error_texts
+    assert "Your account is not approved yet." in browser.errors_text
 
     # just to be sure
     allure.attach(
@@ -40,6 +40,8 @@ def test_viewport_view_book(browser, approved_user, caplog, client, book):
         name='reader_screenshot',
         attachment_type=allure.attachment_type.PNG
     )
+
+    assert browser.get_errors_text(no_errors_exception=False, wait_seconds=None) == ""
 
     # # Test book page scrolling
     # book_page_scroller = WebDriverWait(browser, 10).until(
