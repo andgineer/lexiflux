@@ -69,7 +69,7 @@ def reader(request: HttpRequest) -> HttpResponse:
     else:
         page_number = int(page_number)  # Ensure page_number is an integer
 
-    print("book_code", book_code, "page_number", page_number)
+    print(f"Opening book {book_code} at page {page_number} for user {request.user.username}")
     book_page = BookPage.objects.get(book=book, number=page_number)
 
     return render(
@@ -108,7 +108,7 @@ def page(request: HttpRequest) -> HttpResponse:
     location(request)
 
     page_html = render_page(book_page.content)
-    print(book_code, page_number)
+    print(f"Rendering page {page_number} of book {book_code}")
     rendered_html = render_to_string(
         "page.html",
         {

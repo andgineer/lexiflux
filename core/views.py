@@ -34,26 +34,19 @@ class CustomLoginView(LoginView):  # type: ignore
         username = request.POST.get("username")
         password = request.POST.get("password")
 
-        print(username, password)
-
         if user := UserModel.objects.get(username=username):
-            print(user.is_approved, user.is_superuser)
             if user.check_password(password):
-                print(user.is_approved, user.is_superuser)
                 if user.is_approved or user.is_superuser:
-                    print("approved")
                     if user := authenticate(request, username=username, password=password):
                         login(request, user)
                         return redirect(self.get_success_url())
                     error_message = "Internal auth error."
                 else:
-                    print("not approved")
                     error_message = (
                         "Your account is not approved yet. "
                         "Please wait for an administrator to approve your account."
                     )
             else:
-                print("wrong password")
                 error_message = (
                     "Please enter a correct username and password! "
                     "Note that both fields may be case-sensitive."

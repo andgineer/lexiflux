@@ -18,7 +18,6 @@ from unittest.mock import mock_open, patch, MagicMock
 from lexiflux.ebook.book_base import BookBase
 from lexiflux.ebook.book_plain_text import BookPlainText
 from django.contrib.auth import get_user_model
-from django.urls import reverse
 from lexiflux.models import Author, Language, Book, BookPage, ReaderProfile
 from pytest_django.live_server_helper import LiveServer
 import subprocess
@@ -29,7 +28,7 @@ from selenium.webdriver.chrome.options import Options as ChromeOptions
 from selenium.webdriver.firefox.options import Options as FirefoxOptions
 from selenium.webdriver.edge.options import Options as EdgeOptions
 from selenium.webdriver.chrome.options import Options
-from tests.webdriver_augmented import WebDriverAugmented
+from tests.webdriver_augmented import WebDriverAugmented, DjangoLiveServer
 import urllib3.exceptions
 import logging
 
@@ -105,7 +104,7 @@ def get_options(browser: str) -> Options:
     return options
 
 
-def get_web_driver(browser_name: str, retry_interval=2, timeout=60) -> WebDriverAugmented:
+def get_web_driver(browser_name: str, django_server: DjangoLiveServer, retry_interval=2, timeout=60) -> WebDriverAugmented:
     """
     Creates remote web driver (located on selenium host) for desired browser.
     """
@@ -119,6 +118,7 @@ def get_web_driver(browser_name: str, retry_interval=2, timeout=60) -> WebDriver
     while True:
         try:
             webdrv = WebDriverAugmented(
+                django_server=django_server,
                 command_executor=WEBDRIVER_HOST,
                 options=get_options(browser_name),
             )
@@ -136,12 +136,12 @@ def get_web_driver(browser_name: str, retry_interval=2, timeout=60) -> WebDriver
             pytest.exit(f'{FAIL_HELP}:\n\n{e}\n')
 
 
-@pytest.fixture(scope='session', params=test_browsers, ids=lambda x: f'Browser: {x}')
-def browser(request, with_selenium) -> WebDriverAugmented:
+@pytest.fixture(scope='function', params=test_browsers, ids=lambda x: f'Browser: {x}')
+def browser(request, with_selenium, django_server: DjangoLiveServer) -> WebDriverAugmented:
     """
     Returns all browsers to test with
     """
-    webdrv = get_web_driver(request.param)
+    webdrv = get_web_driver(request.param, django_server)
     request.addfinalizer(lambda *args: webdrv.quit())
     # driver.implicitly_wait(Config().WEB_DRIVER_IMPLICITE_WAIT)
     webdrv.maximize_window()
@@ -173,10 +173,6 @@ def get_linux_docker_host_ip():
         return host_ip
     except socket.error as e:
         raise RuntimeError(f"Failed to determine host IP address: {e}") from e
-
-
-DjangoLiveServer = collections.namedtuple('DjangoLiveServer', ['docker_url', 'host_url'])
-
 
 @pytest.fixture
 def django_server(live_server: LiveServer) -> DjangoLiveServer:
@@ -221,14 +217,16 @@ def pytest_runtest_makereport(item, call):
             )
             if web_driver.browser_name != FIREFOX_BROWSER_NAME:
                 # Firefox do not support js logs: https://github.com/SeleniumHQ/selenium/issues/2972
+                js_logs = web_driver.get_log('browser')
+                log_entries = [f"{entry['level']}: {entry['message']}" for entry in js_logs]
                 allure.attach(
-                    '\n'.join(web_driver.get_log('browser')),
+                    '\n'.join(log_entries),
                     name='js console log:',
                     attachment_type=allure.attachment_type.TEXT,
                 )
 
         except Exception as e:
-            print(f'Fail to take screen-shot: {e}')
+            print(f'Fail to attach browser artifacts: {e}')
 
 
 @pytest.fixture(
@@ -308,10 +306,20 @@ def book_processor_mock():
     return book_processor
 
 
+USER_PASSWORD = '12345'
+
+
 @pytest.fixture
 def user(db):
     User = get_user_model()
-    return User.objects.create_user(username='testuser', password='12345')
+    return User.objects.create_user(username='testuser', password=USER_PASSWORD)
+
+
+@pytest.fixture
+def approved_user(user):
+    user.is_approved = True
+    user.save()
+    return user
 
 
 @pytest.fixture
@@ -330,8 +338,7 @@ def book(db, user, author):
         owner=user
     )
 
-    # Create BookPage instances for the book
-    for i in range(1, 6):  # Create 5 pages as an example
+    for i in range(1, 6):
         BookPage.objects.create(
             book=book,
             number=i,
