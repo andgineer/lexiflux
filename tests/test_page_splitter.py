@@ -1,19 +1,23 @@
+import allure
 import pytest
 from io import StringIO
 from lexiflux.ebook.book_plain_text import BookPlainText
 from lexiflux.ebook.page_splitter import PageSplitter
 
 
+@allure.epic('Page Splitter')
 @pytest.fixture
 def mock_page_splitter():
     yield from mock_book_plain_text(30)
 
 
+@allure.epic('Page Splitter')
 @pytest.fixture
 def mock_page100_splitter():
     yield from mock_book_plain_text(100)
 
 
+@allure.epic('Page Splitter')
 def mock_book_plain_text(page_length: int):
     original_target = PageSplitter.PAGE_LENGTH_TARGET
     set_book_page_length(page_length)
@@ -21,6 +25,7 @@ def mock_book_plain_text(page_length: int):
     set_book_page_length(original_target)
 
 
+@allure.epic('Page Splitter')
 def set_book_page_length(page_length):
     PageSplitter.PAGE_LENGTH_TARGET = page_length  # Mocked target length for testing
     PageSplitter.PAGE_LENGTH_ERROR_TOLERANCE = 0.5
@@ -30,6 +35,7 @@ def set_book_page_length(page_length):
         PageSplitter.PAGE_LENGTH_TARGET * (1 + PageSplitter.PAGE_LENGTH_ERROR_TOLERANCE))
 
 
+@allure.epic('Page Splitter')
 @pytest.mark.django_db
 def test_paragraph_end_priority(mock_page_splitter):
     # Paragraph end is within 25% error margin but farther than sentence end
@@ -42,6 +48,7 @@ def test_paragraph_end_priority(mock_page_splitter):
     assert " <br/> <br/> " + "b" * 3 + ". " + "a" * 10 == pages[2]
 
 
+@allure.epic('Page Splitter')
 @pytest.mark.django_db
 def test_sentence_end_priority(mock_page_splitter):
     # Sentence end near farther than word end
@@ -59,6 +66,7 @@ def test_sentence_end_priority(mock_page_splitter):
     assert "a" * 29 == pages[0]
 
 
+@allure.epic('Page Splitter')
 @pytest.mark.django_db
 def test_word_end_priority(mock_page_splitter):
     # No paragraph or sentence end, splitting by word
@@ -68,6 +76,7 @@ def test_word_end_priority(mock_page_splitter):
     assert len(pages) == 2
 
 
+@allure.epic('Page Splitter')
 @pytest.mark.django_db
 def test_no_special_end(mock_page_splitter):
     # A long string without any special end
@@ -78,6 +87,7 @@ def test_no_special_end(mock_page_splitter):
     len(pages[0]) == 30
 
 
+@allure.epic('Page Splitter')
 @pytest.mark.django_db
 def test_chapter_pattern(mock_page100_splitter, chapter_pattern):
     splitter = BookPlainText(StringIO(f"aa{chapter_pattern}34"))
@@ -86,6 +96,7 @@ def test_chapter_pattern(mock_page100_splitter, chapter_pattern):
     assert splitter.toc[0] == (chapter_pattern.replace("\n", "   ").strip(), 1, 2)
 
 
+@allure.epic('Page Splitter')
 @pytest.mark.django_db
 def test_wrong_chapter_pattern(mock_page_splitter, wrong_chapter_pattern):
     splitter = BookPlainText(StringIO(f"aa{wrong_chapter_pattern}34"))
@@ -93,6 +104,7 @@ def test_wrong_chapter_pattern(mock_page_splitter, wrong_chapter_pattern):
     assert len(splitter.toc) == 0, f"chapter_pattern: {wrong_chapter_pattern}"
 
 
+@allure.epic('Page Splitter')
 @pytest.mark.django_db
 def test_pages_shift_if_heading(mock_page_splitter):
     chapter_pattern = "\n\nCHAPTER VII.\n\n"
@@ -113,6 +125,7 @@ def test_pages_shift_if_heading(mock_page_splitter):
     assert pages[0] == "a" * 20 + "aa"
 
 
+@allure.epic('Page Splitter')
 @pytest.mark.django_db
 def test_split_inside_p_tag(mock_page_splitter):
     # Text contains a long paragraph that should be split inside the <p> tag

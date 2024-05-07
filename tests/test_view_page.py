@@ -1,9 +1,11 @@
+import allure
 import pytest
 from django.urls import reverse
 from django.contrib.auth import get_user_model
 from lexiflux.views import render_page
 
 
+@allure.epic('View: Page')
 @pytest.mark.django_db
 def test_page_view_retrieves_book_page_successfully(client, user, book):
     client.force_login(user)
@@ -17,6 +19,7 @@ def test_page_view_retrieves_book_page_successfully(client, user, book):
     assert response.json()['data']['pageNumber'] == page_number
 
 
+@allure.epic('View: Page')
 @pytest.mark.django_db
 def test_page_view_handles_nonexistent_book_page(client, user, book):
     client.force_login(user)
@@ -28,6 +31,7 @@ def test_page_view_handles_nonexistent_book_page(client, user, book):
     assert "error: Page" in response.content.decode()
 
 
+@allure.epic('View: Page')
 @pytest.mark.django_db
 def test_page_view_respects_access_control(client, user, book):
     # Assuming the setup creates a book not shared with or owned by 'another_user'
@@ -41,6 +45,7 @@ def test_page_view_respects_access_control(client, user, book):
     assert response.status_code == 403
 
 
+@allure.epic('View: Page')
 @pytest.mark.parametrize("content,expected_output", [
     (
         "Hello world <br/> New line",

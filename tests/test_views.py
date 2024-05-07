@@ -1,3 +1,4 @@
+import allure
 import pytest
 from django.contrib.auth import get_user_model
 from django.urls import reverse
@@ -7,6 +8,7 @@ from pytest_django.asserts import assertTemplateUsed
 from lexiflux.models import ReadingLoc, ReadingHistory
 
 
+@allure.epic('View: Location')
 @pytest.mark.django_db
 def test_location_view_updates_reading_location_successfully(client, user, book):
     client.force_login(user)
@@ -29,6 +31,7 @@ def test_location_view_updates_reading_location_successfully(client, user, book)
     ).exists(), "Reading location should be updated in the database"
 
 
+@allure.epic('View: Location')
 @pytest.mark.django_db
 def test_location_view_handles_invalid_parameters(client, user):
     client.force_login(user)
@@ -42,6 +45,7 @@ def test_location_view_handles_invalid_parameters(client, user):
     assert response.status_code == 400
 
 
+@allure.epic('View: Location')
 @pytest.mark.django_db
 def test_location_view_enforces_access_control(client, user, book):
     # Create another user who does not have access to the book
@@ -58,6 +62,7 @@ def test_location_view_enforces_access_control(client, user, book):
     assert response.status_code == 403, f"User should not be able to update reading location for a book they don't have access to: {response.content}"
 
 
+@allure.epic('View: History')
 @pytest.mark.django_db
 def test_add_to_history_success(client, user, book):
     client.force_login(user)
@@ -73,6 +78,7 @@ def test_add_to_history_success(client, user, book):
     assert response.json() == {"message": "Reading history added successfully"}
 
 
+@allure.epic('View: History')
 @pytest.mark.django_db
 def test_add_to_history_invalid_input(client, user):
     client.force_login(user)
@@ -83,6 +89,7 @@ def test_add_to_history_invalid_input(client, user):
     assert response.json() == {"error": "Invalid input"}
 
 
+@allure.epic('View: Book')
 @pytest.mark.django_db
 def test_view_book_success(client, user, book):
     client.force_login(user)
@@ -94,6 +101,7 @@ def test_view_book_success(client, user, book):
     assertTemplateUsed(response, 'book.html')
 
 
+@allure.epic('View: Book')
 @pytest.mark.django_db
 def test_view_book_access_denied(client, book):
     # Assuming another_user does not have access to the book
@@ -104,6 +112,7 @@ def test_view_book_access_denied(client, book):
     assert response.status_code == 403
 
 
+@allure.epic('View: Profile')
 @pytest.mark.django_db
 def test_profile_view_success(client, user):
     client.force_login(user)

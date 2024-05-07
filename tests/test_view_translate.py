@@ -1,3 +1,4 @@
+import allure
 import pytest
 from django.urls import reverse
 from unittest.mock import patch
@@ -6,6 +7,7 @@ from lexiflux.language.translation import get_translator, Translator
 from lexiflux.models import ReaderProfile
 
 
+@allure.epic('Translator')
 @pytest.mark.django_db
 @patch('lexiflux.views.get_translator')
 def test_translate_view_success(mock_get_translator, client, user):
@@ -29,6 +31,7 @@ def test_translate_view_success(mock_get_translator, client, user):
     mock_translator.translate.assert_called_once_with('Hello')
 
 
+@allure.epic('Translator')
 @patch('lexiflux.language.translation.Translator')  # Adjust the import path as necessary
 def test_get_translator(mock_translator, book, user):
     book_code = book.code
@@ -41,6 +44,7 @@ def test_get_translator(mock_translator, book, user):
     assert isinstance(result, mock_translator.return_value.__class__)
 
 
+@allure.epic('Translator')
 @patch('lexiflux.language.translation.GoogleTranslator')
 def test_translator_translate(mock_google_translator, book, user):
     mock_translation = "This is a test translation."

@@ -1,3 +1,4 @@
+import allure
 import pytest
 from unittest.mock import patch, MagicMock, call, ANY
 from lexiflux.ebook.book_base import import_book
@@ -6,6 +7,7 @@ from django.core.management import CommandError
 from lexiflux.ebook.book_plain_text import BookPlainText
 
 
+@allure.epic('Books import: Plain text')
 @patch('lexiflux.models.Author.objects.get_or_create')
 @patch('lexiflux.models.Language.objects.get_or_create')
 @patch('lexiflux.models.Book.objects.create')
@@ -40,6 +42,7 @@ def test_import_book_success(mock_book_page_create, mock_book_create, mock_langu
     mock_book_page_create.assert_has_calls(expected_calls, any_order=True)
 
 
+@allure.epic('Books import: Plain text')
 @patch('lexiflux.models.CustomUser.objects.filter')
 @patch('lexiflux.models.Book.objects.create')
 @patch('lexiflux.models.BookPage.objects.create')
@@ -64,6 +67,7 @@ def test_import_book_without_owner_is_public(
     assert book.public is True
 
 
+@allure.epic('Books import: Plain text')
 @patch('lexiflux.ebook.book_base.CustomUser.objects.filter')
 @patch('lexiflux.ebook.book_base.Book.objects.create')
 @patch('lexiflux.ebook.book_base.BookPage.objects.create')
@@ -89,6 +93,7 @@ def test_import_book_nonexistent_owner_email(
     assert 'User with email "nonexistent@example.com" not found' in str(exc_info.value)
 
 
+@allure.epic('Books import: Plain text')
 @pytest.mark.django_db
 def test_import_plain_text_e2e():
     book = import_book(BookPlainText('tests/resources/alice_adventure_in_wonderland.txt'), '')

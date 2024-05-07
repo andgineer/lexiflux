@@ -1,3 +1,4 @@
+import allure
 import pytest
 from django.contrib.auth import get_user_model
 from django.urls import reverse
@@ -7,6 +8,7 @@ from pytest_django.asserts import assertTemplateUsed
 from lexiflux.models import Book, Author, Language
 
 
+@allure.epic('View: Library')
 @pytest.mark.django_db
 def test_library_view_for_regular_user(client, user, book):
     # Assuming 'user' fixture creates a regular user and 'book' fixture creates a book owned by the user
@@ -28,6 +30,7 @@ def test_library_view_for_regular_user(client, user, book):
     assertTemplateUsed(response, 'library.html')
 
 
+@allure.epic('View: Library')
 @pytest.mark.django_db
 def test_library_view_for_superuser(client, book):
     # Create a separate superuser who does not own any book
@@ -49,6 +52,7 @@ def test_library_view_for_superuser(client, book):
     assert len(books) >= 3, "Superuser should see all books in the library"
 
 
+@allure.epic('View: Library')
 @pytest.mark.django_db
 def test_library_view_pagination(client, user, author, book):
     client.force_login(user)

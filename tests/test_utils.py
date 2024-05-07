@@ -1,9 +1,11 @@
+import allure
 import pytest
 from django.core.management import CommandError
 from lexiflux.utils import validate_log_level
 import logging
 
 
+@allure.epic('Logging')
 @pytest.mark.parametrize("level_name,expected", [
     ("DEBUG", logging.DEBUG),
     ("INFO", logging.INFO),
@@ -16,6 +18,7 @@ def test_validate_log_level_valid(level_name, expected):
     assert validate_log_level(level_name) == expected
 
 
+@allure.epic('Logging')
 @pytest.mark.parametrize("level_name", [
     "INVALID",  # Completely invalid
     "debugg",   # Misspelled

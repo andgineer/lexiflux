@@ -2,18 +2,21 @@ import itertools
 from io import StringIO
 from unittest.mock import patch
 
+import allure
 import pytest
 
 from lexiflux.ebook.book_plain_text import BookPlainText
 from lexiflux.language.translation import detect_language
 
 
+@allure.epic('Language detection')
 @pytest.mark.django_db
 def test_get_language_group(book_plain_text):
     assert book_plain_text.get_language_group('bs') == 'group:bs-hr-sr'
     assert book_plain_text.get_language_group('en') == 'en'
 
 
+@allure.epic('Language detection')
 @pytest.mark.django_db
 def test_get_random_words_success(book_plain_text):
     random_words = book_plain_text.get_random_words(words_num=3)
@@ -22,6 +25,7 @@ def test_get_random_words_success(book_plain_text):
     assert book_plain_text.get_random_words(words_num=3) != random_words
 
 
+@allure.epic('Language detection')
 @pytest.mark.django_db
 def test_get_random_words_no_separators():
     text = "a"*1000
@@ -30,6 +34,7 @@ def test_get_random_words_no_separators():
     assert len(random_words) == BookPlainText.WORD_ESTIMATED_LENGTH * words_num
 
 
+@allure.epic('Language detection')
 @pytest.mark.django_db
 def test_detect_language(mock_detect_language, book_plain_text):
     # majority in first 3 tries
@@ -68,6 +73,7 @@ def test_detect_language(mock_detect_language, book_plain_text):
     assert len(mock_detect_language.call_args_list) == 3
 
 
+@allure.epic('Language detection')
 @patch('lexiflux.language.translation.single_detection')
 def test_detect_language_key_error(mock_single_detection, monkeypatch, caplog):
     monkeypatch.delenv("DETECTLANGUAGE_API_KEY", raising=False)
@@ -78,6 +84,7 @@ def test_detect_language_key_error(mock_single_detection, monkeypatch, caplog):
     assert result == "en"  # Default fallback language
 
 
+@allure.epic('Language detection')
 @patch('lexiflux.language.translation.single_detection')
 def test_detect_language_exception(mock_single_detection, monkeypatch, caplog):
     monkeypatch.setenv("DETECTLANGUAGE_API_KEY", "dummy_key")

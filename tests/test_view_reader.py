@@ -1,15 +1,18 @@
+import allure
 import pytest
 from django.urls import reverse
 from lexiflux.models import ReadingLoc
 from pytest_django.asserts import assertTemplateUsed
 
 
+@allure.epic('View: Reader')
 @pytest.mark.django_db
 def test_reader_view_redirect_unauthenticated_user(client):
     response = client.get(reverse('reader') + f'?book-code=wrong-code')
     assert response.status_code == 302  # Expecting a redirect to login or another page
 
 
+@allure.epic('View: Reader')
 @pytest.mark.django_db
 def test_reader_view_renders_for_authenticated_user(client, user, book):
     client.force_login(user)
@@ -20,6 +23,7 @@ def test_reader_view_renders_for_authenticated_user(client, user, book):
     assert '&#8592;' in response.content.decode()  # Left arrow
 
 
+@allure.epic('View: Reader')
 @pytest.mark.django_db
 def test_reader_view_redirects_to_latest_book_when_book_code_is_none(client, user, book):
     client.force_login(user)
@@ -33,6 +37,7 @@ def test_reader_view_redirects_to_latest_book_when_book_code_is_none(client, use
     assert book.title in response.content.decode()
 
 
+@allure.epic('View: Reader')
 @pytest.mark.django_db
 def test_reader_view_loads_default_when_no_books_read_and_book_code_is_none(client, user):
     client.force_login(user)
