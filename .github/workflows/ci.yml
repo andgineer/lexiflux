@@ -6,6 +6,7 @@ name: CI
 
 env:
   PRIMARY_PYTHON_VERSION: '3.12'
+  NODE_VERSION: '21.x'
   PRIMARY_PLATFORM: 'ubuntu-latest'
   PYTEST_CMD: >-
     python -m pytest 
@@ -66,6 +67,11 @@ jobs:
     - name: Install dependencies
       run: uv pip install -r requirements.dev.txt
 
+    - name: Setup Node.js
+      uses: actions/setup-node@v2
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+
     - name: Start SeleniumHub
       run: |
         mkdir -p allure-results
@@ -74,6 +80,9 @@ jobs:
 
     - name: Test with pytest and Allure report
       run: "${{ env.PYTEST_CMD }} --alluredir=./allure-results"
+
+    - name: Test with Jest and Allure report
+      run: npm test
 
     - name: Load Allure test report history
       uses: actions/checkout@v4

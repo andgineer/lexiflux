@@ -2,7 +2,7 @@ import path from 'path';
 
 export default {
   setupFilesAfterEnv: [path.resolve(__dirname, 'tests/js/jest.setup.ts')],
-  testEnvironment: 'jsdom',
+  testEnvironment: 'allure-jest/jsdom',
   testEnvironmentOptions: {
     html: '<html lang="zh-cmn-Hant"></html>',
   },
