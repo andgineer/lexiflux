@@ -82,7 +82,9 @@ jobs:
       run: "${{ env.PYTEST_CMD }} --alluredir=./allure-results"
 
     - name: Test with Jest and Allure report
-      run: npm test
+      run: |
+        npm ci
+        npm test
 
     - name: Load Allure test report history
       uses: actions/checkout@v4
