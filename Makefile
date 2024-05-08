@@ -55,7 +55,7 @@ js:
 test:
 	rm -rf allure-results
 	-python -m pytest --alluredir=allure-results tests
-	-npm test
+	-ALLURE_LABEL_EPIC="viewport.ts" npm test
 	docker-compose run --rm -it allure allure generate /allure-results -o /allure-report --clean
 	docker-compose restart allure
 	open -a 'Google Chrome' http://localhost:8800

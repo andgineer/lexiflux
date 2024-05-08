@@ -84,7 +84,7 @@ jobs:
     - name: Test with Jest and Allure report
       run: |
         npm ci
-        npm test
+        ALLURE_LABEL_EPIC="viewport.ts" npm test
 
     - name: Load Allure test report history
       uses: actions/checkout@v4
