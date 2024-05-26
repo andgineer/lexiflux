@@ -106,6 +106,12 @@ class BookPlainText(BookBase):  # pylint: disable=too-many-instance-attributes
         text = re.sub(r"[ \t]+", " ", text)
         return text
 
+    @staticmethod
+    def fix_coding(text: str) -> str:
+        """Fix common coding issues."""
+        text = text.replace("ţ", "st")
+        return text
+
     def pages(self) -> Iterator[str]:
         """Split a text into pages of approximately equal length.
 
