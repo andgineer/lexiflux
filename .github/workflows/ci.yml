@@ -132,3 +132,8 @@ jobs:
       if: always()
       uses: coverallsapp/github-action@v2
 
+    - name: Upload Coverage to Codecov
+      if: always()
+      uses: codecov/codecov-action@v4.0.1
+      env:
+        token: ${{ secrets.CODECOV_TOKEN }}

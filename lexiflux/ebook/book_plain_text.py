@@ -109,7 +109,8 @@ class BookPlainText(BookBase):  # pylint: disable=too-many-instance-attributes
     @staticmethod
     def fix_coding(text: str) -> str:
         """Fix common coding issues."""
-        text = text.replace("ţ", "st")
+        text = text.replace("ţ", "ž")
+        text = text.replace("Ď", "đ")
         return text
 
     def pages(self) -> Iterator[str]:
