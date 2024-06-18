@@ -11,6 +11,16 @@ Reading foreign texts with dictionary.
 
 ![Alice in Wonderland](docs/includes/alice_reading.jpg)
 
+
+## Quick start
+
+You need [uv](https://github.com/astral-sh/uv) installed.
+
+    . ./activete.sh  # note space between . and ./activate.sh
+    make run
+
+open in web-browser http://localhost:8000
+
 ## Scripts
     make help
 
