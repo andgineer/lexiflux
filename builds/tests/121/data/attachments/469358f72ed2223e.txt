@@ -1,1 +1,0 @@
-URL from host: http://0.0.0.0:46491/reader?book-code=some-book-code URL from docker: http://10.1.0.104:46491/reader?book-code=some-book-code
