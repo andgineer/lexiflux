@@ -14,32 +14,43 @@
                         </li>
                     {% endfor %}
                 </ul>
+                <button id="collapse-button" class="btn btn-primary" type="button" data-bs-toggle="collapse" data-bs-target="#info-panel" aria-expanded="false" aria-controls="info-panel">
+                    <i id="collapse-icon" class="bi bi-chevron-double-left"></i>
+                </button>
             </div>
         </div>
     </nav>
 
-    <div id="book-page-scroller" class="container-fluid flex-grow-1 overflow-hidden">
-        <!-- book-page-scroller let us scroll word-container inside it -->
-        <div id="words-container">
-            {{ pageHtml|safe }}
+    <div class="flex-grow-1 d-flex flex-column flex-md-row  overflow-hidden">
+        <div id="book-page-scroller" class="container-fluid flex-grow-1 overflow-hidden">
+            <div id="words-container">
+                {{ pageHtml|safe }}
+            </div>
+        </div>
+
+        <div id="info-panel" class="info-panel collapse d-md-block col-12 col-md-4 order-md-last">
+            <div class="card h-100">
+                <div class="card-header d-flex justify-content-between">
+                    <span>Info</span>
+                </div>
+                <div id="infoPanelContent" class="card-body">
+                    body
+                </div>
+            </div>
         </div>
     </div>
 
     <nav class="navbar navbar-expand-lg navbar-light bg-light d-flex justify-content-between navbar-fixed-bottom">
-        <button
-            class="btn btn-primary"
-            id="prev-button">
+        <button class="btn btn-primary" id="prev-button">
             &#8592; <!-- Left arrow -->
         </button>
-
         <div class="text-truncate">
             {{ page.number }}
         </div>
-
-        <button
-            class="btn btn-primary pull-right"
-            id="next-button">
+        <button class="btn btn-primary pull-right" id="next-button">
             &#8594; <!-- Right arrow -->
         </button>
     </nav>
 </div>
+
+
