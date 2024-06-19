@@ -28,13 +28,31 @@
             </div>
         </div>
 
-        <div id="info-panel" class="info-panel collapse d-md-block col-12 col-md-4 order-md-last">
+        <div id="info-panel" class="info-panel collapse d-md-block col-6 order-md-last">
             <div class="card h-100">
-                <div class="card-header d-flex justify-content-between">
-                    <span>Info</span>
+                <div class="card-header">
+                    <ul class="nav nav-tabs card-header-tabs" id="infoPanelTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="dictionary-tab" data-bs-toggle="tab" data-bs-target="#dictionary" type="button" role="tab" aria-controls="dictionary" aria-selected="true">Dictionary</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="explain-tab" data-bs-toggle="tab" data-bs-target="#explain" type="button" role="tab" aria-controls="explain" aria-selected="false">Explain</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="examples-tab" data-bs-toggle="tab" data-bs-target="#examples" type="button" role="tab" aria-controls="examples" aria-selected="false">Examples</button>
+                        </li>
+                    </ul>
                 </div>
-                <div id="infoPanelContent" class="card-body">
-                    body
+                <div class="tab-content card-body" id="infoPanelContent">
+                    <div class="tab-pane fade show active" id="dictionary" role="tabpanel" aria-labelledby="dictionary-tab">
+                        Dictionary content goes here.
+                    </div>
+                    <div class="tab-pane fade" id="explain" role="tabpanel" aria-labelledby="explain-tab">
+                        Explain content goes here.
+                    </div>
+                    <div class="tab-pane fade" id="examples" role="tabpanel" aria-labelledby="examples-tab">
+                        Examples content goes here.
+                    </div>
                 </div>
             </div>
         </div>
