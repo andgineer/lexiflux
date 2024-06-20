@@ -61,6 +61,10 @@ export class Viewport {
 //         this.bookPageScroller = this.getBookPageScroller();
 //         this.wordsContainerTopMargin = this.getTopNavbar().getBoundingClientRect().height;
 //         this.totalWords = this.calculateTotalWords();
+        const pageNumberElement = document.getElementById('page-number');
+        if (pageNumberElement) {
+            pageNumberElement.textContent = this.pageNumber.toString();
+        }
         log('domChanged. bookCode:', this.bookCode, 'pageNum:', this.pageNumber, 'totalWords:', this.totalWords, 'wordsContainerHeight:', this.getWordsContainerHeight());
     }
 
@@ -91,7 +95,6 @@ export class Viewport {
                         throw new Error('words-container element not found');
                     }
                     bookElement.innerHTML = data.html;
-                    this.domChanged();
 
                     this.bookCode = data.data.bookCode;
                     this.pageNumber = parseInt(data.data.pageNumber);
@@ -108,7 +111,7 @@ export class Viewport {
                         }
                         this.reportReadingLocation();
                     }
-
+                    this.domChanged();
                     resolve();
                 })
                 .catch(error => {
