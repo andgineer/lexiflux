@@ -57,10 +57,10 @@ export class Viewport {
     }
 
     public domChanged(): void {
-//         this.wordsContainer = this.getWordsContainer();
-//         this.bookPageScroller = this.getBookPageScroller();
-//         this.wordsContainerTopMargin = this.getTopNavbar().getBoundingClientRect().height;
-//         this.totalWords = this.calculateTotalWords();
+        this.wordsContainer = this.getWordsContainer();
+        this.bookPageScroller = this.getBookPageScroller();
+        this.wordsContainerTopMargin = this.getTopNavbar().getBoundingClientRect().height;
+        this.totalWords = this.calculateTotalWords();
         const pageNumberElement = document.getElementById('page-number');
         if (pageNumberElement) {
             pageNumberElement.textContent = this.pageNumber.toString();
@@ -98,7 +98,8 @@ export class Viewport {
 
                     this.bookCode = data.data.bookCode;
                     this.pageNumber = parseInt(data.data.pageNumber);
-                    this.totalWords = this.calculateTotalWords();
+                    this.domChanged();
+
                     log(`Total words: ${this.totalWords}, topWord: ${topWord}`);
 
                     if (topWord != undefined) {
@@ -111,7 +112,6 @@ export class Viewport {
                         }
                         this.reportReadingLocation();
                     }
-                    this.domChanged();
                     resolve();
                 })
                 .catch(error => {

@@ -22,14 +22,19 @@ if (!container) {
 
 const defaultWordRect: DOMRect = {top: 0, bottom: 0, left: 0, right: 0, width: 0, height: 0, x: 0, y: 0, toJSON: () =>{}};
 mockWordRectFunc = () => defaultWordRect;
-const spans = Array.from(container.children);
-spans.forEach(span => {
-  if (span.id.match(/^word-\d+$/)) {
-    Object.defineProperty(span, 'getBoundingClientRect', {
-      value: () => mockWordRectFunc(span.id)
-    });
-  }
-});
+
+const applyMockRectFunc = () => {
+  container.querySelectorAll('.word').forEach(span => {
+    if (span.id.match(/^word-\d+$/)) {
+      Object.defineProperty(span, 'getBoundingClientRect', {
+        value: jest.fn(() => mockWordRectFunc(span.id)),
+        configurable: true // Ensure the property can be redefined
+      });
+    }
+  });
+};
+
+applyMockRectFunc();
 viewport.domChanged();
 
 describe('viewport.js tests', () => {
@@ -57,6 +62,7 @@ describe('viewport.js tests', () => {
         }
         return mockRect;
       };
+      applyMockRectFunc();
 
       const firstWord = viewport.getFirstVisibleWord();
       expect(firstWord).not.toBeNull();
@@ -75,6 +81,7 @@ describe('viewport.js tests', () => {
         }
         return mockRect;
       };
+      applyMockRectFunc();
 
       const firstWord = viewport.getFirstVisibleWord();
       expect(firstWord).not.toBeNull();
@@ -144,6 +151,7 @@ describe('viewport.js tests', () => {
         }
         return wordRect;
       };
+      applyMockRectFunc();
 
       const initialScrollTop = viewport.getBookPageScroller().scrollTop;
       await viewport.scrollDown();
@@ -169,6 +177,7 @@ describe('viewport.js tests', () => {
         }
         return wordRect;
       };
+      applyMockRectFunc();
 
       viewport.pageNumber = 1; // Current page
       const loadPageSpy = jest.spyOn(viewport, 'loadPage');

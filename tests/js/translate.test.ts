@@ -23,6 +23,16 @@ jest.spyOn(viewport.getWordsContainer(), 'removeChild')
   .mockImplementation((child) => child);
 
 describe('translate.ts', () => {
+    let originalDocument: Document | null;
+
+    beforeEach(() => {
+      originalDocument = global.document;
+    });
+
+    afterEach(() => {
+      global.document = originalDocument || document;
+    });
+
     it('ensures translated text is visible', async () => {
         // Setup the scenario where the translated text would be out of view initially
         const initialScrollTop = viewport.bookPageScroller.scrollTop;
@@ -50,7 +60,7 @@ describe('translate.ts', () => {
     await sendTranslationRequest(selectedText, range, selectedWordSpans);
 
     // Check if fetch was called correctly
-    expect(fetchMock).toHaveBeenCalledWith('/translate?text=test&book-code=');
+    expect(fetchMock).toHaveBeenCalledWith('/translate?text=test&book-code=&full=null');
     // Check if translation was added
     expect(viewport.getWordsContainer().insertBefore).toHaveBeenCalled();
     // Assert the original word spans were removed
