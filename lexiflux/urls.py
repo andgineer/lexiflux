@@ -14,4 +14,7 @@ urlpatterns = [
     path("translate", views.translate, name="translate"),
     path("profile", views.profile, name="profile"),
     path("book", views.view_book, name="book"),
+    path("dictionary/", views.dictionary_content, name="dictionary_content"),
+    path("explain/", views.explain_content, name="explain_content"),
+    path("examples/", views.examples_content, name="examples_content"),
 ]

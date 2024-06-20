@@ -8,8 +8,10 @@ interface TranslationResponse {
 }
 
 function sendTranslationRequest(selectedText: string, range: Range, selectedWordSpans: HTMLElement[]): void {
+  const infoPanel = document.getElementById('info-panel');
+  const isInfoPanelVisible = infoPanel && infoPanel.classList.contains('show');
   const encodedText = encodeURIComponent(selectedText);
-  const url = `/translate?text=${encodedText}&book-code=${viewport.bookCode}`;
+  const url = `/translate?text=${encodedText}&book-code=${viewport.bookCode}&full=${isInfoPanelVisible}`;
 
   fetch(url)
     .then(response => {
@@ -19,14 +21,24 @@ function sendTranslationRequest(selectedText: string, range: Range, selectedWord
             return response.json();
         })
     .then((data: TranslationResponse) => {
-      log('Translated:', data);
-      const sidebar = document.getElementById('sidebar');
-      if (sidebar) {
-        sidebar.innerHTML = data.article; // Set innerHTML only if sidebar is not null
-      } else {
-        log('Sidebar element not found');
-      }
-      createAndReplaceTranslationSpan(selectedText, data.translatedText, selectedWordSpans);
+        log('Translated:', data);
+        createAndReplaceTranslationSpan(selectedText, data.translatedText, selectedWordSpans);
+
+        const dictionaryPanel = document.getElementById('dictionary-panel-1');
+        const explainPanel = document.getElementById('explain-panel');
+        const examplesPanel = document.getElementById('examples-panel');
+        if (!dictionaryPanel || !explainPanel || !examplesPanel) {
+            log('One of the translation panels is missing');
+            return;
+        }
+        dictionaryPanel.innerHTML = data.article;
+        if (isInfoPanelVisible) {
+            log('Info panel is visible');
+        } else {
+            log('Info panel is not visible');
+            explainPanel.innerHTML = '';
+            examplesPanel.innerHTML = '';
+        }
     })
     .catch(error => {
       console.error('Error during translation:', error);

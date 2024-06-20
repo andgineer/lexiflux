@@ -5,7 +5,6 @@ from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
 from django.db import models
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
-from django.template.loader import render_to_string
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 
@@ -107,21 +106,12 @@ def page(request: HttpRequest) -> HttpResponse:
     # Update the reading location
     location(request)
 
-    page_html = render_page(book_page.content)
     print(f"Rendering page {page_number} of book {book_code}")
-    rendered_html = render_to_string(
-        "page.html",
-        {
-            "book": book_page.book,
-            "page": book_page,
-            "pageHtml": page_html,
-        },
-        request,
-    )
+    page_html = render_page(book_page.content)
 
     return JsonResponse(
         {
-            "html": rendered_html,
+            "html": page_html,
             "data": {
                 "bookCode": book_code,
                 "pageNumber": page_number,
@@ -154,10 +144,14 @@ def location(request: HttpRequest) -> HttpResponse:
 
 @login_required  # type: ignore
 def translate(request: HttpRequest) -> HttpResponse:
-    """Translate text."""
+    """Translate text.
+
+    full: if true, side panel is visible so we prepare detailed translation materials.
+    """
     print("Translating text")
     text = request.GET.get("text")
     book_code = request.GET.get("book-code")
+    # active_panel = request.GET.get("active-panel")  # todo: use to call explain / examples / etc
     user_id = request.user.id
 
     print("Translating", text)
@@ -165,7 +159,8 @@ def translate(request: HttpRequest) -> HttpResponse:
     print("Translator", translator)
     translated = translator.translate(text)
     print("Translated", translated)
-    article = """<p>Hello</p>"""  # Example content
+    article = f"""<p>{translated}</p>"""  # todo: get article from the translator
+    # todo: get LLM explanation if `full`
     return JsonResponse({"translatedText": translated, "article": article})
 
 
@@ -262,3 +257,21 @@ def view_book(request: HttpRequest) -> HttpResponse:
     }
 
     return render(request, "book.html", context)
+
+
+def dictionary_content(request: HttpRequest) -> HttpResponse:
+    """Fetch or generate dictionary content."""
+    content = "Dictionary content goes here."
+    return JsonResponse({"content": content})
+
+
+def explain_content(request: HttpRequest) -> HttpResponse:
+    """Fetch or generate explain content."""
+    content = "Explain content goes here."
+    return JsonResponse({"content": content})
+
+
+def examples_content(request: HttpRequest) -> HttpResponse:
+    """Fetch or generate examples content."""
+    content = "Examples content goes here."
+    return JsonResponse({"content": content})

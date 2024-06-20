@@ -11,17 +11,17 @@ let clickTimeout: NodeJS.Timeout | null = null;
 
 async function goToPage(pageNum: number, topWord: number): Promise<void> {
         await viewport.loadPage(pageNum, topWord);
-        reInitDom();
+//         reInitDom();
 }
 
 async function handlePrevButtonClick(): Promise<void> {
     await viewport.scrollUp();
-    reInitDom();
+//     reInitDom();
 }
 
 async function handleNextButtonClick(): Promise<void> {
     await viewport.scrollDown();
-    reInitDom();
+//     reInitDom();
 }
 
 function handleWordClick(event: MouseEvent): void {

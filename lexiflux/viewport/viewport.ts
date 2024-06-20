@@ -57,11 +57,11 @@ export class Viewport {
     }
 
     public domChanged(): void {
-        this.wordsContainer = this.getWordsContainer();
-        this.bookPageScroller = this.getBookPageScroller();
-        this.wordsContainerTopMargin = this.getTopNavbar().getBoundingClientRect().height;
-        this.totalWords = this.calculateTotalWords();
-        log('domChanged: bookCode:', this.bookCode, 'pageNum:', this.pageNumber, 'totalWords:', this.totalWords, 'wordsContainerHeight:', this.getWordsContainerHeight());
+//         this.wordsContainer = this.getWordsContainer();
+//         this.bookPageScroller = this.getBookPageScroller();
+//         this.wordsContainerTopMargin = this.getTopNavbar().getBoundingClientRect().height;
+//         this.totalWords = this.calculateTotalWords();
+        log('domChanged. bookCode:', this.bookCode, 'pageNum:', this.pageNumber, 'totalWords:', this.totalWords, 'wordsContainerHeight:', this.getWordsContainerHeight());
     }
 
     public getWordTop(wordId: number = 0): number {
@@ -86,9 +86,9 @@ export class Viewport {
                     }
                     log('Page ', pageNumber, 'topWord', topWord, ' loaded successfully.');
 
-                    const bookElement = document.getElementById('book');
+                    const bookElement = document.getElementById('words-container');
                     if (!bookElement) {
-                        throw new Error('Book element not found');
+                        throw new Error('words-container element not found');
                     }
                     bookElement.innerHTML = data.html;
                     this.domChanged();
