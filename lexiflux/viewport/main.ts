@@ -1,6 +1,6 @@
 import { viewport } from './viewport';
 import {log} from './utils';
-import { sendTranslationRequest } from './translate';
+import { sendTranslationRequest, lexicalPanelSwitched } from './translate';
 
 const CLICK_TIMEOUT_MS = 200;
 
@@ -91,7 +91,7 @@ function handleMouseUpEvent(): void {
     log('Selected text:', selectedText);
 
     if (selectedText) {
-      sendTranslationRequest(selectedText, range, selectedWordSpans);
+      sendTranslationRequest(selectedText, selectedWordSpans);
     }
   }
 }
@@ -201,6 +201,10 @@ function reInitDom(): void {
     } else {
         console.error('Could not find words container');
     }
+
+    document.querySelectorAll('#infoPanelTabs .nav-link').forEach(tab => {
+        tab.addEventListener('shown.bs.tab', lexicalPanelSwitched);
+    });
 }
 
 document.body.addEventListener('htmx:configRequest', (event: Event) => {

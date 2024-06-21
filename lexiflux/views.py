@@ -151,7 +151,9 @@ def translate(request: HttpRequest) -> HttpResponse:
     print("Translating text")
     text = request.GET.get("text")
     book_code = request.GET.get("book-code")
-    # active_panel = request.GET.get("active-panel")  # todo: use to call explain / examples / etc
+    # word_id = request.GET.get("word-id")  # todo: absolute word ID so we can find context
+    # translate = request.GET.get("translate")  # todo: if false only return lexical article
+    # lexical_panel = request.GET.get("lexical-panel")  # todo: use to call explain / etc
     user_id = request.user.id
 
     print("Translating", text)

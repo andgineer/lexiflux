@@ -1,4 +1,5 @@
 import {log, getElement} from './utils';
+import {clearTranslation} from './translate';
 
 export class Viewport {
     static pageBookScrollerId = 'book-page-scroller';
@@ -98,6 +99,7 @@ export class Viewport {
 
                     this.bookCode = data.data.bookCode;
                     this.pageNumber = parseInt(data.data.pageNumber);
+                    clearTranslation();
                     this.domChanged();
 
                     log(`Total words: ${this.totalWords}, topWord: ${topWord}`);
