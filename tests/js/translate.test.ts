@@ -57,10 +57,10 @@ describe('translate.ts', () => {
     const selectedWordSpans = [spanElement];
     viewport.getWordsContainer().insertBefore(selectedWordSpans[0], null);
 
-    await sendTranslationRequest(selectedText, range, selectedWordSpans);
+    await sendTranslationRequest(selectedText, selectedWordSpans);
 
     // Check if fetch was called correctly
-    expect(fetchMock).toHaveBeenCalledWith('/translate?text=test&book-code=&full=null');
+    expect(fetchMock).toHaveBeenCalledWith('/translate?text=test&book-code=&lexical-panel=');
     // Check if translation was added
     expect(viewport.getWordsContainer().insertBefore).toHaveBeenCalled();
     // Assert the original word spans were removed
@@ -73,7 +73,7 @@ describe('translate.ts', () => {
     const range = document.createRange();
     const selectedWordSpans = [document.createElement('span')];
 
-    await sendTranslationRequest(selectedText, range, selectedWordSpans);
+    await sendTranslationRequest(selectedText, selectedWordSpans);
 
     // Expect no errors thrown, can also check for specific log output if necessary
     expect(fetchMock).toHaveBeenCalled();
@@ -89,7 +89,7 @@ describe('translate.ts', () => {
     const range = document.createRange();
     const selectedWordSpans = [document.createElement('span')];
 
-    sendTranslationRequest(selectedText, range, selectedWordSpans);
+    sendTranslationRequest(selectedText, selectedWordSpans);
 
     // Since sendTranslationRequest does not return a promise, we cannot directly await it.
     // However, we can wait for the next tick to allow any promises within sendTranslationRequest to resolve/reject.
