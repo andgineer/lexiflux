@@ -1,6 +1,6 @@
 import { viewport } from './viewport';
 import {log} from './utils';
-import { sendTranslationRequest, lexicalPanelSwitched } from './translate';
+import { sendTranslationRequest, lexicalPanelSwitched, clearLexicalPanel } from './translate';
 
 const CLICK_TIMEOUT_MS = 200;
 
@@ -91,6 +91,7 @@ function handleMouseUpEvent(): void {
     log('Selected text:', selectedText);
 
     if (selectedText) {
+      clearLexicalPanel();
       sendTranslationRequest(selectedText, selectedWordSpans);
     }
   }
@@ -202,9 +203,25 @@ function reInitDom(): void {
         console.error('Could not find words container');
     }
 
-    document.querySelectorAll('#infoPanelTabs .nav-link').forEach(tab => {
-        tab.addEventListener('shown.bs.tab', lexicalPanelSwitched);
+    const tabElements = document.querySelectorAll('#infoPanelTabs button[data-bs-toggle="tab"]');
+    tabElements.forEach(tabElement => {
+        tabElement.addEventListener('shown.bs.tab', function(event: Event) {
+            const target = event.target as HTMLElement;
+            if (target && target.id) {
+                lexicalPanelSwitched(target.id);
+            }
+        });
     });
+
+    const infoPanel = document.getElementById('info-panel');
+    if (infoPanel) {
+        infoPanel.addEventListener('shown.bs.collapse', function() {
+            const activeTab = document.querySelector('#infoPanelTabs .nav-link.active') as HTMLElement;
+            if (activeTab && activeTab.id) {
+                lexicalPanelSwitched(activeTab.id);
+            }
+        });
+    }
 }
 
 document.body.addEventListener('htmx:configRequest', (event: Event) => {

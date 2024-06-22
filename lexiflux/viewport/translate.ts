@@ -7,25 +7,38 @@ interface TranslationResponse {
   article: string;
 }
 
-let currentSelection = {
-  text: '',
+let currentSelection: {
+  text: string | null;
+  updatedPanels: Set<string>;
+} = {
+  text: null,
   updatedPanels: new Set()
 };
+
+function getActivePanelId(): string | null {
+  const infoPanel = document.getElementById('info-panel');
+  const isInfoPanelVisible = infoPanel ? infoPanel.classList.contains('show') : false;
+
+  if (!isInfoPanelVisible) {
+    return null;
+  }
+
+  const activeTabContent = document.querySelector('#infoPanelContent .tab-pane.active') as HTMLElement | null;
+  return activeTabContent ? activeTabContent.id : null;
+}
 
 function sendTranslationRequest(
     selectedText: string,
     selectedWordSpans: HTMLElement[] | null = null,
-    updateLexical = false,
   ): void {
   // if selectedWordSpans is null do not create translation span
   // if updateLexical is true, update the active lexical panel
-const infoPanel = document.getElementById('info-panel');
-const isInfoPanelVisible = infoPanel ? infoPanel.classList.contains('show') : false;
-  const activePanel = isInfoPanelVisible
-      ? (document.querySelector('#infoPanelTabs .nav-link.active') as HTMLElement).getAttribute('data-bs-target')
-      : null;
   const encodedText = encodeURIComponent(selectedText);
-  const url = `/translate?text=${encodedText}&book-code=${viewport.bookCode}&lexical-panel=${activePanel || ''}`;
+  const activePanelId = getActivePanelId();
+  const url = `/translate?text=${encodedText}&book-code=${viewport.bookCode}&lexical-panel=${activePanelId || ''}`;
+
+// todo: show "..loading.." in lexical panel if activePanelId is not null
+// for that we can rename getActivePanelId to startLoadingInActivePanel
 
   fetch(url)
     .then(response => {
@@ -36,11 +49,12 @@ const isInfoPanelVisible = infoPanel ? infoPanel.classList.contains('show') : fa
         })
     .then((data: TranslationResponse) => {
         log('Translated:', data);
+        currentSelection.text = selectedText;
         if (selectedWordSpans !== null) {
             createAndReplaceTranslationSpan(selectedText, data.translatedText, selectedWordSpans);
         };
-        if (updateLexical) {
-            updateLexicalPanel(data, activePanel);
+        if (activePanelId) {
+            updateLexicalPanel(data, activePanelId);
         }
     })
     .catch(error => {
@@ -48,26 +62,19 @@ const isInfoPanelVisible = infoPanel ? infoPanel.classList.contains('show') : fa
     });
 }
 
-function updateLexicalPanel(data: TranslationResponse, panelToUpdate: string | null): void {
-  const dictionaryPanel = document.getElementById('dictionary-panel-1');
-  const explainPanel = document.getElementById('explain-panel');
-  const examplesPanel = document.getElementById('examples-panel');
-
-  if (!dictionaryPanel || !explainPanel || !examplesPanel) {
-    log('One of the translation panels is missing');
+function updateLexicalPanel(data: TranslationResponse, activePanelId: string): void {
+  if (currentSelection.updatedPanels.has(activePanelId)) {
     return;
   }
-
-  if (panelToUpdate === '#dictionary-panel-1' && !currentSelection.updatedPanels.has('#dictionary-panel-1')) {
-    dictionaryPanel.innerHTML = data.article;
-    currentSelection.updatedPanels.add('#dictionary-panel-1');
-  } else if (panelToUpdate === '#explain-panel' && !currentSelection.updatedPanels.has('#explain-panel')) {
-    explainPanel.innerHTML = data.article;
-    currentSelection.updatedPanels.add('#explain-panel');
-  } else if (panelToUpdate === '#examples-panel' && !currentSelection.updatedPanels.has('#examples-panel')) {
-    examplesPanel.innerHTML = data.article;
-    currentSelection.updatedPanels.add('#examples-panel');
+  const panel = document.querySelector(`#${activePanelId}`) as HTMLElement;
+  if (activePanelId === 'dictionary-panel-1') {
+    panel.innerHTML = data.article;
+  } else if (activePanelId === 'explain-panel') {
+    panel.innerHTML = data.article;
+  } else if (activePanelId === 'examples-panel') {
+    panel.innerHTML = data.article;
   }
+  currentSelection.updatedPanels.add(activePanelId);
 }
 
 function ensureVisible(element: HTMLSpanElement): void {
@@ -104,15 +111,15 @@ function createAndReplaceTranslationSpan(selectedText: string, translatedText: s
     ensureVisible(translationSpan);
 }
 
-function lexicalPanelSwitched(event: Event): void {
-    const activePanel = document.querySelector('#infoPanelTabs .nav-link.active')?.getAttribute('data-bs-target') ?? '';
-    if (currentSelection.text && !currentSelection.updatedPanels.has(activePanel)) {
-      sendTranslationRequest(currentSelection.text, null, true);
+function lexicalPanelSwitched(tabId: string): void {
+    if (currentSelection.text !== null) {
+        sendTranslationRequest(currentSelection.text, null);
     }
 }
 
-function clearTranslation(): void {
-    currentSelection.text = '';
+function clearLexicalPanel(): void {
+    // todo: for loop to clear all panels
+    currentSelection.text = null;
     currentSelection.updatedPanels.clear();
     const dictionaryPanel = document.getElementById('dictionary-panel-1');
     const explainPanel = document.getElementById('explain-panel');
@@ -122,9 +129,9 @@ function clearTranslation(): void {
         log('One of the translation panels is missing');
         return;
     }
-    dictionaryPanel.innerHTML = 'Loading..';
-    explainPanel.innerHTML = 'Loading..';
-    examplesPanel.innerHTML = 'Loading..';
+    dictionaryPanel.innerHTML = '';
+    explainPanel.innerHTML = '';
+    examplesPanel.innerHTML = '';
 }
 
-export { sendTranslationRequest, createAndReplaceTranslationSpan, TranslationResponse, lexicalPanelSwitched, clearTranslation };
+export { sendTranslationRequest, createAndReplaceTranslationSpan, TranslationResponse, lexicalPanelSwitched, clearLexicalPanel };
