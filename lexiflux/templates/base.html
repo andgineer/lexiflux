@@ -43,12 +43,12 @@
               font-size: 1.2em; /* Adjust the size of the arrow */
             }
 
-            .info-panel {
+            #lexical-panel {
                width: 30%;
                transition: none;
             }
 
-            .info-panel.collapse:not(.show) {
+            #lexical-panel.collapse:not(.show) {
                 display: none !important;
             }
 
@@ -57,17 +57,17 @@
                     flex-direction: column !important;
                 }
 
-                .info-panel {
+                #lexical-panel {
                     width: 100%;
                     order: -1;
                 }
             }
 
-            #collapse-button[aria-expanded="true"] #collapse-icon::before {
+            #lexical-panel-button[aria-expanded="true"] #lexical-panel-icon::before {
                 content: "\F18E";
             }
 
-            #collapse-button[aria-expanded="false"] #collapse-icon::before {
+            #lexical-panel-button[aria-expanded="false"] #lexical-panel-icon::before {
                 content: "\F18F";
             }
         </style>

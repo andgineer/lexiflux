@@ -1,5 +1,7 @@
 """Vies for the Lexiflux app."""
 
+from typing import Optional
+
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
 from django.db import models
@@ -7,11 +9,13 @@ from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views.decorators.http import require_POST
+from pydantic import Field
 
 from core.models import CustomUser
 from lexiflux.language.translation import get_translator
+from lexiflux.api import get_params, ViewGetParamsModel
 
-from .models import Book, BookPage, ReadingHistory, ReadingLoc
+from lexiflux.models import Book, BookPage, ReadingHistory, ReadingLoc
 
 
 def render_page(content: str) -> str:
@@ -142,28 +146,45 @@ def location(request: HttpRequest) -> HttpResponse:
     return HttpResponse(status=200)
 
 
+class TranslateGetParams(ViewGetParamsModel):
+    """GET params for the /translate."""
+
+    text: str = Field(..., min_length=1)
+    book_code: str = Field(..., min_length=1)
+    translate: bool = Field(default=True)
+    lexical_article: Optional[str] = Field(default=None)
+
+
 @login_required  # type: ignore
-def translate(request: HttpRequest) -> HttpResponse:
+@get_params(TranslateGetParams)
+def translate(request: HttpRequest, params: TranslateGetParams) -> HttpResponse:
     """Translate text.
 
     full: if true, side panel is visible so we prepare detailed translation materials.
     """
     print("Translating text")
-    text = request.GET.get("text")
-    book_code = request.GET.get("book-code")
+    text = params.text
+    book_code = params.book_code
     # word_id = request.GET.get("word-id")  # todo: absolute word ID so we can find context
-    # translate = request.GET.get("translate")  # todo: if false only return lexical article
-    # lexical_panel = request.GET.get("lexical-panel")  # todo: use to call explain / etc
+    do_translate = params.translate
+    lexical_article = params.lexical_article
     user_id = request.user.id
 
-    print("Translating", text)
-    translator = get_translator(book_code, user_id)
-    print("Translator", translator)
-    translated = translator.translate(text)
-    print("Translated", translated)
-    article = f"""<p>{translated}</p>"""  # todo: get article from the translator
-    # todo: get LLM explanation if `full`
-    return JsonResponse({"translatedText": translated, "article": article})
+    translated = ""
+    if do_translate:
+        print("Translating", text)
+        translator = get_translator(book_code, user_id)
+        print("Translator", translator)
+        translated = translator.translate(text)
+        print("Translated", translated)
+        # todo: get article from the translator
+
+    articles = {}
+    if lexical_article:
+        print("Fetching lexical article")
+        # todo: get LLM explanation if `full`
+        articles[lexical_article] = f"""<p>{text} {lexical_article}</p>"""
+    return JsonResponse({"translatedText": translated, "articles": articles})
 
 
 @login_required  # type: ignore

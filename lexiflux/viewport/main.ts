@@ -203,7 +203,7 @@ function reInitDom(): void {
         console.error('Could not find words container');
     }
 
-    const tabElements = document.querySelectorAll('#infoPanelTabs button[data-bs-toggle="tab"]');
+    const tabElements = document.querySelectorAll('#lexicalPanelTabs button[data-bs-toggle="tab"]');
     tabElements.forEach(tabElement => {
         tabElement.addEventListener('shown.bs.tab', function(event: Event) {
             const target = event.target as HTMLElement;
@@ -213,10 +213,10 @@ function reInitDom(): void {
         });
     });
 
-    const infoPanel = document.getElementById('info-panel');
+    const infoPanel = document.getElementById('lexical-panel');
     if (infoPanel) {
         infoPanel.addEventListener('shown.bs.collapse', function() {
-            const activeTab = document.querySelector('#infoPanelTabs .nav-link.active') as HTMLElement;
+            const activeTab = document.querySelector('#lexicalPanelTabs .nav-link.active') as HTMLElement;
             if (activeTab && activeTab.id) {
                 lexicalPanelSwitched(activeTab.id);
             }

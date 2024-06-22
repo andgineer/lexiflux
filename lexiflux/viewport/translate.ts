@@ -4,7 +4,7 @@ import { viewport } from './viewport'; // If viewport functionalities are requir
 
 interface TranslationResponse {
   translatedText: string;
-  article: string;
+  articles: { [key: string]: string };
 }
 
 let currentSelection: {
@@ -15,16 +15,24 @@ let currentSelection: {
   updatedPanels: new Set()
 };
 
-function getActivePanelId(): string | null {
-  const infoPanel = document.getElementById('info-panel');
+function getActiveLexicalArticleId(): string | null {
+  const infoPanel = document.getElementById('lexical-panel');
   const isInfoPanelVisible = infoPanel ? infoPanel.classList.contains('show') : false;
 
   if (!isInfoPanelVisible) {
     return null;
   }
 
-  const activeTabContent = document.querySelector('#infoPanelContent .tab-pane.active') as HTMLElement | null;
+  const activeTabContent = document.querySelector('#lexicalPanelContent .tab-pane.active') as HTMLElement | null;
   return activeTabContent ? activeTabContent.id : null;
+}
+
+
+function lexicalArticleNumFromId(id: string | null): string {
+  // from lexical article div ID get the number of the article
+  if (!id) return '';
+  const match = id.match(/-(\d+)$/);
+  return match ? match[1] : '';
 }
 
 function sendTranslationRequest(
@@ -33,12 +41,33 @@ function sendTranslationRequest(
   ): void {
   // if selectedWordSpans is null do not create translation span
   // if updateLexical is true, update the active lexical panel
-  const encodedText = encodeURIComponent(selectedText);
-  const activePanelId = getActivePanelId();
-  const url = `/translate?text=${encodedText}&book-code=${viewport.bookCode}&lexical-panel=${activePanelId || ''}`;
 
-// todo: show "..loading.." in lexical panel if activePanelId is not null
-// for that we can rename getActivePanelId to startLoadingInActivePanel
+  const encodedText = encodeURIComponent(selectedText);
+
+  // todo: show "..loading.." in lexical panel if activePanelId is not null
+  // for that we can rename getActiveLexicalArticleId to startLoadingInActivePanel
+  const activePanelId = getActiveLexicalArticleId();
+
+  if (!selectedWordSpans && (!activePanelId || currentSelection.updatedPanels.has(activePanelId))) {
+    return;  // we already created translation span and updated the lexical panel or it is not opened
+  }
+
+  let urlParams = new URLSearchParams({
+    'text': encodedText,
+    'book-code': viewport.bookCode
+  });
+
+  const translate = selectedWordSpans !== null
+  if (!translate) {
+    urlParams.append('translate', 'false');
+  }
+
+  const lexicalArticle = lexicalArticleNumFromId(activePanelId);
+  if (lexicalArticle) {
+    urlParams.append('lexical-article', lexicalArticle);
+  }
+
+  const url = `/translate?${urlParams.toString()}`;
 
   fetch(url)
     .then(response => {
@@ -50,7 +79,7 @@ function sendTranslationRequest(
     .then((data: TranslationResponse) => {
         log('Translated:', data);
         currentSelection.text = selectedText;
-        if (selectedWordSpans !== null) {
+        if (translate) {
             createAndReplaceTranslationSpan(selectedText, data.translatedText, selectedWordSpans);
         };
         if (activePanelId) {
@@ -67,13 +96,7 @@ function updateLexicalPanel(data: TranslationResponse, activePanelId: string): v
     return;
   }
   const panel = document.querySelector(`#${activePanelId}`) as HTMLElement;
-  if (activePanelId === 'dictionary-panel-1') {
-    panel.innerHTML = data.article;
-  } else if (activePanelId === 'explain-panel') {
-    panel.innerHTML = data.article;
-  } else if (activePanelId === 'examples-panel') {
-    panel.innerHTML = data.article;
-  }
+  panel.innerHTML = data.articles[lexicalArticleNumFromId(activePanelId)];
   currentSelection.updatedPanels.add(activePanelId);
 }
 

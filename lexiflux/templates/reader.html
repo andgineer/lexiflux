@@ -17,8 +17,8 @@
                             </li>
                         {% endfor %}
                     </ul>
-                    <button id="collapse-button" class="btn btn-primary" type="button" data-bs-toggle="collapse" data-bs-target="#info-panel" aria-expanded="false" aria-controls="info-panel">
-                        <i id="collapse-icon" class="bi bi-chevron-double-left"></i>
+                    <button id="lexical-panel-button" class="btn btn-primary" type="button" data-bs-toggle="collapse" data-bs-target="#lexical-panel" aria-expanded="false" aria-controls="lexical-panel">
+                        <i id="lexical-panel-icon" class="bi bi-chevron-double-left"></i>
                     </button>
                 </div>
             </div>
@@ -31,27 +31,27 @@
                 </div>
             </div>
 
-            <div id="info-panel" class="info-panel collapse d-md-block col-6 order-md-last">
+            <div id="lexical-panel" class="collapse d-md-block col-6 order-md-last">
                 <div class="card h-100">
                     <div class="card-header">
-                        <ul class="nav nav-tabs card-header-tabs" id="infoPanelTabs" role="tablist">
+                        <ul class="nav nav-tabs card-header-tabs" id="lexicalPanelTabs" role="tablist">
                             <li class="nav-item" role="presentation">
-                                <button class="nav-link active" id="dictionary-tab-1" data-bs-toggle="tab" data-bs-target="#dictionary-panel-1" type="button" role="tab" aria-controls="dictionary-panel-1" aria-selected="true">Dictionary</button>
+                                <button class="nav-link active" id="lexical-tab-1" data-bs-toggle="tab" data-bs-target="#lexical-article-1" type="button" role="tab" aria-controls="lexical-article-1" aria-selected="true">Dictionary</button>
                             </li>
                             <li class="nav-item" role="presentation">
-                                <button class="nav-link" id="explain-tab" data-bs-toggle="tab" data-bs-target="#explain-panel" type="button" role="tab" aria-controls="explain-panel" aria-selected="false">Explain</button>
+                                <button class="nav-link" id="lexical-tab-2" data-bs-toggle="tab" data-bs-target="#lexical-article-2" type="button" role="tab" aria-controls="lexical-article-2" aria-selected="false">Explain</button>
                             </li>
                             <li class="nav-item" role="presentation">
-                                <button class="nav-link" id="examples-tab" data-bs-toggle="tab" data-bs-target="#examples-panel" type="button" role="tab" aria-controls="examples-panel" aria-selected="false">Examples</button>
+                                <button class="nav-link" id="lexical-tab-3" data-bs-toggle="tab" data-bs-target="#lexical-article-3" type="button" role="tab" aria-controls="lexical-article-3" aria-selected="false">Examples</button>
                             </li>
                         </ul>
                     </div>
-                    <div class="tab-content card-body" id="infoPanelContent">
-                        <div class="tab-pane fade show active" id="dictionary-panel-1" role="tabpanel" aria-labelledby="dictionary-tab-1">
+                    <div class="tab-content card-body" id="lexicalPanelContent">
+                        <div class="tab-pane fade show active" id="lexical-article-1" role="tabpanel" aria-labelledby="lexical-tab-1">
                         </div>
-                        <div class="tab-pane fade" id="explain-panel" role="tabpanel" aria-labelledby="explain-tab">
+                        <div class="tab-pane fade" id="lexical-article-2" role="tabpanel" aria-labelledby="lexical-tab-2">
                         </div>
-                        <div class="tab-pane fade" id="examples-panel" role="tabpanel" aria-labelledby="examples-tab">
+                        <div class="tab-pane fade" id="lexical-article-3" role="tabpanel" aria-labelledby="lexical-tab-3">
                         </div>
                     </div>
                 </div>
