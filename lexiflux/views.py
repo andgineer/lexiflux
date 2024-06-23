@@ -162,28 +162,24 @@ def translate(request: HttpRequest, params: TranslateGetParams) -> HttpResponse:
 
     full: if true, side panel is visible so we prepare detailed translation materials.
     """
-    print("Translating text")
-    text = params.text
-    book_code = params.book_code
-    # word_id = request.GET.get("word-id")  # todo: absolute word ID so we can find context
-    do_translate = params.translate
-    lexical_article = params.lexical_article
     user_id = request.user.id
+    print("Translating text")
+    # word_id = request.GET.get("word-id")  # todo: absolute word ID so we can find context
 
     translated = ""
-    if do_translate:
-        print("Translating", text)
-        translator = get_translator(book_code, user_id)
+    if params.translate:
+        print("Translating", params.text)
+        translator = get_translator(params.book_code, user_id)
         print("Translator", translator)
-        translated = translator.translate(text)
+        translated = translator.translate(params.text)
         print("Translated", translated)
         # todo: get article from the translator
 
     articles = {}
-    if lexical_article:
+    if params.lexical_article:
         print("Fetching lexical article")
         # todo: get LLM explanation if `full`
-        articles[lexical_article] = f"""<p>{text} {lexical_article}</p>"""
+        articles[params.lexical_article] = f"""<p>{params.text} {params.lexical_article}</p>"""
     return JsonResponse({"translatedText": translated, "articles": articles})
 
 
@@ -280,21 +276,3 @@ def view_book(request: HttpRequest) -> HttpResponse:
     }
 
     return render(request, "book.html", context)
-
-
-def dictionary_content(request: HttpRequest) -> HttpResponse:
-    """Fetch or generate dictionary content."""
-    content = "Dictionary content goes here."
-    return JsonResponse({"content": content})
-
-
-def explain_content(request: HttpRequest) -> HttpResponse:
-    """Fetch or generate explain content."""
-    content = "Explain content goes here."
-    return JsonResponse({"content": content})
-
-
-def examples_content(request: HttpRequest) -> HttpResponse:
-    """Fetch or generate examples content."""
-    content = "Examples content goes here."
-    return JsonResponse({"content": content})

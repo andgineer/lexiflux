@@ -3,6 +3,9 @@ django-allauth
 deep-translator
 django-widget-tweaks
 pydantic
+langchain
+openai
+ollama
 EbookLib
 chardet
 transliterate

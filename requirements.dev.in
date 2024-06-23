@@ -16,3 +16,6 @@ pre-commit
 pylint
 mypy
 pylint-django
+
+# debug
+notebook
