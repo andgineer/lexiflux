@@ -1,8 +1,0 @@
-"Epic","Feature","Story","FAILED","BROKEN","PASSED","SKIPPED","UNKNOWN"
-"","","","0","0","65","0","0"
-"Books import: EPUB","Clean HTML","","0","0","4","0","0"
-"Books import: EPUB","Flatten list","","0","0","2","0","0"
-"Books import: EPUB","Import command","","0","0","1","0","0"
-"End-to-end (selenium)","Reader","Reader view","0","0","3","0","0"
-"End-to-end (selenium)","Reader","Un-approved user cannot access reader view","0","0","3","0","0"
-"Books import: EPUB","Headings extraction","","0","0","4","0","0"
