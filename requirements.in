@@ -4,6 +4,9 @@ deep-translator
 django-widget-tweaks
 pydantic
 langchain
+langchain-community
+langchain-core
+langchain-openai
 openai
 ollama
 EbookLib
