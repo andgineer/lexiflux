@@ -17,6 +17,7 @@ Reading foreign texts with dictionary.
 You need [uv](https://github.com/astral-sh/uv) installed.
 
     . ./activete.sh  # note space between . and ./activate.sh
+    ./manage createsuperuser  # create admin user
     make run
 
 open in web-browser http://localhost:8000
@@ -24,9 +25,9 @@ open in web-browser http://localhost:8000
 ## Scripts
     make help
 
-## New istallation
+## New installation
     make migrate
-    python manage.py createsuperuser
+    ./manage createsuperuser
 
 https://github.com/nidhaloff/deep-translator
 https://github.com/terryyin/translate-python
