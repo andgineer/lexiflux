@@ -127,9 +127,11 @@ and not other parts of the text.
 Expected text language is {text_language} but you should detect the actual language if it does not fit.
 Give comments in {user_language} about parts that can be difficult to understand by
 {user_language} student learning {text_language} - difficult words, forms and expressions etc.
-Return result in json without any additional block marks or labels.
-Translation in "translation", the translated sentence in "sentence",
-ISO code of the actual text language in "text_language", comments in "comments".
+Return result in json without any additional block marks or labels:
+"translation" - translation;
+"sentence" - the original sentence with the marked term;
+"text_language" - ISO639 set-1 code of the actual text language;
+"comments" - comments.
 """
 
         sentence_prompt_template = ChatPromptTemplate.from_messages(
