@@ -120,11 +120,27 @@ with the <span class="highlighted-term"> tag.
             [("system", explain_system_template), ("user", "{text}")]
         )
 
+        sentence_system_template = """Given following text in {text_language} translate to
+        {user_language} the sentence with term marked with a <span class="highlighted-term"> tag. 
+        Translate only the sentence with the term marked with a <span class="highlighted-term"> tag 
+        and not other parts of the text. 
+        Give comments in {user_language} about parts that can be difficult to understand by 
+        {user_language} student learning {text_language} - difficult words, forms and expressions etc. 
+        Return result in json without any additional block marks or labels.
+        Translation in "translation", the translated sentence in "sentence", 
+        iso code of the text in "text_language", comments in "comments".
+                """
+
+        sentence_prompt_template = ChatPromptTemplate.from_messages(
+            [("system", sentence_system_template), ("user", "The text is: {text}")]
+        )
+
         return {
             "Translate": {"template": translation_prompt_template, "parser": parser},
             "Dictionary": {"template": dictionary_prompt_template, "parser": parser},
             "Examples": {"template": examples_prompt_template, "parser": parser},
             "Explain": {"template": explain_prompt_template, "parser": parser},
+            "Sentence": {"template": sentence_prompt_template, "parser": parser},
         }
 
     def _hashable_dict(self, d: Dict[str, Any]) -> tuple[tuple[str, Any]]:
