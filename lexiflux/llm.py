@@ -120,16 +120,17 @@ with the <span class="highlighted-term"> tag.
             [("system", explain_system_template), ("user", "{text}")]
         )
 
-        sentence_system_template = """Given following text in {text_language} translate to
-        {user_language} the sentence with term marked with a <span class="highlighted-term"> tag. 
-        Translate only the sentence with the term marked with a <span class="highlighted-term"> tag 
-        and not other parts of the text. 
-        Give comments in {user_language} about parts that can be difficult to understand by 
-        {user_language} student learning {text_language} - difficult words, forms and expressions etc. 
-        Return result in json without any additional block marks or labels.
-        Translation in "translation", the translated sentence in "sentence", 
-        iso code of the text in "text_language", comments in "comments".
-                """
+        sentence_system_template = """Given following text translate to
+{user_language} the sentence with term marked with a <span class="highlighted-term"> tag.
+Translate only the full sentence with the term marked with a <span class="highlighted-term"> tag
+and not other parts of the text.
+Expected text language is {text_language} but you should detect the actual language if it does not fit.
+Give comments in {user_language} about parts that can be difficult to understand by
+{user_language} student learning {text_language} - difficult words, forms and expressions etc.
+Return result in json without any additional block marks or labels.
+Translation in "translation", the translated sentence in "sentence",
+ISO code of the actual text language in "text_language", comments in "comments".
+"""
 
         sentence_prompt_template = ChatPromptTemplate.from_messages(
             [("system", sentence_system_template), ("user", "The text is: {text}")]
