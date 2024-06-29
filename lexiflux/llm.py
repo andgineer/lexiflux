@@ -1,5 +1,6 @@
 """AI lexical articles."""
 
+import json
 import os
 from functools import lru_cache
 from typing import Any, Dict, List
@@ -9,6 +10,36 @@ from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
 from langchain_openai import ChatOpenAI
 import openai
 from langchain.schema import BaseOutputParser
+from pydantic import Field
+
+
+class SimpleOutputParser(BaseOutputParser[str]):
+    """Simple output parser."""
+
+    def parse(self, text: str) -> str:
+        return text
+
+
+class SentenceOutputParser(BaseOutputParser[str]):
+    """Sentence output parser."""
+
+    retry_count: int = Field(default=1, description="Number of retry attempts for JSON parsing")
+
+    def parse(self, text: str) -> str:
+        for _ in range(self.retry_count + 1):
+            try:
+                json_result = json.loads(text)
+                if "translation" not in json_result:
+                    json_result["translation"] = text
+            except json.JSONDecodeError:
+                if _ == self.retry_count:
+                    json_result = {"translation": text}
+        text_language = json_result.get("text_language")
+        translation = json_result["translation"]
+        if text_language:
+            json_result["translation"] = f"({text_language}) {translation}"
+        result = f"""{json_result["translation"]}<hr>{json_result.get("comments", "")}"""
+        return result
 
 
 class Llm:  # pylint: disable=too-few-public-methods
@@ -47,13 +78,8 @@ class Llm:  # pylint: disable=too-few-public-methods
         return self._model_cache[model_key]
 
     def _create_article_templates(self) -> Dict[str, Any]:
-        class SimpleOutputParser(BaseOutputParser[str]):
-            """Simple output parser."""
-
-            def parse(self, text: str) -> str:
-                return text
-
         parser = SimpleOutputParser()
+        sentence_parser = SentenceOutputParser(retry_count=1)
 
         translation_system_template = """Given the following text in {text_language},
 translate the term marked with <span class="highlighted-term"> tag to {user_language}. 
@@ -94,7 +120,7 @@ Ensure your response adheres strictly to these instructions:
 - If you detect a language different from {text_language}, mention that, 
 but do not mention the language if it is {text_language}.
 - Do not mark the translation with "Translation" or similar terms.
-        """
+"""
 
         examples_prompt_template = ChatPromptTemplate.from_messages(
             [("system", examples_system_template), ("user", "The term is: {term}")]
@@ -121,9 +147,8 @@ with the <span class="highlighted-term"> tag.
         )
 
         sentence_system_template = """Given following text translate to
-{user_language} the sentence with term marked with a <span class="highlighted-term"> tag.
-Translate only the full sentence with the term marked with a <span class="highlighted-term"> tag
-and not other parts of the text.
+{user_language} only the sentence with term marked with a <span class="highlighted-term"> tag inside.
+Translate only the sentence and not other parts of the text.
 Expected text language is {text_language} but you should detect the actual language if it does not fit.
 Give comments in {user_language} about parts that can be difficult to understand by
 {user_language} student learning {text_language} - difficult words, forms and expressions etc.
@@ -143,7 +168,7 @@ Return result in json without any additional block marks or labels:
             "Dictionary": {"template": dictionary_prompt_template, "parser": parser},
             "Examples": {"template": examples_prompt_template, "parser": parser},
             "Explain": {"template": explain_prompt_template, "parser": parser},
-            "Sentence": {"template": sentence_prompt_template, "parser": parser},
+            "Sentence": {"template": sentence_prompt_template, "parser": sentence_parser},
         }
 
     def _hashable_dict(self, d: Dict[str, Any]) -> tuple[tuple[str, Any]]:
