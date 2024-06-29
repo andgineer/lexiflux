@@ -3,7 +3,7 @@
 import json
 import os
 from functools import lru_cache
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Iterable
 
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
@@ -25,6 +25,12 @@ class SentenceOutputParser(BaseOutputParser[str]):
 
     retry_count: int = Field(default=1, description="Number of retry attempts for JSON parsing")
 
+    def remove_delimiters(self, text: str, delimiters: Iterable[str] = ("||", "**")) -> str:
+        """Remove delimiters from text."""
+        for delimiter in delimiters:
+            text = text.replace(delimiter, "")
+        return text
+
     def parse(self, text: str) -> str:
         for _ in range(self.retry_count + 1):
             try:
@@ -34,12 +40,22 @@ class SentenceOutputParser(BaseOutputParser[str]):
             except json.JSONDecodeError:
                 if _ == self.retry_count:
                     json_result = {"translation": text}
-        text_language = json_result.get("text_language")
-        translation = json_result["translation"]
-        if text_language:
-            json_result["translation"] = f"({text_language}) {translation}"
-        result = f"""{json_result["translation"]}<hr>{json_result.get("comments", "")}"""
-        return result
+        detected_language = json_result.get("detected_language", "")
+        expected_language = json_result.get("expected_language", "")
+        comments = json_result.get("comments")
+        if comments is not None:
+            comments = self.remove_delimiters(comments)
+            if "no comments" in comments.lower() or comments.lower().strip() == "none":
+                comments = ""
+        else:
+            comments = ""
+        if comments:
+            comments = f"<hr>{comments}"
+        translation = self.remove_delimiters(json_result["translation"])
+        if detected_language.lower() != expected_language.lower():
+            # todo: if the detected language is in same language group ignore it
+            translation = f"({detected_language}) {translation}"
+        return f"""{translation}<hr>{comments}"""
 
 
 class Llm:  # pylint: disable=too-few-public-methods
@@ -146,18 +162,29 @@ with the <span class="highlighted-term"> tag.
             [("system", explain_system_template), ("user", "{text}")]
         )
 
-        sentence_system_template = """Given following text translate to
-{user_language} only the sentence with term marked with a <span class="highlighted-term"> tag inside.
-Translate only the sentence and not other parts of the text.
-Expected text language is {text_language} but you should detect the actual language if it does not fit.
-Give comments in {user_language} about parts that can be difficult to understand by
-{user_language} student learning {text_language} - difficult words, forms and expressions etc.
-Return result in json without any additional block marks or labels:
-"translation" - translation;
-"sentence" - the original sentence with the marked term;
-"text_language" - ISO639 set-1 code of the actual text language;
-"comments" - comments.
+        sentence_system_template = """Below given a text with the sentence
+marked with double vertical bars before and after the sentence, like this:
+||This is the marked sentence containing **the word**.||
+Return in JSON format without any additional block marks or labels the following fields:
+- "translation": translation from {detected_language} to {user_language} for the marked sentence.
+Use surrounding context for better translation, but translate the marked sentence only,
+not the text around.
+- "comments": explanation of difficulties in the marked {detected_language} sentence
+for a {user_language} speaker.
+The explanation should be in {user_language} language
+Use surrounding context for better comments if necessary.
+If there are no comments, set this field to null.
+Do not include phrases like "There are no difficult words" or "No comments".
+- "expected_language": The name of {text_language} language written in {user_language}.
+- "detected_language": The name of {detected_language} language written in {user_language}.
+
+Critical instructions:
+- Do not add a language name (e.g., "(Serbian)") to translation or comments.
+- Before returning result detect language in the fields "translation" and "comments".
+If is not {user_language}, translate the fields to {user_language} language.
 """
+        # todo: still sometimes return translation / comment not in user language
+        # add step to translate them
 
         sentence_prompt_template = ChatPromptTemplate.from_messages(
             [("system", sentence_system_template), ("user", "The text is: {text}")]
@@ -170,6 +197,50 @@ Return result in json without any additional block marks or labels:
             "Explain": {"template": explain_prompt_template, "parser": parser},
             "Sentence": {"template": sentence_prompt_template, "parser": sentence_parser},
         }
+
+    @lru_cache(maxsize=1000)
+    def _detect_sentence(
+        self,
+        article_name: str,
+        hashable_params: tuple[tuple[str, Any]],
+        hashable_data: tuple[tuple[str, Any]],
+    ) -> Dict[str, str]:
+        """Mark with <sentence> the sentence with highlighted word(s) and detect its language."""
+        params = dict(hashable_params)
+        data = dict(hashable_data)
+
+        preprocessing_template = """Given a text in {text_language}, identify the full sentence
+that contains the word(s) marked with double asterisks **like this**.
+Mark the sentence containing the marked word(s) with double vertical bars before
+and after the sentence, like this: ||This is the marked sentence containing **the word**.||
+
+Definition of a sentence: grammatical unit that consists of one or more words,
+usually containing a subject and a predicate, and expresses a complete thought.
+It typically begins with a capital letter and ends with a terminal punctuation mark.
+Can be simple, containing a single independent clause (e.g., "The cat sleeps."), or complex,
+containing one or more dependent clauses in addition to an independent clause
+(e.g., "Although it was raining, we went for a walk.").
+In identifying the sentence, ensure to include any dependent or subordinate clauses
+that are part of the main thought.
+
+Additionally, detect the language of the marked sentence, which may differ from
+the {text_language}.
+
+Return the result in JSON format with the following fields:
+"text": The full input text with the marked sentence and highlighted word(s).
+"detected_language": The detected language of the marked sentence, accurately reflects the actual language of the sentence.
+        """
+        preprocessing_prompt_template = ChatPromptTemplate.from_messages(
+            [("system", preprocessing_template), ("user", "{text}")]
+        )
+        model_name = params.get("model", "gpt-3.5-turbo")
+        model = self._get_or_create_model(
+            article_name, data["text_language"], data["user_language"], model_name
+        )
+
+        chain = preprocessing_prompt_template | model | SimpleOutputParser()
+        result = chain.invoke(data)
+        return json.loads(result)  # type: ignore
 
     def _hashable_dict(self, d: Dict[str, Any]) -> tuple[tuple[str, Any]]:
         return tuple(sorted(d.items()))  # type: ignore
@@ -188,6 +259,10 @@ Return result in json without any additional block marks or labels:
 
         if article_name not in self._articles_templates:
             raise ValueError(f"Lexical article '{article_name}' not found.")
+
+        preprocessed_data = self._detect_sentence(article_name, hashable_params, hashable_data)
+        data["text"] = preprocessed_data["text"]
+        data["detected_language"] = preprocessed_data["detected_language"]
 
         model_name = params.get("model", "gpt-3.5-turbo")
         model = self._get_or_create_model(
