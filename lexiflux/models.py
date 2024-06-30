@@ -143,21 +143,44 @@ class BookFile(models.Model):  # type: ignore
 
 
 class BookPage(models.Model):  # type: ignore
-    """A book page."""
+    """A page of a book."""
 
     number = models.PositiveIntegerField()
     content = models.TextField()
     book = models.ForeignKey(Book, related_name="pages", on_delete=models.CASCADE)
+    _words = models.JSONField(default=list, blank=True, db_column="words")
 
     class Meta:
-        """Meta class for BookPage."""
-
         ordering = ["number"]
         unique_together = ("book", "number")
 
     def __str__(self) -> str:
-        """Return the string representation of a BookPage."""
         return f"Page {self.number} of {self.book.title}"
+
+    @property
+    def words(self) -> list[Tuple[int, int]]:
+        """Property to parse words from the content."""
+        if not self._words:
+            self._words = self._parse_words()
+            self.save(update_fields=["_words"])
+        return self._words  # type: ignore
+
+    @words.setter
+    def words(self, value: list[Tuple[int, int]]) -> None:
+        self._words = value
+
+    def save(self, *args: Any, **kwargs: Any) -> None:
+        if not self.words:
+            self.words = self._parse_words()
+        super().save(*args, **kwargs)
+
+    def _parse_words(self) -> list[Tuple[int, int]]:
+        words = []
+        for match in re.finditer(r"\S+", self.content):
+            word = match.group()
+            if word != "<br/>":
+                words.append((match.start(), match.end()))
+        return words
 
 
 class ReaderProfile(models.Model):  # type: ignore

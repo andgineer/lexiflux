@@ -18,19 +18,28 @@ from lexiflux.api import get_params, ViewGetParamsModel
 from lexiflux.models import Book, BookPage, ReadingHistory, ReadingLoc
 
 
-def render_page(content: str) -> str:
-    """Render the page."""
-    words = content.split()  # Split the content into words
-    spanned_words = []
-    word_index = 0
-    for word in words:
-        if word == "<br/>":
-            spanned_words.append("<br/>")
-        else:
-            spanned_word = f'<span id="word-{word_index}" class="word">{word}</span>'
-            spanned_words.append(spanned_word)
-            word_index += 1
-    return " ".join(spanned_words)
+def render_page(page_db: BookPage) -> str:
+    """Render the page using the parsed word."""
+    content = page_db.content
+    result = []
+    last_end = 0
+
+    for word_idx, word_pos in enumerate(page_db.words):
+        # Add text between words (if any)
+        start, end = word_pos
+        if start > last_end:
+            result.append(content[last_end:start])
+
+        # Add the word with span
+        word = content[start:end]
+        result.append(f'<span id="word-{word_idx}" class="word">{word}</span>')
+        last_end = end
+
+    # Add any remaining text after the last word
+    if last_end < len(content):
+        result.append(content[last_end:])
+
+    return "".join(result)
 
 
 def redirect_to_reader(request: HttpRequest) -> HttpResponse:
@@ -111,7 +120,7 @@ def page(request: HttpRequest) -> HttpResponse:
     location(request)
 
     print(f"Rendering page {page_number} of book {book_code}")
-    page_html = render_page(book_page.content)
+    page_html = render_page(book_page)
 
     return JsonResponse(
         {
@@ -166,6 +175,7 @@ def translate(request: HttpRequest, params: TranslateGetParams) -> HttpResponse:
     print("Translating text")
     # word_id = request.GET.get("word-id")  # todo: absolute word ID so we can find context
 
+    # lexical_articles = LexicalArticles()
     translated = ""
     if params.translate:
         print("Translating", params.text)
@@ -178,8 +188,22 @@ def translate(request: HttpRequest, params: TranslateGetParams) -> HttpResponse:
     articles = {}
     if params.lexical_article:
         print("Fetching lexical article")
-        # todo: get LLM explanation if `full`
-        articles[params.lexical_article] = f"""<p>{params.text} {params.lexical_article}</p>"""
+        # articles_map = {
+        #     1: "Dictionary",
+        #     "Dictionary Advanced": "Dictionary\u2601$+",
+        #     2: "Examples",
+        #     3: "Explain",
+        # }
+        # todo: get context as text and the selection as word
+        # articles[params.lexical_article] = lexical_articles.get_article(
+        #     articles_map[params.lexical_article],
+        #     params.text,
+        #     "",
+        #     "sr",
+        #     "ru",
+        # )
+        # f"""<p>{params.text} {params.lexical_article}</p>"""
+        articles[params.lexical_article] = f"{params.text} {params.lexical_article}"
     return JsonResponse({"translatedText": translated, "articles": articles})
 
 
