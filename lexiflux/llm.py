@@ -3,7 +3,7 @@
 import json
 import os
 from functools import lru_cache
-from typing import Any, Dict, List, Iterable
+from typing import Any, Dict, List, Iterable, Union
 
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
@@ -13,15 +13,15 @@ from langchain.schema import BaseOutputParser
 from pydantic import Field
 
 
-class SimpleOutputParser(BaseOutputParser[str]):
+class TextOutputParser(BaseOutputParser[str]):
     """Simple output parser."""
 
     def parse(self, text: str) -> str:
         return text
 
 
-class SentenceOutputParser(BaseOutputParser[str]):
-    """Sentence output parser."""
+class BaseJsonParser(BaseOutputParser[str]):
+    """Base parser for JSON output."""
 
     retry_count: int = Field(default=1, description="Number of retry attempts for JSON parsing")
 
@@ -31,15 +31,26 @@ class SentenceOutputParser(BaseOutputParser[str]):
             text = text.replace(delimiter, "")
         return text
 
-    def parse(self, text: str) -> str:
+    def parse_json(self, text: str) -> Union[Dict[str, Any], str]:
+        """Parse JSON with retry logic.
+
+        Return just text if the retries exhausted.
+        """
         for _ in range(self.retry_count + 1):
             try:
-                json_result = json.loads(text)
-                if "translation" not in json_result:
-                    json_result["translation"] = text
+                return json.loads(text)  # type: ignore
             except json.JSONDecodeError:
-                if _ == self.retry_count:
-                    json_result = {"translation": text}
+                pass  # ignore up to retry_count
+        return text
+
+
+class SentenceOutputParser(BaseJsonParser):
+    """Sentence output parser."""
+
+    def parse(self, text: str) -> str:
+        json_result = self.parse_json(text)
+        if isinstance(json_result, str) or "translation" not in json_result:
+            return text  # return text if parsing failed
         detected_language = json_result.get("detected_language", "")
         expected_language = json_result.get("expected_language", "")
         comments = json_result.get("comments")
@@ -56,6 +67,35 @@ class SentenceOutputParser(BaseOutputParser[str]):
             # todo: if the detected language is in same language group ignore it
             translation = f"({detected_language}) {translation}"
         return f"""{translation}<hr>{comments}"""
+
+
+class ExplainOutputParser(BaseJsonParser):
+    """Explain output parser."""
+
+    def parse(self, text: str) -> str:
+        json_result = self.parse_json(text)
+        if isinstance(json_result, str) or "explanation" not in json_result:
+            return text  # return text if parsing failed
+        # detected_language = json_result.get("detected_language", "")
+        # expected_language = json_result.get("expected_language", "")
+        explanation = self.remove_delimiters(json_result["explanation"])
+        translation = self.remove_delimiters(json_result["translation"])
+        return f"""{explanation}<hr>{translation}"""
+
+
+class ExamplesOutputParser(BaseJsonParser):
+    """Examples output parser."""
+
+    def parse(self, text: str) -> str:
+        json_result = self.parse_json(text)
+        if isinstance(json_result, str) or not isinstance(json_result, list):
+            return text  # return text if parsing failed
+        result = []
+        for item in json_result:
+            example = self.remove_delimiters(item["example"])
+            translation = self.remove_delimiters(item["translation"])
+            result.append(f"""<p>{example}</p><p>{translation}</>""")
+        return "<hr>".join(result)
 
 
 class Llm:  # pylint: disable=too-few-public-methods
@@ -94,22 +134,27 @@ class Llm:  # pylint: disable=too-few-public-methods
         return self._model_cache[model_key]
 
     def _create_article_templates(self) -> Dict[str, Any]:
-        parser = SimpleOutputParser()
+        text_parser = TextOutputParser()
         sentence_parser = SentenceOutputParser(retry_count=1)
+        explain_parser = ExplainOutputParser(retry_count=1)
+        examples_parser = ExamplesOutputParser(retry_count=1)
 
         translation_system_template = """Given the following text in {text_language},
-translate the term marked with <span class="highlighted-term"> tag to {user_language}. 
+translate to {user_language} language the term marked with double starts before and after the term, like this:
+This is the sentence containing **the term**. 
 Give translation of the term in the exact sentence where the term is (and not all occurrences in the text).
 Put into result only the term translation.
 If the text is not in {text_language}, prefix the result with the text language name in parentheses, like (Latin).
 """
 
         translation_prompt_template = ChatPromptTemplate.from_messages(
-            [("system", translation_system_template), ("user", "{text}")]
+            [("system", translation_system_template), ("user", "The text is: {text}")]
         )
 
-        dictionary_system_template = """Given the term in {text_language},
-write {text_language} - {user_language} dictionary article for the term.
+        dictionary_system_template = """Given the following text in {text_language},
+write {text_language} - {user_language} dictionary article for the term marked with
+double starts before and after the term, like this:
+This is the sentence containing **the term**. 
 The article should be in {user_language}.
 Include grammar attributes - part of the speech, genre, number, countability and other grammar attributes.
 All grammar attributes should be on one line in a compact way with abbreviations like in good dictionaries.
@@ -120,67 +165,70 @@ it by starting the result with the detected language name in parentheses.
 Give the result in HTML formatting, without any block marks."""
 
         dictionary_prompt_template = ChatPromptTemplate.from_messages(
-            [("system", dictionary_system_template), ("user", "The term is: {term}")]
+            [("system", dictionary_system_template), ("user", "The text is: {text}")]
         )
 
-        examples_system_template = """Given the term in {text_language},
-provide up to seven examples in {text_language} of sentences with the term.
-After each example, provide the translation of the example to {user_language} in a separate paragraph 
-using the <p> tag.
-Do not prefix the translation with ({user_language}) or with "Translation." 
-Separate examples with <hr> tags. 
-Provide the result in HTML formatting, without any block marks.
+        examples_system_template = """Given the following text in {text_language},
+provide up to seven examples in {text_language} language of sentences with the term marked with
+double starts before and after the term, like this:
+This is the sentence containing **the term**.
 
-Ensure your response adheres strictly to these instructions:
-- Do not repeat examples.
-- If you detect a language different from {text_language}, mention that, 
-but do not mention the language if it is {text_language}.
-- Do not mark the translation with "Translation" or similar terms.
+Return in JSON format without any additional block marks or labels.
+The JSON should contain array of objects with the following fields:
+"example": the example sentence.
+"translation": translation of the sentence to {user_language} language.
+
+Critical instructions:
+- Recheck language in the fields "translation".
+If is not {user_language}, translate the field to {user_language} language.
 """
 
         examples_prompt_template = ChatPromptTemplate.from_messages(
-            [("system", examples_system_template), ("user", "The term is: {term}")]
+            [("system", examples_system_template), ("user", "The text is: {text}")]
         )
 
-        explain_system_template = """Explain using only {text_language}, the usage
-of the term marked in the text with a <span class="highlighted-term"> tag.
-Explain the usage only in the sentence where the term
-is marked with the <span class="highlighted-term"> tag, and not in other occurrences of the text.
-Only if the text is not in {text_language}, start with the detected language in parentheses.
-After <hr> provide the translation of the explanation to {user_language}.
-Give the result in HTML formatting without any additional block marks or labels.
+        explain_system_template = """Below given a text with the sentence
+in {detected_language} language
+marked with double vertical bars before and after the sentence, like this:
+||This is the marked sentence containing **the word**.||
+Inside the sentence, the term is marked with double stars - like
+**the word** in the example above.
 
-Ensure your response adheres strictly to these instructions:
-- Use {text_language} for the initial explanation.
-- Never put into the result names of the languages {text_language} or {user_language}.
-- Explain the exact sentence where the term is marked with the <span class="highlighted-term"> tag.
-Do not mention usage of the term in sentences where it is not marked
-with the <span class="highlighted-term"> tag.
+Return in JSON format without any additional block marks or labels the following fields:
+- "explanation": in {text_language} language explain the usage of the marked term
+in the marked sentence, and not in other occurrences of the text.
+You may use surrounding text for better explanation, but explain the marked usage only.
+- "translation": translation of the explanation to {user_language}.
+- "expected_language": The name of {text_language} language in {user_language}.
+- "detected_language": The name of {detected_language} language in {user_language}.
+
+Critical instructions:
+- Recheck language in the field "translation".
+If is not {user_language}, translate the field to {user_language} language.
 """
 
         explain_prompt_template = ChatPromptTemplate.from_messages(
-            [("system", explain_system_template), ("user", "{text}")]
+            [("system", explain_system_template), ("user", "The text is: {text}")]
         )
 
         sentence_system_template = """Below given a text with the sentence
 marked with double vertical bars before and after the sentence, like this:
 ||This is the marked sentence containing **the word**.||
 Return in JSON format without any additional block marks or labels the following fields:
-- "translation": translation from {detected_language} to {user_language} for the marked sentence.
-Use surrounding context for better translation, but translate the marked sentence only,
-not the text around.
-- "comments": explanation of difficulties in the marked {detected_language} sentence
+- "translation": translate the marked sentence only from {detected_language}
+to {user_language} language.
+You may use surrounding text for better translation, but translate the marked sentence only.
+- "comments": explain difficulties (if any) in the marked {detected_language} sentence
 for a {user_language} speaker.
 The explanation should be in {user_language} language
-Use surrounding context for better comments if necessary.
 If there are no comments, set this field to null.
 Do not include phrases like "There are no difficult words" or "No comments".
-- "expected_language": The name of {text_language} language written in {user_language}.
-- "detected_language": The name of {detected_language} language written in {user_language}.
+- "expected_language": The name of {text_language} language in {user_language}.
+- "detected_language": The name of {detected_language} language in {user_language}.
 
 Critical instructions:
 - Do not add a language name (e.g., "(Serbian)") to translation or comments.
-- Before returning result detect language in the fields "translation" and "comments".
+- Recheck language in fields "translation" and "comments".
 If is not {user_language}, translate the fields to {user_language} language.
 """
         # todo: still sometimes return translation / comment not in user language
@@ -191,10 +239,10 @@ If is not {user_language}, translate the fields to {user_language} language.
         )
 
         return {
-            "Translate": {"template": translation_prompt_template, "parser": parser},
-            "Dictionary": {"template": dictionary_prompt_template, "parser": parser},
-            "Examples": {"template": examples_prompt_template, "parser": parser},
-            "Explain": {"template": explain_prompt_template, "parser": parser},
+            "Translate": {"template": translation_prompt_template, "parser": text_parser},
+            "Dictionary": {"template": dictionary_prompt_template, "parser": text_parser},
+            "Examples": {"template": examples_prompt_template, "parser": examples_parser},
+            "Explain": {"template": explain_prompt_template, "parser": explain_parser},
             "Sentence": {"template": sentence_prompt_template, "parser": sentence_parser},
         }
 
@@ -238,7 +286,7 @@ Return the result in JSON format with the following fields:
             article_name, data["text_language"], data["user_language"], model_name
         )
 
-        chain = preprocessing_prompt_template | model | SimpleOutputParser()
+        chain = preprocessing_prompt_template | model | TextOutputParser()
         result = chain.invoke(data)
         return json.loads(result)  # type: ignore
 
@@ -260,9 +308,10 @@ Return the result in JSON format with the following fields:
         if article_name not in self._articles_templates:
             raise ValueError(f"Lexical article '{article_name}' not found.")
 
-        preprocessed_data = self._detect_sentence(article_name, hashable_params, hashable_data)
-        data["text"] = preprocessed_data["text"]
-        data["detected_language"] = preprocessed_data["detected_language"]
+        if article_name in {"Sentence", "Explain"}:
+            preprocessed_data = self._detect_sentence(article_name, hashable_params, hashable_data)
+            data["text"] = preprocessed_data["text"]
+            data["detected_language"] = preprocessed_data["detected_language"]
 
         model_name = params.get("model", "gpt-3.5-turbo")
         model = self._get_or_create_model(
