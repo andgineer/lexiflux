@@ -151,21 +151,22 @@ If the text is not in {text_language}, prefix the result with the text language 
             [("system", translation_system_template), ("user", "The text is: {text}")]
         )
 
-        dictionary_system_template = """Given the following text in {text_language},
-write {text_language} - {user_language} dictionary article for the term marked with
+        lexical_system_template = """Given the following text in {text_language},
+write {text_language} - {user_language} lexical article for the term marked with
 double starts before and after the term, like this:
 This is the sentence containing **the term**. 
 The article should be in {user_language}.
-Include grammar attributes - part of the speech, genre, number, countability and other grammar attributes.
-All grammar attributes should be on one line in a compact way with abbreviations like in good dictionaries.
-Include different meanings, declination table and other information you expect to see in a good dictionary
-like Oxford, but do not include examples.
+The article includes different meanings, grammar attributes of them - part of the speech,
+genre, number, countability and other.
+Article should be in compact nice style like in good dictionaries.
+Include declination table and other information you expect to see in a good dictionary
+like Oxford Dictionary.
 If you are sure the text is in a different language, write the article based on that language and indicate
 it by starting the result with the detected language name in parentheses.
 Give the result in HTML formatting, without any block marks."""
 
-        dictionary_prompt_template = ChatPromptTemplate.from_messages(
-            [("system", dictionary_system_template), ("user", "The text is: {text}")]
+        lexical_prompt_template = ChatPromptTemplate.from_messages(
+            [("system", lexical_system_template), ("user", "The text is: {text}")]
         )
 
         examples_system_template = """Given the following text in {text_language},
@@ -240,7 +241,7 @@ If is not {user_language}, translate the fields to {user_language} language.
 
         return {
             "Translate": {"template": translation_prompt_template, "parser": text_parser},
-            "Dictionary": {"template": dictionary_prompt_template, "parser": text_parser},
+            "Lexical": {"template": lexical_prompt_template, "parser": text_parser},
             "Examples": {"template": examples_prompt_template, "parser": examples_parser},
             "Explain": {"template": explain_prompt_template, "parser": explain_parser},
             "Sentence": {"template": sentence_prompt_template, "parser": sentence_parser},

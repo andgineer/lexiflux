@@ -7,9 +7,11 @@ from typing import TypeAlias, Tuple, List, Any
 from django.conf import settings
 from django.db import models
 from django.utils import timezone
+from django.core.cache import cache
 from transliterate import get_available_language_codes, translit
 
 from core.models import CustomUser
+
 
 BOOK_CODE_LENGTH = 100
 
@@ -148,7 +150,6 @@ class BookPage(models.Model):  # type: ignore
     number = models.PositiveIntegerField()
     content = models.TextField()
     book = models.ForeignKey(Book, related_name="pages", on_delete=models.CASCADE)
-    _words = models.JSONField(default=list, blank=True, db_column="words")
 
     class Meta:
         ordering = ["number"]
@@ -158,21 +159,16 @@ class BookPage(models.Model):  # type: ignore
         return f"Page {self.number} of {self.book.title}"
 
     @property
-    def words(self) -> list[Tuple[int, int]]:
+    def words(self) -> List[Tuple[int, int]]:
         """Property to parse words from the content."""
-        if not self._words:
-            self._words = self._parse_words()
-            self.save(update_fields=["_words"])
-        return self._words  # type: ignore
-
-    @words.setter
-    def words(self, value: list[Tuple[int, int]]) -> None:
-        self._words = value
-
-    def save(self, *args: Any, **kwargs: Any) -> None:
-        if not self.words:
-            self.words = self._parse_words()
-        super().save(*args, **kwargs)
+        if not hasattr(self, "_cached_words"):
+            cache_key = f"book_page_words_{self.id}"
+            cached_words = cache.get(cache_key)
+            if cached_words is None:
+                cached_words = self._parse_words()
+                cache.set(cache_key, cached_words, timeout=60 * 60)  # Cache for 1 hour
+            self._cached_words = cached_words  # pylint: disable=attribute-defined-outside-init
+        return self._cached_words  # type: ignore
 
     def _parse_words(self) -> list[Tuple[int, int]]:
         words = []
