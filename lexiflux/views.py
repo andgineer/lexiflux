@@ -1,6 +1,7 @@
 """Vies for the Lexiflux app."""
 
-from typing import Optional
+from typing import Optional, Dict, Any
+import urllib.parse
 
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
@@ -185,6 +186,7 @@ def translate(request: HttpRequest, params: TranslateGetParams) -> HttpResponse:
         print("Translated", translated)
         # todo: get article from the translator
 
+    result: Dict[str, Any] = {"translatedText": translated}
     articles = {}
     if params.lexical_article:
         print("Fetching lexical article")
@@ -204,7 +206,16 @@ def translate(request: HttpRequest, params: TranslateGetParams) -> HttpResponse:
         # )
         # f"""<p>{params.text} {params.lexical_article}</p>"""
         articles[params.lexical_article] = f"{params.text} {params.lexical_article}"
-    return JsonResponse({"translatedText": translated, "articles": articles})
+        result["articles"] = articles
+        if params.lexical_article == "3":
+            result["url"] = f"https://glosbe.com/sr/ru/{urllib.parse.quote(params.text)}"
+            result["window"] = True
+    return JsonResponse(result)
+
+
+def proxy(request: HttpRequest) -> HttpResponse:
+    """Intermediary to reload separate browser window - workaround for cross-site."""
+    return render(request, "proxy.html")
 
 
 @login_required  # type: ignore

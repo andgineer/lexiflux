@@ -14,4 +14,5 @@ urlpatterns = [
     path("translate", views.translate, name="translate"),
     path("profile", views.profile, name="profile"),
     path("book", views.view_book, name="book"),
+    path("proxy.html", views.proxy, name="proxy"),
 ]

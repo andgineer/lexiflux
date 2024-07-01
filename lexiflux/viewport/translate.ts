@@ -5,6 +5,8 @@ import { viewport } from './viewport'; // If viewport functionalities are requir
 interface TranslationResponse {
   translatedText: string;
   articles: { [key: string]: string };
+  url: string | null;
+  window: boolean | null;
 }
 
 let currentSelection: {
@@ -14,6 +16,8 @@ let currentSelection: {
   text: null,
   updatedPanels: new Set()
 };
+
+const dictionaryWindows: { [key: string]: Window | null } = {};
 
 function getActiveLexicalArticleId(): string | null {
   const infoPanel = document.getElementById('lexical-panel');
@@ -91,12 +95,72 @@ function sendTranslationRequest(
     });
 }
 
+function handleOpenLexicalWindow(url: string, windowKey: string, windowFeatures: string): void {
+    let dictionaryWindow = window.open('', windowKey, windowFeatures);
+
+    if (!dictionaryWindow) {
+        console.error('Failed to open or focus window', windowKey);
+        return;
+    }
+
+    const isNewWindow = dictionaryWindow.location.href === 'about:blank' || !dictionaryWindow.location.href.includes('/proxy.html');
+
+    if (isNewWindow) {
+        dictionaryWindow.location.href = `/proxy.html`;
+
+        // Set up a listener for when the proxy is ready
+        const proxyReadyListener = (event: MessageEvent) => {
+            if (event.source === dictionaryWindow && event.data === 'PROXY_READY') {
+                dictionaryWindow?.postMessage({ type: 'LOAD_URL', url: url }, '*');
+                window.removeEventListener('message', proxyReadyListener);
+            }
+        };
+        window.addEventListener('message', proxyReadyListener);
+    } else {
+        dictionaryWindow.postMessage({ type: 'LOAD_URL', url: url }, '*');
+    }
+
+    dictionaryWindow.focus();
+}
+
 function updateLexicalPanel(data: TranslationResponse, activePanelId: string): void {
   if (currentSelection.updatedPanels.has(activePanelId)) {
     return;
   }
+
   const panel = document.querySelector(`#${activePanelId}`) as HTMLElement;
-  panel.innerHTML = data.articles[lexicalArticleNumFromId(activePanelId)];
+  const windowKey = `Lexical-${activePanelId}`;
+
+  if (data.url) {
+    const url = data.url;
+    const windowFeatures = 'width=800,height=600';
+
+    if (data.window) {
+      panel.innerHTML = `..see separate window.. <br><br><button id="openWindowButton-${activePanelId}" class="btn btn-primary btn-sm">Re-open</button>`;
+      const openWindowButton = document.getElementById(`openWindowButton-${activePanelId}`);
+      openWindowButton?.removeEventListener('click', () => handleOpenLexicalWindow(url, windowKey, windowFeatures));
+      openWindowButton?.addEventListener('click', () => handleOpenLexicalWindow(url, windowKey, windowFeatures));
+      openWindowButton?.click();
+    } else {
+      // Fetch the content from the URL and update the panel
+      fetch(url)
+        .then(response => response.text())
+        .then(html => {
+//           panel.innerHTML = html;
+           let iframe = document.getElementById('lexical-frame-${activePanelId}') as HTMLIFrameElement | null;
+           if (iframe) {
+             iframe.src = html;
+           }
+        })
+        .catch(error => {
+          console.error('Error fetching content:', error);
+          panel.innerHTML = 'Error loading content.';
+        });
+    }
+  } else {
+    // Put into the panel the article from backend
+    panel.innerHTML = data.articles[lexicalArticleNumFromId(activePanelId)];
+  }
   currentSelection.updatedPanels.add(activePanelId);
 }
 
@@ -141,20 +205,26 @@ function lexicalPanelSwitched(tabId: string): void {
 }
 
 function clearLexicalPanel(): void {
-    // todo: for loop to clear all panels
     currentSelection.text = null;
     currentSelection.updatedPanels.clear();
-    const dictionaryPanel = document.getElementById('dictionary-panel-1');
-    const explainPanel = document.getElementById('explain-panel');
-    const examplesPanel = document.getElementById('examples-panel');
 
-    if (!dictionaryPanel || !explainPanel || !examplesPanel) {
-        log('One of the translation panels is missing');
+    const panelContent = document.getElementById('lexicalPanelContent');
+    if (!panelContent) {
+        console.error('Lexical panel content container is missing');
         return;
     }
-    dictionaryPanel.innerHTML = '';
-    explainPanel.innerHTML = '';
-    examplesPanel.innerHTML = '';
+
+    // Clear all tab panes
+    const tabPanes = panelContent.querySelectorAll('.tab-pane');
+    tabPanes.forEach((pane) => {
+        pane.innerHTML = '';
+    });
+
+    // If there are any iframes, reset their src
+    const iframes = panelContent.querySelectorAll('iframe');
+    iframes.forEach((iframe) => {
+        iframe.src = '';
+    });
 }
 
 export { sendTranslationRequest, createAndReplaceTranslationSpan, TranslationResponse, lexicalPanelSwitched, clearLexicalPanel };
