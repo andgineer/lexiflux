@@ -20,8 +20,8 @@
 | lexiflux/tests.py                      |        0 |        0 |    100% |           |
 | lexiflux/urls.py                       |        3 |        0 |    100% |           |
 | lexiflux/utils.py                      |        8 |        0 |    100% |           |
-| lexiflux/views.py                      |      151 |       10 |     93% |40, 47, 66, 75, 144, 190-206, 249-250, 276 |
-|                              **TOTAL** |  **872** |  **178** | **80%** |           |
+| lexiflux/views.py                      |      159 |       15 |     91% |41, 48, 67, 76, 145, 192-212, 218, 260-261, 287 |
+|                              **TOTAL** |  **880** |  **183** | **79%** |           |
 
 
 ## Setup coverage badge
