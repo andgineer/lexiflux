@@ -2,6 +2,9 @@ import allure
 import pytest
 from django.urls import reverse
 from django.contrib.auth import get_user_model
+from django.core.cache import cache as django_cache
+
+from lexiflux.models import Author, Language, Book, BookPage
 from lexiflux.views import render_page
 
 
@@ -60,5 +63,12 @@ def test_page_view_respects_access_control(client, user, book):
         '<span id="word-0" class="word">SingleWord</span>'
     ),
 ])
-def test_render_page(content, expected_output):
-    assert render_page(content) == expected_output
+@pytest.mark.django_db
+def test_render_page(content, expected_output, book):
+    page = BookPage.objects.create(
+        book=book,
+        number=book.pages.count() + 1,  # Use a new page number
+        content=content
+    )
+    django_cache.delete(page.get_cache_key())
+    assert render_page(page) == expected_output

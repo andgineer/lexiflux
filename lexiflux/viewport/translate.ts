@@ -17,7 +17,7 @@ let currentSelection: {
   updatedPanels: new Set()
 };
 
-const dictionaryWindows: { [key: string]: Window | null } = {};
+let dictionaryWindows: { [key: string]: Window | null } = {};
 
 function getActiveLexicalArticleId(): string | null {
   const infoPanel = document.getElementById('lexical-panel');
@@ -96,72 +96,68 @@ function sendTranslationRequest(
 }
 
 function handleOpenLexicalWindow(url: string, windowKey: string, windowFeatures: string): void {
-    let dictionaryWindow = window.open('', windowKey, windowFeatures);
+    let dictionaryWindow = dictionaryWindows[windowKey];
 
-    if (!dictionaryWindow) {
-        console.error('Failed to open or focus window', windowKey);
-        return;
-    }
-
-    const isNewWindow = dictionaryWindow.location.href === 'about:blank' || !dictionaryWindow.location.href.includes('/proxy.html');
-
-    if (isNewWindow) {
-        dictionaryWindow.location.href = `/proxy.html`;
-
-        // Set up a listener for when the proxy is ready
-        const proxyReadyListener = (event: MessageEvent) => {
-            if (event.source === dictionaryWindow && event.data === 'PROXY_READY') {
-                dictionaryWindow?.postMessage({ type: 'LOAD_URL', url: url }, '*');
-                window.removeEventListener('message', proxyReadyListener);
-            }
-        };
-        window.addEventListener('message', proxyReadyListener);
+    if (dictionaryWindow && !dictionaryWindow.closed) {
+        dictionaryWindow.location.href = url;
     } else {
-        dictionaryWindow.postMessage({ type: 'LOAD_URL', url: url }, '*');
+        dictionaryWindow = window.open(url, windowKey, windowFeatures);
+        dictionaryWindows[windowKey] = dictionaryWindow;
     }
-
-    dictionaryWindow.focus();
+    if (dictionaryWindow) {
+        dictionaryWindow.focus();
+    }
 }
 
 function updateLexicalPanel(data: TranslationResponse, activePanelId: string): void {
-  if (currentSelection.updatedPanels.has(activePanelId)) {
+  // activePanelId - num of the lexical article
+  let articleId = lexicalArticleNumFromId(activePanelId);
+
+  console.log('updateLexicalPanel', data, activePanelId, articleId);
+  if (currentSelection.updatedPanels.has(articleId)) {
     return;
   }
 
-  const panel = document.querySelector(`#${activePanelId}`) as HTMLElement;
-  const windowKey = `Lexical-${activePanelId}`;
+  console.log(`lexical-content-${articleId}`, `lexical-frame-${articleId}`)
+  const contentDiv = document.getElementById(`lexical-content-${articleId}`) as HTMLElement;
+  const iframe = document.getElementById(`lexical-frame-${articleId}`) as HTMLIFrameElement;
+  const windowKey = `Lexical-${articleId}`;
+  console.log(contentDiv, iframe, windowKey);
+
+  // Show spinner
+  contentDiv.innerHTML = `
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+  `;
 
   if (data.url) {
     const url = data.url;
-    const windowFeatures = 'width=800,height=600';
+    const windowFeatures = 'location=no,menubar=no,toolbar=no,scrollbars=yes,width=800,height=600';  // todo: width from window
 
     if (data.window) {
-      panel.innerHTML = `..see separate window.. <br><br><button id="openWindowButton-${activePanelId}" class="btn btn-primary btn-sm">Re-open</button>`;
-      const openWindowButton = document.getElementById(`openWindowButton-${activePanelId}`);
+      // Hide spinner and show button
+      contentDiv.innerHTML = `
+        ..see separate window.. <br><br>
+        <button id="openWindowButton-${articleId}" class="btn btn-primary btn-sm">Open in new window</button>
+      `;
+      const openWindowButton = document.getElementById(`openWindowButton-${articleId}`);
       openWindowButton?.removeEventListener('click', () => handleOpenLexicalWindow(url, windowKey, windowFeatures));
       openWindowButton?.addEventListener('click', () => handleOpenLexicalWindow(url, windowKey, windowFeatures));
       openWindowButton?.click();
     } else {
-      // Fetch the content from the URL and update the panel
-      fetch(url)
-        .then(response => response.text())
-        .then(html => {
-//           panel.innerHTML = html;
-           let iframe = document.getElementById('lexical-frame-${activePanelId}') as HTMLIFrameElement | null;
-           if (iframe) {
-             iframe.src = html;
-           }
-        })
-        .catch(error => {
-          console.error('Error fetching content:', error);
-          panel.innerHTML = 'Error loading content.';
-        });
+      // Load URL in iframe
+      contentDiv.innerHTML = ''; // Hide spinner
+      iframe.src = url;
+      iframe.style.display = 'block';
     }
   } else {
-    // Put into the panel the article from backend
-    panel.innerHTML = data.articles[lexicalArticleNumFromId(activePanelId)];
+    // Load article content
+    contentDiv.innerHTML = data.articles[articleId];
+    iframe.style.display = 'none';
   }
-  currentSelection.updatedPanels.add(activePanelId);
+
+  currentSelection.updatedPanels.add(articleId);
 }
 
 function ensureVisible(element: HTMLSpanElement): void {
@@ -215,7 +211,7 @@ function clearLexicalPanel(): void {
     }
 
     // Clear all tab panes
-    const tabPanes = panelContent.querySelectorAll('.tab-pane');
+    const tabPanes = panelContent.querySelectorAll('.lexical-content');
     tabPanes.forEach((pane) => {
         pane.innerHTML = '';
     });

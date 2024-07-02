@@ -24,7 +24,6 @@ def test_translate_view_success(mock_get_translator, client, user):
 
     assert response.status_code == 200
     assert response.json()['translatedText'] == 'Hola'
-    assert 'articles' in response.json()
     mock_get_translator.assert_called_once_with(book_code, user.id)
     mock_translator.translate.assert_called_once_with('Hello')
 

@@ -6,8 +6,10 @@ from typing import TypeAlias, Tuple, List, Any
 
 from django.conf import settings
 from django.db import models
+from django.dispatch import receiver
 from django.utils import timezone
 from django.core.cache import cache
+from django.db.models.signals import pre_save
 from transliterate import get_available_language_codes, translit
 
 from core.models import CustomUser
@@ -161,14 +163,12 @@ class BookPage(models.Model):  # type: ignore
     @property
     def words(self) -> List[Tuple[int, int]]:
         """Property to parse words from the content."""
-        if not hasattr(self, "_cached_words"):
-            cache_key = f"book_page_words_{self.id}"
-            cached_words = cache.get(cache_key)
-            if cached_words is None:
-                cached_words = self._parse_words()
-                cache.set(cache_key, cached_words, timeout=60 * 60)  # Cache for 1 hour
-            self._cached_words = cached_words  # pylint: disable=attribute-defined-outside-init
-        return self._cached_words  # type: ignore
+        cache_key = self.get_cache_key()
+        cached_words = cache.get(cache_key)
+        if cached_words is None:
+            cached_words = self._parse_words()
+            cache.set(cache_key, cached_words, timeout=60 * 60)  # Cache for 1 hour
+        return cached_words  # type: ignore
 
     def _parse_words(self) -> list[Tuple[int, int]]:
         words = []
@@ -177,6 +177,19 @@ class BookPage(models.Model):  # type: ignore
             if word != "<br/>":
                 words.append((match.start(), match.end()))
         return words
+
+    def get_cache_key(self) -> str:
+        """Return the cache key for the words on this page."""
+        return f"book_page_words__{self.book.code}_{self.number}"
+
+
+@receiver(pre_save, sender=BookPage)  # pylint: disable=unused-argument
+def clear_cache_if_content_changed(sender, instance, **kwargs):  # type: ignore  # pylint: disable=unused-argument
+    """Clear the cache if the content has changed."""
+    if instance.pk:  # If this is an existing instance
+        old_instance = BookPage.objects.get(pk=instance.pk)
+        if old_instance.content != instance.content:
+            cache.delete(instance.get_cache_key())
 
 
 class ReaderProfile(models.Model):  # type: ignore

@@ -213,11 +213,6 @@ def translate(request: HttpRequest, params: TranslateGetParams) -> HttpResponse:
     return JsonResponse(result)
 
 
-def proxy(request: HttpRequest) -> HttpResponse:
-    """Intermediary to reload separate browser window - workaround for cross-site."""
-    return render(request, "proxy.html")
-
-
 @login_required  # type: ignore
 def profile(request: HttpRequest) -> HttpResponse:
     # if not request.user.is_approved:
