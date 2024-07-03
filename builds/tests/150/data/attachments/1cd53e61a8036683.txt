@@ -1,1 +1,0 @@
-WARNING  django.request:log.py:241 Bad Request: /history
