@@ -37,12 +37,16 @@ def create_user_profile(
     if created:
         try:
             english_language = Language.objects.get(google_code="en")
+            serbian_language = Language.objects.get(google_code="sr")
         except Language.DoesNotExist as exc:
-            raise ValueError("English language not found in the Language table.") from exc
+            raise ValueError(
+                "English and / or Serbian language not found in the Language table."
+            ) from exc
 
         reader_profile = ReaderProfile.objects.create(
             user=instance,
-            language=english_language,
+            language=serbian_language,
+            user_language=english_language,
             inline_translation_type="Dictionary",
             inline_translation_parameters=json.dumps({"dictionary": "GoogleTranslator"}),
         )

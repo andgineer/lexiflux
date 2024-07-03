@@ -168,12 +168,16 @@ new Vue({
         modalTitle: '',
         inlineTranslation: {{ inline_translation|safe }}
     },
+    mounted: function() {
+        this.loadArticles();
+    },
     methods: {
         openModal(action, article = null) {
             this.resetForm();
             this.modalTitle = action === 'add' ? 'Add New Article' : 'Edit Article';
             if (article) {
                 this.form = JSON.parse(JSON.stringify(article));
+                this.form.id = article.id;
                 this.showTitleField = true;
             } else {
                 this.showTitleField = true;
@@ -252,8 +256,11 @@ new Vue({
                 if (data.status === 'success') {
                     if (isInlineTranslation) {
                         this.inlineTranslation = data.inline_translation;
+                    } else {
+                        this.loadArticles();
                     }
-                    location.reload();
+                    const modal = bootstrap.Modal.getInstance(this.$refs.articleModal);
+                    modal.hide();
                 } else {
                     alert(data.message);
                 }
@@ -267,12 +274,12 @@ new Vue({
                         'Content-Type': 'application/json',
                         'X-CSRFToken': '{{ csrf_token }}'
                     },
-                    body: JSON.stringify({ action: 'delete', id })
+                    body: JSON.stringify({ action: 'delete', id: id })
                 })
                 .then(response => response.json())
                 .then(data => {
                     if (data.status === 'success') {
-                        location.reload();
+                        this.loadArticles();
                     } else {
                         alert(data.message);
                     }
@@ -287,7 +294,19 @@ new Vue({
             this.form.parameters = JSON.parse(JSON.stringify(this.inlineTranslation.parameters));
             new bootstrap.Modal(this.$refs.articleModal).show();
         },
+        loadArticles() {
+            fetch('{% url "api_profile" %}')
+                .then(response => response.json())
+                .then(data => {
+                    this.articles = data.articles;
+                    console.log('Loaded articles:', this.articles);  // Debug log
+                })
+                .catch(error => {
+                    console.error('Error loading articles:', error);
+                });
+        },
     }
 });
 </script>
+
 {% endblock %}

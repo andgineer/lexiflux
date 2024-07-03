@@ -14,6 +14,7 @@ urlpatterns = [
     path("translate", views.translate, name="translate"),
     path("book", views.view_book, name="book"),
     path("profile/", views.profile, name="profile"),
+    path("api/profile/", views.api_profile, name="api_profile"),
     path("manage-lexical-article/", views.manage_lexical_article, name="manage_lexical_article"),
     path(
         "save-inline-translation/", views.save_inline_translation, name="save_inline_translation"

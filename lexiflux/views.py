@@ -296,10 +296,29 @@ def manage_lexical_article(request: HttpRequest) -> JsonResponse:  # pylint: dis
             return JsonResponse({"status": "error", "message": "Article not found"})
 
     elif action == "delete":
+        if "id" not in data:
+            return JsonResponse({"status": "error", "message": "Article ID is missing"})
+
         LexicalArticle.objects.filter(id=data["id"], reader_profile=reader_profile).delete()
+
         return JsonResponse({"status": "success"})
 
     return JsonResponse({"status": "error", "message": "Invalid action"})
+
+
+# views.py
+@login_required  # type: ignore
+def api_profile(request: HttpRequest) -> JsonResponse:
+    """Return the profile data as JSON for AJAX."""
+    reader_profile = request.user.reader_profile
+    return JsonResponse(
+        {
+            "articles": list(
+                reader_profile.get_lexical_articles().values("id", "title", "type", "parameters")
+            ),
+            "inline_translation": reader_profile.inline_translation,
+        }
+    )
 
 
 @login_required  # type: ignore
