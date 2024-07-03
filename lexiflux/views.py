@@ -218,13 +218,44 @@ def translate(request: HttpRequest, params: TranslateGetParams) -> HttpResponse:
 def profile(request: HttpRequest) -> HttpResponse:
     """Profile page."""
     reader_profile = request.user.reader_profile
+    try:
+        inline_translation = {
+            "type": reader_profile.inline_translation_type,
+            "parameters": json.loads(reader_profile.inline_translation_parameters),
+        }
+    except TypeError:
+        inline_translation = {"type": reader_profile.inline_translation_type, "parameters": {}}
     return render(
         request,
         "profile.html",
         {
             "user": request.user,
             "reader_profile": reader_profile,
+            "articles": json.dumps(
+                list(reader_profile.get_lexical_articles().values("title", "type", "parameters"))
+            ),
+            "inline_translation": json.dumps(inline_translation),
         },
+    )
+
+
+@login_required  # type: ignore
+@require_http_methods(["POST"])  # type: ignore
+def save_inline_translation(request: HttpRequest) -> JsonResponse:
+    """Save the inline translation settings."""
+    data = json.loads(request.body)
+    reader_profile = request.user.reader_profile
+    reader_profile.inline_translation_type = data["type"]
+    reader_profile.inline_translation_parameters = json.dumps(data["parameters"])
+    reader_profile.save()
+    return JsonResponse(
+        {
+            "status": "success",
+            "inline_translation": {
+                "type": reader_profile.inline_translation_type,
+                "parameters": json.loads(reader_profile.inline_translation_parameters),
+            },
+        }
     )
 
 
@@ -279,20 +310,6 @@ def manage_lexical_article(request: HttpRequest) -> JsonResponse:  # pylint: dis
         return JsonResponse({"status": "success"})
 
     return JsonResponse({"status": "error", "message": "Invalid action"})
-
-
-@login_required  # type: ignore
-@require_http_methods(["POST"])  # type: ignore
-def save_inline_translation(request: HttpRequest) -> JsonResponse:
-    """Save the inline translation setting."""
-    data = json.loads(request.body)
-    inline_translation = data.get("inline_translation", "")
-
-    reader_profile = request.user.reader_profile
-    reader_profile.inline_translation = inline_translation
-    reader_profile.save()
-
-    return JsonResponse({"status": "success"})
 
 
 @login_required  # type: ignore

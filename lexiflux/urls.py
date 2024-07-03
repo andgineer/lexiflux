@@ -20,4 +20,7 @@ urlpatterns = [
     ),
     path("get-models/", views.get_models, name="get_models"),
     path("update-profile/", views.update_profile, name="update_profile"),
+    path(
+        "save-inline-translation/", views.save_inline_translation, name="save_inline_translation"
+    ),
 ]

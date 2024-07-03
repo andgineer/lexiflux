@@ -18,6 +18,16 @@ from core.models import CustomUser
 
 BOOK_CODE_LENGTH = 100
 
+ARTICLE_TYPES = [
+    ("Translate", "Translate"),
+    ("Sentence", "Sentence"),
+    ("Explain", "Explain"),
+    ("Examples", "Examples"),
+    ("Lexical", "Lexical"),
+    ("Dictionary", "Dictionary"),
+    ("Site", "Site"),
+]
+
 TocEntry: TypeAlias = Tuple[str, int, int]  # <title>, <page num>, <word on the page num>
 Toc: TypeAlias = List[TocEntry]
 
@@ -196,16 +206,6 @@ def clear_cache_if_content_changed(sender, instance, **kwargs):  # type: ignore 
 class LexicalArticle(models.Model):  # type: ignore
     """A lexical article."""
 
-    ARTICLE_TYPES = [
-        ("Translate", "Translate"),
-        ("Sentence", "Sentence"),
-        ("Explain", "Explain"),
-        ("Examples", "Examples"),
-        ("Lexical", "Lexical"),
-        ("Dictionary", "Dictionary"),
-        ("Site", "Site"),
-    ]
-
     reader_profile = models.ForeignKey(
         "ReaderProfile", on_delete=models.CASCADE, related_name="lexical_articles"
     )
@@ -245,10 +245,11 @@ class ReaderProfile(models.Model):  # type: ignore
         blank=True,
         related_name="current_readers",
     )
-    native_language = models.ForeignKey(Language, on_delete=models.SET_NULL, null=True)
-    inline_translation = models.TextField(
-        blank=True
-    )  # todo: type+parameters like LexicalArticle without title
+    native_language = models.ForeignKey(
+        Language, on_delete=models.SET_NULL, null=True
+    )  # todo: user_language
+    inline_translation_type = models.CharField(max_length=20, choices=ARTICLE_TYPES)
+    inline_translation_parameters = models.JSONField(default=dict)
 
     def get_lexical_articles(self) -> list[LexicalArticle]:
         """Return all lexical articles for this reader profile."""

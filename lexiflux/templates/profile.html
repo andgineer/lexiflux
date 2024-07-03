@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="d-flex flex-column vh-100">
+<div id="profile-app" class="d-flex flex-column vh-100">
     <nav class="navbar navbar-expand-lg navbar-light bg-light">
         <div class="container-fluid">
             {% include 'hamburger.html' with current_page='profile' %}
@@ -17,347 +17,260 @@
                 <h2>Profile Information</h2>
                 <div class="card mb-4">
                     <div class="card-body">
-                        <p><strong>Email:</strong> <span id="userEmail">{{ user.email }}</span> <button class="btn btn-sm btn-primary" data-action="editField" data-field="email">Edit</button></p>
-                        <p><strong>Native Language:</strong> <span id="nativeLanguage">{{ reader_profile.native_language|default:"Not set" }}</span> <button class="btn btn-sm btn-primary" data-action="editField" data-field="nativeLanguage">Edit</button></p>
-                        <p><strong>Current Book:</strong> <span id="currentBook">{{ reader_profile.current_book|default:"None" }}</span> <button class="btn btn-sm btn-primary" data-action="editField" data-field="currentBook">Edit</button></p>
+                        <p><strong>Email:</strong> <span>{{ user.email }}</span></p>
+                        <p><strong>Native Language:</strong> <span>{{ reader_profile.native_language }}</span></p>
+                        <p><strong>Current Book:</strong> <span>{{ reader_profile.current_book }}</span></p>
                     </div>
                 </div>
 
                 <h2>In-line Translation</h2>
-                <button type="button" class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#articleModal" data-action="editInlineTranslation">
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <p><strong>Current setting:</strong></p>
+                        <pre>[[ inlineTranslation.type ]] - [[ JSON.stringify(inlineTranslation.parameters, null, 2) ]]</pre>
+                    </div>
+                </div>
+                <button type="button" class="btn btn-primary mb-3" @click="editInlineTranslation">
                     Edit In-line Translation
                 </button>
             </div>
 
             <div class="col-md-6">
                 <h2>Lexical Articles</h2>
-                <button type="button" class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#articleModal">
+                <button type="button" class="btn btn-primary mb-3" @click="openModal('add')">
                     Add New Article
                 </button>
-                <ul class="list-group" id="articleList">
-                    {% for article in reader_profile.get_lexical_articles %}
-                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                <ul class="list-group">
+                    <li class="list-group-item d-flex justify-content-between align-items-center" v-for="article in articles" :key="article.id">
                         <div>
-                            <h5 class="mb-1">{{ article.title }}</h5>
-                            <small>Type: {{ article.type }}</small>
+                            <h5 class="mb-1">[[ article.title ]]</h5>
+                            <small>Type: [[ article.type ]]</small>
                         </div>
                         <div>
-                            <button class="btn btn-primary btn-sm" data-action="editArticle" data-id="{{ article.id }}" data-bs-toggle="modal" data-bs-target="#articleModal">Edit</button>
-                            <button class="btn btn-danger btn-sm" data-action="deleteArticle" data-id="{{ article.id }}">Delete</button>
+                            <button class="btn btn-primary btn-sm" @click="openModal('edit', article)">Edit</button>
+                            <button class="btn btn-danger btn-sm" @click="deleteArticle(article.id)">Delete</button>
                         </div>
                     </li>
-                    {% endfor %}
                 </ul>
             </div>
         </div>
     </div>
-</div>
 
-<!-- Modal for adding/editing lexical articles and in-line translation -->
-<div class="modal fade" id="articleModal" tabindex="-1" aria-labelledby="articleModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="articleModalLabel">Add/Edit Article</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <form id="articleForm">
-                    <input type="hidden" id="articleId">
-                    <div class="mb-3" id="titleField">
-                        <label for="articleTitle" class="form-label">Title</label>
-                        <input type="text" id="articleTitle" class="form-control" required>
-                    </div>
-                    <div class="mb-3" id="typeField">
-                        <label for="articleType" class="form-label">Article Type</label>
-                        <select id="articleType" class="form-select">
-                            <option value="">Select type</option>
-                            <option value="Translate">Translate</option>
-                            <option value="Sentence">Sentence</option>
-                            <option value="Explain">Explain</option>
-                            <option value="Examples">Examples</option>
-                            <option value="Lexical">Lexical</option>
-                            <option value="Dictionary">Dictionary</option>
-                            <option value="Site">Site</option>
-                        </select>
-                    </div>
-                    <div id="parameters"></div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-primary" id="saveArticleBtn">Save</button>
+    <!-- Modal for adding/editing lexical articles and in-line translation -->
+    <div class="modal fade" id="articleModal" tabindex="-1" aria-labelledby="articleModalLabel" aria-hidden="true" ref="articleModal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">{{ modalTitle }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form @submit.prevent="saveArticle">
+                        <div class="mb-3" v-if="showTitleField">
+                            <label for="articleTitle" class="form-label">Title</label>
+                            <input type="text" v-model="form.title" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="articleType" class="form-label">Article Type</label>
+                            <select v-model="form.type" class="form-select" @change="updateParameters">
+                                <option value="">Select type</option>
+                                <option value="Translate">Translate</option>
+                                <option value="Sentence">Sentence</option>
+                                <option value="Explain">Explain</option>
+                                <option value="Examples">Examples</option>
+                                <option value="Lexical">Lexical</option>
+                                <option value="Dictionary">Dictionary</option>
+                                <option value="Site">Site</option>
+                            </select>
+                        </div>
+                        <div v-if="form.type === 'Site'">
+                            <div class="mb-3">
+                                <label class="form-label">URL</label>
+                                <input type="url" v-model="form.parameters.url" class="form-control">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Predefined URLs</label>
+                                <select v-model="form.parameters.url" class="form-select">
+                                    <option value="">Select a predefined URL</option>
+                                    <option v-for="url in predefinedUrls" :value="url">{{ url }}</option>
+                                </select>
+                            </div>
+                            <div class="mb-3 form-check">
+                                <input type="checkbox" v-model="form.parameters.window" class="form-check-input">
+                                <label class="form-check-label">Open in new window</label>
+                            </div>
+                        </div>
+                        <div v-if="['Translate', 'Sentence', 'Explain', 'Examples', 'Lexical'].includes(form.type)">
+                            <div class="mb-3">
+                                <label class="form-label">AI Model</label>
+                                <select v-model="form.parameters.model" class="form-select">
+                                    <option value="">Select model</option>
+                                    <option v-for="model in aiModels" :value="model">{{ model }}</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div v-if="form.type === 'Dictionary'">
+                            <div class="mb-3">
+                                <label class="form-label">Dictionary</label>
+                                <select v-model="form.parameters.dictionary" class="form-select">
+                                    <option value="merriam-webster">Merriam-Webster</option>
+                                    <option value="oxford">Oxford</option>
+                                    <option value="cambridge">Cambridge</option>
+                                </select>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Save</button>
+                    </form>
+                </div>
             </div>
         </div>
     </div>
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const articleModal = new bootstrap.Modal(document.getElementById('articleModal'));
-    const articleList = document.getElementById('articleList');
-    const articleForm = document.getElementById('articleForm');
-    const articleType = document.getElementById('articleType');
-    const articleTitle = document.getElementById('articleTitle');
-    const parameters = document.getElementById('parameters');
+new Vue({
+    el: '#profile-app',
+    delimiters: ['[[', ']]'],
+    data: {
+        articles: {{ articles|safe }},
+        aiModels: [],
+        predefinedUrls: [
+            'https://www.merriam-webster.com/dictionary/{term}',
+            'https://translate.google.com/?sl=en&tl=sr&text={term}&op=translate',
+            'https://glosbe.com/sr/ru/{term}',
+            'https://dictionary.cambridge.org/spellcheck/english/?q={term}',
+            'https://www.oed.com/search/dictionary/?scope=Entries&q={term}'
+        ],
+        form: {
+            id: null,
+            title: '',
+            type: '',
+            parameters: {}
+        },
+        showTitleField: true,
+        modalTitle: '',
+        inlineTranslation: {{ inline_translation|safe }}
+    },
+    methods: {
+        openModal(action, article = null) {
+            this.resetForm();
+            this.modalTitle = action === 'add' ? 'Add New Article' : 'Edit Article';
+            if (article) {
+                this.form = JSON.parse(JSON.stringify(article));
+                this.showTitleField = true;
+            } else {
+                this.showTitleField = true;
+            }
+            this.updateParameters();
+            new bootstrap.Modal(this.$refs.articleModal).show();
+        },
+        resetForm() {
+            this.form = {
+                id: null,
+                title: '',
+                type: '',
+                parameters: {}
+            };
+        },
+        updateParameters() {
+            if (!this.form.title) {
+                this.form.title = this.generateTitle(this.form.type);
+            }
+            if (this.form.type === 'Site') {
+                this.form.parameters = {
+                    url: '',
+                    window: false
+                };
+            } else if (['Translate', 'Sentence', 'Explain', 'Examples', 'Lexical'].includes(this.form.type)) {
+                fetch('{% url "get_models" %}')
+                    .then(response => response.json())
+                    .then(data => {
+                        this.aiModels = data.models;
+                    });
+                this.form.parameters = {
+                    model: ''
+                };
+            } else if (this.form.type === 'Dictionary') {
+                this.form.parameters = {
+                    dictionary: ''
+                };
+            }
+        },
+        generateTitle(type) {
+            let title = type;
+            if (type === 'Site') {
+                const url = this.form.parameters.url;
+                if (url) {
+                    title = new URL(url).hostname;
+                }
+            } else if (type === 'Dictionary') {
+                title = this.form.parameters.dictionary;
+            }
 
-    const predefinedUrls = [
-        'https://www.merriam-webster.com/dictionary/{term}',
-        'https://translate.google.com/?sl=en&tl=sr&text={term}&op=translate',
-        'https://glosbe.com/sr/ru/{term}',
-        'https://dictionary.cambridge.org/spellcheck/english/?q={term}',
-        'https://www.oed.com/search/dictionary/?scope=Entries&q={term}'
-    ];
+            let uniqueTitle = title;
+            let counter = 1;
+            while (this.articles.some(a => a.title === uniqueTitle)) {
+                uniqueTitle = `${title} ${counter}`;
+                counter++;
+            }
+            return uniqueTitle;
+        },
+        saveArticle() {
+            const action = this.form.id ? 'edit' : 'add';
+            const isInlineTranslation = !this.showTitleField;
 
-    let articles = {{ reader_profile.get_lexical_articles|safe|default:"[]" }};
+            let url = isInlineTranslation ? '{% url "save_inline_translation" %}' : '{% url "manage_lexical_article" %}';
+            let data = isInlineTranslation ? { type: this.form.type, parameters: this.form.parameters } : { action, ...this.form };
 
-    // Modal event listeners
-    articleModal._element.addEventListener('show.bs.modal', function (event) {
-        const button = event.relatedTarget;
-        const action = button.getAttribute('data-action');
-        const id = button.getAttribute('data-id');
-
-        if (action === 'editArticle') {
-            editArticle(id);
-        } else if (action === 'editInlineTranslation') {
-            editInlineTranslation();
-        } else {
-            resetForm();
-        }
-    });
-
-    function editArticle(id) {
-        const article = articles.find(a => a.id === parseInt(id));
-        if (article) {
-            document.getElementById('articleId').value = article.id;
-            articleTitle.value = article.title;
-            articleType.value = article.type;
-            articleType.dispatchEvent(new Event('change'));
-            fillParameters(article.parameters);
-        }
-    }
-
-    function editInlineTranslation() {
-        resetForm();
-        document.getElementById('titleField').style.display = 'none';
-        document.getElementById('typeField').style.display = 'none';
-        document.getElementById('articleModalLabel').textContent = 'Edit In-line Translation';
-        parameters.innerHTML = `
-            <div class="mb-3">
-                <label class="form-label">In-line Translation Settings</label>
-                <textarea id="inlineTranslation" class="form-control" rows="3">{{ reader_profile.inline_translation }}</textarea>
-            </div>
-        `;
-    }
-
-    function deleteArticle(id) {
-        if (confirm('Are you sure you want to delete this article?')) {
-            fetch('{% url "manage_lexical_article" %}', {
+            fetch(url, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'X-CSRFToken': '{{ csrf_token }}'
                 },
-                body: JSON.stringify({ action: 'delete', id })
+                body: JSON.stringify(data)
             })
             .then(response => response.json())
             .then(data => {
                 if (data.status === 'success') {
+                    if (isInlineTranslation) {
+                        this.inlineTranslation = data.inline_translation;
+                    }
                     location.reload();
                 } else {
                     alert(data.message);
                 }
             });
-        }
-    }
-
-    function editField(field) {
-        const element = document.getElementById(field);
-        const currentValue = element.textContent;
-        const input = document.createElement('input');
-        input.type = 'text';
-        input.value = currentValue;
-        input.classList.add('form-control');
-        element.parentNode.replaceChild(input, element);
-        input.focus();
-
-        input.addEventListener('blur', function() {
-            const newValue = this.value;
-            const span = document.createElement('span');
-            span.id = field;
-            span.textContent = newValue;
-            this.parentNode.replaceChild(span, this);
-
-            fetch('{% url "update_profile" %}', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': '{{ csrf_token }}'
-                },
-                body: JSON.stringify({ field, value: newValue })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.status !== 'success') {
-                    alert('Failed to update profile');
-                }
-            });
-        });
-    }
-
-    function resetForm() {
-        articleForm.reset();
-        document.getElementById('articleId').value = '';
-        document.getElementById('titleField').style.display = 'block';
-        document.getElementById('typeField').style.display = 'block';
-        document.getElementById('articleModalLabel').textContent = 'Add/Edit Article';
-        parameters.innerHTML = '';
-    }
-
-    function fillParameters(params) {
-        if (params.model) {
-            document.getElementById('model').value = params.model;
-        } else if (params.dictionary) {
-            document.getElementById('dictionary').value = params.dictionary;
-        } else if (params.url) {
-            document.getElementById('url').value = params.url;
-            document.getElementById('window').checked = params.window;
-        }
-    }
-
-    function generateTitle(type) {
-        let title = type;
-        if (type === 'Site') {
-            const url = document.getElementById('url').value;
-            if (url) {
-                title = new URL(url).hostname;
-            }
-        } else if (type === 'Dictionary') {
-            title = document.getElementById('dictionary').options[document.getElementById('dictionary').selectedIndex].text;
-        }
-
-        let uniqueTitle = title;
-        let counter = 1;
-        while (articles.some(a => a.title === uniqueTitle)) {
-            if (['Translate', 'Sentence', 'Explain', 'Examples', 'Lexical'].includes(type)) {
-                const model = document.getElementById('model').value;
-                uniqueTitle = `${title} (${model})`;
-            } else {
-                uniqueTitle = `${title} ${counter}`;
-                counter++;
-            }
-        }
-        return uniqueTitle;
-    }
-
-    articleType.addEventListener('change', function() {
-        parameters.innerHTML = '';
-        if (['Translate', 'Sentence', 'Explain', 'Examples', 'Lexical'].includes(this.value)) {
-            fetch('{% url "get_models" %}')
+        },
+        deleteArticle(id) {
+            if (confirm('Are you sure you want to delete this article?')) {
+                fetch('{% url "manage_lexical_article" %}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    },
+                    body: JSON.stringify({ action: 'delete', id })
+                })
                 .then(response => response.json())
                 .then(data => {
-                    let select = `<div class="mb-3"><label class="form-label">AI Model</label><select id="model" class="form-select"><option value="">Select model</option>`;
-                    data.models.forEach(model => {
-                        select += `<option value="${model}">${model}</option>`;
-                    });
-                    select += '</select></div>';
-                    parameters.innerHTML = select;
+                    if (data.status === 'success') {
+                        location.reload();
+                    } else {
+                        alert(data.message);
+                    }
                 });
-        } else if (this.value === 'Dictionary') {
-            parameters.innerHTML = `
-                <div class="mb-3">
-                    <label class="form-label">Dictionary</label>
-                    <select id="dictionary" class="form-select">
-                        <option value="merriam-webster">Merriam-Webster</option>
-                        <option value="oxford">Oxford</option>
-                        <option value="cambridge">Cambridge</option>
-                    </select>
-                </div>
-            `;
-        } else if (this.value === 'Site') {
-            parameters.innerHTML = `
-                <div class="mb-3">
-                    <label class="form-label">URL</label>
-                    <input type="url" id="url" class="form-control" placeholder="Custom URL">
-                </div>
-                <div class="mb-3">
-                    <label class="form-label">Predefined URLs</label>
-                    <select id="predefinedUrl" class="form-select">
-                        <option value="">Select a predefined URL</option>
-                        ${predefinedUrls.map(url => `<option value="${url}">${url}</option>`).join('')}
-                    </select>
-                </div>
-                <div class="mb-3 form-check">
-                    <input type="checkbox" id="window" class="form-check-input">
-                    <label class="form-check-label" for="window">Open in new window</label>
-                </div>
-            `;
-            document.getElementById('predefinedUrl').addEventListener('change', function() {
-                document.getElementById('url').value = this.value;
-            });
-        }
-
-        if (!articleTitle.value) {
-            articleTitle.value = generateTitle(this.value);
-        }
-    });
-
-    function saveArticle() {
-        const id = document.getElementById('articleId').value;
-        const type = articleType.value;
-        const title = articleTitle.value;
-
-        if (!title) {
-            alert('Title is required');
-            return;
-        }
-
-        if (articles.some(a => a.title === title && a.id !== parseInt(id))) {
-            alert('An article with this title already exists');
-            return;
-        }
-
-        let parameters = {};
-        if (['Translate', 'Sentence', 'Explain', 'Examples', 'Lexical'].includes(type)) {
-            parameters.model = document.getElementById('model').value;
-        } else if (type === 'Dictionary') {
-            parameters.dictionary = document.getElementById('dictionary').value;
-        } else if (type === 'Site') {
-            parameters.url = document.getElementById('url').value;
-            parameters.window = document.getElementById('window').checked;
-        }
-
-        const action = id ? 'edit' : 'add';
-
-        fetch('{% url "manage_lexical_article" %}', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': '{{ csrf_token }}'
-            },
-            body: JSON.stringify({ action, id, type, title, parameters })
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.status === 'success') {
-                location.reload();
-            } else {
-                alert(data.message);
             }
-        });
+        },
+        editInlineTranslation() {
+            this.resetForm();
+            this.showTitleField = false;
+            this.modalTitle = 'Edit In-line Translation';
+            this.form.type = this.inlineTranslation.type;
+            this.form.parameters = JSON.parse(JSON.stringify(this.inlineTranslation.parameters));
+            new bootstrap.Modal(this.$refs.articleModal).show();
+        },
     }
-
-    // Event listeners
-    document.querySelectorAll('button[data-action="editField"]').forEach(btn => {
-        btn.addEventListener('click', () => editField(btn.dataset.field));
-    });
-    document.getElementById('saveArticleBtn').addEventListener('click', saveArticle);
-
-    articleList.addEventListener('click', (e) => {
-        if (e.target.matches('button[data-action="deleteArticle"]')) {
-            deleteArticle(e.target.dataset.id);
-        }
-    });
 });
 </script>
 {% endblock %}
