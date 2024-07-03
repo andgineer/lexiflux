@@ -12,6 +12,12 @@ urlpatterns = [
     path("location", views.location, name="location"),
     path("history", views.add_to_history, name="history"),
     path("translate", views.translate, name="translate"),
-    path("profile", views.profile, name="profile"),
     path("book", views.view_book, name="book"),
+    path("profile/", views.profile, name="profile"),
+    path("manage-lexical-article/", views.manage_lexical_article, name="manage_lexical_article"),
+    path(
+        "save-inline-translation/", views.save_inline_translation, name="save_inline_translation"
+    ),
+    path("get-models/", views.get_models, name="get_models"),
+    path("update-profile/", views.update_profile, name="update_profile"),
 ]

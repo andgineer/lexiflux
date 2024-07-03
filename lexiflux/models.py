@@ -10,6 +10,7 @@ from django.dispatch import receiver
 from django.utils import timezone
 from django.core.cache import cache
 from django.db.models.signals import pre_save
+from django.core.exceptions import ValidationError
 from transliterate import get_available_language_codes, translit
 
 from core.models import CustomUser
@@ -192,6 +193,45 @@ def clear_cache_if_content_changed(sender, instance, **kwargs):  # type: ignore 
             cache.delete(instance.get_cache_key())
 
 
+class LexicalArticle(models.Model):  # type: ignore
+    """A lexical article."""
+
+    ARTICLE_TYPES = [
+        ("Translate", "Translate"),
+        ("Sentence", "Sentence"),
+        ("Explain", "Explain"),
+        ("Examples", "Examples"),
+        ("Lexical", "Lexical"),
+        ("Dictionary", "Dictionary"),
+        ("Site", "Site"),
+    ]
+
+    reader_profile = models.ForeignKey(
+        "ReaderProfile", on_delete=models.CASCADE, related_name="lexical_articles"
+    )
+    type = models.CharField(max_length=20, choices=ARTICLE_TYPES)
+    title = models.CharField(max_length=100)
+    parameters = models.JSONField(default=dict)
+
+    class Meta:
+        unique_together = ("reader_profile", "title")
+
+    def clean(self) -> None:
+        if self.type == "Site":
+            if "url" not in self.parameters or "window" not in self.parameters:
+                raise ValidationError("Site article must have 'url' and 'window' parameters.")
+        elif self.type == "Dictionary":
+            if "dictionary" not in self.parameters:
+                raise ValidationError("Dictionary article must have 'dictionary' parameter.")
+        elif self.type not in ["Dictionary", "Site"]:
+            if "model" not in self.parameters:
+                raise ValidationError(f"{self.type} article must have 'model' parameter.")
+
+    def save(self, *args: Any, **kwargs: Any) -> None:
+        self.clean()
+        super().save(*args, **kwargs)
+
+
 class ReaderProfile(models.Model):  # type: ignore
     """A reader profile."""
 
@@ -206,6 +246,13 @@ class ReaderProfile(models.Model):  # type: ignore
         related_name="current_readers",
     )
     native_language = models.ForeignKey(Language, on_delete=models.SET_NULL, null=True)
+    inline_translation = models.TextField(
+        blank=True
+    )  # todo: type+parameters like LexicalArticle without title
+
+    def get_lexical_articles(self) -> list[LexicalArticle]:
+        """Return all lexical articles for this reader profile."""
+        return self.lexical_articles.all()  # type: ignore
 
 
 class ReadingLoc(models.Model):  # type: ignore

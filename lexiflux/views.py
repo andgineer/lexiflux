@@ -1,5 +1,6 @@
 """Vies for the Lexiflux app."""
 
+import json
 from typing import Optional, Dict, Any
 import urllib.parse
 
@@ -9,14 +10,14 @@ from django.db import models
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
-from django.views.decorators.http import require_POST
+from django.views.decorators.http import require_POST, require_http_methods
 from pydantic import Field
 
 from core.models import CustomUser
 from lexiflux.language.translation import get_translator
 from lexiflux.api import get_params, ViewGetParamsModel
 
-from lexiflux.models import Book, BookPage, ReadingHistory, ReadingLoc
+from lexiflux.models import Book, BookPage, ReadingHistory, ReadingLoc, LexicalArticle, Language
 
 
 def render_page(page_db: BookPage) -> str:
@@ -215,9 +216,116 @@ def translate(request: HttpRequest, params: TranslateGetParams) -> HttpResponse:
 
 @login_required  # type: ignore
 def profile(request: HttpRequest) -> HttpResponse:
-    # if not request.user.is_approved:
     """Profile page."""
-    return render(request, "profile.html")
+    reader_profile = request.user.reader_profile
+    return render(
+        request,
+        "profile.html",
+        {
+            "user": request.user,
+            "reader_profile": reader_profile,
+        },
+    )
+
+
+@login_required  # type: ignore
+@require_http_methods(["POST"])  # type: ignore
+def manage_lexical_article(request: HttpRequest) -> JsonResponse:  # pylint: disable=too-many-return-statements
+    """Add, edit, or delete a lexical article."""
+    data = json.loads(request.body)
+    action = data.get("action")
+    reader_profile = request.user.reader_profile
+
+    if action == "add":
+        # Check for duplicate titles
+        if LexicalArticle.objects.filter(
+            reader_profile=reader_profile, title=data["title"]
+        ).exists():
+            return JsonResponse(
+                {"status": "error", "message": "An article with this title already exists"}
+            )
+
+        article = LexicalArticle.objects.create(
+            reader_profile=reader_profile,
+            type=data["type"],
+            title=data["title"],
+            parameters=data["parameters"],
+        )
+        return JsonResponse({"status": "success", "id": article.id})
+
+    if action == "edit":
+        try:
+            article = LexicalArticle.objects.get(id=data["id"], reader_profile=reader_profile)
+            # Check for duplicate titles, excluding the current article
+            if (
+                LexicalArticle.objects.filter(reader_profile=reader_profile, title=data["title"])
+                .exclude(id=data["id"])
+                .exists()
+            ):
+                return JsonResponse(
+                    {"status": "error", "message": "An article with this title already exists"}
+                )
+
+            article.type = data["type"]
+            article.title = data["title"]
+            article.parameters = data["parameters"]
+            article.save()
+            return JsonResponse({"status": "success"})
+        except LexicalArticle.DoesNotExist:
+            return JsonResponse({"status": "error", "message": "Article not found"})
+
+    elif action == "delete":
+        LexicalArticle.objects.filter(id=data["id"], reader_profile=reader_profile).delete()
+        return JsonResponse({"status": "success"})
+
+    return JsonResponse({"status": "error", "message": "Invalid action"})
+
+
+@login_required  # type: ignore
+@require_http_methods(["POST"])  # type: ignore
+def save_inline_translation(request: HttpRequest) -> JsonResponse:
+    """Save the inline translation setting."""
+    data = json.loads(request.body)
+    inline_translation = data.get("inline_translation", "")
+
+    reader_profile = request.user.reader_profile
+    reader_profile.inline_translation = inline_translation
+    reader_profile.save()
+
+    return JsonResponse({"status": "success"})
+
+
+@login_required  # type: ignore
+def get_models(request: HttpRequest) -> JsonResponse:
+    """Return the available models."""
+    models_list = ["gpt-3.5-turbo", "gpt-4-turbo"]
+    return JsonResponse({"models": models_list})
+
+
+@login_required  # type: ignore
+@require_http_methods(["POST"])  # type: ignore
+def update_profile(request: HttpRequest) -> JsonResponse:
+    """Update the user profile."""
+    data = json.loads(request.body)
+    field = data.get("field")
+    value = data.get("value")
+
+    reader_profile = request.user.reader_profile
+
+    if field == "email":
+        request.user.email = value
+        request.user.save()
+    elif field == "nativeLanguage":
+        language, _ = Language.objects.get_or_create(name=value)
+        reader_profile.native_language = language
+    elif field == "currentBook":
+        book = Book.objects.filter(title=value).first()
+        reader_profile.current_book = book
+    else:
+        return JsonResponse({"status": "error", "message": "Invalid field"})
+
+    reader_profile.save()
+    return JsonResponse({"status": "success"})
 
 
 @login_required  # type: ignore
@@ -261,8 +369,8 @@ def library(request: HttpRequest) -> HttpResponse:
 
 
 @login_required  # type: ignore
-@require_POST
-def add_to_history(request):
+@require_POST  # type: ignore
+def add_to_history(request: HttpRequest) -> JsonResponse:
     """Add the location to History."""
     user = request.user
 
