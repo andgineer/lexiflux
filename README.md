@@ -16,14 +16,14 @@
 | lexiflux/language/translation.py       |       45 |        0 |    100% |           |
 | lexiflux/lexical\_articles.py          |       10 |       10 |      0% |      3-32 |
 | lexiflux/llm.py                        |      125 |      125 |      0% |     3-334 |
-| lexiflux/models.py                     |      172 |       24 |     86% |58, 68, 121, 130-131, 148, 159, 174, 203-205, 224, 226-227, 230, 270-271, 316-328 |
+| lexiflux/models.py                     |      172 |       23 |     87% |68, 121, 130-131, 148, 159, 174, 203-205, 224, 226-227, 230, 270-271, 316-328 |
 | lexiflux/settings.py                   |        0 |        0 |    100% |           |
 | lexiflux/signals.py                    |       21 |        2 |     90% |     40-41 |
 | lexiflux/tests.py                      |        0 |        0 |    100% |           |
 | lexiflux/urls.py                       |        3 |        0 |    100% |           |
 | lexiflux/utils.py                      |        8 |        0 |    100% |           |
 | lexiflux/views.py                      |      218 |       61 |     72% |49, 68, 77, 146, 193-213, 239-244, 256-302, 308-309, 316-335, 370-371, 397 |
-|                              **TOTAL** | **1021** |  **271** | **73%** |           |
+|                              **TOTAL** | **1021** |  **270** | **74%** |           |
 
 
 ## Setup coverage badge
