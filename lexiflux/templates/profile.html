@@ -14,44 +14,61 @@
     <div class="container mt-4">
         <div class="row">
             <div class="col-md-6">
-                <h2>Profile Information</h2>
                 <div class="card mb-4">
+                    <h5 class="card-header">User</h5>
                     <div class="card-body">
-                        <p><strong>Email:</strong> <span>{{ user.email }}</span></p>
-                        <p><strong>Native Language:</strong> <span>{{ reader_profile.native_language }}</span></p>
-                        <p><strong>Current Book:</strong> <span>{{ reader_profile.current_book }}</span></p>
+                        <div>
+                            <strong>Email:</strong> <span>{{ user.email }}</span>
+                        </div>
+                        <div>
+                            <strong>Current Book:</strong> <span>{{ reader_profile.current_book }}</span>
+                        </div>
                     </div>
                 </div>
 
-                <h2>In-line Translation</h2>
+                <div class="card mb-4">
+                    <h5 class="card-header">Reading profile</h5>
+                    <div class="card-body">
+                        <div>
+                            <strong>For language:</strong> <span>{{ reader_profile.language }}</span>
+                        </div>
+                        <div>
+                            <strong>User language:</strong> <span>{{ reader_profile.user_language }}</span>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="card mb-3">
+                    <h5 class="card-header">In-text Translation</h5>
                     <div class="card-body">
                         <p><strong>Current setting:</strong></p>
                         <pre>[[ inlineTranslation.type ]] - [[ JSON.stringify(inlineTranslation.parameters, null, 2) ]]</pre>
+                        <button type="button" class="btn btn-primary mb-3" @click="editInlineTranslation">
+                            Edit
+                        </button>
                     </div>
                 </div>
-                <button type="button" class="btn btn-primary mb-3" @click="editInlineTranslation">
-                    Edit In-line Translation
-                </button>
             </div>
 
             <div class="col-md-6">
-                <h2>Lexical Articles</h2>
-                <button type="button" class="btn btn-primary mb-3" @click="openModal('add')">
-                    Add New Article
-                </button>
-                <ul class="list-group">
-                    <li class="list-group-item d-flex justify-content-between align-items-center" v-for="article in articles" :key="article.id">
-                        <div>
-                            <h5 class="mb-1">[[ article.title ]]</h5>
-                            <small>Type: [[ article.type ]]</small>
-                        </div>
-                        <div>
-                            <button class="btn btn-primary btn-sm" @click="openModal('edit', article)">Edit</button>
-                            <button class="btn btn-danger btn-sm" @click="deleteArticle(article.id)">Delete</button>
-                        </div>
-                    </li>
-                </ul>
+                <h5 class="card-header">Lexical Articles</h5>
+                <div class="card-body">
+                    <ul class="list-group">
+                        <li class="list-group-item d-flex justify-content-between align-items-center" v-for="article in articles" :key="article.id">
+                            <div>
+                                <h5 class="mb-1">[[ article.title ]]</h5>
+                                <small>Type: [[ article.type ]]</small>
+                            </div>
+                            <div>
+                                <button class="btn btn-primary btn-sm" @click="openModal('edit', article)">Edit</button>
+                                <button class="btn btn-danger btn-sm" @click="deleteArticle(article.id)">Delete</button>
+                            </div>
+                        </li>
+                    </ul>
+                    <button type="button" class="btn btn-primary mb-3" @click="openModal('add')">
+                        Add New Article
+                    </button>
+                </div>
             </div>
         </div>
     </div>
