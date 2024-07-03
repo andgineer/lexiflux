@@ -2,7 +2,7 @@
 
 import json
 import re
-from typing import TypeAlias, Tuple, List, Any
+from typing import TypeAlias, Tuple, List, Any, Dict
 
 from django.conf import settings
 from django.db import models
@@ -46,7 +46,9 @@ def split_into_words(text: str) -> list[str]:
 class Language(models.Model):  # type: ignore
     """Model to store languages."""
 
-    google_code = models.CharField(max_length=10, unique=True)  # Google Translate language code
+    google_code = models.CharField(
+        max_length=10, primary_key=True
+    )  # Google Translate language code
     epub_code = models.CharField(max_length=10)  # EPUB (ISO-639) language code
 
     name = models.CharField(max_length=100, unique=True)
@@ -238,6 +240,9 @@ class ReaderProfile(models.Model):  # type: ignore
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="reader_profile"
     )
+    language = models.ForeignKey(
+        Language, on_delete=models.CASCADE, related_name="profile_language"
+    )
     current_book = models.ForeignKey(
         Book,
         on_delete=models.SET_NULL,
@@ -245,11 +250,25 @@ class ReaderProfile(models.Model):  # type: ignore
         blank=True,
         related_name="current_readers",
     )
-    native_language = models.ForeignKey(
-        Language, on_delete=models.SET_NULL, null=True
-    )  # todo: user_language
+    user_language = models.ForeignKey(
+        Language, on_delete=models.SET_NULL, null=True, related_name="profile_user_language"
+    )
     inline_translation_type = models.CharField(max_length=20, choices=ARTICLE_TYPES)
     inline_translation_parameters = models.JSONField(default=dict)
+
+    class Meta:
+        unique_together = ("user", "language")
+
+    @property
+    def inline_translation(self) -> Dict[str, Any]:
+        """Return inline translation as an object."""
+        try:
+            return {
+                "type": self.inline_translation_type,
+                "parameters": json.loads(self.inline_translation_parameters),
+            }
+        except TypeError:
+            return {"type": self.inline_translation_type, "parameters": {}}
 
     def get_lexical_articles(self) -> list[LexicalArticle]:
         """Return all lexical articles for this reader profile."""

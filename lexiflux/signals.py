@@ -1,28 +1,25 @@
 """Signals for the lexiflux app."""
 
+import json
 from typing import Any
 
 from django.contrib.auth import get_user_model
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 
-from .models import ReaderProfile, LexicalArticle
+from lexiflux.models import ReaderProfile, LexicalArticle, Language
 
 User = get_user_model()
 
 DEFAULT_LEXICAL_ARTICLES = [
     {"type": "Sentence", "title": "Sentence", "parameters": {"model": "gpt-3.5-turbo"}},
     {"type": "Explain", "title": "Explain", "parameters": {"model": "gpt-3.5-turbo"}},
-    {
-        "type": "Dictionary",
-        "title": "merriam-webster",
-        "parameters": {"dictionary": "merriam-webster"},
-    },
+    {"type": "Examples", "title": "Examples", "parameters": {"model": "gpt-3.5-turbo"}},
     {
         "type": "Site",
-        "title": "translate.google",
+        "title": "glosbe",
         "parameters": {
-            "url": "https://translate.google.com/?sl=en&tl=sr&text={term}&op=translate",
+            "url": "https://glosbe.com/sr/ru/ff{term}",
             "window": True,
         },
     },
@@ -38,7 +35,17 @@ def create_user_profile(
 ) -> None:
     """Create a profile and default lexical articles for a new user."""
     if created:
-        reader_profile = ReaderProfile.objects.create(user=instance)
+        try:
+            english_language = Language.objects.get(google_code="en")
+        except Language.DoesNotExist as exc:
+            raise ValueError("English language not found in the Language table.") from exc
+
+        reader_profile = ReaderProfile.objects.create(
+            user=instance,
+            language=english_language,
+            inline_translation_type="Dictionary",
+            inline_translation_parameters=json.dumps({"dictionary": "GoogleTranslator"}),
+        )
 
         for article in DEFAULT_LEXICAL_ARTICLES:
             LexicalArticle.objects.create(

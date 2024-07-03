@@ -218,13 +218,6 @@ def translate(request: HttpRequest, params: TranslateGetParams) -> HttpResponse:
 def profile(request: HttpRequest) -> HttpResponse:
     """Profile page."""
     reader_profile = request.user.reader_profile
-    try:
-        inline_translation = {
-            "type": reader_profile.inline_translation_type,
-            "parameters": json.loads(reader_profile.inline_translation_parameters),
-        }
-    except TypeError:
-        inline_translation = {"type": reader_profile.inline_translation_type, "parameters": {}}
     return render(
         request,
         "profile.html",
@@ -234,7 +227,7 @@ def profile(request: HttpRequest) -> HttpResponse:
             "articles": json.dumps(
                 list(reader_profile.get_lexical_articles().values("title", "type", "parameters"))
             ),
-            "inline_translation": json.dumps(inline_translation),
+            "inline_translation": json.dumps(reader_profile.inline_translation),
         },
     )
 
@@ -251,10 +244,7 @@ def save_inline_translation(request: HttpRequest) -> JsonResponse:
     return JsonResponse(
         {
             "status": "success",
-            "inline_translation": {
-                "type": reader_profile.inline_translation_type,
-                "parameters": json.loads(reader_profile.inline_translation_parameters),
-            },
+            "inline_translation": reader_profile.inline_translation,
         }
     )
 
@@ -334,7 +324,7 @@ def update_profile(request: HttpRequest) -> JsonResponse:
         request.user.save()
     elif field == "nativeLanguage":
         language, _ = Language.objects.get_or_create(name=value)
-        reader_profile.native_language = language
+        reader_profile.user_language = language
     elif field == "currentBook":
         book = Book.objects.filter(title=value).first()
         reader_profile.current_book = book
