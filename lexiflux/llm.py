@@ -11,6 +11,7 @@ from langchain_openai import ChatOpenAI
 import openai
 from langchain.schema import BaseOutputParser
 from pydantic import Field
+from django.core.cache import cache
 
 
 class TextOutputParser(BaseOutputParser[str]):
@@ -99,7 +100,17 @@ class ExamplesOutputParser(BaseJsonParser):
 
 
 class Llm:  # pylint: disable=too-few-public-methods
-    """AI lexical articles."""
+    """AI lexical articles.
+
+    As `data` expect
+    - book_code: str
+    - page_number: int
+    - word_ids: List[int]  # for all words in the `term`
+    - text: str
+    - term: str
+    - text_language: str
+    - user_language: str
+    """
 
     ChatMessages = List[SystemMessage | HumanMessage | AIMessage]
 
@@ -109,6 +120,45 @@ class Llm:  # pylint: disable=too-few-public-methods
 
         self._articles_templates = self._create_article_templates()
         self._model_cache: Dict[str, ChatOpenAI] = {}
+
+    def article_names(self) -> list[str]:
+        """Return a list of all available Lexical Article names."""
+        return list(self._articles_templates.keys())
+
+    def get_article(self, article_name: str, params: Dict[str, Any], data: Dict[str, Any]) -> str:
+        """Generate the article based on data."""
+        return self._get_article_cached(
+            article_name, self._hashable_dict(params), self._hashable_dict(data)
+        )
+
+    def detect_sentence(
+        self,
+        article_name: str,
+        hashable_params: tuple[tuple[str, Any]],
+        hashable_data: tuple[tuple[str, Any]],
+    ) -> Dict[str, str]:
+        """Return already detected sentence for the first word in the `term`.
+
+        If the sentence is not detected, it will be detected and returned.
+        """
+        data = dict(hashable_data)
+        text_language = data["text_language"]
+        user_language = data["user_language"]
+        book_code = data["book_code"]
+        page_number = data["page_number"]
+        word_ids = data["word_ids"]
+        cache_key = (
+            f"sentences:{text_language}:{user_language}:{book_code}:{page_number}:{word_ids[0]}"
+        )
+        try:
+            sentence = cache.get(cache_key)
+            if sentence is None:
+                sentence = self._detect_sentence(article_name, hashable_params, hashable_data)
+                cache.set(cache_key, sentence, timeout=None)
+        except Exception:  # pylint: disable=broad-except
+            # Django is not inited
+            sentence = self._detect_sentence(article_name, hashable_params, hashable_data)
+        return sentence  # type: ignore
 
     def _get_model_key(
         self,
@@ -310,7 +360,7 @@ Return the result in JSON format with the following fields:
             raise ValueError(f"Lexical article '{article_name}' not found.")
 
         if article_name in {"Sentence", "Explain"}:
-            preprocessed_data = self._detect_sentence(article_name, hashable_params, hashable_data)
+            preprocessed_data = self.detect_sentence(article_name, hashable_params, hashable_data)
             data["text"] = preprocessed_data["text"]
             data["detected_language"] = preprocessed_data["detected_language"]
 
@@ -322,13 +372,3 @@ Return the result in JSON format with the following fields:
         chain = templates["template"] | model | templates["parser"]
 
         return chain.invoke(data)  # type: ignore
-
-    def get_article(self, article_name: str, params: Dict[str, Any], data: Dict[str, Any]) -> str:
-        """Create the article based on data."""
-        return self._get_article_cached(
-            article_name, self._hashable_dict(params), self._hashable_dict(data)
-        )
-
-    def article_names(self) -> list[str]:
-        """Return a list of all available Lexical Article names."""
-        return list(self._articles_templates.keys())
