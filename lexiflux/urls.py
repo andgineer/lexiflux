@@ -27,6 +27,11 @@ urlpatterns = [
         views.api_get_profile_for_language,
         name="api_get_profile_for_language",
     ),
+    path(
+        "api/update-user-language/",
+        views.api_update_user_language,
+        name="api_update_user_language",
+    ),
     path("api/profile/", views.api_profile, name="api_profile"),
     path("manage-lexical-article/", views.manage_lexical_article, name="manage_lexical_article"),
     path(

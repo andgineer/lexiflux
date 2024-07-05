@@ -351,11 +351,36 @@ def api_get_profile_for_language(request: HttpRequest) -> JsonResponse:
                     )
                 ),
                 "inline_translation": reader_profile.inline_translation,
+                "user_language_id": reader_profile.user_language.google_code
+                if reader_profile.user_language
+                else None,
             }
         )
     except Exception as e:  # pylint: disable=broad-except
         logger.exception("Error in api_get_profile_for_language")
         return JsonResponse({"status": "error", "message": str(e)}, status=500)
+
+
+@login_required  # type: ignore
+@require_http_methods(["POST"])  # type: ignore
+def api_update_user_language(request: HttpRequest) -> JsonResponse:
+    """Update the user language."""
+    try:
+        data = json.loads(request.body)
+        language_id = data.get("language_id")
+        profile_language_id = data.get("profile_language_id")
+
+        language = get_object_or_404(Language, google_code=language_id)
+        reader_profile = get_object_or_404(
+            ReaderProfile, user=request.user, language__google_code=profile_language_id
+        )
+
+        reader_profile.user_language = language
+        reader_profile.save()
+
+        return JsonResponse({"status": "success"})
+    except Exception as e:  # pylint: disable=broad-except
+        return JsonResponse({"status": "error", "message": str(e)})
 
 
 @login_required  # type: ignore

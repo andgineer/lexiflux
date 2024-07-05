@@ -13,37 +13,52 @@
 
     <div class="container mt-4">
 
-        <div class="mb-3">
-            <label for="languageSelect" class="form-label">Profile for the</label>
-            <select id="languageSelect" v-model="currentLanguageId" @change="changeLanguage" class="form-select">
-                <option v-for="language in allLanguages" :value="language.google_code">
-                    [[ language.name ]]
-                </option>
-            </select>
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <div class="d-flex align-items-center">
+                    <label for="languageSelect" class="form-label me-3 mb-0 text-nowrap">Profile for:</label>
+                    <select id="languageSelect" v-model="currentLanguageId" @change="changeLanguage" class="form-select">
+                        <option v-for="language in allLanguages" :value="language.google_code">
+                            [[ language.name ]]
+                        </option>
+                    </select>
+                </div>
+            </div>
         </div>
 
         <div class="row">
             <div class="col-md-6">
-
                 <div class="card mb-3">
                     <h5 class="card-header">Options</h5>
                     <div class="card-body">
-                        <div>
-                            <strong>User language:</strong> <span>{{ reader_profile.user_language }}</span>
+                        <div class="mb-3 d-flex align-items-center">
+                            <label for="userLanguageSelect" class="form-label me-3 mb-0 text-nowrap">Translate to:</label>
+                            <select id="userLanguageSelect" v-model="userLanguageId" @change="changeUserLanguage" class="form-select">
+                                <option v-for="language in allLanguages" :value="language.google_code">
+                                    [[ language.name ]]
+                                </option>
+                            </select>
                         </div>
-                        <div>
-                            <strong>In-text translation:</strong>
-                            <pre>[[ inlineTranslation.type ]] - [[ JSON.stringify(inlineTranslation.parameters, null, 2) ]]</pre>
-                            <button type="button" class="btn btn-primary mb-3" @click="editInlineTranslation">
-                                Edit
-                            </button>
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <strong>In-text translation:</strong>
+                                <button type="button" class="btn btn-primary btn-sm" @click="editInlineTranslation">
+                                    Edit
+                                </button>
+                            </div>
+                            <div class="mt-2 p-2 bg-light rounded">
+                                <div><strong>Type:</strong> [[ inlineTranslation.type ]]</div>
+                                <div v-for="(value, name) in inlineTranslation.parameters" :key="name">
+                                    <strong>[[ name ]]:</strong> [[ value ]]
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
 
             <div class="col-md-6">
-                <h5 class="card-header">Lexical Articles</h5>
+                <h5 class="card-header">Lexical Articles Sidebar</h5>
                 <div class="card-body">
                     <ul class="list-group">
                         <li class="list-group-item d-flex justify-content-between align-items-center" v-for="article in articles" :key="article.id">
@@ -161,6 +176,7 @@ new Vue({
             modalTitle: '',
             allLanguages: [],
             currentLanguageId: null,
+            userLanguageId: null,
             inlineTranslation: {},
         };
 
@@ -185,7 +201,8 @@ new Vue({
             console.error('Error parsing inline translation:', e);
         }
 
-        data.currentLanguageId = '{{ default_profile.language.google_code }}' || null;  // Changed to google_code
+        data.currentLanguageId = '{{ default_profile.language.google_code }}' || null;
+        data.userLanguageId = '{{ default_profile.user_language.google_code }}' || null;
 
         return data;
     },
@@ -207,10 +224,33 @@ new Vue({
                 if (data.status === 'success') {
                     this.articles = data.articles;
                     this.inlineTranslation = data.inline_translation;
-                    // Update other relevant data
+                    this.userLanguageId = data.user_language_id;
                 } else {
                     alert('Failed to change profile');
                 }
+            });
+        },
+        changeUserLanguage() {
+            fetch('{% url "api_update_user_language" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify({
+                    language_id: this.userLanguageId,
+                    profile_language_id: this.currentLanguageId
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status !== 'success') {
+                    alert('Failed to update user language: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while updating user language');
             });
         },
         openModal(action, article = null) {
