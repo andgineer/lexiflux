@@ -87,12 +87,12 @@ function handleMouseUpEvent(): void {
   if (selection && selection.rangeCount > 0) {
     let range = selection.getRangeAt(0);
     let selectedWordSpans = getSelectedWordSpans(range);
-    let selectedText = selectedWordSpans.map(span => span.textContent).join(' ');
-    log('Selected text:', selectedText);
+    let wordIds = selectedWordSpans.map(span => span.id.replace('word-', ''));
+    log('Selected word IDs:', wordIds);
 
-    if (selectedText) {
+    if (wordIds.length > 0) {
       clearLexicalPanel();
-      sendTranslationRequest(selectedText, selectedWordSpans);
+      sendTranslationRequest(wordIds, selectedWordSpans);
     }
   }
 }

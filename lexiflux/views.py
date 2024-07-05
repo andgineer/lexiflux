@@ -160,8 +160,9 @@ def location(request: HttpRequest) -> HttpResponse:
 class TranslateGetParams(ViewGetParamsModel):
     """GET params for the /translate."""
 
-    text: str = Field(..., min_length=1)
+    word_ids: str = Field(default=None)
     book_code: str = Field(..., min_length=1)
+    book_page_number: int = Field(..., ge=1)
     translate: bool = Field(default=True)
     lexical_article: Optional[str] = Field(default=None)
 
@@ -174,16 +175,24 @@ def translate(request: HttpRequest, params: TranslateGetParams) -> HttpResponse:
     full: if true, side panel is visible so we prepare detailed translation materials.
     """
     user_id = request.user.id
-    print("Translating text")
+    book = Book.objects.get(code=params.book_code)
+    book_page = BookPage.objects.get(book=book, number=params.book_page_number)
+    word_ids = [int(id) for id in params.word_ids.split(".")]
+    selected_words = [
+        book_page.content[book_page.words[id][0] : book_page.words[id][1]] for id in word_ids
+    ]
+    selected_text = " ".join(selected_words)
+
+    print("Translating text", selected_text)
     # word_id = request.GET.get("word-id")  # todo: absolute word ID so we can find context
 
     # lexical_articles = LexicalArticles()
     translated = ""
     if params.translate:
-        print("Translating", params.text)
+        print("Translating", selected_text)
         translator = get_translator(params.book_code, user_id)
         print("Translator", translator)
-        translated = translator.translate(params.text)
+        translated = translator.translate(selected_text)
         print("Translated", translated)
         # todo: get article from the translator
 
@@ -206,10 +215,10 @@ def translate(request: HttpRequest, params: TranslateGetParams) -> HttpResponse:
         #     "ru",
         # )
         # f"""<p>{params.text} {params.lexical_article}</p>"""
-        articles[params.lexical_article] = f"{params.text} {params.lexical_article}"
+        articles[params.lexical_article] = f"{selected_text} {params.lexical_article}"
         result["articles"] = articles
         if params.lexical_article == "3":
-            result["url"] = f"https://glosbe.com/sr/ru/{urllib.parse.quote(params.text)}"
+            result["url"] = f"https://glosbe.com/sr/ru/{urllib.parse.quote(selected_text)}"
             result["window"] = True
     return JsonResponse(result)
 

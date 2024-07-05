@@ -79,7 +79,7 @@ class Book(models.Model):  # type: ignore
         related_name="owned_books",
     )
 
-    code = models.CharField(max_length=BOOK_CODE_LENGTH, unique=True)
+    code = models.CharField(max_length=BOOK_CODE_LENGTH, unique=True, db_index=True)
     public = models.BooleanField(default=False)
     shared_with = models.ManyToManyField(
         settings.AUTH_USER_MODEL, blank=True, related_name="shared_books"

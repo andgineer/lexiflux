@@ -10,10 +10,10 @@ interface TranslationResponse {
 }
 
 let currentSelection: {
-  text: string | null;
+  wordIds: string[] | null;
   updatedPanels: Set<string>;
 } = {
-  text: null,
+  wordIds: null,
   updatedPanels: new Set()
 };
 
@@ -40,13 +40,11 @@ function lexicalArticleNumFromId(id: string | null): string {
 }
 
 function sendTranslationRequest(
-    selectedText: string,
+    wordIds: string[],
     selectedWordSpans: HTMLElement[] | null = null,
   ): void {
   // if selectedWordSpans is null do not create translation span
   // if updateLexical is true, update the active lexical panel
-
-  const encodedText = encodeURIComponent(selectedText);
 
   // todo: show "..loading.." in lexical panel if activePanelId is not null
   // for that we can rename getActiveLexicalArticleId to startLoadingInActivePanel
@@ -57,8 +55,9 @@ function sendTranslationRequest(
   }
 
   let urlParams = new URLSearchParams({
-    'text': encodedText,
-    'book-code': viewport.bookCode
+    'word-ids': wordIds.join('.'),
+    'book-code': viewport.bookCode,
+    'book-page-number': viewport.pageNumber.toString(),
   });
 
   const translate = selectedWordSpans !== null
@@ -82,8 +81,9 @@ function sendTranslationRequest(
         })
     .then((data: TranslationResponse) => {
         log('Translated:', data);
-        currentSelection.text = selectedText;
+        currentSelection.wordIds = wordIds;
         if (translate) {
+            let selectedText = selectedWordSpans.map(span => span.textContent).join(' ');
             createAndReplaceTranslationSpan(selectedText, data.translatedText, selectedWordSpans);
         };
         if (activePanelId) {
@@ -195,13 +195,13 @@ function createAndReplaceTranslationSpan(selectedText: string, translatedText: s
 }
 
 function lexicalPanelSwitched(tabId: string): void {
-    if (currentSelection.text !== null) {
-        sendTranslationRequest(currentSelection.text, null);
+    if (currentSelection.wordIds !== null) {
+        sendTranslationRequest(currentSelection.wordIds, null);
     }
 }
 
 function clearLexicalPanel(): void {
-    currentSelection.text = null;
+    currentSelection.wordIds = null;
     currentSelection.updatedPanels.clear();
 
     const panelContent = document.getElementById('lexicalPanelContent');
