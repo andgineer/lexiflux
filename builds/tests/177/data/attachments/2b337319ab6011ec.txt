@@ -1,0 +1,1 @@
+GET params validation error [{'type': 'missing', 'loc': ('book-page-number',), 'msg': 'Field required', 'input': {'text': 'Hello', 'book-code': 'alice-adventures-carroll'}, 'url': 'https://errors.pydantic.dev/2.7/v/missing'}]
