@@ -6,9 +6,8 @@ from collections import Counter
 
 from django.core.management import CommandError
 
-from core.models import CustomUser
 from lexiflux.language.translation import detect_language, find_language
-from lexiflux.models import Book, Author, Language, BookPage
+from lexiflux.models import Book, Author, Language, BookPage, CustomUser
 from lexiflux.models import Toc
 
 log = logging.getLogger()

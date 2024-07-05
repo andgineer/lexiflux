@@ -1,9 +1,27 @@
 """Forms for the Lexiflux app."""
 
 from typing import Dict, Any
-
 from django import forms
-from .models import LexicalArticle
+from django.contrib.auth.forms import UserCreationForm
+from lexiflux.models import LexicalArticle
+from lexiflux.models import CustomUser
+
+
+class CustomUserCreationForm(UserCreationForm):  # type: ignore  # pylint: disable=too-many-ancestors
+    """Form for creating a new user."""
+
+    def save(self, commit: bool = True) -> CustomUser:
+        user = super().save(commit=False)
+        user.is_active = True
+        if commit:
+            user.save()
+        return user  # type: ignore
+
+    class Meta(UserCreationForm.Meta):  # type: ignore
+        """Meta class for the form."""
+
+        model = CustomUser
+        fields = UserCreationForm.Meta.fields + ("email",)
 
 
 class LexicalArticleForm(forms.ModelForm):  # type: ignore

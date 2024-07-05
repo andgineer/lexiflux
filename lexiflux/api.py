@@ -20,7 +20,7 @@ class ViewGetParamsModel(BaseModel):  # pylint: disable=too-few-public-methods
         """Pydantic configuration."""
 
         alias_generator = to_kebab_case
-        allow_population_by_field_name = True
+        populate_by_name = True
 
 
 def get_params(schema: Type[BaseModel]) -> Callable[[Callable[..., Any]], Callable[..., Any]]:

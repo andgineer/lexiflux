@@ -3,21 +3,87 @@
 import json
 from typing import Optional, Dict, Any
 import urllib.parse
-
+import logging
+from pydantic import Field
 from django.contrib.auth.decorators import login_required
+from django.core.exceptions import ValidationError
 from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
-from django.db import models
+from django.db import models, IntegrityError
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views.decorators.http import require_POST, require_http_methods
-from pydantic import Field
+from django.urls import reverse_lazy
+from django.views import generic
+from django.contrib.auth import authenticate
+from django.contrib.auth.forms import AuthenticationForm
+from django.contrib.auth import get_user_model, login
+from django.contrib.auth.views import LoginView
 
-from core.models import CustomUser
 from lexiflux.language.translation import get_translator
 from lexiflux.api import get_params, ViewGetParamsModel
+from lexiflux.forms import CustomUserCreationForm
 
-from lexiflux.models import Book, BookPage, ReadingHistory, ReadingLoc, LexicalArticle, Language
+from lexiflux.models import (
+    Book,
+    BookPage,
+    ReadingHistory,
+    ReadingLoc,
+    LexicalArticle,
+    Language,
+    ReaderProfile,
+    CustomUser,
+)
+
+logger = logging.getLogger(__name__)
+
+
+class SignUpView(generic.CreateView):  # type: ignore
+    """Sign up view."""
+
+    form_class = CustomUserCreationForm
+    success_url = reverse_lazy("login")
+    template_name = "signup.html"
+
+
+UserModel = get_user_model()
+
+
+class CustomLoginView(LoginView):  # type: ignore
+    """Custom login view."""
+
+    template_name = "login.html"
+
+    def post(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
+        """Handle post request."""
+        username = request.POST.get("username")
+        password = request.POST.get("password")
+
+        if user := UserModel.objects.get(username=username):
+            if user.check_password(password):
+                if user.is_approved or user.is_superuser:
+                    if user := authenticate(request, username=username, password=password):
+                        login(request, user)
+                        return redirect(self.get_success_url())
+                    error_message = "Internal auth error."
+                else:
+                    error_message = (
+                        "Your account is not approved yet. "
+                        "Please wait for an administrator to approve your account."
+                    )
+            else:
+                error_message = (
+                    "Please enter a correct username and password! "
+                    "Note that both fields may be case-sensitive."
+                )
+        else:
+            error_message = (
+                "Please enter a correct username and password! "
+                "Note that both fields may be case-sensitive."
+            )
+
+        form = AuthenticationForm(initial={"username": username})
+        return render(request, self.template_name, {"form": form, "error_message": error_message})
 
 
 def render_page(page_db: BookPage) -> str:
@@ -174,7 +240,6 @@ def translate(request: HttpRequest, params: TranslateGetParams) -> HttpResponse:
 
     full: if true, side panel is visible so we prepare detailed translation materials.
     """
-    user_id = request.user.id
     book = Book.objects.get(code=params.book_code)
     book_page = BookPage.objects.get(book=book, number=params.book_page_number)
     word_ids = [int(id) for id in params.word_ids.split(".")]
@@ -190,7 +255,7 @@ def translate(request: HttpRequest, params: TranslateGetParams) -> HttpResponse:
     translated = ""
     if params.translate:
         print("Translating", selected_text)
-        translator = get_translator(params.book_code, user_id)
+        translator = get_translator(request.user, book)
         print("Translator", translator)
         translated = translator.translate(selected_text)
         print("Translated", translated)
@@ -226,19 +291,71 @@ def translate(request: HttpRequest, params: TranslateGetParams) -> HttpResponse:
 @login_required  # type: ignore
 def profile(request: HttpRequest) -> HttpResponse:
     """Profile page."""
-    reader_profile = request.user.reader_profile
-    return render(
-        request,
-        "profile.html",
-        {
-            "user": request.user,
-            "reader_profile": reader_profile,
-            "articles": json.dumps(
-                list(reader_profile.get_lexical_articles().values("title", "type", "parameters"))
-            ),
-            "inline_translation": json.dumps(reader_profile.inline_translation),
-        },
+    reader_profile = (
+        request.user.default_reader_profile or request.user.reader_profiles.all().first()
     )
+    all_languages = Language.objects.all()
+
+    articles = (
+        list(reader_profile.get_lexical_articles().values("id", "title", "type", "parameters"))
+        if reader_profile
+        else []
+    )
+    all_languages_data = list(
+        all_languages.values("google_code", "name")
+    )  # Changed 'id' to 'google_code'
+    inline_translation = reader_profile.inline_translation if reader_profile else {}
+
+    logger.debug(f"Articles: {articles}")
+    logger.debug(f"All languages: {all_languages_data}")
+    logger.debug(f"Inline translation: {inline_translation}")
+
+    articles_json = json.dumps(articles)
+    all_languages_json = json.dumps(all_languages_data)
+    inline_translation_json = json.dumps(inline_translation)
+
+    logger.debug(f"Articles JSON: {articles_json}")
+    logger.debug(f"All languages JSON: {all_languages_json}")
+    logger.debug(f"Inline translation JSON: {inline_translation_json}")
+
+    context = {
+        "user": request.user,
+        "reader_profile": reader_profile,
+        "articles": articles_json,
+        "all_languages": all_languages_json,
+        "default_profile": reader_profile,
+        "inline_translation": inline_translation_json,
+    }
+
+    return render(request, "profile.html", context)
+
+
+@login_required  # type: ignore
+@require_http_methods(["POST"])  # type: ignore
+def api_get_profile_for_language(request: HttpRequest) -> JsonResponse:
+    """Change or create a new profile for the selected language."""
+    try:
+        data = json.loads(request.body)
+        language_id = data.get("language_id")
+        language = get_object_or_404(Language, google_code=language_id)
+
+        reader_profile = ReaderProfile.get_or_create_profile(request.user, language)
+
+        return JsonResponse(
+            {
+                "status": "success",
+                "profile_id": reader_profile.id,
+                "articles": list(
+                    reader_profile.get_lexical_articles().values(
+                        "id", "title", "type", "parameters"
+                    )
+                ),
+                "inline_translation": reader_profile.inline_translation,
+            }
+        )
+    except Exception as e:  # pylint: disable=broad-except
+        logger.exception("Error in api_get_profile_for_language")
+        return JsonResponse({"status": "error", "message": str(e)}, status=500)
 
 
 @login_required  # type: ignore
@@ -246,7 +363,8 @@ def profile(request: HttpRequest) -> HttpResponse:
 def save_inline_translation(request: HttpRequest) -> JsonResponse:
     """Save the inline translation settings."""
     data = json.loads(request.body)
-    reader_profile = request.user.reader_profile
+    language_id = data.get("language_id")
+    reader_profile = request.user.reader_profiles.get(language_id=language_id)
     reader_profile.inline_translation_type = data["type"]
     reader_profile.inline_translation_parameters = json.dumps(data["parameters"])
     reader_profile.save()
@@ -262,19 +380,50 @@ def save_inline_translation(request: HttpRequest) -> JsonResponse:
 @require_http_methods(["POST"])  # type: ignore
 def manage_lexical_article(request: HttpRequest) -> JsonResponse:  # pylint: disable=too-many-return-statements
     """Add, edit, or delete a lexical article."""
-    data = json.loads(request.body)
-    action = data.get("action")
-    reader_profile = request.user.reader_profile
+    try:
+        data = json.loads(request.body)
+        action = data.get("action")
+        language_id = data.get("language_id")
 
-    if action == "add":
-        # Check for duplicate titles
-        if LexicalArticle.objects.filter(
-            reader_profile=reader_profile, title=data["title"]
-        ).exists():
+        logger.debug(f"Received request: action={action}, language_id={language_id}")
+
+        if not language_id:
             return JsonResponse(
-                {"status": "error", "message": "An article with this title already exists"}
+                {"status": "error", "message": "Language ID is missing"}, status=400
             )
 
+        try:
+            language = Language.objects.get(google_code=language_id)
+            reader_profile = ReaderProfile.objects.get(user=request.user, language=language)
+        except Language.DoesNotExist:
+            return JsonResponse({"status": "error", "message": "Language not found"}, status=404)
+        except ReaderProfile.DoesNotExist:
+            return JsonResponse(
+                {"status": "error", "message": "Reader profile not found for this language"},
+                status=404,
+            )
+
+        if action == "add":
+            return add_lexical_article(reader_profile, data)
+        if action == "edit":
+            return edit_lexical_article(reader_profile, data)
+        if action == "delete":
+            return delete_lexical_article(reader_profile, data)
+        return JsonResponse({"status": "error", "message": "Invalid action"}, status=400)
+
+    except json.JSONDecodeError:
+        logger.exception("Invalid JSON in request body")
+        return JsonResponse(
+            {"status": "error", "message": "Invalid JSON in request body"}, status=400
+        )
+    except Exception as e:  # pylint: disable=broad-except
+        logger.exception("An unexpected error occurred in manage_lexical_article")
+        return JsonResponse({"status": "error", "message": str(e)}, status=500)
+
+
+def add_lexical_article(reader_profile: ReaderProfile, data: dict[str, Any]) -> JsonResponse:
+    """Add a lexical article."""
+    try:
         article = LexicalArticle.objects.create(
             reader_profile=reader_profile,
             type=data["type"],
@@ -282,44 +431,68 @@ def manage_lexical_article(request: HttpRequest) -> JsonResponse:  # pylint: dis
             parameters=data["parameters"],
         )
         return JsonResponse({"status": "success", "id": article.id})
+    except IntegrityError:
+        return JsonResponse(
+            {"status": "error", "message": "An article with this title already exists"}, status=400
+        )
+    except KeyError as e:
+        return JsonResponse(
+            {"status": "error", "message": f"Missing required field: {str(e)}"}, status=400
+        )
 
-    if action == "edit":
-        try:
-            article = LexicalArticle.objects.get(id=data["id"], reader_profile=reader_profile)
-            # Check for duplicate titles, excluding the current article
-            if (
-                LexicalArticle.objects.filter(reader_profile=reader_profile, title=data["title"])
-                .exclude(id=data["id"])
-                .exists()
-            ):
-                return JsonResponse(
-                    {"status": "error", "message": "An article with this title already exists"}
-                )
 
-            article.type = data["type"]
-            article.title = data["title"]
-            article.parameters = data["parameters"]
-            article.save()
-            return JsonResponse({"status": "success"})
-        except LexicalArticle.DoesNotExist:
-            return JsonResponse({"status": "error", "message": "Article not found"})
+def edit_lexical_article(reader_profile: ReaderProfile, data: dict[str, Any]) -> JsonResponse:
+    """Edit a lexical article."""
+    try:
+        article_id = data.get("id")
+        if not article_id:
+            return JsonResponse(
+                {"status": "error", "message": "Article ID is missing"}, status=400
+            )
 
-    elif action == "delete":
-        if "id" not in data:
-            return JsonResponse({"status": "error", "message": "Article ID is missing"})
+        article = LexicalArticle.objects.filter(
+            id=article_id, reader_profile=reader_profile
+        ).first()
+        if not article:
+            return JsonResponse({"status": "error", "message": "Article not found"}, status=404)
 
-        LexicalArticle.objects.filter(id=data["id"], reader_profile=reader_profile).delete()
+        article.type = data.get("type", article.type)
+        article.title = data.get("title", article.title)
+        article.parameters = data.get("parameters", article.parameters)
+        article.full_clean()  # Validate the model
+        article.save()
+        return JsonResponse({"status": "success", "id": article.id})
+    except ValidationError as e:
+        return JsonResponse({"status": "error", "message": str(e)}, status=400)
+    except Exception as e:  # pylint: disable=broad-except
+        logger.exception(f"Error editing article: {str(e)}")
+        return JsonResponse({"status": "error", "message": "Failed to edit article"}, status=500)
 
+
+def delete_lexical_article(reader_profile: ReaderProfile, data: dict[str, Any]) -> JsonResponse:
+    """Delete a lexical article."""
+    try:
+        article_id = data.get("id")
+        if not article_id:
+            return JsonResponse(
+                {"status": "error", "message": "Article ID is missing"}, status=400
+            )
+
+        article = LexicalArticle.objects.get(id=article_id, reader_profile=reader_profile)
+        article.delete()
         return JsonResponse({"status": "success"})
+    except LexicalArticle.DoesNotExist:
+        return JsonResponse({"status": "error", "message": "Article not found"}, status=404)
+    except Exception as e:  # pylint: disable=broad-except
+        logger.exception(f"Error deleting article: {str(e)}")
+        return JsonResponse({"status": "error", "message": "Failed to delete article"}, status=500)
 
-    return JsonResponse({"status": "error", "message": "Invalid action"})
 
-
-# views.py
 @login_required  # type: ignore
 def api_profile(request: HttpRequest) -> JsonResponse:
     """Return the profile data as JSON for AJAX."""
-    reader_profile = request.user.reader_profile
+    language_id = request.GET.get("language_id")
+    reader_profile = request.user.reader_profiles.get(language_id=language_id)
     return JsonResponse(
         {
             "articles": list(

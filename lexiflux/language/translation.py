@@ -8,7 +8,7 @@ from typing import Optional
 from deep_translator import GoogleTranslator, single_detection
 from django.db.models import Q
 
-from lexiflux.models import Book, Language, ReaderProfile
+from lexiflux.models import Book, Language, ReaderProfile, CustomUser
 
 log = logging.getLogger()
 
@@ -31,10 +31,9 @@ class Translator:  # pylint: disable=too-few-public-methods
 
 
 @lru_cache(maxsize=128)
-def get_translator(book_code: str, user_id: str) -> Translator:
+def get_translator(user: CustomUser, book: Book) -> Translator:
     """Get translator."""
-    book = Book.objects.get(code=book_code)
-    profile = ReaderProfile.objects.get(user_id=user_id)
+    profile = ReaderProfile.get_or_create_profile(user, book.language)
     return Translator(book, profile)
 
 

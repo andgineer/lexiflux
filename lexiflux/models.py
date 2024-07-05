@@ -5,16 +5,14 @@ import re
 from typing import TypeAlias, Tuple, List, Any, Dict
 
 from django.conf import settings
-from django.db import models
+from django.db import models, transaction
 from django.dispatch import receiver
 from django.utils import timezone
 from django.core.cache import cache
 from django.db.models.signals import pre_save
 from django.core.exceptions import ValidationError
+from django.contrib.auth.models import AbstractUser
 from transliterate import get_available_language_codes, translit
-
-from core.models import CustomUser
-
 
 BOOK_CODE_LENGTH = 100
 
@@ -30,6 +28,21 @@ ARTICLE_TYPES = [
 
 TocEntry: TypeAlias = Tuple[str, int, int]  # <title>, <page num>, <word on the page num>
 Toc: TypeAlias = List[TocEntry]
+
+
+class CustomUser(AbstractUser):  # type: ignore
+    """Custom user model for the application."""
+
+    email = models.EmailField(unique=True, blank=False)
+    is_approved = models.BooleanField(default=False)
+
+    default_reader_profile = models.ForeignKey(
+        "lexiflux.ReaderProfile",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="default_for_users",
+    )
 
 
 def split_into_words(text: str) -> list[str]:
@@ -237,11 +250,11 @@ class LexicalArticle(models.Model):  # type: ignore
 class ReaderProfile(models.Model):  # type: ignore
     """A reader profile."""
 
-    user = models.OneToOneField(
-        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="reader_profile"
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="reader_profiles"
     )
     language = models.ForeignKey(
-        Language, on_delete=models.CASCADE, related_name="profile_language"
+        Language, on_delete=models.CASCADE, related_name="reader_profiles"
     )
     current_book = models.ForeignKey(
         Book,
@@ -258,6 +271,42 @@ class ReaderProfile(models.Model):  # type: ignore
 
     class Meta:
         unique_together = ("user", "language")
+
+    @classmethod
+    @transaction.atomic  # type: ignore
+    def get_or_create_profile(cls, user: CustomUser, language: Language) -> "ReaderProfile":
+        """Get or create a profile for the given user and language."""
+        default = user.default_reader_profile
+        profile, created = cls.objects.get_or_create(
+            user=user,
+            language=language,
+            defaults={
+                "user_language": default.user_language if user.default_reader_profile else None,
+                "inline_translation_type": default.inline_translation_type
+                if user.default_reader_profile
+                else "",
+                "inline_translation_parameters": default.inline_translation_parameters
+                if user.default_reader_profile
+                else {},
+            },
+        )
+
+        if created:
+            # Copy lexical articles from the default profile
+            if user.default_reader_profile:
+                for article in user.default_reader_profile.lexical_articles.all():
+                    LexicalArticle.objects.create(
+                        reader_profile=profile,
+                        type=article.type,
+                        title=article.title,
+                        parameters=article.parameters,
+                    )
+
+            # Set this new profile as the default
+            user.default_reader_profile = profile
+            user.save()
+
+        return profile  # type: ignore
 
     @property
     def inline_translation(self) -> Dict[str, Any]:

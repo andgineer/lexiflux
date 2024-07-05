@@ -26,7 +26,7 @@ def test_translate_view_success(mock_get_translator, client, user, book):
 
     assert response.status_code == 200
     assert response.json()['translatedText'] == 'Hola'
-    mock_get_translator.assert_called_once_with(book_code, user.id)
+    mock_get_translator.assert_called_once_with(user, book)
     mock_translator.translate.assert_called_once_with('of page 1')
 
 
@@ -36,9 +36,9 @@ def test_get_translator(mock_translator, book, user):
     book_code = book.code
     user_id = user.id
 
-    result = get_translator(book_code, str(user_id))
+    result = get_translator(user, book)
 
-    profile, created = ReaderProfile.objects.get_or_create(user=user)
+    profile, created = ReaderProfile.objects.get_or_create(user=user, language=book.language)
     mock_translator.assert_called_once_with(book, profile)
     assert isinstance(result, mock_translator.return_value.__class__)
 

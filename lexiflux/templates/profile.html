@@ -12,40 +12,32 @@
     </nav>
 
     <div class="container mt-4">
+
+        <div class="mb-3">
+            <label for="languageSelect" class="form-label">Profile for the</label>
+            <select id="languageSelect" v-model="currentLanguageId" @change="changeLanguage" class="form-select">
+                <option v-for="language in allLanguages" :value="language.google_code">
+                    [[ language.name ]]
+                </option>
+            </select>
+        </div>
+
         <div class="row">
             <div class="col-md-6">
-                <div class="card mb-4">
-                    <h5 class="card-header">User</h5>
-                    <div class="card-body">
-                        <div>
-                            <strong>Email:</strong> <span>{{ user.email }}</span>
-                        </div>
-                        <div>
-                            <strong>Current Book:</strong> <span>{{ reader_profile.current_book }}</span>
-                        </div>
-                    </div>
-                </div>
 
-                <div class="card mb-4">
-                    <h5 class="card-header">Reading profile</h5>
+                <div class="card mb-3">
+                    <h5 class="card-header">Options</h5>
                     <div class="card-body">
-                        <div>
-                            <strong>For language:</strong> <span>{{ reader_profile.language }}</span>
-                        </div>
                         <div>
                             <strong>User language:</strong> <span>{{ reader_profile.user_language }}</span>
                         </div>
-                    </div>
-                </div>
-
-                <div class="card mb-3">
-                    <h5 class="card-header">In-text Translation</h5>
-                    <div class="card-body">
-                        <p><strong>Current setting:</strong></p>
-                        <pre>[[ inlineTranslation.type ]] - [[ JSON.stringify(inlineTranslation.parameters, null, 2) ]]</pre>
-                        <button type="button" class="btn btn-primary mb-3" @click="editInlineTranslation">
-                            Edit
-                        </button>
+                        <div>
+                            <strong>In-text translation:</strong>
+                            <pre>[[ inlineTranslation.type ]] - [[ JSON.stringify(inlineTranslation.parameters, null, 2) ]]</pre>
+                            <button type="button" class="btn btn-primary mb-3" @click="editInlineTranslation">
+                                Edit
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -148,30 +140,79 @@
 new Vue({
     el: '#profile-app',
     delimiters: ['[[', ']]'],
-    data: {
-        articles: {{ articles|safe }},
-        aiModels: [],
-        predefinedUrls: [
-            'https://www.merriam-webster.com/dictionary/{term}',
-            'https://translate.google.com/?sl=en&tl=sr&text={term}&op=translate',
-            'https://glosbe.com/sr/ru/{term}',
-            'https://dictionary.cambridge.org/spellcheck/english/?q={term}',
-            'https://www.oed.com/search/dictionary/?scope=Entries&q={term}'
-        ],
-        form: {
-            id: null,
-            title: '',
-            type: '',
-            parameters: {}
-        },
-        showTitleField: true,
-        modalTitle: '',
-        inlineTranslation: {{ inline_translation|safe }}
+    data: function() {
+        let data = {
+            articles: [],
+            aiModels: [],
+            predefinedUrls: [
+                'https://www.merriam-webster.com/dictionary/{term}',
+                'https://translate.google.com/?sl=en&tl=sr&text={term}&op=translate',
+                'https://glosbe.com/sr/ru/{term}',
+                'https://dictionary.cambridge.org/spellcheck/english/?q={term}',
+                'https://www.oed.com/search/dictionary/?scope=Entries&q={term}'
+            ],
+            form: {
+                id: null,
+                title: '',
+                type: '',
+                parameters: {}
+            },
+            showTitleField: true,
+            modalTitle: '',
+            allLanguages: [],
+            currentLanguageId: null,
+            inlineTranslation: {},
+        };
+
+        try {
+            data.articles = JSON.parse('{{ articles|escapejs }}' || '[]');
+            console.log('Parsed articles:', data.articles);
+        } catch (e) {
+            console.error('Error parsing articles:', e);
+        }
+
+        try {
+            data.allLanguages = JSON.parse('{{ all_languages|escapejs }}' || '[]');
+            console.log('Parsed languages:', data.allLanguages);
+        } catch (e) {
+            console.error('Error parsing languages:', e);
+        }
+
+        try {
+            data.inlineTranslation = JSON.parse('{{ inline_translation|escapejs }}' || '{}');
+            console.log('Parsed inline translation:', data.inlineTranslation);
+        } catch (e) {
+            console.error('Error parsing inline translation:', e);
+        }
+
+        data.currentLanguageId = '{{ default_profile.language.google_code }}' || null;  // Changed to google_code
+
+        return data;
     },
     mounted: function() {
         this.loadArticles();
     },
     methods: {
+        changeLanguage() {
+            fetch('{% url "api_get_profile_for_language" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify({ language_id: this.currentLanguageId })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    this.articles = data.articles;
+                    this.inlineTranslation = data.inline_translation;
+                    // Update other relevant data
+                } else {
+                    alert('Failed to change profile');
+                }
+            });
+        },
         openModal(action, article = null) {
             this.resetForm();
             this.modalTitle = action === 'add' ? 'Add New Article' : 'Edit Article';
@@ -241,7 +282,9 @@ new Vue({
             const isInlineTranslation = !this.showTitleField;
 
             let url = isInlineTranslation ? '{% url "save_inline_translation" %}' : '{% url "manage_lexical_article" %}';
-            let data = isInlineTranslation ? { type: this.form.type, parameters: this.form.parameters } : { action, ...this.form };
+            let data = isInlineTranslation ?
+                { type: this.form.type, parameters: this.form.parameters, language_id: this.currentLanguageId } :
+                { action, ...this.form, language_id: this.currentLanguageId };
 
             fetch(url, {
                 method: 'POST',
@@ -262,8 +305,12 @@ new Vue({
                     const modal = bootstrap.Modal.getInstance(this.$refs.articleModal);
                     modal.hide();
                 } else {
-                    alert(data.message);
+                    alert(data.message || 'An error occurred');
                 }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while saving the article');
             });
         },
         deleteArticle(id) {
@@ -274,15 +321,23 @@ new Vue({
                         'Content-Type': 'application/json',
                         'X-CSRFToken': '{{ csrf_token }}'
                     },
-                    body: JSON.stringify({ action: 'delete', id: id })
+                    body: JSON.stringify({
+                        action: 'delete',
+                        id: id,
+                        language_id: this.currentLanguageId  // Add this line
+                    })
                 })
                 .then(response => response.json())
                 .then(data => {
                     if (data.status === 'success') {
                         this.loadArticles();
                     } else {
-                        alert(data.message);
+                        alert(data.message || 'An error occurred while deleting the article');
                     }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred while deleting the article');
                 });
             }
         },
@@ -295,14 +350,28 @@ new Vue({
             new bootstrap.Modal(this.$refs.articleModal).show();
         },
         loadArticles() {
-            fetch('{% url "api_profile" %}')
-                .then(response => response.json())
+            fetch(`{% url "api_profile" %}?language_id=${this.currentLanguageId}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.text();
+                })
+                .then(text => {
+                    try {
+                        return JSON.parse(text);
+                    } catch (e) {
+                        console.error('Server response is not valid JSON:', text);
+                        throw new Error('The server response is not valid JSON');
+                    }
+                })
                 .then(data => {
                     this.articles = data.articles;
-                    console.log('Loaded articles:', this.articles);  // Debug log
+                    console.log('Loaded articles:', this.articles);
                 })
                 .catch(error => {
                     console.error('Error loading articles:', error);
+                    alert('Failed to load articles. Please try again.');
                 });
         },
     }

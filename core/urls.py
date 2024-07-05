@@ -15,17 +15,9 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 
-from django.contrib import admin
 from django.urls import include, path
-from django.contrib.auth.views import LogoutView
 
-from .views import SignUpView, CustomLoginView
 
 urlpatterns = [
     path("", include("lexiflux.urls")),
-    path("admin/", admin.site.urls),
-    path("accounts/login/", CustomLoginView.as_view(), name="login"),
-    path("accounts/logout/", LogoutView.as_view(next_page="login"), name="logout"),
-    path("accounts/signup/", SignUpView.as_view(), name="signup"),
-    path("accounts/", include("django.contrib.auth.urls")),
 ]

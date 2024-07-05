@@ -1,7 +1,7 @@
 """Custom User Admin Configuration"""
 
 from django.contrib import admin
-from .models import CustomUser
+from lexiflux.models import CustomUser
 
 
 @admin.register(CustomUser)

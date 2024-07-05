@@ -5,3 +5,4 @@ max-line-length=99
 # globally disable pylint checks (comma separated)
 disable=
     fixme,
+    logging-fstring-interpolation,

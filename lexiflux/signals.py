@@ -50,6 +50,8 @@ def create_user_profile(
             inline_translation_type="Dictionary",
             inline_translation_parameters=json.dumps({"dictionary": "GoogleTranslator"}),
         )
+        instance.default_reader_profile = reader_profile
+        instance.save()
 
         for article in DEFAULT_LEXICAL_ARTICLES:
             LexicalArticle.objects.create(
@@ -60,13 +62,3 @@ def create_user_profile(
             )
 
         # todo: inline_translation
-
-
-@receiver(post_save, sender=User)  # type: ignore
-def save_user_profile(
-    sender: Any,  # pylint: disable=unused-argument
-    instance: Any,
-    **kwargs: Any,
-) -> None:
-    """Save a profile for a new user."""
-    instance.reader_profile.save()
