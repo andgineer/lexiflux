@@ -10,22 +10,24 @@ from lexiflux.models import ReaderProfile
 @allure.epic('Translator')
 @pytest.mark.django_db
 @patch('lexiflux.views.get_translator')
-def test_translate_view_success(mock_get_translator, client, user):
+def test_translate_view_success(mock_get_translator, client, user, book):
     client.force_login(user)
 
     mock_translator = mock_get_translator.return_value
     mock_translator.translate.return_value = "Hola"
 
-    book_code = 'alice-adventures-carroll'
+    book_code = 'some-book-code'
     response = client.get(reverse('translate'), {
         'text': 'Hello',
-        'book-code': book_code,  # Assuming a book ID is necessary but not used in the mock
+        'book-code': book_code,
+        'book-page-number': '1',
+        'word-ids': '1.2.3',
     })
 
     assert response.status_code == 200
     assert response.json()['translatedText'] == 'Hola'
     mock_get_translator.assert_called_once_with(book_code, user.id)
-    mock_translator.translate.assert_called_once_with('Hello')
+    mock_translator.translate.assert_called_once_with('of page 1')
 
 
 @allure.epic('Translator')
