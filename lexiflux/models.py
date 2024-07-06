@@ -205,6 +205,33 @@ class BookPage(models.Model):  # type: ignore
         """Return the cache key for the words on this page."""
         return f"book_page_words__{self.book.code}_{self.number}"
 
+    def extract_words(
+        self, start_word_id: int, end_word_id: int
+    ) -> Tuple[str, List[Tuple[int, int]]]:
+        """Extract a fragment of text from start_word_id to end_word_id (inclusive).
+
+        Returns:
+            (The extracted text fragment, A list of word indices for the extracted fragment)
+        """
+        words = self.words
+
+        start_word_id = max(start_word_id, 0)
+        if end_word_id >= len(words):
+            end_word_id = len(words) - 1
+        if start_word_id > end_word_id:
+            raise ValueError("Invalid word IDs")
+
+        start_pos = words[start_word_id][0]
+        end_pos = words[end_word_id][1]
+
+        text_fragment = self.content[start_pos:end_pos]
+        word_indices = words[start_word_id : end_word_id + 1]
+
+        # Adjust word indices to be relative to the start of the fragment
+        adjusted_indices = [(start - start_pos, end - start_pos) for start, end in word_indices]
+
+        return text_fragment, adjusted_indices
+
 
 @receiver(pre_save, sender=BookPage)  # pylint: disable=unused-argument
 def clear_cache_if_content_changed(sender, instance, **kwargs):  # type: ignore  # pylint: disable=unused-argument
