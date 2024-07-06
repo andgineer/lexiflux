@@ -156,6 +156,7 @@ packaging==24.1
     #   spacy
     #   thinc
     #   weasel
+pip==24.1.1
 preshed==3.0.9
     # via
     #   spacy

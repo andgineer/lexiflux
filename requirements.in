@@ -17,3 +17,6 @@ transliterate
 beautifulsoup4
 spacy
 nltk
+# to download nltk data
+pip
+

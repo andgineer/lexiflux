@@ -336,6 +336,7 @@ parso==0.8.4
     # via jedi
 pexpect==4.9.0
     # via ipython
+pip==24.1.1
 platformdirs==4.1.0
     # via
     #   jupyter-core
