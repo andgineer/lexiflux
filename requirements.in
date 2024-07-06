@@ -15,3 +15,5 @@ EbookLib
 chardet
 transliterate
 beautifulsoup4
+spacy
+nltk
