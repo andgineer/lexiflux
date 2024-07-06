@@ -1,4 +1,4 @@
-from lexiflux.word_extractor import parse_words, HTMLWordExtractor
+from lexiflux.language.word_extractor import parse_words, HTMLWordExtractor
 
 
 def get_content_by_indices(content, indices):

@@ -14,7 +14,7 @@ from django.core.exceptions import ValidationError
 from django.contrib.auth.models import AbstractUser
 from transliterate import get_available_language_codes, translit
 
-from lexiflux.word_extractor import parse_words
+from lexiflux.language.word_extractor import parse_words
 
 BOOK_CODE_LENGTH = 100
 
@@ -179,7 +179,8 @@ class BookPage(models.Model):  # type: ignore
 
     number = models.PositiveIntegerField()
     content = models.TextField()
-    book = models.ForeignKey(Book, related_name="pages", on_delete=models.CASCADE)
+    book = models.ForeignKey("Book", related_name="pages", on_delete=models.CASCADE)
+    word_indices = models.TextField(null=True, blank=True)
 
     class Meta:
         ordering = ["number"]
@@ -188,36 +189,56 @@ class BookPage(models.Model):  # type: ignore
     def __str__(self) -> str:
         return f"Page {self.number} of {self.book.title}"
 
+    def _encode_word_indices(self, word_indices: List[Tuple[int, int]]) -> str:
+        """Encode word indices to a compact string format."""
+        # Flatten the structure before encoding
+        flattened = [index for pair in word_indices for index in pair]
+        return json.dumps(flattened)
+
+    def _decode_word_indices(self) -> List[Tuple[int, int]]:
+        """Decode word indices from the compact string format."""
+        if not self.word_indices:
+            return []
+        try:
+            # Parse the JSON string
+            flat_indices = json.loads(self.word_indices)
+            # Pair the indices
+            return list(zip(flat_indices[::2], flat_indices[1::2]))
+        except json.JSONDecodeError:
+            print(f"Failed to decode word_indices: {self.word_indices}")
+            return []
+
     @property
     def words(self) -> List[Tuple[int, int]]:
-        """Property to parse words from the content."""
-        cache_key = self.get_cache_key()
-        cached_words = cache.get(cache_key)
-        if cached_words is None:
-            cached_words = self._parse_words()
-            cache.set(cache_key, cached_words, timeout=60 * 60)  # Cache for 1 hour
-        return cached_words  # type: ignore
+        """Property to parse words from the content or retrieve from DB."""
+        if self.word_indices is None:
+            print("Word indices are None, parsing words...")
+            self._parse_and_save_words()
+        else:
+            print(f"Word indices found: {self.word_indices}")
 
-    def _parse_words(self) -> list[Tuple[int, int]]:
-        return parse_words(self.content)
+        decoded = self._decode_word_indices()
+        print(f"Decoded word indices: {decoded}")
+        return decoded
 
-    def get_cache_key(self) -> str:
-        """Return the cache key for the words on this page."""
-        return f"book_page_words__{self.book.code}_{self.number}"
+    def _parse_and_save_words(self) -> None:
+        """Parse words from content and save to DB."""
+        parsed_words, _ = parse_words(self.content)  # Assuming parse_words returns a tuple
+        print(f"Parsed words: {parsed_words}")
+        self.word_indices = self._encode_word_indices(parsed_words)
+        print(f"Encoded word indices: {self.word_indices}")
+        self.save(update_fields=["word_indices"])
 
     def extract_words(
         self, start_word_id: int, end_word_id: int
     ) -> Tuple[str, List[Tuple[int, int]]]:
-        """Extract a fragment of text from start_word_id to end_word_id (inclusive).
-
-        Returns:
-            (The extracted text fragment, A list of word indices for the extracted fragment)
-        """
+        """Extract a fragment of text from start_word_id to end_word_id (inclusive)."""
         words = self.words
+        if not words:
+            return "", []
 
         start_word_id = max(start_word_id, 0)
-        if end_word_id >= len(words):
-            end_word_id = len(words) - 1
+        end_word_id = min(end_word_id, len(words) - 1)
         if start_word_id > end_word_id:
             raise ValueError("Invalid word IDs")
 

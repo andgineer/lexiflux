@@ -70,5 +70,4 @@ def test_render_page(content, expected_output, book):
         number=book.pages.count() + 1,  # Use a new page number
         content=content
     )
-    django_cache.delete(page.get_cache_key())
     assert render_page(page) == expected_output
