@@ -4,9 +4,20 @@ from lexiflux.language.extract_sentences import break_into_sentences, SentenceTo
 
 @pytest.fixture
 def sample_text_and_word_ids():
-    text = "This is a test. It has three sentences. How about that?"
-    word_ids = [(0, 4), (5, 7), (8, 9), (10, 14), (15, 17), (18, 21), (22, 27),
-                (28, 37), (38, 41), (42, 47), (48, 52), (53, 57)]
+    text = " is a test. It has three sentences. How about that? We've"
+    word_ids = [
+        (1, 3),   # is
+        (4, 5),   # a
+        (6, 10),  # test
+        (11, 13), # It
+        (14, 17), # has
+        (18, 23), # three
+        (24, 33), # sentences
+        (35, 38), # How
+        (39, 44), # about
+        (45, 49), # that
+        (51, 55), # We've
+    ]
     return text, word_ids
 
 
@@ -15,17 +26,17 @@ def test_break_into_sentences_spacy(sample_text_and_word_ids):
     sentences, word_to_sentence = break_into_sentences(text, word_ids, tokenizer=SentenceTokenizer.SPACY,
                                                        lang_code='sr')
 
-    assert len(sentences) == 3
-    assert sentences[0] == "This is a test."
-    assert word_to_sentence == {0: 0, 1: 0, 2: 0, 3: 0, 4: 1, 5: 1, 6: 1, 7: 1, 8: 2, 9: 2, 10: 2, 11: 2}
+    assert len(sentences) == 4
+    assert sentences[0] == " is a test."
+    assert word_to_sentence == {0: 0, 1: 0, 2: 0, 3: 1, 4: 1, 5: 1, 6: 1, 7: 2, 8: 2, 9: 2, 10: 3}
 
 
 def test_break_into_sentences_nltk(sample_text_and_word_ids):
     text, word_ids = sample_text_and_word_ids
     sentences, word_to_sentence = break_into_sentences(text, word_ids, tokenizer=SentenceTokenizer.NLTK)
 
-    assert sentences == ["This is a test.", "It has three sentences.", "How about that?"]
-    assert word_to_sentence == {0: 0, 1: 0, 2: 0, 3: 0, 4: 1, 5: 1, 6: 1, 7: 1, 8: 2, 9: 2, 10: 2, 11: 2}
+    assert sentences == [' is a test.', 'It has three sentences.', 'How about that?', "We've"]
+    assert word_to_sentence == {0: 0, 1: 0, 2: 0, 3: 1, 4: 1, 5: 1, 6: 1, 7: 2, 8: 2, 9: 2, 10: 3}
 
 
 def test_break_into_sentences_unsupported_language():
