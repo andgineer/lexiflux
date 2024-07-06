@@ -7,25 +7,25 @@ def get_words_by_indices(content, indices):
 def test_simple_text():
     content = "This is a simple test."
     words = get_words_by_indices(content, parse_words(content))
-    assert words == ["This", "is", "a", "simple", "test."]
+    assert words == ["This", "is", "a", "simple", "test"]
     assert len(words) == 5
 
 def test_html_tags():
     content = "<p>This is a <b>bold</b> statement.</p>"
     words = get_words_by_indices(content, parse_words(content))
-    assert words == ["This", "is", "a", "bold", "statement."]
+    assert words == ["This", "is", "a", "bold", "statement"]
     assert len(words) == 5
 
 def test_math_symbols():
     content = "Let's consider the case where a < b and x > y."
     words = get_words_by_indices(content, parse_words(content))
-    assert words == ["Let's", "consider", "the", "case", "where", "a", "<", "b", "and", "x", ">", "y."]
+    assert words == ["Let's", "consider", "the", "case", "where", "a", "<", "b", "and", "x", ">", "y"]
     assert len(words) == 12
 
 def test_mixed_content():
     content = "<div>Python code: if x < 5 and y > 10:</div><p>This is a test.</p>"
     words = get_words_by_indices(content, parse_words(content))
-    assert words == ["Python", "code:", "if", "x", "<", "5", "and", "y", ">", "10:", "This", "is", "a", "test."]
+    assert words == ["Python", "code", "if", "x", "<", "5", "and", "y", ">", "10", "This", "is", "a", "test"]
     assert len(words) == 14
 
 def test_empty_content():

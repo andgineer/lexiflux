@@ -31,7 +31,8 @@ class HTMLWordExtractor(HTMLParser):
 
     def handle_data(self, data: str) -> None:
         if not self.ignore_content:
-            for match in re.finditer(r"\S+", data):
+            # regular expression to handle punctuation
+            for match in re.finditer(r"(?:[\w'-]+(?:-[\w'-]+)*|[<>])", data):
                 word = match.group()
                 start = self.current_pos + match.start()
                 end = start + len(word)
