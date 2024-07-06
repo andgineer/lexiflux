@@ -13,7 +13,7 @@
 | lexiflux/ebook/headings.py              |       36 |        0 |    100% |           |
 | lexiflux/ebook/page\_splitter.py        |       37 |        5 |     86% |     23-29 |
 | lexiflux/forms.py                       |       33 |       18 |     45% |14-18, 35-51 |
-| lexiflux/language/extract\_sentences.py |       51 |        7 |     86% |55, 57-60, 86-87, 94 |
+| lexiflux/language/extract\_sentences.py |       51 |        6 |     88% |56-58, 86-87, 94 |
 | lexiflux/language/google\_languages.py  |       12 |        0 |    100% |           |
 | lexiflux/language/translation.py        |       44 |        0 |    100% |           |
 | lexiflux/language/word\_extractor.py    |       75 |        0 |    100% |           |
@@ -26,7 +26,7 @@
 | lexiflux/urls.py                        |        6 |        0 |    100% |           |
 | lexiflux/utils.py                       |        8 |        0 |    100% |           |
 | lexiflux/views.py                       |      343 |      128 |     63% |68, 75-80, 115, 134, 143, 212, 267-287, 337-361, 368-383, 390-396, 408-446, 451-464, 471-494, 499-513, 519-521, 534-535, 542-561, 596-597, 623 |
-|                               **TOTAL** | **1350** |  **362** | **73%** |           |
+|                               **TOTAL** | **1350** |  **361** | **73%** |           |
 
 
 ## Setup coverage badge
