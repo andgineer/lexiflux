@@ -14,6 +14,8 @@ from django.core.exceptions import ValidationError
 from django.contrib.auth.models import AbstractUser
 from transliterate import get_available_language_codes, translit
 
+from lexiflux.word_extractor import parse_words
+
 BOOK_CODE_LENGTH = 100
 
 ARTICLE_TYPES = [
@@ -197,12 +199,7 @@ class BookPage(models.Model):  # type: ignore
         return cached_words  # type: ignore
 
     def _parse_words(self) -> list[Tuple[int, int]]:
-        words = []
-        for match in re.finditer(r"\S+", self.content):
-            word = match.group()
-            if word != "<br/>":
-                words.append((match.start(), match.end()))
-        return words
+        return parse_words(self.content)
 
     def get_cache_key(self) -> str:
         """Return the cache key for the words on this page."""
