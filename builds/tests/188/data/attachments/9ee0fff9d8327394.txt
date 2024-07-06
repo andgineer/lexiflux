@@ -1,0 +1,4 @@
+Word indices are None, parsing words...
+Parsed words: [(0, 5), (6, 11), (18, 21), (22, 26)]
+Encoded word indices: [0, 5, 6, 11, 18, 21, 22, 26]
+Decoded word indices: [(0, 5), (6, 11), (18, 21), (22, 26)]
