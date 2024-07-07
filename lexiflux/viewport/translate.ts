@@ -1,4 +1,3 @@
-// translate.ts
 import { log } from './utils'; // Assuming log function is used here
 import { viewport } from './viewport'; // If viewport functionalities are required
 
@@ -39,19 +38,90 @@ function lexicalArticleNumFromId(id: string | null): string {
   return match ? match[1] : '';
 }
 
+function getNextNode(node: Node): Node | null {
+  if (node.firstChild) {
+    return node.firstChild;
+  }
+  while (node) {
+    if (node.nextSibling) {
+      return node.nextSibling;
+    }
+    node = node.parentNode as Node;
+  }
+  return null;
+}
+
+function getWordIdsFromRange(range: Range): string[] {
+  const container = document.getElementById('words-container');
+  if (!container) return [];
+
+  const wordIds: string[] = [];
+  let startNode: Node | null = range.startContainer;
+  let endNode: Node | null = range.endContainer;
+
+  // Adjust start node to include the whole word
+  while (startNode && startNode.nodeType === Node.TEXT_NODE) {
+    if (startNode.previousSibling && startNode.previousSibling.nodeType === Node.ELEMENT_NODE &&
+        (startNode.previousSibling as HTMLElement).classList.contains('word')) {
+      startNode = startNode.previousSibling;
+      break;
+    }
+    startNode = startNode.parentNode;
+  }
+  if (startNode instanceof HTMLElement && !startNode.classList.contains('word')) {
+    const closestWord = startNode.querySelector('.word');
+    startNode = closestWord || startNode;
+  }
+
+  // Adjust end node to include the whole word
+  while (endNode && endNode.nodeType === Node.TEXT_NODE) {
+    if (endNode.nextSibling && endNode.nextSibling.nodeType === Node.ELEMENT_NODE &&
+        (endNode.nextSibling as HTMLElement).classList.contains('word')) {
+      endNode = endNode.nextSibling;
+      break;
+    }
+    endNode = endNode.parentNode;
+  }
+  if (endNode instanceof HTMLElement && !endNode.classList.contains('word')) {
+    const words = endNode.querySelectorAll('.word');
+    endNode = words[words.length - 1] || endNode;
+  }
+
+  if (startNode && endNode) {
+    let currentNode: Node | null = startNode;
+    while (currentNode) {
+      if (currentNode.nodeType === Node.ELEMENT_NODE &&
+          (currentNode as HTMLElement).classList.contains('word')) {
+        const id = (currentNode as HTMLElement).id.replace('word-', '');
+        if (id) wordIds.push(id);
+      }
+      if (currentNode === endNode) break;
+      currentNode = getNextNode(currentNode);
+    }
+  }
+
+  log('Selected word IDs:', wordIds);
+  return wordIds;
+}
+
 function sendTranslationRequest(
-    wordIds: string[],
-    selectedWordSpans: HTMLElement[] | null = null,
+    selectedRange: Range | null = null,
   ): void {
-  // if selectedWordSpans is null do not create translation span
+  // if selectedRange is null do not create translation span
   // if updateLexical is true, update the active lexical panel
 
   // todo: show "..loading.." in lexical panel if activePanelId is not null
   // for that we can rename getActiveLexicalArticleId to startLoadingInActivePanel
   const activePanelId = getActiveLexicalArticleId();
 
-  if (!selectedWordSpans && (!activePanelId || currentSelection.updatedPanels.has(activePanelId))) {
-    return;  // we already created translation span and updated the lexical panel or it is not opened
+  if (!selectedRange && (!activePanelId || currentSelection.updatedPanels.has(activePanelId)) && currentSelection.wordIds === null) {
+        return;
+  }
+
+  let wordIds = selectedRange ? getWordIdsFromRange(selectedRange) : currentSelection.wordIds;
+  if (!wordIds || wordIds.length === 0) {
+    console.log('No word IDs to translate');
+    return;
   }
 
   let urlParams = new URLSearchParams({
@@ -60,7 +130,7 @@ function sendTranslationRequest(
     'book-page-number': viewport.pageNumber.toString(),
   });
 
-  const translate = selectedWordSpans !== null
+  const translate = selectedRange !== null
   if (!translate) {
     urlParams.append('translate', 'false');
   }
@@ -82,10 +152,9 @@ function sendTranslationRequest(
     .then((data: TranslationResponse) => {
         log('Translated:', data);
         currentSelection.wordIds = wordIds;
-        if (translate) {
-            let selectedText = selectedWordSpans.map(span => span.textContent).join(' ');
-            createAndReplaceTranslationSpan(selectedText, data.translatedText, selectedWordSpans);
-        };
+        if (selectedRange) {
+            createAndReplaceTranslationSpan(data.translatedText, selectedRange);
+        }
         if (activePanelId) {
             updateLexicalPanel(data, activePanelId);
         }
@@ -167,36 +236,72 @@ function ensureVisible(element: HTMLSpanElement): void {
     }
 }
 
-function createAndReplaceTranslationSpan(selectedText: string, translatedText: string, selectedWordSpans: HTMLElement[]): void {
-    let firstWordSpan = selectedWordSpans[0];
-    let translationSpan = document.createElement('span');
-    translationSpan.dataset.originalHtml = selectedWordSpans.map(span => span.outerHTML).join('');
+function createAndReplaceTranslationSpan(translatedText: string, range: Range): void {
+    const translationSpan = document.createElement('span');
     translationSpan.className = 'translation-span';
-    translationSpan.id = 'translation-' + firstWordSpan.id;
 
-    let translationDiv = document.createElement('div');
+    const translationDiv = document.createElement('div');
     translationDiv.className = 'translation-text';
     translationDiv.textContent = translatedText;
 
-    let textDiv = document.createElement('div');
-    textDiv.className = 'text';
-    // Update to include original HTML instead of just text
-    textDiv.innerHTML = selectedWordSpans.map(span => span.outerHTML).join('&nbsp;');
-
     translationSpan.appendChild(translationDiv);
-    translationSpan.appendChild(textDiv);
-    viewport.getWordsContainer().insertBefore(translationSpan, firstWordSpan);
 
-    // Remove the original word spans
-    selectedWordSpans.forEach(span => {
-        viewport.getWordsContainer().removeChild(span);
-    });
+    // Adjust the range to include full words
+    let startNode: Node | null = range.startContainer;
+    let endNode: Node | null = range.endContainer;
+
+    // Adjust start node
+    while (startNode && startNode.nodeType === Node.TEXT_NODE) {
+      if (startNode.previousSibling && startNode.previousSibling.nodeType === Node.ELEMENT_NODE &&
+          (startNode.previousSibling as HTMLElement).classList.contains('word')) {
+        startNode = startNode.previousSibling;
+        break;
+      }
+      startNode = startNode.parentNode;
+    }
+    if (startNode instanceof HTMLElement && !startNode.classList.contains('word')) {
+      const closestWord = startNode.querySelector('.word');
+      startNode = closestWord || startNode;
+    }
+
+    // Adjust end node
+    while (endNode && endNode.nodeType === Node.TEXT_NODE) {
+      if (endNode.nextSibling && endNode.nextSibling.nodeType === Node.ELEMENT_NODE &&
+          (endNode.nextSibling as HTMLElement).classList.contains('word')) {
+        endNode = endNode.nextSibling;
+        break;
+      }
+      endNode = endNode.parentNode;
+    }
+    if (endNode instanceof HTMLElement && !endNode.classList.contains('word')) {
+      const words = endNode.querySelectorAll('.word');
+      endNode = words[words.length - 1] || endNode;
+    }
+
+    if (startNode && endNode) {
+        range.setStartBefore(startNode);
+        range.setEndAfter(endNode);
+    }
+
+    const contents = range.cloneContents();
+    translationSpan.appendChild(contents);
+
+    // Replace the range contents with the translation span
+    range.deleteContents();
+    range.insertNode(translationSpan);
+
+    // Assign a unique ID to the translation span
+    const firstWordSpan = translationSpan.querySelector('.word');
+    if (firstWordSpan) {
+        translationSpan.id = 'translation-' + firstWordSpan.id;
+    }
+
     ensureVisible(translationSpan);
 }
 
 function lexicalPanelSwitched(tabId: string): void {
     if (currentSelection.wordIds !== null) {
-        sendTranslationRequest(currentSelection.wordIds, null);
+        sendTranslationRequest(null);
     }
 }
 
