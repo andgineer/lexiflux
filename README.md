@@ -14,7 +14,7 @@
 | lexiflux/ebook/page\_splitter.py         |       37 |        5 |     86% |     23-29 |
 | lexiflux/forms.py                        |       33 |       18 |     45% |14-18, 35-51 |
 | lexiflux/language/google\_languages.py   |       12 |        0 |    100% |           |
-| lexiflux/language/sentence\_extractor.py |       51 |        6 |     88% |56-58, 86-87, 94 |
+| lexiflux/language/sentence\_extractor.py |       51 |        6 |     88% |59-61, 89-90, 97 |
 | lexiflux/language/translation.py         |       44 |        0 |    100% |           |
 | lexiflux/language/word\_extractor.py     |       75 |        0 |    100% |           |
 | lexiflux/lexical\_articles.py            |       10 |       10 |      0% |      3-32 |
