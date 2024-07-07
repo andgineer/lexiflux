@@ -90,6 +90,7 @@ function getWordIdsFromRange(range: Range): string[] {
   if (startNode && endNode) {
     let currentNode: Node | null = startNode;
     while (currentNode) {
+      // todo: replace with select by class
       if (currentNode.nodeType === Node.ELEMENT_NODE &&
           (currentNode as HTMLElement).classList.contains('word')) {
         const id = (currentNode as HTMLElement).id.replace('word-', '');

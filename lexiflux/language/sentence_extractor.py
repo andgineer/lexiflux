@@ -44,6 +44,9 @@ def get_spacy_model(lang_code: str) -> Optional[spacy.language.Language]:
     Get (and if necessary, download) the appropriate spaCy model for the given language code.
     Returns None if the model is not available or fails to load.
     """
+    # nlp = spacy.load("xx_ent_wiki_sm")
+    # import xx_ent_wiki_sm
+    # nlp = xx_ent_wiki_sm.load()
     model_name = SPACY_MODELS.get(lang_code)
     if not model_name:
         print(f"No spaCy model available for language code: {lang_code}")

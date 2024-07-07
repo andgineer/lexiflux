@@ -90,6 +90,9 @@
                 </div>
                 <div class="modal-body">
                     <form @submit.prevent="saveArticle">
+                        <div class="alert alert-danger" v-if="errorMessage" role="alert">
+                            [[ errorMessage ]]
+                        </div>
                         <div class="mb-3" v-if="showTitleField">
                             <label for="articleTitle" class="form-label">Title</label>
                             <input type="text" v-model="form.title" class="form-control" required>
@@ -149,6 +152,29 @@
             </div>
         </div>
     </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div class="modal fade" id="deleteConfirmModal" tabindex="-1" aria-labelledby="deleteConfirmModalLabel" aria-hidden="true" ref="deleteConfirmModal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="deleteConfirmModalLabel">Confirm Deletion</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Are you sure you want to delete the article: <strong>"[[ deleteArticleTitle ]]"</strong>?</p>
+                    <div class="alert alert-danger" v-if="deleteErrorMessage" role="alert">
+                        [[ deleteErrorMessage ]]
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-danger" @click="confirmDelete">Delete</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
 </div>
 
 <script>
@@ -178,6 +204,10 @@ new Vue({
             currentLanguageId: null,
             userLanguageId: null,
             inlineTranslation: {},
+            errorMessage: '',
+            deleteArticleId: null,
+            deleteArticleTitle: '',
+            deleteErrorMessage: '',
         };
 
         try {
@@ -255,6 +285,7 @@ new Vue({
         },
         openModal(action, article = null) {
             this.resetForm();
+            this.errorMessage = '';
             this.modalTitle = action === 'add' ? 'Add New Article' : 'Edit Article';
             if (article) {
                 this.form = JSON.parse(JSON.stringify(article));
@@ -345,41 +376,52 @@ new Vue({
                     const modal = bootstrap.Modal.getInstance(this.$refs.articleModal);
                     modal.hide();
                 } else {
-                    alert(data.message || 'An error occurred');
+                    this.errorMessage = `An error occurred while saving the article: ${data.message || 'An error occurred'}`;
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
-                alert('An error occurred while saving the article');
+                this.errorMessage = `An error occurred while saving the article: ${error.message || 'Unknown error'}`;
             });
         },
         deleteArticle(id) {
-            if (confirm('Are you sure you want to delete this article?')) {
-                fetch('{% url "manage_lexical_article" %}', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': '{{ csrf_token }}'
-                    },
-                    body: JSON.stringify({
-                        action: 'delete',
-                        id: id,
-                        language_id: this.currentLanguageId  // Add this line
-                    })
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.status === 'success') {
-                        this.loadArticles();
-                    } else {
-                        alert(data.message || 'An error occurred while deleting the article');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    alert('An error occurred while deleting the article');
-                });
+            const article = this.articles.find(a => a.id === id);
+            if (article) {
+                this.deleteArticleId = id;
+                this.deleteArticleTitle = article.title;
+                this.deleteErrorMessage = '';
+                new bootstrap.Modal(this.$refs.deleteConfirmModal).show();
+            } else {
+                console.error('Article not found');
+                // Optionally, show an error message to the user
             }
+        },
+        confirmDelete() {
+            fetch('{% url "manage_lexical_article" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify({
+                    action: 'delete',
+                    id: this.deleteArticleId,
+                    language_id: this.currentLanguageId
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    this.loadArticles();
+                    bootstrap.Modal.getInstance(this.$refs.deleteConfirmModal).hide();
+                } else {
+                    this.deleteErrorMessage = data.message || 'An error occurred while deleting the article';
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                this.deleteErrorMessage = 'An error occurred while deleting the article';
+            });
         },
         editInlineTranslation() {
             this.resetForm();
