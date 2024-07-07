@@ -2,31 +2,31 @@
 
 [Full report](https://htmlpreview.github.io/?https://github.com/andgineer/lexiflux/blob/python-coverage-comment-action-data/htmlcov/index.html)
 
-| Name                                    |    Stmts |     Miss |   Cover |   Missing |
-|---------------------------------------- | -------: | -------: | ------: | --------: |
-| lexiflux/admin.py                       |        6 |        0 |    100% |           |
-| lexiflux/api.py                         |       24 |        3 |     88% |     37-39 |
-| lexiflux/apps.py                        |       14 |        0 |    100% |           |
-| lexiflux/ebook/book\_base.py            |       71 |        5 |     93% |43, 50, 91, 130-131 |
-| lexiflux/ebook/book\_epub.py            |       92 |        8 |     91% |94, 111, 114-116, 176-178 |
-| lexiflux/ebook/book\_plain\_text.py     |      111 |        7 |     94% |58-59, 112-114, 135, 182 |
-| lexiflux/ebook/headings.py              |       36 |        0 |    100% |           |
-| lexiflux/ebook/page\_splitter.py        |       37 |        5 |     86% |     23-29 |
-| lexiflux/forms.py                       |       33 |       18 |     45% |14-18, 35-51 |
-| lexiflux/language/extract\_sentences.py |       51 |        6 |     88% |56-58, 86-87, 94 |
-| lexiflux/language/google\_languages.py  |       12 |        0 |    100% |           |
-| lexiflux/language/translation.py        |       44 |        0 |    100% |           |
-| lexiflux/language/word\_extractor.py    |       75 |        0 |    100% |           |
-| lexiflux/lexical\_articles.py           |       10 |       10 |      0% |      3-32 |
-| lexiflux/llm.py                         |      142 |      142 |      0% |     3-374 |
-| lexiflux/models.py                      |      214 |       27 |     87% |73, 83, 136, 145-146, 163, 174, 190, 201, 207-209, 238, 263, 282, 284-285, 288, 364-365, 410-422 |
-| lexiflux/settings.py                    |        0 |        0 |    100% |           |
-| lexiflux/signals.py                     |       21 |        2 |     90% |     41-42 |
-| lexiflux/tests.py                       |        0 |        0 |    100% |           |
-| lexiflux/urls.py                        |        6 |        0 |    100% |           |
-| lexiflux/utils.py                       |        8 |        0 |    100% |           |
-| lexiflux/views.py                       |      343 |      128 |     63% |68, 75-80, 115, 134, 143, 212, 267-287, 337-361, 368-383, 390-396, 408-446, 451-464, 471-494, 499-513, 519-521, 534-535, 542-561, 596-597, 623 |
-|                               **TOTAL** | **1350** |  **361** | **73%** |           |
+| Name                                     |    Stmts |     Miss |   Cover |   Missing |
+|----------------------------------------- | -------: | -------: | ------: | --------: |
+| lexiflux/admin.py                        |        6 |        0 |    100% |           |
+| lexiflux/api.py                          |       24 |        3 |     88% |     37-39 |
+| lexiflux/apps.py                         |       14 |        0 |    100% |           |
+| lexiflux/ebook/book\_base.py             |       71 |        5 |     93% |43, 50, 91, 130-131 |
+| lexiflux/ebook/book\_epub.py             |       92 |        8 |     91% |94, 111, 114-116, 176-178 |
+| lexiflux/ebook/book\_plain\_text.py      |      111 |        7 |     94% |58-59, 112-114, 135, 182 |
+| lexiflux/ebook/headings.py               |       36 |        0 |    100% |           |
+| lexiflux/ebook/page\_splitter.py         |       37 |        5 |     86% |     23-29 |
+| lexiflux/forms.py                        |       33 |       18 |     45% |14-18, 35-51 |
+| lexiflux/language/google\_languages.py   |       12 |        0 |    100% |           |
+| lexiflux/language/sentence\_extractor.py |       51 |        6 |     88% |56-58, 86-87, 94 |
+| lexiflux/language/translation.py         |       44 |        0 |    100% |           |
+| lexiflux/language/word\_extractor.py     |       75 |        0 |    100% |           |
+| lexiflux/lexical\_articles.py            |       10 |       10 |      0% |      3-32 |
+| lexiflux/llm.py                          |      142 |      142 |      0% |     3-374 |
+| lexiflux/models.py                       |      207 |       23 |     89% |70, 80, 133, 142-143, 160, 171, 187, 201, 238, 273, 275-276, 279, 355-356, 401-413 |
+| lexiflux/settings.py                     |        0 |        0 |    100% |           |
+| lexiflux/signals.py                      |       21 |        2 |     90% |     41-42 |
+| lexiflux/tests.py                        |        0 |        0 |    100% |           |
+| lexiflux/urls.py                         |        6 |        0 |    100% |           |
+| lexiflux/utils.py                        |        8 |        0 |    100% |           |
+| lexiflux/views.py                        |      343 |      128 |     63% |68, 75-80, 115, 134, 143, 212, 267-287, 337-361, 368-383, 390-396, 408-446, 451-464, 471-494, 499-513, 519-521, 534-535, 542-561, 596-597, 623 |
+|                                **TOTAL** | **1343** |  **357** | **73%** |           |
 
 
 ## Setup coverage badge
