@@ -6,10 +6,7 @@ from typing import TypeAlias, Tuple, List, Any, Dict
 
 from django.conf import settings
 from django.db import models, transaction
-from django.dispatch import receiver
 from django.utils import timezone
-from django.core.cache import cache
-from django.db.models.signals import pre_save
 from django.core.exceptions import ValidationError
 from django.contrib.auth.models import AbstractUser
 from transliterate import get_available_language_codes, translit
@@ -190,7 +187,10 @@ class BookPage(models.Model):  # type: ignore
         return f"Page {self.number} of {self.book.title}"
 
     def _encode_word_indices(self, word_indices: List[Tuple[int, int]]) -> str:
-        """Encode word indices to a compact string format."""
+        """Encode word indices to a compact string format.
+
+        [[0, 4], [5, 7], [8, 9], [10, 14], [15, 19]] -> "[0, 4, 5, 7, 8, 9, 10, 14, 15, 19]"
+        """
         # Flatten the structure before encoding
         flattened = [index for pair in word_indices for index in pair]
         return json.dumps(flattened)
@@ -200,9 +200,9 @@ class BookPage(models.Model):  # type: ignore
         if not self.word_indices:
             return []
         try:
-            # Parse the JSON string
             flat_indices = json.loads(self.word_indices)
-            # Pair the indices
+            if len(flat_indices) % 2 != 0:
+                raise ValueError("Word indices DB field has an odd number of elements.")
             return list(zip(flat_indices[::2], flat_indices[1::2]))
         except json.JSONDecodeError:
             print(f"Failed to decode word_indices: {self.word_indices}")
@@ -252,15 +252,6 @@ class BookPage(models.Model):  # type: ignore
         adjusted_indices = [(start - start_pos, end - start_pos) for start, end in word_indices]
 
         return text_fragment, adjusted_indices
-
-
-@receiver(pre_save, sender=BookPage)  # pylint: disable=unused-argument
-def clear_cache_if_content_changed(sender, instance, **kwargs):  # type: ignore  # pylint: disable=unused-argument
-    """Clear the cache if the content has changed."""
-    if instance.pk:  # If this is an existing instance
-        old_instance = BookPage.objects.get(pk=instance.pk)
-        if old_instance.content != instance.content:
-            cache.delete(instance.get_cache_key())
 
 
 class LexicalArticle(models.Model):  # type: ignore

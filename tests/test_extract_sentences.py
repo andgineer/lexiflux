@@ -1,5 +1,5 @@
 import pytest
-from lexiflux.language.extract_sentences import break_into_sentences, SentenceTokenizer, get_spacy_model
+from lexiflux.language.sentence_extractor import break_into_sentences, SentenceTokenizer, get_spacy_model
 
 
 @pytest.fixture
