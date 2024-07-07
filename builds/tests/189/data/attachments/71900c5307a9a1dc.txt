@@ -1,0 +1,4 @@
+Word indices are None, parsing words...
+Parsed words: [(0, 10)]
+Encoded word indices: [0, 10]
+Decoded word indices: [(0, 10)]
