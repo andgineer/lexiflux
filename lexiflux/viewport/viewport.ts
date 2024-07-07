@@ -25,37 +25,33 @@ export class Viewport {
         this.bookCode = document.body.getAttribute('data-book-code') || '';
         this.pageNumber = parseInt(document.body.getAttribute('data-book-page-number') || '0');
         log(`Viewport constructor: bookCode: ${this.bookCode}, pageNumber: ${this.pageNumber}`);
-    }
+    }  // constructor
 
     public getWordsContainer(): HTMLElement {
         return getElement(Viewport.wordsContainerId);
-    }
+    }  // getWordsContainer
 
     public getWordsContainerHeight(): number {
         return this.wordsContainer.getBoundingClientRect().height;
-    }
+    }  // getWordsContainerHeight
 
     public getTopNavbar(): HTMLElement {
         return getElement(Viewport.topNavbarId);
-    }
+    }  // getTopNavbar
 
     public getBookPageScroller(): HTMLElement {
         return getElement(Viewport.pageBookScrollerId);
-    }
+    }  // getBookPageScroller
 
     public calculateTotalWords(): number {
         // Calculate the number of words by counting word elements within the wordsContainer
         const wordElements = this.wordsContainer.querySelectorAll('.word');
         return wordElements.length;
-    }
+    }  // calculateTotalWords
 
-    public word(index: number): HTMLElement {
-        const result = document.getElementById(`word-${index}`);
-        if (!result) {
-            throw new Error(`Could not find word ${index}.`);
-        }
-        return result as HTMLElement;
-    }
+    public word(index: number): HTMLElement | null {
+        return document.getElementById(`word-${index}`);
+    }  // word
 
     public domChanged(): void {
         this.wordsContainer = this.getWordsContainer();
@@ -67,13 +63,13 @@ export class Viewport {
             pageNumberElement.textContent = this.pageNumber.toString();
         }
         log('domChanged. bookCode:', this.bookCode, 'pageNum:', this.pageNumber, 'totalWords:', this.totalWords, 'wordsContainerHeight:', this.getWordsContainerHeight());
-    }
+    }  // domChanged
 
     public getWordTop(wordId: number = 0): number {
         // find targetLastWord top coordinate
         const word = document.getElementById('word-' + wordId);
         return word ? word.getBoundingClientRect().top - this.wordsContainerTopMargin : 0;
-    }
+    }  // getWordTop
 
     public loadPage(pageNumber: number, topWord: number | undefined = 0): Promise<void> {
         // if topWord is undefined you should call reportReadingPosition() by yourself
@@ -121,7 +117,7 @@ export class Viewport {
                     reject(error);
                 });
         });
-    }
+    }  // loadPage
 
     private binarySearchVisibleWord(
         low: number,
@@ -130,6 +126,9 @@ export class Viewport {
         wordCount: {value: number}
     ): number {
         // Look for any visible word in the container - first that we find
+        if (this.totalWords === 0) {
+          return -1;
+        }
         const containerBottom = this.bookPageScroller.getBoundingClientRect().bottom;
         const containerTop = this.wordsContainerTopMargin;
         log('Searching for visible word between', low, high, 'container rect:', containerTop, containerBottom);
@@ -157,11 +156,14 @@ export class Viewport {
         }
         log('return low:', low);
         return low;
-    }
+    }  // binarySearchVisibleWord
 
     public getFirstVisibleWord(): number {
         // Look for the first visible word in the container
         log('Searching for the first visible word');
+        if (this.totalWords === 0) {
+          return -1;
+        }
 
         // first find any visible word - this is the upper bound in search for the first visible word
         let totalHeight = {value: 0};  // accumulate statistics to
@@ -199,7 +201,7 @@ export class Viewport {
         }
         log('return low:', low);
         return low;
-    }
+    }  // getFirstVisibleWord
 
     public reportReadingLocation(): void {
         // Determine the first visible word and report to the server the reading location
@@ -215,7 +217,7 @@ export class Viewport {
                 // Process response if necessary
             })
             .catch(error => console.error('Error:', error));
-    }
+    }  // reportReadingLocation
     
     public async scrollUp(): Promise<void> {
         // Scroll one viewport up
@@ -233,19 +235,22 @@ export class Viewport {
             this.bookPageScroller.scrollTop -= this.bookPageScroller.clientHeight - this.lineHeight;
             this.reportReadingLocation();
         }
-    }
+    }  // scrollUp
 
     public async scrollDown(): Promise<void> {
         // Scroll one viewport down
-        if (this.word(this.totalWords - 1).getBoundingClientRect().bottom <= this.bookPageScroller.getBoundingClientRect().bottom) {
+        const scrollerRect = this.bookPageScroller.getBoundingClientRect();
+        const containerRect = this.wordsContainer.getBoundingClientRect();
+
+        if (containerRect.bottom <= scrollerRect.bottom) {
+            // We've reached the bottom of the current page
             await this.loadPage(this.pageNumber + 1, 0);
         } else {
-            // no need to check for too large scroll top, it will be handled by the browser
+            // Scroll down by viewport height minus line height
             this.bookPageScroller.scrollTop += this.bookPageScroller.clientHeight - this.lineHeight;
-            log('***** scrollTop:', this.bookPageScroller.scrollTop, 'clientHeight,lineHeight:', this.bookPageScroller.clientHeight, this.lineHeight);
             this.reportReadingLocation();
         }
-    }
+    }  // scrollDown
 }
 
 // Global instance of the Viewport class

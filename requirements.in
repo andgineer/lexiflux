@@ -15,6 +15,7 @@ EbookLib
 chardet
 transliterate
 beautifulsoup4
+polyglot
 spacy
 nltk
 # to download spacy data

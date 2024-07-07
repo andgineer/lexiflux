@@ -177,7 +177,12 @@ class BookPage(models.Model):  # type: ignore
     number = models.PositiveIntegerField()
     content = models.TextField()
     book = models.ForeignKey("Book", related_name="pages", on_delete=models.CASCADE)
-    word_indices = models.TextField(null=True, blank=True)
+    word_indices = models.TextField(
+        null=True,
+        blank=True,
+        help_text="Word indices in JSON format. List of tuples with start and end index. "
+        "Index in the list - word index.",
+    )
 
     class Meta:
         ordering = ["number"]
@@ -187,16 +192,15 @@ class BookPage(models.Model):  # type: ignore
         return f"Page {self.number} of {self.book.title}"
 
     def _encode_word_indices(self, word_indices: List[Tuple[int, int]]) -> str:
-        """Encode word indices to a compact string format.
+        """Encode word indices nested list to a compact flat list.
 
         [[0, 4], [5, 7], [8, 9], [10, 14], [15, 19]] -> "[0, 4, 5, 7, 8, 9, 10, 14, 15, 19]"
         """
-        # Flatten the structure before encoding
         flattened = [index for pair in word_indices for index in pair]
         return json.dumps(flattened)
 
     def _decode_word_indices(self) -> List[Tuple[int, int]]:
-        """Decode word indices from the compact string format."""
+        """Decode word indices from the flat list to nested list."""
         if not self.word_indices:
             return []
         try:
@@ -212,21 +216,14 @@ class BookPage(models.Model):  # type: ignore
     def words(self) -> List[Tuple[int, int]]:
         """Property to parse words from the content or retrieve from DB."""
         if self.word_indices is None:
-            print("Word indices are None, parsing words...")
             self._parse_and_save_words()
-        else:
-            print(f"Word indices found: {self.word_indices}")
 
-        decoded = self._decode_word_indices()
-        print(f"Decoded word indices: {decoded}")
-        return decoded
+        return self._decode_word_indices()
 
     def _parse_and_save_words(self) -> None:
         """Parse words from content and save to DB."""
-        parsed_words, _ = parse_words(self.content)  # Assuming parse_words returns a tuple
-        print(f"Parsed words: {parsed_words}")
+        parsed_words, _ = parse_words(self.content)
         self.word_indices = self._encode_word_indices(parsed_words)
-        print(f"Encoded word indices: {self.word_indices}")
         self.save(update_fields=["word_indices"])
 
     def extract_words(
