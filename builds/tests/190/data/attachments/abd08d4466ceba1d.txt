@@ -1,0 +1,1 @@
+ERROR    django.request:log.py:241 Internal Server Error: /page
