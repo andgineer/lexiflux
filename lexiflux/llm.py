@@ -8,6 +8,9 @@ from typing import Any, Dict, List, Iterable, Union
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
 from langchain_openai import ChatOpenAI
+from langchain_anthropic import ChatAnthropic
+from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_mistralai import ChatMistralAI
 import openai
 from langchain.schema import BaseOutputParser
 from pydantic import Field
@@ -21,6 +24,23 @@ ChatModels = {
     "gpt-4-turbo": {
         "title": "GPT-4 Turbo",
         "model": ChatOpenAI,
+    },
+    "gpt-4-turbo-preview": {
+        "title": "GPT-4 Turbo Preview",
+        "model": ChatOpenAI,
+    },
+    # https://docs.anthropic.com/en/docs/models-overview
+    "claude-3-5-sonnet-20240620": {
+        "title": "Claude 3.5 Sonnet",
+        "model": ChatAnthropic,
+    },
+    "gemini-pro": {
+        "title": "Gemini Pro",
+        "model": ChatGoogleGenerativeAI,
+    },
+    "mistral-medium": {
+        "title": "Mistral Medium",
+        "model": ChatMistralAI,
     },
 }
 

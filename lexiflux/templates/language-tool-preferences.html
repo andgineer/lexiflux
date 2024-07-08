@@ -6,7 +6,7 @@
         <div class="container-fluid">
             {% include 'hamburger.html' with current_page='profile' %}
             <div class="mx-3 text-truncate container-fluid">
-                Language Settings
+                Language Tool Preferences
             </div>
         </div>
     </nav>
@@ -283,6 +283,7 @@ new Vue({
         openModal(action, article = null) {
             this.resetForm();
             this.errorMessage = '';
+            this.showTitleField = false;
             this.modalTitle = action === 'add' ? 'Add New Article' : 'Edit Article';
             if (article) {
                 this.form = JSON.parse(JSON.stringify(article));
@@ -434,6 +435,7 @@ new Vue({
         },
         editInlineTranslation() {
             this.resetForm();
+            this.errorMessage = '';
             this.showTitleField = false;
             this.modalTitle = 'Edit In-line Translation';
             this.form.type = this.inlineTranslation.type;

@@ -13,7 +13,7 @@ User = get_user_model()
 
 DEFAULT_LEXICAL_ARTICLES = [
     {"type": "Sentence", "title": "Sentence", "parameters": {"model": "gpt-3.5-turbo"}},
-    {"type": "Explain", "title": "Explain", "parameters": {"model": "gpt-3.5-turbo"}},
+    {"type": "Explain", "title": "Explain", "parameters": {"model": "gpt-4-turbo"}},
     {"type": "Examples", "title": "Examples", "parameters": {"model": "gpt-3.5-turbo"}},
     {
         "type": "Site",

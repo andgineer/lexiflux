@@ -290,7 +290,7 @@ def translate(request: HttpRequest, params: TranslateGetParams) -> HttpResponse:
 
 
 @login_required  # type: ignore
-def profile(request: HttpRequest) -> HttpResponse:
+def language_tool_preferences(request: HttpRequest) -> HttpResponse:
     """Profile page."""
     reader_profile = (
         request.user.default_reader_profile or request.user.reader_profiles.all().first()
@@ -328,7 +328,7 @@ def profile(request: HttpRequest) -> HttpResponse:
         "inline_translation": inline_translation_json,
     }
 
-    return render(request, "profile.html", context)
+    return render(request, "language-tool-preferences.html", context)
 
 
 @login_required  # type: ignore

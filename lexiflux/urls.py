@@ -21,7 +21,11 @@ urlpatterns = [
     path("history", views.add_to_history, name="history"),
     path("translate", views.translate, name="translate"),
     path("book", views.view_book, name="book"),
-    path("profile/", views.profile, name="profile"),
+    path(
+        "language-tool-preferences/",
+        views.language_tool_preferences,
+        name="language-tool-preferences",
+    ),
     path(
         "api/get-profile-for-language/",
         views.api_get_profile_for_language,

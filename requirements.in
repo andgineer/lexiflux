@@ -9,6 +9,9 @@ langchain
 langchain-community
 langchain-core
 langchain-openai
+langchain_anthropic
+langchain_google_genai
+langchain_mistralai
 openai
 ollama
 EbookLib
