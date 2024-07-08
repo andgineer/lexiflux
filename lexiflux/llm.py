@@ -13,6 +13,17 @@ from langchain.schema import BaseOutputParser
 from pydantic import Field
 from django.core.cache import cache
 
+ChatModels = {
+    "gpt-3.5-turbo": {
+        "title": "GPT-3.5 Turbo",
+        "model": ChatOpenAI,
+    },
+    "gpt-4-turbo": {
+        "title": "GPT-4 Turbo",
+        "model": ChatOpenAI,
+    },
+}
+
 
 class TextOutputParser(BaseOutputParser[str]):
     """Simple output parser."""

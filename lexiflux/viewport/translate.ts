@@ -101,7 +101,6 @@ function getWordIdsFromRange(range: Range): string[] {
     }
   }
 
-  log('Selected word IDs:', wordIds);
   return wordIds;
 }
 

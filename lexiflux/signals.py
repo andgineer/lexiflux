@@ -60,5 +60,3 @@ def create_user_profile(
                 title=article["title"],
                 parameters=article["parameters"],
             )
-
-        # todo: inline_translation
