@@ -17,7 +17,7 @@
 | lexiflux/language/translation.py         |       44 |       28 |     36% |21-25, 30, 36-37, 42-55, 68-77 |
 | lexiflux/language/word\_extractor.py     |       75 |       62 |     17% |14-19, 22-28, 31-39, 42-44, 47-53, 60-109, 114-116 |
 | lexiflux/lexical\_articles.py            |       10 |       10 |      0% |      3-32 |
-| lexiflux/llm.py                          |      146 |      138 |      5% |    12-405 |
+| lexiflux/llm.py                          |      146 |      138 |      5% |    12-411 |
 | lexiflux/models.py                       |      201 |       93 |     54% |49-51, 70, 80, 112, 117, 122, 126-145, 148-156, 160, 171, 192, 199-200, 204-213, 218-221, 225-227, 233-251, 268-276, 279-280, 318-350, 355-361, 365, 395-418 |
 | lexiflux/settings.py                     |        0 |        0 |    100% |           |
 | lexiflux/signals.py                      |       21 |       11 |     48% |     37-57 |
