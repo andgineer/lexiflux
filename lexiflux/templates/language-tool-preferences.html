@@ -118,7 +118,7 @@
                         </div>
                         <div class="mb-3" v-if="showTitleField">
                             <label for="articleTitle" class="form-label">Title</label>
-                            <input type="text" v-model="form.title" class="form-control" required>
+                            <input type="text" v-model="form.title" @input="handleTitleChange" class="form-control" required>
                         </div>
                         <div class="mb-3">
                             <label for="articleType" class="form-label">Article Type</label>
@@ -153,7 +153,7 @@
                         <div v-if="['Translate', 'Sentence', 'Explain', 'Examples', 'Lexical'].includes(form.type)">
                             <div class="mb-3">
                                 <label class="form-label">AI Model</label>
-                                <select v-model="form.parameters.model" class="form-select">
+                                <select v-model="form.parameters.model" @change="updateParameters" class="form-select">
                                     <option value="">Select model</option>
                                     <option v-for="model in aiModels" :key="model.key" :value="model.key">
                                         [[ model.title ]]
@@ -223,6 +223,7 @@ new Vue({
             },
             showTitleField: true,
             modalTitle: '',
+            titleManuallyEdited: false,
             allLanguages: [],
             currentLanguageId: null,
             userLanguageId: null,
@@ -307,6 +308,7 @@ new Vue({
         openModal(action, article = null) {
             this.resetForm();
             this.errorMessage = '';
+            this.titleManuallyEdited = false;
             this.modalTitle = action === 'add' ? 'Add New Article' : 'Edit Article';
             if (article) {
                 this.form = JSON.parse(JSON.stringify(article));
@@ -323,10 +325,13 @@ new Vue({
                     };
                 }
                 this.showTitleField = true;
+                this.titleManuallyEdited = true;
             } else {
                 this.showTitleField = true;
+                // Set a default type and generate a title
+                this.form.type = 'Translate';
+                this.updateParameters();
             }
-            this.updateParameters();
             new bootstrap.Modal(this.$refs.articleModal).show();
         },
         resetForm() {
@@ -362,50 +367,48 @@ new Vue({
             return model ? model.title : modelKey;
         },
         updateParameters() {
-            if (!this.form.title) {
-                this.form.title = this.generateTitle(this.form.type);
-            }
+            const oldType = this.form.type;
+            const oldModel = this.form.parameters ? this.form.parameters.model : null;
+
             if (this.form.type === 'Site') {
                 this.form.parameters = this.form.parameters || {
                     url: '',
                     window: false
                 };
             } else if (['Translate', 'Sentence', 'Explain', 'Examples', 'Lexical'].includes(this.form.type)) {
-                fetch('{% url "get_models" %}')
-                    .then(response => {
-                        if (!response.ok) {
-                            throw new Error(`HTTP error! status: ${response.status}`);
-                        }
-                        return response.json();
-                    })
-                    .then(data => {
-                        this.aiModels = data.models;
-                        console.log('AI Models:', this.aiModels);
-                        // Set default model if not already set
-                        if (!this.form.parameters || !this.form.parameters.model) {
-                            this.form.parameters = this.form.parameters || {};
-                            this.form.parameters.model = this.aiModels.length > 0 ? this.aiModels[0].key : '';
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error fetching models:', error);
-                        this.aiModels = [];
-                    });
+                if (!this.form.parameters || !this.form.parameters.model) {
+                    this.form.parameters = this.form.parameters || {};
+                    this.form.parameters.model = this.aiModels.length > 0 ? this.aiModels[0].key : '';
+                }
             } else if (this.form.type === 'Dictionary') {
                 this.form.parameters = this.form.parameters || {
                     dictionary: ''
                 };
             }
+
+            if (oldType !== this.form.type || oldModel !== this.form.parameters.model || !this.form.title || !this.titleManuallyEdited) {
+                this.form.title = this.generateTitle(this.form.type);
+                this.titleManuallyEdited = false;  // Reset this flag as we've auto-generated the title
+            }
+        },
+        handleTitleChange() {
+            this.titleManuallyEdited = true;
         },
         generateTitle(type) {
             let title = type;
+
             if (type === 'Site') {
                 const url = this.form.parameters.url;
                 if (url) {
-                    title = new URL(url).hostname;
+                    title = this.formatUrl(url);
                 }
             } else if (type === 'Dictionary') {
-                title = this.form.parameters.dictionary;
+                title = this.form.parameters.dictionary || title;
+            } else if (this.form.parameters && this.form.parameters.model) {
+                const model = this.aiModels.find(m => m.key === this.form.parameters.model);
+                if (model && model.suffix) {
+                    title = `${type} ${model.suffix}`;
+                }
             }
 
             let uniqueTitle = title;

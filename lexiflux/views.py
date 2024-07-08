@@ -539,7 +539,10 @@ def api_profile(request: HttpRequest) -> JsonResponse:
 @login_required  # type: ignore
 def get_models(request: HttpRequest) -> JsonResponse:
     """Return the available models."""
-    models_list = [{"key": key, "title": value["title"]} for key, value in ChatModels.items()]
+    models_list = [
+        {"key": key, "title": value["title"], "suffix": value["suffix"]}
+        for key, value in ChatModels.items()
+    ]
     return JsonResponse({"models": models_list})
 
 
