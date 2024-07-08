@@ -20,27 +20,33 @@ ChatModels = {
     "gpt-3.5-turbo": {
         "title": "GPT-3.5 Turbo",
         "model": ChatOpenAI,
+        "suffix": "⚙️3.5",
     },
     "gpt-4-turbo": {
         "title": "GPT-4 Turbo",
         "model": ChatOpenAI,
+        "suffix": "⚙️4",
     },
     "gpt-4-turbo-preview": {
         "title": "GPT-4 Turbo Preview",
         "model": ChatOpenAI,
+        "suffix": "⚙️4+",
     },
     # https://docs.anthropic.com/en/docs/models-overview
     "claude-3-5-sonnet-20240620": {
         "title": "Claude 3.5 Sonnet",
         "model": ChatAnthropic,
+        "suffix": "💡3.5",  # U+1F4A1
     },
     "gemini-pro": {
         "title": "Gemini Pro",
         "model": ChatGoogleGenerativeAI,
+        "suffix": "🌀",
     },
     "mistral-medium": {
         "title": "Mistral Medium",
         "model": ChatMistralAI,
+        "suffix": "🌪️",
     },
 }
 

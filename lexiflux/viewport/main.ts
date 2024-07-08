@@ -185,12 +185,6 @@ function reInitDom(): void {
     }
 }
 
-document.body.addEventListener('htmx:configRequest', (event: Event) => {
-    const detail = (event as CustomEvent).detail;
-    detail.parameters['book-page-number'] = viewport.pageNumber;
-    detail.parameters['book-code'] = viewport.bookCode;
-});
-
 document.addEventListener('DOMContentLoaded', () => {
     viewport.loadPage(viewport.pageNumber, 0).then(() => {
         reInitDom();

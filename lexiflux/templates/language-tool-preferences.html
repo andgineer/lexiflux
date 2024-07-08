@@ -48,8 +48,17 @@
                             </div>
                             <div class="mt-2 p-2 bg-light rounded">
                                 <div><strong>Type:</strong> [[ inlineTranslation.type ]]</div>
-                                <div v-for="(value, name) in inlineTranslation.parameters" :key="name">
-                                    <strong>[[ name ]]:</strong> [[ value ]]
+                                <div v-if="inlineTranslation.type === 'Site'">
+                                    <div><strong>URL:</strong> [[ formatUrl(inlineTranslation.parameters.url) ]]</div>
+                                    <div><strong>in separate window:</strong> [[ inlineTranslation.parameters.window ]]</div>
+                                </div>
+                                <div v-else-if="inlineTranslation.type === 'Dictionary'">
+                                    <div><strong>Dictionary:</strong> [[ inlineTranslation.parameters.dictionary ]]</div>
+                                </div>
+                                <div v-else v-for="(value, name) in inlineTranslation.parameters" :key="name">
+                                    <strong>[[ name ]]:</strong>
+                                    <span v-if="name === 'model'">[[ getModelTitle(value) ]]</span>
+                                    <span v-else>[[ value ]]</span>
                                 </div>
                             </div>
                         </div>
@@ -58,13 +67,27 @@
             </div>
 
             <div class="col-md-6">
-                <h5 class="card-header">Lexical Articles Sidebar</h5>
+                <h5 class="card-header">
+                    Lexical Articles Sidebar
+                    <i class="bi bi-binoculars"></i>
+                </h5>
                 <div class="card-body">
                     <ul class="list-group">
                         <li class="list-group-item d-flex justify-content-between align-items-center" v-for="article in articles" :key="article.id">
                             <div>
                                 <h5 class="mb-1">[[ article.title ]]</h5>
-                                <small>Type: [[ article.type ]]</small>
+                                <div v-if="article.type === 'Site'">
+                                    <div><strong>URL:</strong> [[ formatUrl(article.parameters.url) ]]</div>
+                                    <div><strong>in separate window:</strong> [[ article.parameters.window ]]</div>
+                                </div>
+                                <div v-else-if="article.type === 'Dictionary'">
+                                    <div><strong>Dictionary:</strong> [[ article.parameters.dictionary ]]</div>
+                                </div>
+                                <div v-else v-for="(value, name) in article.parameters" :key="name">
+                                    <strong>[[ name ]]:</strong>
+                                    <span v-if="name === 'model'">[[ getModelTitle(value) ]]</span>
+                                    <span v-else>[[ value ]]</span>
+                                </div>
                             </div>
                             <div>
                                 <button class="btn btn-primary btn-sm" @click="openModal('edit', article)">Edit</button>
@@ -234,6 +257,7 @@ new Vue({
         return data;
     },
     mounted: function() {
+        this.loadAIModels();
         this.loadArticles();
     },
     methods: {
@@ -283,11 +307,21 @@ new Vue({
         openModal(action, article = null) {
             this.resetForm();
             this.errorMessage = '';
-            this.showTitleField = false;
             this.modalTitle = action === 'add' ? 'Add New Article' : 'Edit Article';
             if (article) {
                 this.form = JSON.parse(JSON.stringify(article));
                 this.form.id = article.id;
+                // Ensure correct parameters structure
+                if (this.form.type === 'Site') {
+                    this.form.parameters = {
+                        url: this.form.parameters.url || '',
+                        window: this.form.parameters.window || false
+                    };
+                } else if (this.form.type === 'Dictionary') {
+                    this.form.parameters = {
+                        dictionary: this.form.parameters.dictionary || ''
+                    };
+                }
                 this.showTitleField = true;
             } else {
                 this.showTitleField = true;
@@ -302,6 +336,30 @@ new Vue({
                 type: '',
                 parameters: {}
             };
+        },
+        loadAIModels() {
+            fetch('{% url "get_models" %}')
+                .then(response => response.json())
+                .then(data => {
+                    this.aiModels = data.models;
+                })
+                .catch(error => {
+                    console.error('Error loading AI models:', error);
+                });
+        },
+        formatUrl(url) {
+            try {
+                let domain = new URL(url).hostname;
+                domain = domain.replace(/^www\./, '');
+                domain = domain.replace(/\.com$/, '');
+                return domain;
+            } catch (e) {
+                return url;  // Return the original string if it's not a valid URL
+            }
+        },
+       getModelTitle(modelKey) {
+            const model = this.aiModels.find(m => m.key === modelKey);
+            return model ? model.title : modelKey;
         },
         updateParameters() {
             if (!this.form.title) {
@@ -363,9 +421,24 @@ new Vue({
             const isInlineTranslation = !this.showTitleField;
 
             let url = isInlineTranslation ? '{% url "save_inline_translation" %}' : '{% url "manage_lexical_article" %}';
-            let data = isInlineTranslation ?
-                { type: this.form.type, parameters: this.form.parameters, language_id: this.currentLanguageId } :
-                { action, ...this.form, language_id: this.currentLanguageId };
+            let data;
+
+            if (isInlineTranslation) {
+                data = { type: this.form.type, parameters: this.form.parameters, language_id: this.currentLanguageId };
+            } else {
+                // Ensure correct parameters for each type
+                if (this.form.type === 'Site') {
+                    this.form.parameters = {
+                        url: this.form.parameters.url || '',
+                        window: this.form.parameters.window || false
+                    };
+                } else if (this.form.type === 'Dictionary') {
+                    this.form.parameters = {
+                        dictionary: this.form.parameters.dictionary || ''
+                    };
+                }
+                data = { action, ...this.form, language_id: this.currentLanguageId };
+            }
 
             fetch(url, {
                 method: 'POST',
@@ -439,7 +512,21 @@ new Vue({
             this.showTitleField = false;
             this.modalTitle = 'Edit In-line Translation';
             this.form.type = this.inlineTranslation.type;
-            this.form.parameters = JSON.parse(JSON.stringify(this.inlineTranslation.parameters));
+
+            // Set up parameters based on the type
+            if (this.form.type === 'Site') {
+                this.form.parameters = {
+                    url: this.inlineTranslation.parameters.url || '',
+                    window: this.inlineTranslation.parameters.window || false
+                };
+            } else if (this.form.type === 'Dictionary') {
+                this.form.parameters = {
+                    dictionary: this.inlineTranslation.parameters.dictionary || ''
+                };
+            } else {
+                this.form.parameters = JSON.parse(JSON.stringify(this.inlineTranslation.parameters));
+            }
+
             new bootstrap.Modal(this.$refs.articleModal).show();
         },
         loadArticles() {
