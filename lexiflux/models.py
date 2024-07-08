@@ -229,7 +229,10 @@ class BookPage(models.Model):  # type: ignore
     def extract_words(
         self, start_word_id: int, end_word_id: int
     ) -> Tuple[str, List[Tuple[int, int]]]:
-        """Extract a fragment of text from start_word_id to end_word_id (inclusive)."""
+        """Extract a fragment of text from start_word_id to end_word_id (inclusive).
+
+        Returns (text_fragment, word_indices adjusted to the fragment).
+        """
         words = self.words
         if not words:
             return "", []
@@ -243,6 +246,7 @@ class BookPage(models.Model):  # type: ignore
         end_pos = words[end_word_id][1]
 
         text_fragment = self.content[start_pos:end_pos]
+        # todo: clear from the text html tags and add to the result map {position: tag}
         word_indices = words[start_word_id : end_word_id + 1]
 
         # Adjust word indices to be relative to the start of the fragment

@@ -18,9 +18,5 @@ EbookLib
 chardet
 transliterate
 beautifulsoup4
-polyglot
-spacy
+fasttext
 nltk
-# to download spacy data
-pip
-

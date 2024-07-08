@@ -20,6 +20,7 @@ from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth import get_user_model, login
 from django.contrib.auth.views import LoginView
 
+from lexiflux.language.sentence_extractor import break_into_sentences
 from lexiflux.language.translation import get_translator
 from lexiflux.api import get_params, ViewGetParamsModel
 from lexiflux.forms import CustomUserCreationForm
@@ -37,6 +38,8 @@ from lexiflux.models import (
 )
 
 logger = logging.getLogger(__name__)
+
+MAX_SENTENCE_LENGTH = 100
 
 
 class SignUpView(generic.CreateView):  # type: ignore
@@ -236,7 +239,7 @@ class TranslateGetParams(ViewGetParamsModel):
 
 @login_required  # type: ignore
 @get_params(TranslateGetParams)
-def translate(request: HttpRequest, params: TranslateGetParams) -> HttpResponse:
+def translate(request: HttpRequest, params: TranslateGetParams) -> HttpResponse:  # pylint: disable=too-many-locals
     """Translate text.
 
     full: if true, side panel is visible so we prepare detailed translation materials.
@@ -282,10 +285,23 @@ def translate(request: HttpRequest, params: TranslateGetParams) -> HttpResponse:
         # )
         # f"""<p>{params.text} {params.lexical_article}</p>"""
         articles[params.lexical_article] = f"{selected_text} {params.lexical_article}"
-        result["articles"] = articles
         if params.lexical_article == "3":
             result["url"] = f"https://glosbe.com/sr/ru/{urllib.parse.quote(selected_text)}"
             result["window"] = True
+        elif params.lexical_article == "1":
+            highlited_word = word_ids[0]
+            start_word = max(0, highlited_word - MAX_SENTENCE_LENGTH)
+            end_word = highlited_word + MAX_SENTENCE_LENGTH
+            if start_word - end_word < MAX_SENTENCE_LENGTH * 2:
+                end_word = start_word + MAX_SENTENCE_LENGTH * 2
+            context_str, context_word_ids = book_page.extract_words(start_word, end_word)
+            sentences, _ = break_into_sentences(
+                context_str,
+                context_word_ids,
+                lang_code="sr",
+            )
+            articles[params.lexical_article] = "<br><br>".join(sentences)
+        result["articles"] = articles
     return JsonResponse(result)
 
 
