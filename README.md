@@ -24,7 +24,7 @@
 | lexiflux/tests.py                        |        0 |        0 |    100% |           |
 | lexiflux/urls.py                         |        6 |        6 |      0% |      3-10 |
 | lexiflux/utils.py                        |        8 |        5 |     38% |     10-16 |
-| lexiflux/views.py                        |      344 |      321 |      7% |    28-657 |
+| lexiflux/views.py                        |      344 |      321 |      7% |    28-660 |
 |                                **TOTAL** | **1330** |  **996** | **25%** |           |
 
 
