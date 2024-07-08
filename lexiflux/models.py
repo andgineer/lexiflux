@@ -35,8 +35,8 @@ class CustomUser(AbstractUser):  # type: ignore
     email = models.EmailField(unique=True, blank=False)
     is_approved = models.BooleanField(default=False)
 
-    default_reader_profile = models.ForeignKey(
-        "lexiflux.ReaderProfile",
+    default_language_preferences = models.ForeignKey(
+        "lexiflux.LanguagePreferences",
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
@@ -255,7 +255,7 @@ class LexicalArticle(models.Model):  # type: ignore
     """A lexical article."""
 
     reader_profile = models.ForeignKey(
-        "ReaderProfile", on_delete=models.CASCADE, related_name="lexical_articles"
+        "LanguagePreferences", on_delete=models.CASCADE, related_name="lexical_articles"
     )
     type = models.CharField(max_length=20, choices=ARTICLE_TYPES)
     title = models.CharField(max_length=100)
@@ -280,14 +280,18 @@ class LexicalArticle(models.Model):  # type: ignore
         super().save(*args, **kwargs)
 
 
-class ReaderProfile(models.Model):  # type: ignore
-    """A reader profile."""
+class LanguagePreferences(models.Model):  # type: ignore
+    """Language Preferences.
+
+    Like target language to translate this language to,
+    inline translation dictionary, Lexical Sidebar Config.
+    """
 
     user = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="reader_profiles"
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="language_preferences"
     )
     language = models.ForeignKey(
-        Language, on_delete=models.CASCADE, related_name="reader_profiles"
+        Language, on_delete=models.CASCADE, related_name="language_preferences"
     )
     current_book = models.ForeignKey(
         Book,
@@ -307,27 +311,31 @@ class ReaderProfile(models.Model):  # type: ignore
 
     @classmethod
     @transaction.atomic  # type: ignore
-    def get_or_create_profile(cls, user: CustomUser, language: Language) -> "ReaderProfile":
-        """Get or create a profile for the given user and language."""
-        default = user.default_reader_profile
+    def get_or_create_language_preferences(
+        cls, user: CustomUser, language: Language
+    ) -> "LanguagePreferences":
+        """Get or create a Language Preferences for the given user and language."""
+        default = user.default_language_preferences
         profile, created = cls.objects.get_or_create(
             user=user,
             language=language,
             defaults={
-                "user_language": default.user_language if user.default_reader_profile else None,
+                "user_language": default.user_language
+                if user.default_language_preferences
+                else None,
                 "inline_translation_type": default.inline_translation_type
-                if user.default_reader_profile
+                if user.default_language_preferences
                 else "",
                 "inline_translation_parameters": default.inline_translation_parameters
-                if user.default_reader_profile
+                if user.default_language_preferences
                 else {},
             },
         )
 
         if created:
             # Copy lexical articles from the default profile
-            if user.default_reader_profile:
-                for article in user.default_reader_profile.lexical_articles.all():
+            if user.default_language_preferences:
+                for article in user.default_language_preferences.lexical_articles.all():
                     LexicalArticle.objects.create(
                         reader_profile=profile,
                         type=article.type,
@@ -336,7 +344,7 @@ class ReaderProfile(models.Model):  # type: ignore
                     )
 
             # Set this new profile as the default
-            user.default_reader_profile = profile
+            user.default_language_preferences = profile
             user.save()
 
         return profile  # type: ignore

@@ -18,7 +18,7 @@ from unittest.mock import mock_open, patch, MagicMock
 from lexiflux.ebook.book_base import BookBase
 from lexiflux.ebook.book_plain_text import BookPlainText
 from django.contrib.auth import get_user_model
-from lexiflux.models import Author, Language, Book, BookPage, ReaderProfile
+from lexiflux.models import Author, Language, Book, BookPage, LanguagePreferences
 from pytest_django.live_server_helper import LiveServer
 import subprocess
 import time

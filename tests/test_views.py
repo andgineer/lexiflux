@@ -114,11 +114,11 @@ def test_view_book_access_denied(client, book):
 
 @allure.epic('View: Profile')
 @pytest.mark.django_db
-def test_profile_view_success(client, user):
+def test_language_preferences_view_success(client, user):
     client.force_login(user)
 
-    response = client.get(reverse('profile'))
+    response = client.get(reverse('language-tool-preferences'))
 
     assert response.status_code == 200
 
-    assertTemplateUsed(response, 'profile.html')
+    assertTemplateUsed(response, 'language-tool-preferences.html')

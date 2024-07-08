@@ -7,7 +7,7 @@ from django.contrib.auth import get_user_model
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 
-from lexiflux.models import ReaderProfile, LexicalArticle, Language
+from lexiflux.models import LanguagePreferences, LexicalArticle, Language
 
 User = get_user_model()
 
@@ -43,19 +43,19 @@ def create_user_profile(
                 "English and / or Serbian language not found in the Language table."
             ) from exc
 
-        reader_profile = ReaderProfile.objects.create(
+        language_preferences = LanguagePreferences.objects.create(
             user=instance,
             language=serbian_language,
             user_language=english_language,
             inline_translation_type="Dictionary",
             inline_translation_parameters=json.dumps({"dictionary": "GoogleTranslator"}),
         )
-        instance.default_reader_profile = reader_profile
+        instance.default_language_preferences = language_preferences
         instance.save()
 
         for article in DEFAULT_LEXICAL_ARTICLES:
             LexicalArticle.objects.create(
-                reader_profile=reader_profile,
+                reader_profile=language_preferences,
                 type=article["type"],
                 title=article["title"],
                 parameters=article["parameters"],

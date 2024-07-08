@@ -32,7 +32,7 @@ from lexiflux.models import (
     ReadingLoc,
     LexicalArticle,
     Language,
-    ReaderProfile,
+    LanguagePreferences,
     CustomUser,
 )
 
@@ -293,7 +293,8 @@ def translate(request: HttpRequest, params: TranslateGetParams) -> HttpResponse:
 def language_tool_preferences(request: HttpRequest) -> HttpResponse:
     """Profile page."""
     reader_profile = (
-        request.user.default_reader_profile or request.user.reader_profiles.all().first()
+        request.user.default_language_preferences
+        or request.user.language_preferences.all().first()
     )
     all_languages = Language.objects.all()
 
@@ -340,20 +341,22 @@ def api_get_profile_for_language(request: HttpRequest) -> JsonResponse:
         language_id = data.get("language_id")
         language = get_object_or_404(Language, google_code=language_id)
 
-        reader_profile = ReaderProfile.get_or_create_profile(request.user, language)
+        language_preferences = LanguagePreferences.get_or_create_language_preferences(
+            request.user, language
+        )
 
         return JsonResponse(
             {
                 "status": "success",
-                "profile_id": reader_profile.id,
+                "profile_id": language_preferences.id,
                 "articles": list(
-                    reader_profile.get_lexical_articles().values(
+                    language_preferences.get_lexical_articles().values(
                         "id", "title", "type", "parameters"
                     )
                 ),
-                "inline_translation": reader_profile.inline_translation,
-                "user_language_id": reader_profile.user_language.google_code
-                if reader_profile.user_language
+                "inline_translation": language_preferences.inline_translation,
+                "user_language_id": language_preferences.user_language.google_code
+                if language_preferences.user_language
                 else None,
             }
         )
@@ -373,7 +376,7 @@ def api_update_user_language(request: HttpRequest) -> JsonResponse:
 
         language = get_object_or_404(Language, google_code=language_id)
         reader_profile = get_object_or_404(
-            ReaderProfile, user=request.user, language__google_code=profile_language_id
+            LanguagePreferences, user=request.user, language__google_code=profile_language_id
         )
 
         reader_profile.user_language = language
@@ -390,7 +393,7 @@ def save_inline_translation(request: HttpRequest) -> JsonResponse:
     """Save the inline translation settings."""
     data = json.loads(request.body)
     language_id = data.get("language_id")
-    reader_profile = request.user.reader_profiles.get(language_id=language_id)
+    reader_profile = request.user.language_preferences.get(language_id=language_id)
     reader_profile.inline_translation_type = data["type"]
     reader_profile.inline_translation_parameters = json.dumps(data["parameters"])
     reader_profile.save()
@@ -420,10 +423,10 @@ def manage_lexical_article(request: HttpRequest) -> JsonResponse:  # pylint: dis
 
         try:
             language = Language.objects.get(google_code=language_id)
-            reader_profile = ReaderProfile.objects.get(user=request.user, language=language)
+            reader_profile = LanguagePreferences.objects.get(user=request.user, language=language)
         except Language.DoesNotExist:
             return JsonResponse({"status": "error", "message": "Language not found"}, status=404)
-        except ReaderProfile.DoesNotExist:
+        except LanguagePreferences.DoesNotExist:
             return JsonResponse(
                 {"status": "error", "message": "Reader profile not found for this language"},
                 status=404,
@@ -447,7 +450,7 @@ def manage_lexical_article(request: HttpRequest) -> JsonResponse:  # pylint: dis
         return JsonResponse({"status": "error", "message": str(e)}, status=500)
 
 
-def add_lexical_article(reader_profile: ReaderProfile, data: dict[str, Any]) -> JsonResponse:
+def add_lexical_article(reader_profile: LanguagePreferences, data: dict[str, Any]) -> JsonResponse:
     """Add a lexical article."""
     try:
         article = LexicalArticle.objects.create(
@@ -467,7 +470,9 @@ def add_lexical_article(reader_profile: ReaderProfile, data: dict[str, Any]) -> 
         )
 
 
-def edit_lexical_article(reader_profile: ReaderProfile, data: dict[str, Any]) -> JsonResponse:
+def edit_lexical_article(
+    reader_profile: LanguagePreferences, data: dict[str, Any]
+) -> JsonResponse:
     """Edit a lexical article."""
     try:
         article_id = data.get("id")
@@ -495,7 +500,9 @@ def edit_lexical_article(reader_profile: ReaderProfile, data: dict[str, Any]) ->
         return JsonResponse({"status": "error", "message": "Failed to edit article"}, status=500)
 
 
-def delete_lexical_article(reader_profile: ReaderProfile, data: dict[str, Any]) -> JsonResponse:
+def delete_lexical_article(
+    reader_profile: LanguagePreferences, data: dict[str, Any]
+) -> JsonResponse:
     """Delete a lexical article."""
     try:
         article_id = data.get("id")
@@ -518,7 +525,7 @@ def delete_lexical_article(reader_profile: ReaderProfile, data: dict[str, Any]) 
 def api_profile(request: HttpRequest) -> JsonResponse:
     """Return the profile data as JSON for AJAX."""
     language_id = request.GET.get("language_id")
-    reader_profile = request.user.reader_profiles.get(language_id=language_id)
+    reader_profile = request.user.language_preferences.get(language_id=language_id)
     return JsonResponse(
         {
             "articles": list(

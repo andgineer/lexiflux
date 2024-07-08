@@ -4,7 +4,7 @@ from django.urls import reverse
 from unittest.mock import patch
 
 from lexiflux.language.translation import get_translator, Translator
-from lexiflux.models import ReaderProfile
+from lexiflux.models import LanguagePreferences
 
 
 @allure.epic('Translator')
@@ -38,7 +38,7 @@ def test_get_translator(mock_translator, book, user):
 
     result = get_translator(user, book)
 
-    profile, created = ReaderProfile.objects.get_or_create(user=user, language=book.language)
+    profile, created = LanguagePreferences.objects.get_or_create(user=user, language=book.language)
     mock_translator.assert_called_once_with(book, profile)
     assert isinstance(result, mock_translator.return_value.__class__)
 
@@ -49,7 +49,7 @@ def test_translator_translate(mock_google_translator, book, user):
     mock_translation = "This is a test translation."
     mock_google_translator.return_value.translate.return_value = mock_translation
 
-    profile, created = ReaderProfile.objects.get_or_create(user=user)
+    profile, created = LanguagePreferences.objects.get_or_create(user=user)
     translator = Translator(book, profile)
     result = translator.translate("This is a test.")
 
