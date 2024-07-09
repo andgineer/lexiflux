@@ -2,7 +2,7 @@
 
 import json
 import re
-from typing import TypeAlias, Tuple, List, Any, Dict
+from typing import TypeAlias, Tuple, List, Any, Dict, Optional
 
 from django.conf import settings
 from django.db import models, transaction
@@ -184,12 +184,19 @@ class BookPage(models.Model):  # type: ignore
         "Index in the list - word index.",
     )
 
+    _words_cache: Optional[List[Tuple[int, int]]] = None
+
     class Meta:
         ordering = ["number"]
         unique_together = ("book", "number")
 
     def __str__(self) -> str:
         return f"Page {self.number} of {self.book.title}"
+
+    def save(self, *args: Any, **kwargs: Any) -> None:
+        """Override the save method to clear cache of word indices."""
+        self._words_cache = None
+        super().save(*args, **kwargs)
 
     def _encode_word_indices(self, word_indices: List[Tuple[int, int]]) -> str:
         """Encode word indices nested list to a compact flat list.
@@ -215,10 +222,11 @@ class BookPage(models.Model):  # type: ignore
     @property
     def words(self) -> List[Tuple[int, int]]:
         """Property to parse words from the content or retrieve from DB."""
-        if self.word_indices is None:
-            self._parse_and_save_words()
-
-        return self._decode_word_indices()
+        if self._words_cache is None or self.word_indices is None:
+            if self.word_indices is None:
+                self._parse_and_save_words()
+            self._words_cache = self._decode_word_indices()
+        return self._words_cache
 
     def _parse_and_save_words(self) -> None:
         """Parse words from content and save to DB."""
