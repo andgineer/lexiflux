@@ -135,7 +135,10 @@ def reader(request: HttpRequest) -> HttpResponse:
     if not book:
         if book_code:
             print(f"Book {book_code} not found")
-        if not (reading_location := ReadingLoc.objects.filter(user=request.user).first()):
+        reading_location = (
+            ReadingLoc.objects.filter(user=request.user).order_by("-updated").first()
+        )
+        if not reading_location:
             return redirect("library")  # Redirect if the user has no reading history
 
         book = reading_location.book
@@ -155,12 +158,21 @@ def reader(request: HttpRequest) -> HttpResponse:
     print(f"Opening book {book_code} at page {page_number} for user {request.user.username}")
     book_page = BookPage.objects.get(book=book, number=page_number)
 
+    language_preferences = LanguagePreferences.get_or_create_language_preferences(
+        request.user, book.language
+    )
+    if request.user.default_language_preferences != language_preferences:
+        request.user.default_language_preferences = language_preferences
+        request.user.save()
+    lexical_articles = language_preferences.get_lexical_articles()
+
     return render(
         request,
         "reader.html",
         {
             "book": book_page.book,
             "page": book_page,
+            "lexical_articles": lexical_articles,
             "top_word": 0,
         },
     )
@@ -265,55 +277,47 @@ def translate(request: HttpRequest, params: TranslateGetParams) -> HttpResponse:
         # todo: get article from the translator
 
     result: Dict[str, Any] = {"translatedText": translated}
-    articles = {}
+
     if params.lexical_article:
-        print("Fetching lexical article")
-        # articles_map = {
-        #     1: "Dictionary",
-        #     "Dictionary Advanced": "Dictionary\u2601$+",
-        #     2: "Examples",
-        #     3: "Explain",
-        # }
-        # todo: get context as text and the selection as word
-        # articles[params.lexical_article] = lexical_articles.get_article(
-        #     articles_map[params.lexical_article],
-        #     params.text,
-        #     "",
-        #     "sr",
-        #     "ru",
-        # )
-        # f"""<p>{params.text} {params.lexical_article}</p>"""
-        articles[params.lexical_article] = f"{selected_text} {params.lexical_article}"
-        if params.lexical_article == "3":
-            result["url"] = f"https://glosbe.com/sr/ru/{urllib.parse.quote(selected_text)}"
-            result["window"] = True
-        elif params.lexical_article == "1":
+        language_preferences = LanguagePreferences.get_or_create_language_preferences(
+            request.user, book.language
+        )
+        try:
+            article = language_preferences.lexical_articles.get(id=int(params.lexical_article))
+        except LexicalArticle.DoesNotExist:
+            return JsonResponse({"error": "Lexical article not found"}, status=404)
+
+        if article.type == "Site":
+            result["url"] = article.parameters.get("url", "").format(
+                term=urllib.parse.quote(selected_text)
+            )
+            result["window"] = article.parameters.get("window", True)
+        else:
             start_word = max(0, term_word_ids[0] - MAX_SENTENCE_LENGTH)
             end_word = term_word_ids[-1] + MAX_SENTENCE_LENGTH
-            if start_word - end_word < MAX_SENTENCE_LENGTH * 2:
+            if end_word - start_word < MAX_SENTENCE_LENGTH * 2:
                 end_word = start_word + MAX_SENTENCE_LENGTH * 2
             if end_word > len(book_page.words):
                 end_word = len(book_page.words)
-            if start_word - end_word < MAX_SENTENCE_LENGTH * 2:
+            if end_word - start_word < MAX_SENTENCE_LENGTH * 2:
                 start_word = max(0, end_word - MAX_SENTENCE_LENGTH * 2)
+
             context_str, context_word_slices = book_page.extract_words(start_word, end_word)
             context_term_word_ids = [word_id - start_word for word_id in term_word_ids]
+
             llm = Llm()
             data = llm.generate_article(
-                article_name="Lexical",
-                params={
-                    "model": "gpt-3.5-turbo",
-                },
+                article_name=article.type,
+                params=article.parameters,
                 data={
                     "text": context_str,
                     "word_slices": context_word_slices,
                     "term_word_ids": context_term_word_ids,
-                    "text_language": "sr",
-                    "user_language": "en",
+                    "text_language": book.language.google_code,
+                    "user_language": language_preferences.user_language.google_code,
                 },
             )
-            articles[params.lexical_article] = str(data)
-        result["articles"] = articles
+            result["articles"] = {params.lexical_article: str(data)}
     return JsonResponse(result)
 
 

@@ -38,42 +38,37 @@
                 <div class="card h-100">
                     <div class="card-header">
                         <ul class="nav nav-tabs card-header-tabs" id="lexicalPanelTabs" role="tablist">
+                            {% for article in lexical_articles %}
                             <li class="nav-item" role="presentation">
-                                <button class="nav-link active" id="lexical-tab-1" data-bs-toggle="tab" data-bs-target="#lexical-article-1" type="button" role="tab" aria-controls="lexical-article-1" aria-selected="true">Dictionary</button>
+                                <button class="nav-link {% if forloop.first %}active{% endif %}"
+                                        id="lexical-tab-{{ forloop.counter }}"
+                                        data-bs-toggle="tab"
+                                        data-bs-target="#lexical-article-{{ forloop.counter }}"
+                                        type="button" role="tab"
+                                        aria-controls="lexical-article-{{ forloop.counter }}"
+                                        aria-selected="{% if forloop.first %}true{% else %}false{% endif %}">
+                                    {{ article.title }}
+                                </button>
                             </li>
-                            <li class="nav-item" role="presentation">
-                                <button class="nav-link" id="lexical-tab-2" data-bs-toggle="tab" data-bs-target="#lexical-article-2" type="button" role="tab" aria-controls="lexical-article-2" aria-selected="false">Explain</button>
-                            </li>
-                            <li class="nav-item" role="presentation">
-                                <button class="nav-link" id="lexical-tab-3" data-bs-toggle="tab" data-bs-target="#lexical-article-3" type="button" role="tab" aria-controls="lexical-article-3" aria-selected="false">Examples</button>
-                            </li>
+                            {% endfor %}
                         </ul>
                     </div>
                     <div class="tab-content card-body" id="lexicalPanelContent">
-                        <div class="tab-pane fade show active" id="lexical-article-1" role="tabpanel" aria-labelledby="lexical-tab-1">
-                            <div id="lexical-content-1" class="lexical-content">
+                        {% for article in lexical_articles %}
+                        <div class="tab-pane fade {% if forloop.first %}show active{% endif %}"
+                             id="lexical-article-{{ forloop.counter }}"
+                             role="tabpanel"
+                             aria-labelledby="lexical-tab-{{ forloop.counter }}">
+                            <div id="lexical-content-{{ forloop.counter }}" class="lexical-content">
                                 <div class="spinner-border text-primary" role="status">
                                     <span class="visually-hidden">Loading...</span>
                                 </div>
                             </div>
-                            <iframe id="lexical-frame-1" src="" style="width:100%; height:100%; border:none;"></iframe>
+                            {% if article.type == "Site" %}
+                            <iframe id="lexical-frame-{{ forloop.counter }}" src="" style="width:100%; height:100%; border:none;"></iframe>
+                            {% endif %}
                         </div>
-                        <div class="tab-pane fade" id="lexical-article-2" role="tabpanel" aria-labelledby="lexical-tab-2">
-                            <div id="lexical-content-2" class="lexical-content">
-                                <div class="spinner-border text-primary" role="status">
-                                    <span class="visually-hidden">Loading...</span>
-                                </div>
-                            </div>
-                            <iframe id="lexical-frame-2" src="" style="width:100%; height:100%; border:none;"></iframe>
-                        </div>
-                        <div class="tab-pane fade" id="lexical-article-3" role="tabpanel" aria-labelledby="lexical-tab-3">
-                            <div id="lexical-content-3" class="lexical-content">
-                                <div class="spinner-border text-primary" role="status">
-                                    <span class="visually-hidden">Loading...</span>
-                                </div>
-                            </div>
-                            <iframe id="lexical-frame-3" src="" style="width:100%; height:100%; border:none;"></iframe>
-                        </div>
+                        {% endfor %}
                     </div>
                 </div>
             </div>
