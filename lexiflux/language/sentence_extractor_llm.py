@@ -1,10 +1,10 @@
 """Advanced sentence extraction utilities for the LexiFlux language module.
 
-(!) Main risk here - we expect LLM to keep the input text exactly the same except for the marked sentence.
+(!) Main risk here - we expect LLM to keep the input text exactly the same
+except for the marked sentence.
 """
 
 from typing import List, Tuple, Dict
-import os
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_openai import ChatOpenAI
 from langchain.schema import BaseOutputParser
@@ -23,46 +23,44 @@ WORD_START_MARK = "**"
 WORD_END_MARK = "**"
 
 
-def break_into_sentences(
+def break_into_sentences(  # pylint: disable=too-many-locals
     plain_text: str,
-    word_ids: List[Tuple[int, int]],
-    highlighted_word_id: int,
+    word_slices: List[Tuple[int, int]],
+    term_word_ids: List[int],  # pylint: disable=redefined-outer-name
     lang_code: str = "en",
 ) -> Tuple[List[str], Dict[int, int]]:
     """
-    Break plain text into sentences, mark the highlighted word, and map word IDs to sentence indices.
+    Break plain text into sentences, mark the highlighted word, and map word IDs
+    to sentence indices.
 
     Args:
-    plain_text (str): The input text without HTML tags.
-    word_ids (List[Tuple[int, int]]]: List of word start and end indices.
-    highlighted_word_id (int): The ID of the word to be highlighted.
-    lang_code (str): Language code of the text.
+    plain_text: The input text without HTML tags.
+    word_slices: List of word start and end indices.
+    term_word_ids: The ID of the word to be highlighted.
+    lang_code: Language code of the text.
 
     Returns:
     Tuple[List[str], Dict[int, int]]: A tuple containing:
         - List of sentences
         - Dictionary mapping word index to sentence index
     """
-    if highlighted_word_id >= len(word_ids):
-        raise ValueError(
-            f"Highlighted word ID is {highlighted_word_id} but there are just {len(word_ids)} word IDs."
-        )
-    # Step 1: Mark the highlighted word with **
-    highlighted_word_start, highlighted_word_end = word_ids[highlighted_word_id]
+    # Step 1: Mark the highlighted term with **
+    term_start = word_slices[term_word_ids[0]][0]
+    term_end = word_slices[term_word_ids[-1]][1]
     marked_text = (
-        plain_text[:highlighted_word_start]
+        plain_text[:term_start]
         + WORD_START_MARK
-        + plain_text[highlighted_word_start:highlighted_word_end]
+        + plain_text[term_start:term_end]
         + WORD_END_MARK
-        + plain_text[highlighted_word_end:]
+        + plain_text[term_end:]
     )
 
     # Step 2: Use LLM to detect and mark the sentence
     marked_text_with_sentence = detect_sentence_llm(marked_text, lang_code)
 
     # Step 3: Extract sentences and create word_to_sentence mapping
-    sentences = []
-    word_to_sentence = {}
+    sentences_list = []
+    map_word_to_sentence = {}
     current_sentence = 0
 
     sentence_start = marked_text_with_sentence.find(SENTENCE_START_MARK)
@@ -79,17 +77,19 @@ def break_into_sentences(
         sentence_start + len(SENTENCE_START_MARK) : sentence_end
     ]
     clean_sentence = marked_sentence.replace(WORD_START_MARK, "").replace(WORD_END_MARK, "")
-    sentences.append(clean_sentence)
+    sentences_list.append(clean_sentence)
     # sentence end index after removing word and sentence marks
     sentence_end -= len(SENTENCE_START_MARK) + len(WORD_START_MARK) + len(WORD_END_MARK)
 
-    for word_id, (word_start, word_end) in enumerate(word_ids):
+    for word_id, (word_start, word_end) in enumerate(word_slices):  # pylint: disable=redefined-outer-name
         if sentence_start <= word_start < sentence_end:
-            # print(f"Word ID {word_id} (started at {word_start}) is in sentence: {plain_text[0:word_start]}@@@{plain_text[word_start:word_end]}@@@{plain_text[word_end:]}")
-            word_to_sentence[word_id] = current_sentence
-            word_ids[word_id] = (word_start, word_end)
+            # print(f"Word ID {word_id} (started at {word_start}) is in sentence:
+            # {plain_text[0:word_start]}@@@{plain_text[word_start:word_end]}
+            # @@@{plain_text[word_end:]}")
+            map_word_to_sentence[word_id] = current_sentence
+            word_slices[word_id] = (word_start, word_end)
 
-    return sentences, word_to_sentence
+    return sentences_list, map_word_to_sentence
 
 
 def detect_sentence_llm(text: str, text_language: str) -> str:
@@ -120,7 +120,6 @@ def detect_sentence_llm(text: str, text_language: str) -> str:
     model = ChatOpenAI(
         model="gpt-3.5-turbo",
         temperature=0.5,
-        api_key=os.getenv("OPENAI_API_KEY"),
     )
 
     chain = preprocessing_prompt_template | model | TextOutputParser()
@@ -131,7 +130,7 @@ def detect_sentence_llm(text: str, text_language: str) -> str:
 
 if __name__ == "__main__":
     # Example usage
-    sample_text = "The quick brown fox jumps over the lazy dog. It was a sunny day in the forest."
+    SAMPLE_TEXT = "The quick brown fox jumps over the lazy dog. It was a sunny day in the forest."
     sample_word_ids = [
         (0, 3),
         (4, 9),
@@ -155,11 +154,9 @@ if __name__ == "__main__":
         (80, 87),
         (87, 88),
     ]
-    highlighted_word_id = 3  # "jumps"
+    term_word_ids = [3]  # "jumps"
 
-    sentences, word_to_sentence = break_into_sentences(
-        sample_text, sample_word_ids, highlighted_word_id
-    )
+    sentences, word_to_sentence = break_into_sentences(SAMPLE_TEXT, sample_word_ids, term_word_ids)
 
     print("Sentences:")
     for i, sentence in enumerate(sentences):
