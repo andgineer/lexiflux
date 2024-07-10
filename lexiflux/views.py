@@ -161,6 +161,10 @@ def reader(request: HttpRequest) -> HttpResponse:
     language_preferences = LanguagePreferences.get_or_create_language_preferences(
         request.user, book.language
     )
+    # Minimize user's confusion:
+    # we expect when he goes to the Language preferences he wants to change the preferences
+    # for the language of the book he just read. Language preferences editor could be very
+    # confusing if you do not notice for which language you are changing the preferences.
     if request.user.default_language_preferences != language_preferences:
         request.user.default_language_preferences = language_preferences
         request.user.save()

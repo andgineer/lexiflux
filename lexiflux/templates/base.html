@@ -72,6 +72,37 @@
             #lexical-panel-button[aria-expanded="false"] #lexical-panel-icon::before {
                 content: "\F18F";
             }
+
+            .card-title {
+                white-space: nowrap;
+            }
+            .language-select-wrapper {
+                position: relative;
+                display: inline-block;
+                max-width: 300px; /* Adjust this value to your preferred maximum width */
+                width: 100%;
+            }
+            .language-flag {
+                position: absolute;
+                left: 10px;
+                top: 50%;
+                transform: translateY(-50%);
+                font-size: 1.2em;
+                pointer-events: none;
+                z-index: 1;
+            }
+            #languageSelect {
+                width: 100%;
+                padding-left: 40px;
+                padding-right: 30px;
+                appearance: none;
+                -webkit-appearance: none;
+                -moz-appearance: none;
+                background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='black' width='18px' height='18px'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+                background-repeat: no-repeat;
+                background-position: right 10px center;
+            }
+
         </style>
     </head>
     <body data-book-code="{{ book.code }}"
