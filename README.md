@@ -17,7 +17,7 @@
 | lexiflux/language/google\_languages.py          |       12 |        0 |    100% |           |
 | lexiflux/language/llm.py                        |      164 |      122 |     26% |57-62, 69, 79-81, 88-93, 100-118, 125-132, 139-147, 157-162, 166, 191, 209-222, 248-291, 300, 305-337, 340-455, 464, 474-492 |
 | lexiflux/language/sentence\_extractor.py        |       25 |       17 |     32% |     44-65 |
-| lexiflux/language/sentence\_extractor\_llm.py   |       54 |       40 |     26% |17, 46-92, 97-129, 134-170 |
+| lexiflux/language/sentence\_extractor\_llm.py   |       52 |       39 |     25% |17, 48-92, 97-128, 133-167 |
 | lexiflux/language/translation.py                |       44 |        0 |    100% |           |
 | lexiflux/language/word\_extractor.py            |       75 |        0 |    100% |           |
 | lexiflux/lexical\_articles.py                   |       11 |       11 |      0% |      3-34 |
@@ -28,7 +28,7 @@
 | lexiflux/urls.py                                |        6 |        0 |    100% |           |
 | lexiflux/utils.py                               |        8 |        0 |    100% |           |
 | lexiflux/views.py                               |      359 |      142 |     60% |71, 78-83, 118, 137, 146, 215, 270-316, 367-393, 400-415, 422-428, 440-478, 483-496, 505-528, 535-549, 555-557, 570-574, 581-600, 635-636, 662 |
-|                                       **TOTAL** | **1431** |  **403** | **72%** |           |
+|                                       **TOTAL** | **1429** |  **402** | **72%** |           |
 
 
 ## Setup coverage badge
