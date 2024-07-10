@@ -14,7 +14,9 @@ from langchain_mistralai import ChatMistralAI
 import openai
 from langchain.schema import BaseOutputParser
 from pydantic import Field
-from django.core.cache import cache
+
+from lexiflux.language.sentence_extractor import break_into_sentences
+from lexiflux.language.word_extractor import parse_words
 
 ChatModels = {
     "gpt-3.5-turbo": {
@@ -150,13 +152,15 @@ class Llm:  # pylint: disable=too-few-public-methods
     """
 
     ChatMessages = List[SystemMessage | HumanMessage | AIMessage]
+    _model_cache: Dict[str, Any]
 
     def __init__(self) -> None:
         openai.api_key = os.getenv("OPENAI_API_KEY")
-        # alternatively set LANGCHAIN_API_KEY
-
+        # os.environ["ANTHROPIC_API_KEY"] = os.getenv("ANTHROPIC_API_KEY")
+        # os.environ["GOOGLE_API_KEY"] = os.getenv("GOOGLE_API_KEY")
+        # os.environ["MISTRAL_API_KEY"] = os.getenv("MISTRAL_API_KEY")
         self._articles_templates = self._create_article_templates()
-        self._model_cache: Dict[str, ChatOpenAI] = {}
+        self._model_cache: Dict[str, Any] = {}
 
     def article_names(self) -> list[str]:
         """Return a list of all available Lexical Article names."""
@@ -170,32 +174,50 @@ class Llm:  # pylint: disable=too-few-public-methods
 
     def detect_sentence(
         self,
-        article_name: str,
-        hashable_params: tuple[tuple[str, Any]],
+        article_name: str,  # pylint: disable=unused-argument
+        hashable_params: tuple[tuple[str, Any]],  # pylint: disable=unused-argument
         hashable_data: tuple[tuple[str, Any]],
     ) -> Dict[str, str]:
-        """Return already detected sentence for the first word in the `term`.
+        """Return detected sentence for the first word in the `term`.
 
         If the sentence is not detected, it will be detected and returned.
         """
         data = dict(hashable_data)
         text_language = data["text_language"]
-        user_language = data["user_language"]
-        book_code = data["book_code"]
-        page_number = data["page_number"]
+        text = data["text"]
         word_ids = data["word_ids"]
-        cache_key = (
-            f"sentences:{text_language}:{user_language}:{book_code}:{page_number}:{word_ids[0]}"
+        term = data["term"]
+
+        # Find the first word of the term in the text
+        term_start = text.find(term)
+        if term_start == -1:
+            raise ValueError(f"Term '{term}' not found in the text.")
+
+        # Find the word_id that corresponds to the start of the term
+        highlighted_word_id = next(
+            (i for i, (start, end) in enumerate(word_ids) if start == term_start), None
         )
-        try:
-            sentence = cache.get(cache_key)
-            if sentence is None:
-                sentence = self._detect_sentence(article_name, hashable_params, hashable_data)
-                cache.set(cache_key, sentence, timeout=None)
-        except Exception:  # pylint: disable=broad-except
-            # Django is not inited
-            sentence = self._detect_sentence(article_name, hashable_params, hashable_data)
-        return sentence  # type: ignore
+        if highlighted_word_id is None:
+            raise ValueError(f"No word_id found for term '{term}'.")
+
+        # Use break_into_sentences to detect the sentence
+        sentences, _ = break_into_sentences(
+            text, word_ids, highlighted_word_id, lang_code=text_language
+        )
+
+        if not sentences:
+            raise ValueError("No sentence detected.")
+
+        # Get the detected sentence
+        detected_sentence = sentences[0]
+
+        # Prepare the result
+        result = {
+            "text": f"||{detected_sentence}||",
+            "detected_language": text_language,  # do not detected language
+        }
+
+        return result
 
     def _get_model_key(
         self,
@@ -208,15 +230,39 @@ class Llm:  # pylint: disable=too-few-public-methods
 
     def _get_or_create_model(
         self, article_name: str, text_language: str, user_language: str, model_name: str
-    ) -> ChatOpenAI:
+    ) -> Any:
         model_key = self._get_model_key(article_name, text_language, user_language, model_name)
 
         if model_key not in self._model_cache:
-            self._model_cache[model_key] = ChatOpenAI(
-                model=model_name,
-                temperature=0.5,
-                api_key=os.getenv("OPENAI_API_KEY"),  # type: ignore
-            )
+            model_info = ChatModels.get(model_name)
+            if not model_info:
+                raise ValueError(f"Unsupported model: {model_name}")
+
+            model_class = model_info["model"]
+
+            if model_class == ChatOpenAI:
+                self._model_cache[model_key] = model_class(
+                    model=model_name,
+                    temperature=0.5,
+                    api_key=os.getenv("OPENAI_API_KEY"),
+                )
+            elif model_class == ChatAnthropic:
+                self._model_cache[model_key] = model_class(
+                    model=model_name,
+                    temperature=0.5,
+                )
+            elif model_class == ChatGoogleGenerativeAI:
+                self._model_cache[model_key] = model_class(
+                    model=model_name,
+                    temperature=0.5,
+                )
+            elif model_class == ChatMistralAI:
+                self._model_cache[model_key] = model_class(
+                    model=model_name,
+                    temperature=0.5,
+                )
+            else:
+                raise ValueError(f"Unsupported model class: {model_class}")
 
         return self._model_cache[model_key]
 
@@ -334,50 +380,6 @@ If is not {user_language}, translate the fields to {user_language} language.
             "Sentence": {"template": sentence_prompt_template, "parser": sentence_parser},
         }
 
-    @lru_cache(maxsize=1000)
-    def _detect_sentence(
-        self,
-        article_name: str,
-        hashable_params: tuple[tuple[str, Any]],
-        hashable_data: tuple[tuple[str, Any]],
-    ) -> Dict[str, str]:
-        """Mark with <sentence> the sentence with highlighted word(s) and detect its language."""
-        params = dict(hashable_params)
-        data = dict(hashable_data)
-
-        preprocessing_template = """Given a text in {text_language}, identify the full sentence
-that contains the word(s) marked with double asterisks **like this**.
-Mark the sentence containing the marked word(s) with double vertical bars before
-and after the sentence, like this: ||This is the marked sentence containing **the word**.||
-
-Definition of a sentence: grammatical unit that consists of one or more words,
-usually containing a subject and a predicate, and expresses a complete thought.
-It typically begins with a capital letter and ends with a terminal punctuation mark.
-Can be simple, containing a single independent clause (e.g., "The cat sleeps."), or complex,
-containing one or more dependent clauses in addition to an independent clause
-(e.g., "Although it was raining, we went for a walk.").
-In identifying the sentence, ensure to include any dependent or subordinate clauses
-that are part of the main thought.
-
-Additionally, detect the language of the marked sentence, which may differ from
-the {text_language}.
-
-Return the result in JSON format with the following fields:
-"text": The full input text with the marked sentence and highlighted word(s).
-"detected_language": The detected language of the marked sentence, accurately reflects the actual language of the sentence.
-        """
-        preprocessing_prompt_template = ChatPromptTemplate.from_messages(
-            [("system", preprocessing_template), ("user", "{text}")]
-        )
-        model_name = params.get("model", "gpt-3.5-turbo")
-        model = self._get_or_create_model(
-            article_name, data["text_language"], data["user_language"], model_name
-        )
-
-        chain = preprocessing_prompt_template | model | TextOutputParser()
-        result = chain.invoke(data)
-        return json.loads(result)  # type: ignore
-
     def _hashable_dict(self, d: Dict[str, Any]) -> tuple[tuple[str, Any]]:
         return tuple(sorted(d.items()))  # type: ignore
 
@@ -409,3 +411,66 @@ Return the result in JSON format with the following fields:
         chain = templates["template"] | model | templates["parser"]
 
         return chain.invoke(data)  # type: ignore
+
+    def get_article_from_text(  # pylint: disable=too-many-arguments, too-many-locals
+        self,
+        article_name: str,  # pylint: disable=unused-argument
+        text: str,
+        text_language: str,
+        user_language: str,
+        term_word_indices: List[int],
+        model_name: str = "gpt-3.5-turbo",
+    ) -> str:
+        """Get the article based on the text and term word indices.
+
+        Convenient way to debug the LLM without BookPage.
+        """
+        word_ids, _ = parse_words(text)
+
+        # Find the start and end indices of the term
+        term_start = word_ids[term_word_indices[0]][0]
+        term_end = word_ids[term_word_indices[-1]][1]
+        term = text[term_start:term_end]
+        print(f"term: {term}")
+
+        sentences, word_to_sentence = break_into_sentences(text, word_ids, lang_code=text_language)
+        print(f"sentences: {sentences}")
+
+        # Find sentences that include all words in the term
+        term_sentence_indices = set()
+        for word_index in term_word_indices:
+            sentence_index = word_to_sentence[word_index]
+            term_sentence_indices.add(sentence_index)
+
+        # Ensure all term words are in adjacent sentences
+        if max(term_sentence_indices) - min(term_sentence_indices) + 1 != len(
+            term_sentence_indices
+        ):
+            raise ValueError("Term words are not in adjacent sentences")
+
+        # Get the relevant sentences
+        start_sentence_index = min(term_sentence_indices)
+        end_sentence_index = max(term_sentence_indices)
+        relevant_sentences = sentences[start_sentence_index : end_sentence_index + 1]
+
+        # Create marked text
+        marked_text = text
+        # Replace the relevant sentences with marked versions
+        relevant_text = "".join(relevant_sentences)
+        marked_relevant_text = f"||{relevant_text.replace(term, f'**{term}**')}||"
+        marked_text = marked_text.replace(relevant_text, marked_relevant_text)
+
+        # Prepare data for the LLM chain
+        data = {
+            "text": marked_text,
+            "term": term,
+            "text_language": text_language,
+            "user_language": user_language,
+            "detected_language": text_language,  # do not detected language
+        }
+
+        # Use the existing method to get the article
+        params = {"model": model_name}
+        return self._get_article_cached(
+            article_name, self._hashable_dict(params), self._hashable_dict(data)
+        )

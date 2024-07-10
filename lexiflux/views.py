@@ -20,11 +20,10 @@ from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth import get_user_model, login
 from django.contrib.auth.views import LoginView
 
-from lexiflux.language.sentence_extractor import break_into_sentences
 from lexiflux.language.translation import get_translator
 from lexiflux.api import get_params, ViewGetParamsModel
 from lexiflux.forms import CustomUserCreationForm
-from lexiflux.llm import ChatModels
+from lexiflux.language.llm import ChatModels, Llm
 
 from lexiflux.models import (
     Book,
@@ -294,13 +293,16 @@ def translate(request: HttpRequest, params: TranslateGetParams) -> HttpResponse:
             end_word = highlited_word + MAX_SENTENCE_LENGTH
             if start_word - end_word < MAX_SENTENCE_LENGTH * 2:
                 end_word = start_word + MAX_SENTENCE_LENGTH * 2
-            context_str, context_word_ids = book_page.extract_words(start_word, end_word)
-            sentences, _ = break_into_sentences(
-                context_str,
-                context_word_ids,
-                lang_code="sr",
+            context_str, _ = book_page.extract_words(start_word, end_word)
+            llm = Llm()
+            data = llm.get_article_from_text(
+                article_name="Dictionary",
+                text=context_str,
+                term_word_indices=[word_id - start_word for word_id in word_ids],
+                text_language="sr",
+                user_language="ru",
             )
-            articles[params.lexical_article] = "<br><br>".join(sentences)
+            articles[params.lexical_article] = str(data)
         result["articles"] = articles
     return JsonResponse(result)
 

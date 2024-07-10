@@ -46,20 +46,3 @@ def detect_language(input_text: str) -> Tuple[str, float]:
     confidence = predictions[1][0]
 
     return lang_code, confidence
-
-
-if __name__ == "__main__":
-    texts = [
-        "Hello, how are you?",
-        "Bonjour, comment allez-vous?",
-        "Hola, ¿cómo estás?",
-        "Здравствуйте, как дела?",
-        "你好，你好吗？",
-    ]
-
-    for text in texts:
-        lang, conf = detect_language(text)
-        print(f"Text: {text}")
-        print(f"Detected language: {lang}")
-        print(f"Confidence: {conf:.4f}")
-        print()

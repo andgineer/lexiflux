@@ -1,6 +1,6 @@
 """Lexical articles."""
 
-from lexiflux.llm import Llm
+from lexiflux.language.llm import Llm
 
 
 class LexicalArticles:
