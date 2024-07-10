@@ -3,19 +3,18 @@
 import json
 import os
 from functools import lru_cache
-from typing import Any, Dict, List, Iterable, Union
+from typing import Any, Dict, List, Iterable, Union, Set, Tuple
 
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
 from langchain_openai import ChatOpenAI
-from langchain_anthropic import ChatAnthropic
-from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_mistralai import ChatMistralAI
 import openai
 from langchain.schema import BaseOutputParser
 from pydantic import Field
 
 from lexiflux.language.sentence_extractor import break_into_sentences
+from lexiflux.language.sentence_extractor_llm import SENTENCE_START_MARK
 from lexiflux.language.word_extractor import parse_words
 
 ChatModels = {
@@ -34,23 +33,33 @@ ChatModels = {
         "model": ChatOpenAI,
         "suffix": "⚙️4+",
     },
-    # https://docs.anthropic.com/en/docs/models-overview
-    "claude-3-5-sonnet-20240620": {
-        "title": "Claude 3.5 Sonnet",
-        "model": ChatAnthropic,
-        "suffix": "💡3.5",  # U+1F4A1
-    },
-    "gemini-pro": {
-        "title": "Gemini Pro",
-        "model": ChatGoogleGenerativeAI,
-        "suffix": "🌀",
-    },
-    "mistral-medium": {
-        "title": "Mistral Medium",
-        "model": ChatMistralAI,
-        "suffix": "🌪️",
-    },
+    # # https://docs.anthropic.com/en/docs/models-overview
+    # "claude-3-5-sonnet-20240620": {
+    #     "title": "Claude 3.5 Sonnet",
+    #     "model": ChatAnthropic,
+    #     "suffix": "💡3.5",  # U+1F4A1
+    # },
+    # "gemini-pro": {
+    #     "title": "Gemini Pro",
+    #     "model": ChatGoogleGenerativeAI,
+    #     "suffix": "🌀",
+    # },
+    # "mistral-medium": {
+    #     "title": "Mistral Medium",
+    #     "model": ChatMistralAI,
+    #     "suffix": "🌪️",
+    # },
 }
+
+
+def find_nth_occurrence(substring: str, string: str, occurrence: int) -> int:
+    """Find the nth occurrence (1 - first, etc) of a substring in a string."""
+    start = -1
+    for _ in range(occurrence):
+        start = string.find(substring, start + 1)
+        if start == -1:
+            return -1
+    return start
 
 
 class TextOutputParser(BaseOutputParser[str]):
@@ -139,17 +148,7 @@ class ExamplesOutputParser(BaseJsonParser):
 
 
 class Llm:  # pylint: disable=too-few-public-methods
-    """AI lexical articles.
-
-    As `data` expect
-    - book_code: str
-    - page_number: int
-    - word_ids: List[int]  # for all words in the `term`
-    - text: str
-    - term: str
-    - text_language: str
-    - user_language: str
-    """
+    """AI lexical articles."""
 
     ChatMessages = List[SystemMessage | HumanMessage | AIMessage]
     _model_cache: Dict[str, Any]
@@ -162,61 +161,133 @@ class Llm:  # pylint: disable=too-few-public-methods
         self._articles_templates = self._create_article_templates()
         self._model_cache: Dict[str, Any] = {}
 
-    def article_names(self) -> list[str]:
+    def article_names(self) -> List[str]:
         """Return a list of all available Lexical Article names."""
         return list(self._articles_templates.keys())
 
-    def get_article(self, article_name: str, params: Dict[str, Any], data: Dict[str, Any]) -> str:
-        """Generate the article based on data."""
-        return self._get_article_cached(
+    def generate_article(
+        self, article_name: str, params: Dict[str, Any], data: Dict[str, Any]
+    ) -> str:
+        """Generate the article based on the data.
+
+        Expects in `params`:
+        - model: LLM model name from ChatModels.keys()
+        Expects in `data`:
+        - text:
+            highlighted words marked with WORD_START_MARK and WORD_END_MARK
+            sentences that contained the highlighted words marked with SENTENCE_START_MARK
+            and SENTENCE_END_MARK
+        - word_slices:
+            list of tuples with start and end indices of words in the text
+            to get the last word in text: start, end = word_slices[-1]; text[start:end]
+        - term_word_ids: list of the highlighted word IDs, expected to be contiguous
+        - text_language: Expected text language (could be wrong if this is phrase
+            in different language)
+        - user_language: User's language
+
+        Returns:
+            HTML formatted article.
+        """
+        return self._generate_article_cached(
             article_name, self._hashable_dict(params), self._hashable_dict(data)
         )
 
-    def detect_sentence(
+    def prepare_data(
         self,
-        article_name: str,  # pylint: disable=unused-argument
-        hashable_params: tuple[tuple[str, Any]],  # pylint: disable=unused-argument
+        text: str,
+        term: str,
+        term_occurence: int = 1,
+    ) -> Dict[str, Any]:
+        """From the text given prepare the data to generate an LLM article.
+
+        Convenient way to debug the LLM.
+        If term is included in the text multiple times, you can specify which occurrence to use
+        (1 - 1st, etc).
+
+        Return: dict with "term_word_ids" and "word_slices" ready to use in generate_article().
+        """
+        word_slices, _ = parse_words(text)
+        term_start = find_nth_occurrence(term, text, term_occurence)
+        term_end = term_start + len(term)
+        # find the word slices that contain the term
+        term_word_ids = []
+        for i, (start, end) in enumerate(word_slices):
+            if start >= term_start and end <= term_end:
+                term_word_ids.append(i)
+
+        data = {
+            "word_slices": word_slices,
+            "term_word_ids": term_word_ids,
+        }
+        return data
+
+    def mark_term_and_sentence(  # pylint: disable=too-many-locals
+        self,
         hashable_data: tuple[tuple[str, Any]],
     ) -> Dict[str, str]:
-        """Return detected sentence for the first word in the `term`.
+        """Mark in the text the term and sentence(s) that contains it.
 
-        If the sentence is not detected, it will be detected and returned.
+        Expects in `data`:
+        - text:
+        - word_slices:
+            list of tuples with start and end indices of words in the text
+        - term_word_ids:
+            list of the highlighted word IDs, expected to be contiguous
+        - text_language:
+            Expected text language (could be wrong if this is phrase in different language)
+
+        Returns:
+            {
+                "text":
+                    detected sentence(s) marked with SENTENCE_START_MARK and SENTENCE_END_MARK
+                    and term marked with WORD_START_MARK and WORD_END_MARK
+                "detected_language":
+                    detected language of the sentence(s)
+            }
         """
         data = dict(hashable_data)
         text_language = data["text_language"]
         text = data["text"]
-        word_ids = data["word_ids"]
-        term = data["term"]
+        word_slices: List[Tuple[int, int]] = data["word_slices"]
+        term_word_ids: List[int] = data["term_word_ids"]
 
-        # Find the first word of the term in the text
-        term_start = text.find(term)
-        if term_start == -1:
-            raise ValueError(f"Term '{term}' not found in the text.")
-
-        # Find the word_id that corresponds to the start of the term
-        highlighted_word_id = next(
-            (i for i, (start, end) in enumerate(word_ids) if start == term_start), None
-        )
-        if highlighted_word_id is None:
-            raise ValueError(f"No word_id found for term '{term}'.")
-
-        # Use break_into_sentences to detect the sentence
-        sentences, _ = break_into_sentences(
-            text, word_ids, highlighted_word_id, lang_code=text_language
+        # todo: implement and use BookPage cached sentence detection
+        sentences, word_to_sentence = break_into_sentences(
+            text, word_slices, term_word_ids, lang_code=text_language
         )
 
-        if not sentences:
+        if not sentences:  # todo: fallback to full text? use LLM detector?
             raise ValueError("No sentence detected.")
 
-        # Get the detected sentence
-        detected_sentence = sentences[0]
+        # Get all the sentences that contains the term words
+        term_sentences: Set[int] = {word_to_sentence[word_id] for word_id in term_word_ids}
+        # Get all words ID in the term sentences
+        term_sentences_word_ids = {
+            word_id
+            for word_id, sentence_id in word_to_sentence.items()
+            if sentence_id in term_sentences
+        }
+        # mark sentence
+        sentence_start, _ = word_slices[min(term_sentences_word_ids)]
+        _, sentence_end = word_slices[max(term_sentences_word_ids)]
+        marked_text = (
+            f"{text[:sentence_start]}||{text[sentence_start:sentence_end]}||{text[sentence_end:]}"
+        )
+        # mark term
+        term_start = word_slices[term_word_ids[0]][0] + len(SENTENCE_START_MARK)
+        term_end = word_slices[term_word_ids[-1]][1] + len(SENTENCE_START_MARK)
+        marked_text = (
+            f"{marked_text[:term_start]}**"
+            f"{marked_text[term_start:term_end]}**"
+            f"{marked_text[term_end:]}"
+        )
 
-        # Prepare the result
+        # todo: detect language of the sentence(s) with fasttext
         result = {
-            "text": f"||{detected_sentence}||",
+            "text": marked_text,
             "detected_language": text_language,  # do not detected language
         }
-
+        print(result)
         return result
 
     def _get_model_key(
@@ -241,23 +312,22 @@ class Llm:  # pylint: disable=too-few-public-methods
             model_class = model_info["model"]
 
             if model_class == ChatOpenAI:
-                self._model_cache[model_key] = model_class(
-                    model=model_name,
-                    temperature=0.5,
-                    api_key=os.getenv("OPENAI_API_KEY"),
-                )
-            elif model_class == ChatAnthropic:
-                self._model_cache[model_key] = model_class(
+                self._model_cache[model_key] = model_class(  # type: ignore
                     model=model_name,
                     temperature=0.5,
                 )
-            elif model_class == ChatGoogleGenerativeAI:
-                self._model_cache[model_key] = model_class(
-                    model=model_name,
-                    temperature=0.5,
-                )
+            # elif model_class == ChatAnthropic:
+            #     self._model_cache[model_key] = model_class(
+            #         model=model_name,
+            #         temperature=0.5,
+            #     )
+            # elif model_class == ChatGoogleGenerativeAI:
+            #     self._model_cache[model_key] = model_class(
+            #         model=model_name,
+            #         temperature=0.5,
+            #     )
             elif model_class == ChatMistralAI:
-                self._model_cache[model_key] = model_class(
+                self._model_cache[model_key] = model_class(  # type: ignore
                     model=model_name,
                     temperature=0.5,
                 )
@@ -272,9 +342,13 @@ class Llm:  # pylint: disable=too-few-public-methods
         explain_parser = ExplainOutputParser(retry_count=1)
         examples_parser = ExamplesOutputParser(retry_count=1)
 
-        translation_system_template = """Given the following text in {text_language},
-translate to {user_language} language the term marked with double starts before and after the term, like this:
-This is the sentence containing **the term**. 
+        translation_system_template = """Below given a text with the sentence
+in {detected_language} language
+marked with double vertical bars before and after the sentence, like this:
+||This is the marked sentence containing **the word**.||
+Inside the sentence, the term is marked with double stars - like
+**the word** in the example above.
+Translate to {user_language} language the term.
 Give translation of the term in the exact sentence where the term is (and not all occurrences in the text).
 Put into result only the term translation.
 If the text is not in {text_language}, prefix the result with the text language name in parentheses, like (Latin).
@@ -284,10 +358,13 @@ If the text is not in {text_language}, prefix the result with the text language 
             [("system", translation_system_template), ("user", "The text is: {text}")]
         )
 
-        lexical_system_template = """Given the following text in {text_language},
-write {text_language} - {user_language} lexical article for the term marked with
-double starts before and after the term, like this:
-This is the sentence containing **the term**. 
+        lexical_system_template = """Below given a text with the sentence
+in {detected_language} language
+marked with double vertical bars before and after the sentence, like this:
+||This is the marked sentence containing **the word**.||
+Inside the sentence, the term is marked with double stars - like
+**the word** in the example above.
+Write {text_language} - {user_language} lexical article for the term. 
 The article should be in {user_language}.
 The article includes different meanings, grammar attributes of them - part of the speech,
 genre, number, countability and other.
@@ -302,10 +379,13 @@ Give the result in HTML formatting, without any block marks."""
             [("system", lexical_system_template), ("user", "The text is: {text}")]
         )
 
-        examples_system_template = """Given the following text in {text_language},
-provide up to seven examples in {text_language} language of sentences with the term marked with
-double starts before and after the term, like this:
-This is the sentence containing **the term**.
+        examples_system_template = """Below given a text with the sentence
+in {detected_language} language
+marked with double vertical bars before and after the sentence, like this:
+||This is the marked sentence containing **the word**.||
+Inside the sentence, the term is marked with double stars - like
+**the word** in the example above.
+Provide up to seven examples in {text_language} language of sentences with the term.
 
 Return in JSON format without any additional block marks or labels.
 The JSON should contain array of objects with the following fields:
@@ -380,11 +460,11 @@ If is not {user_language}, translate the fields to {user_language} language.
             "Sentence": {"template": sentence_prompt_template, "parser": sentence_parser},
         }
 
-    def _hashable_dict(self, d: Dict[str, Any]) -> tuple[tuple[str, Any]]:
-        return tuple(sorted(d.items()))  # type: ignore
+    def _hashable_dict(self, d: Dict[str, Any]) -> Tuple[Tuple[str, Any], ...]:
+        return tuple((k, tuple(v) if isinstance(v, list) else v) for k, v in sorted(d.items()))
 
     @lru_cache(maxsize=1000)
-    def _get_article_cached(
+    def _generate_article_cached(
         self,
         article_name: str,
         hashable_params: tuple[tuple[str, Any]],
@@ -398,10 +478,9 @@ If is not {user_language}, translate the fields to {user_language} language.
         if article_name not in self._articles_templates:
             raise ValueError(f"Lexical article '{article_name}' not found.")
 
-        if article_name in {"Sentence", "Explain"}:
-            preprocessed_data = self.detect_sentence(article_name, hashable_params, hashable_data)
-            data["text"] = preprocessed_data["text"]
-            data["detected_language"] = preprocessed_data["detected_language"]
+        marked_text = self.mark_term_and_sentence(hashable_data)
+        data["text"] = marked_text["text"]
+        data["detected_language"] = marked_text["detected_language"]
 
         model_name = params.get("model", "gpt-3.5-turbo")
         model = self._get_or_create_model(
@@ -411,66 +490,3 @@ If is not {user_language}, translate the fields to {user_language} language.
         chain = templates["template"] | model | templates["parser"]
 
         return chain.invoke(data)  # type: ignore
-
-    def get_article_from_text(  # pylint: disable=too-many-arguments, too-many-locals
-        self,
-        article_name: str,  # pylint: disable=unused-argument
-        text: str,
-        text_language: str,
-        user_language: str,
-        term_word_indices: List[int],
-        model_name: str = "gpt-3.5-turbo",
-    ) -> str:
-        """Get the article based on the text and term word indices.
-
-        Convenient way to debug the LLM without BookPage.
-        """
-        word_ids, _ = parse_words(text)
-
-        # Find the start and end indices of the term
-        term_start = word_ids[term_word_indices[0]][0]
-        term_end = word_ids[term_word_indices[-1]][1]
-        term = text[term_start:term_end]
-        print(f"term: {term}")
-
-        sentences, word_to_sentence = break_into_sentences(text, word_ids, lang_code=text_language)
-        print(f"sentences: {sentences}")
-
-        # Find sentences that include all words in the term
-        term_sentence_indices = set()
-        for word_index in term_word_indices:
-            sentence_index = word_to_sentence[word_index]
-            term_sentence_indices.add(sentence_index)
-
-        # Ensure all term words are in adjacent sentences
-        if max(term_sentence_indices) - min(term_sentence_indices) + 1 != len(
-            term_sentence_indices
-        ):
-            raise ValueError("Term words are not in adjacent sentences")
-
-        # Get the relevant sentences
-        start_sentence_index = min(term_sentence_indices)
-        end_sentence_index = max(term_sentence_indices)
-        relevant_sentences = sentences[start_sentence_index : end_sentence_index + 1]
-
-        # Create marked text
-        marked_text = text
-        # Replace the relevant sentences with marked versions
-        relevant_text = "".join(relevant_sentences)
-        marked_relevant_text = f"||{relevant_text.replace(term, f'**{term}**')}||"
-        marked_text = marked_text.replace(relevant_text, marked_relevant_text)
-
-        # Prepare data for the LLM chain
-        data = {
-            "text": marked_text,
-            "term": term,
-            "text_language": text_language,
-            "user_language": user_language,
-            "detected_language": text_language,  # do not detected language
-        }
-
-        # Use the existing method to get the article
-        params = {"model": model_name}
-        return self._get_article_cached(
-            article_name, self._hashable_dict(params), self._hashable_dict(data)
-        )

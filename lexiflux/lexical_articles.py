@@ -1,5 +1,7 @@
 """Lexical articles."""
 
+from typing import List
+
 from lexiflux.language.llm import Llm
 
 
@@ -15,7 +17,7 @@ class LexicalArticles:
     ) -> str:
         """Create the article."""
         if article_name in self.llm.article_names():
-            return self.llm.get_article(
+            return self.llm.generate_article(  # type: ignore
                 article_name,
                 {},
                 {
@@ -27,6 +29,6 @@ class LexicalArticles:
             )
         raise ValueError(f"Article '{article_name}' not found.")
 
-    def article_names(self) -> list[str]:
+    def article_names(self) -> List[str]:
         """Get a list of all available article names."""
-        return self.llm.article_names()
+        return self.llm.article_names()  # type: ignore

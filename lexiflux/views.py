@@ -245,9 +245,9 @@ def translate(request: HttpRequest, params: TranslateGetParams) -> HttpResponse:
     """
     book = Book.objects.get(code=params.book_code)
     book_page = BookPage.objects.get(book=book, number=params.book_page_number)
-    word_ids = [int(id) for id in params.word_ids.split(".")]
+    term_word_ids = [int(id) for id in params.word_ids.split(".")]
     selected_words = [
-        book_page.content[book_page.words[id][0] : book_page.words[id][1]] for id in word_ids
+        book_page.content[book_page.words[id][0] : book_page.words[id][1]] for id in term_word_ids
     ]
     selected_text = " ".join(selected_words)
 
@@ -288,19 +288,29 @@ def translate(request: HttpRequest, params: TranslateGetParams) -> HttpResponse:
             result["url"] = f"https://glosbe.com/sr/ru/{urllib.parse.quote(selected_text)}"
             result["window"] = True
         elif params.lexical_article == "1":
-            highlited_word = word_ids[0]
-            start_word = max(0, highlited_word - MAX_SENTENCE_LENGTH)
-            end_word = highlited_word + MAX_SENTENCE_LENGTH
+            start_word = max(0, term_word_ids[0] - MAX_SENTENCE_LENGTH)
+            end_word = term_word_ids[-1] + MAX_SENTENCE_LENGTH
             if start_word - end_word < MAX_SENTENCE_LENGTH * 2:
                 end_word = start_word + MAX_SENTENCE_LENGTH * 2
-            context_str, _ = book_page.extract_words(start_word, end_word)
+            if end_word > len(book_page.words):
+                end_word = len(book_page.words)
+            if start_word - end_word < MAX_SENTENCE_LENGTH * 2:
+                start_word = max(0, end_word - MAX_SENTENCE_LENGTH * 2)
+            context_str, context_word_slices = book_page.extract_words(start_word, end_word)
+            context_term_word_ids = [word_id - start_word for word_id in term_word_ids]
             llm = Llm()
-            data = llm.get_article_from_text(
-                article_name="Dictionary",
-                text=context_str,
-                term_word_indices=[word_id - start_word for word_id in word_ids],
-                text_language="sr",
-                user_language="ru",
+            data = llm.generate_article(
+                article_name="Lexical",
+                params={
+                    "model": "gpt-3.5-turbo",
+                },
+                data={
+                    "text": context_str,
+                    "word_slices": context_word_slices,
+                    "term_word_ids": context_term_word_ids,
+                    "text_language": "sr",
+                    "user_language": "en",
+                },
             )
             articles[params.lexical_article] = str(data)
         result["articles"] = articles

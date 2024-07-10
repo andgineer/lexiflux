@@ -3,7 +3,7 @@ exclude: |
         tests/|
         docs/|
         core/migrations/|
-        venv/|
+        .venv/|
         migrations/|
         manage.py|
         __about__.py
