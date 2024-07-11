@@ -19,7 +19,7 @@ DEFAULT_LEXICAL_ARTICLES = [
         "type": "Site",
         "title": "glosbe",
         "parameters": {
-            "url": "https://glosbe.com/sr/ru/ff{term}",
+            "url": "https://glosbe.com/sr/ru/{term}",
             "window": True,
         },
     },

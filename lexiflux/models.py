@@ -11,6 +11,7 @@ from django.core.exceptions import ValidationError
 from django.contrib.auth.models import AbstractUser
 from transliterate import get_available_language_codes, translit
 
+from lexiflux.language.sentence_extractor import break_into_sentences
 from lexiflux.language.word_extractor import parse_words
 
 BOOK_CODE_LENGTH = 100
@@ -183,7 +184,9 @@ class BookPage(models.Model):  # type: ignore
         help_text="Word indices in JSON format. List of tuples with start and end index. "
         "Index in the list - word index.",
     )
+    word_to_sentence_map = models.JSONField(null=True, blank=True)
 
+    _word_sentence_mapping_cache: Optional[Dict[int, int]] = None
     _words_cache: Optional[List[Tuple[int, int]]] = None
 
     class Meta:
@@ -196,6 +199,7 @@ class BookPage(models.Model):  # type: ignore
     def save(self, *args: Any, **kwargs: Any) -> None:
         """Override the save method to clear cache of word indices."""
         self._words_cache = None
+        self._word_sentence_mapping_cache = None
         super().save(*args, **kwargs)
 
     def _encode_word_indices(self, word_indices: List[Tuple[int, int]]) -> str:
@@ -261,6 +265,29 @@ class BookPage(models.Model):  # type: ignore
         adjusted_indices = [(start - start_pos, end - start_pos) for start, end in word_indices]
 
         return text_fragment, adjusted_indices
+
+    @property
+    def word_sentence_mapping(self) -> Dict[int, int]:
+        """Property to parse word to sentence mapping from DB or cache."""
+        if self._word_sentence_mapping_cache is None:
+            if self.word_to_sentence_map is None:
+                self._detect_and_store_sentences()
+            assert self.word_to_sentence_map is not None  # mypy
+            # Ensure all keys are integers
+            self._word_sentence_mapping_cache = {
+                int(k): v for k, v in json.loads(self.word_to_sentence_map).items()
+            }
+        return self._word_sentence_mapping_cache
+
+    def _detect_and_store_sentences(self) -> None:
+        _, word_to_sentence = break_into_sentences(
+            self.content, self.words, lang_code=self.book.language.google_code
+        )
+        # Ensure all keys are strings before JSON serialization
+        self.word_to_sentence_map = json.dumps({str(k): v for k, v in word_to_sentence.items()})
+        self.save(update_fields=["word_to_sentence_map"])
+        # Ensure all keys are integers in the cache
+        self._word_sentence_mapping_cache = {int(k): v for k, v in word_to_sentence.items()}
 
 
 class LexicalArticle(models.Model):  # type: ignore

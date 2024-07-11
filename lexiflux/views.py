@@ -1,7 +1,7 @@
 """Vies for the Lexiflux app."""
 
 import json
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, List, Tuple
 import urllib.parse
 import logging
 from pydantic import Field
@@ -252,12 +252,66 @@ class TranslateGetParams(ViewGetParamsModel):
     lexical_article: Optional[str] = Field(default=None)
 
 
+def get_context_for_term(
+    book_page: BookPage, term_word_ids: List[int]
+) -> Tuple[str, List[Tuple[int, int]], List[int], int]:
+    """Get the context for the term."""
+    start_word = max(0, term_word_ids[0] - MAX_SENTENCE_LENGTH)
+    end_word = term_word_ids[-1] + MAX_SENTENCE_LENGTH
+    if end_word - start_word < MAX_SENTENCE_LENGTH * 2:
+        end_word = start_word + MAX_SENTENCE_LENGTH * 2
+    if end_word > len(book_page.words):
+        end_word = len(book_page.words)
+    if end_word - start_word < MAX_SENTENCE_LENGTH * 2:
+        start_word = max(0, end_word - MAX_SENTENCE_LENGTH * 2)
+
+    context_str, context_word_slices = book_page.extract_words(start_word, end_word)
+    context_term_word_ids = [word_id - start_word for word_id in term_word_ids]
+    return context_str, context_word_slices, context_term_word_ids, start_word
+
+
+def get_lexical_article(
+    article: LexicalArticle,
+    selected_text: str,
+    book_page: BookPage,
+    term_word_ids: List[int],
+    language_preferences: LanguagePreferences,
+) -> Dict[str, Any]:
+    """Get the lexical article."""
+    if article.type == "Site":
+        return {
+            "url": article.parameters.get("url", "").format(
+                term=urllib.parse.quote(selected_text)
+            ),
+            "window": article.parameters.get("window", True),
+        }
+    context_str, context_word_slices, context_term_word_ids, context_start_word = (
+        get_context_for_term(book_page, term_word_ids)
+    )
+    llm = Llm()
+    data = llm.generate_article(
+        article_name=article.type,
+        params=article.parameters,
+        data={
+            "text": context_str,
+            "word_slices": context_word_slices,
+            "term_word_ids": context_term_word_ids,
+            "text_language": book_page.book.language.google_code,
+            "user_language": language_preferences.user_language.google_code,
+            "page": book_page,
+            "context_start_word": context_start_word,
+        },
+    )
+    return {"article": str(data)}
+
+
 @login_required  # type: ignore
 @get_params(TranslateGetParams)
-def translate(request: HttpRequest, params: TranslateGetParams) -> HttpResponse:  # pylint: disable=too-many-locals
-    """Translate text.
+def translate(request: HttpRequest, params: TranslateGetParams) -> HttpResponse:
+    """Translate the selected text.
 
-    full: if true, side panel is visible so we prepare detailed translation materials.
+    The selected text is defined by the word IDs.
+    If the lexical article is provided, the article is generated for the selected text.
     """
     book = Book.objects.get(code=params.book_code)
     book_page = BookPage.objects.get(book=book, number=params.book_page_number)
@@ -267,61 +321,29 @@ def translate(request: HttpRequest, params: TranslateGetParams) -> HttpResponse:
     ]
     selected_text = " ".join(selected_words)
 
-    # word_id = request.GET.get("word-id")  # todo: absolute word ID so we can find context
+    result: Dict[str, Any] = {}
 
-    # lexical_articles = LexicalArticles()
-    translated = ""
     if params.translate:
         translator = get_translator(request.user, book)
-        translated = translator.translate(selected_text)
-        # todo: get article from the translator
-
-    result: Dict[str, Any] = {"translatedText": translated}
+        result["translatedText"] = translator.translate(selected_text)
 
     if params.lexical_article:
         language_preferences = LanguagePreferences.get_or_create_language_preferences(
             request.user, book.language
         )
         all_articles = language_preferences.lexical_articles.all()
-
-        article_index = int(params.lexical_article) - 1  # lexical_article param is 1-based
+        article_index = int(params.lexical_article) - 1
 
         if 0 <= article_index < len(all_articles):
             article = all_articles[article_index]
+            result.update(
+                get_lexical_article(
+                    article, selected_text, book_page, term_word_ids, language_preferences
+                )
+            )
         else:
             return JsonResponse({"error": "Lexical article not found"}, status=404)
 
-        if article.type == "Site":
-            result["url"] = article.parameters.get("url", "").format(
-                term=urllib.parse.quote(selected_text)
-            )
-            result["window"] = article.parameters.get("window", True)
-        else:
-            start_word = max(0, term_word_ids[0] - MAX_SENTENCE_LENGTH)
-            end_word = term_word_ids[-1] + MAX_SENTENCE_LENGTH
-            if end_word - start_word < MAX_SENTENCE_LENGTH * 2:
-                end_word = start_word + MAX_SENTENCE_LENGTH * 2
-            if end_word > len(book_page.words):
-                end_word = len(book_page.words)
-            if end_word - start_word < MAX_SENTENCE_LENGTH * 2:
-                start_word = max(0, end_word - MAX_SENTENCE_LENGTH * 2)
-
-            context_str, context_word_slices = book_page.extract_words(start_word, end_word)
-            context_term_word_ids = [word_id - start_word for word_id in term_word_ids]
-
-            llm = Llm()
-            data = llm.generate_article(
-                article_name=article.type,
-                params=article.parameters,
-                data={
-                    "text": context_str,
-                    "word_slices": context_word_slices,
-                    "term_word_ids": context_term_word_ids,
-                    "text_language": book.language.google_code,
-                    "user_language": language_preferences.user_language.google_code,
-                },
-            )
-            result["articles"] = {params.lexical_article: str(data)}
     return JsonResponse(result)
 
 

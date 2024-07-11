@@ -3,7 +3,6 @@
 from enum import Enum
 from typing import List, Tuple, Dict, Optional
 import nltk
-from nltk.tokenize import sent_tokenize
 
 
 nltk.download("punkt", quiet=True)
@@ -40,26 +39,41 @@ def break_into_sentences(
     """
     # todo: in the sentence words is not included the punctuation
     #  that could be at the beginning and / or end of the sentence.
-    #  maybe instead of sentence textx we better return the sentences positions
+    #  so if we collect only the words that wont be full sentence - we may miss the punctuation
+    #  maybe instead of sentence texts we better return the sentences positions
     if tokenizer == SentenceTokenizer.NLTK:
         try:
             nltk.data.find(f"tokenizers/punkt/{lang_code}.pickle")
-            sentences = sent_tokenize(plain_text, language=lang_code)
+            sentence_spans = list(
+                nltk.tokenize.punkt.PunktSentenceTokenizer(
+                    lang_vars=nltk.tokenize.punkt.PunktLanguageVars(lang_code)
+                ).span_tokenize(plain_text)
+            )
         except LookupError:
             print(f"NLTK punkt tokenizer not available for {lang_code}. Using default.")
-            sentences = sent_tokenize(plain_text)
+            sentence_spans = list(
+                nltk.tokenize.punkt.PunktSentenceTokenizer().span_tokenize(plain_text)
+            )
     else:
         raise ValueError(f"Unsupported tokenizer: {tokenizer}")
 
     word_to_sentence = {}
     current_sentence = 0
-    sentence_end = 0
 
     for i, (word_start, _) in enumerate(word_slices):
-        while current_sentence < len(sentences) and word_start >= sentence_end:
-            sentence_end += len(sentences[current_sentence])
+        while (
+            current_sentence < len(sentence_spans)
+            and word_start >= sentence_spans[current_sentence][1]
+        ):
             current_sentence += 1
 
-        word_to_sentence[i] = current_sentence - 1
+        if current_sentence < len(sentence_spans):
+            word_to_sentence[i] = current_sentence
+        else:
+            # If we've gone past the last sentence, assign to the last sentence
+            word_to_sentence[i] = len(sentence_spans) - 1
+
+    # Create the list of sentence strings
+    sentences = [plain_text[start:end] for start, end in sentence_spans]
 
     return sentences, word_to_sentence

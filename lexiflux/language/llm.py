@@ -3,7 +3,7 @@
 import json
 import os
 from functools import lru_cache
-from typing import Any, Dict, List, Iterable, Union, Set, Tuple
+from typing import Any, Dict, List, Iterable, Union, Tuple
 
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
@@ -13,9 +13,14 @@ import openai
 from langchain.schema import BaseOutputParser
 from pydantic import Field
 
-from lexiflux.language.sentence_extractor import break_into_sentences
-from lexiflux.language.sentence_extractor_llm import SENTENCE_START_MARK
+from lexiflux.language.sentence_extractor_llm import (
+    SENTENCE_START_MARK,
+    SENTENCE_END_MARK,
+    WORD_START_MARK,
+    WORD_END_MARK,
+)
 from lexiflux.language.word_extractor import parse_words
+from lexiflux.models import BookPage
 
 ChatModels = {
     "gpt-3.5-turbo": {
@@ -246,49 +251,49 @@ class Llm:  # pylint: disable=too-few-public-methods
             }
         """
         data = dict(hashable_data)
-        text_language = data["text_language"]
         text = data["text"]
         word_slices: List[Tuple[int, int]] = data["word_slices"]
         term_word_ids: List[int] = data["term_word_ids"]
+        page: BookPage = data["page"]
+        context_start_word = data["context_start_word"]
 
-        # todo: implement and use BookPage cached sentence detection
-        sentences, word_to_sentence = break_into_sentences(
-            text, word_slices, term_word_ids, lang_code=text_language
-        )
-
-        if not sentences:  # todo: fallback to full text? use LLM detector?
-            raise ValueError("No sentence detected.")
-
-        # Get all the sentences that contains the term words
-        term_sentences: Set[int] = {word_to_sentence[word_id] for word_id in term_word_ids}
-        # Get all words ID in the term sentences
-        term_sentences_word_ids = {
-            word_id
-            for word_id, sentence_id in word_to_sentence.items()
+        mapping = page.word_sentence_mapping
+        page_term_word_ids = [wid + context_start_word for wid in term_word_ids]
+        term_sentences = set(mapping[word_id] for word_id in page_term_word_ids)
+        term_sentences_word_ids = [
+            word_id - context_start_word
+            for word_id, sentence_id in mapping.items()
             if sentence_id in term_sentences
-        }
-        # mark sentence
-        sentence_start, _ = word_slices[min(term_sentences_word_ids)]
-        _, sentence_end = word_slices[max(term_sentences_word_ids)]
-        marked_text = (
-            f"{text[:sentence_start]}||{text[sentence_start:sentence_end]}||{text[sentence_end:]}"
-        )
-        # mark term
+            and word_id - context_start_word >= 0
+            and word_id - context_start_word < len(word_slices)
+        ]
+
+        min_word_id = min(term_sentences_word_ids)
+        max_word_id = max(term_sentences_word_ids)
+
+        try:
+            sentence_start = word_slices[min_word_id][0]
+            sentence_end = word_slices[max_word_id][1]
+
+            marked_text = (
+                f"{text[:sentence_start]}{SENTENCE_START_MARK}"
+                f"{text[sentence_start:sentence_end]}{SENTENCE_END_MARK}{text[sentence_end:]}"
+            )
+        except IndexError as e:
+            print(f"Error detecting sentence, mark full text instead: {e}")
+            marked_text = f"{SENTENCE_START_MARK}{text}{SENTENCE_END_MARK}"
+
         term_start = word_slices[term_word_ids[0]][0] + len(SENTENCE_START_MARK)
         term_end = word_slices[term_word_ids[-1]][1] + len(SENTENCE_START_MARK)
         marked_text = (
-            f"{marked_text[:term_start]}**"
-            f"{marked_text[term_start:term_end]}**"
+            f"{marked_text[:term_start]}{WORD_START_MARK}"
+            f"{marked_text[term_start:term_end]}{WORD_END_MARK}"
             f"{marked_text[term_end:]}"
         )
-
-        # todo: detect language of the sentence(s) with fasttext
-        result = {
+        return {
             "text": marked_text,
-            "detected_language": text_language,  # do not detected language
+            "detected_language": data["text_language"],
         }
-        print(result)
-        return result
 
     def _get_model_key(
         self,

@@ -3,7 +3,7 @@ import { viewport } from './viewport';
 
 interface TranslationResponse {
   translatedText?: string;
-  articles?: { [key: string]: string };
+  article?: string;
   url?: string | null;
   window?: boolean | null;
 }
@@ -381,8 +381,8 @@ function updateLexicalPanel(data: TranslationResponse, activePanelId: string): v
       iframe.src = url;
       iframe.style.display = 'block';
     }
-  } else if (data.articles && data.articles[articleId]) {
-    contentDiv.innerHTML = data.articles[articleId];
+  } else if (data.article) {
+    contentDiv.innerHTML = data.article;
     iframe.style.display = 'none';
   } else {
     // Handle error case
