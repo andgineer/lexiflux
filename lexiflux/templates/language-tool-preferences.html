@@ -15,18 +15,18 @@
 
         <div class="row mb-4">
             <div class="col-md-12">
-                <div class="card">
+                <div class="card language-selection-card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Editing preferences for:</h5>
+                    </div>
                     <div class="card-body">
-                        <div class="d-flex align-items-center">
-                            <h5 class="card-title mb-0 me-3">Preferences For:</h5>
-                            <div class="language-select-wrapper flex-grow-1">
-                                <span class="language-flag">[[ getSelectedLanguageFlag() ]]</span>
-                                <select id="languageSelect" v-model="currentLanguageId" @change="changeLanguage" class="form-select">
-                                    <option v-for="language in allLanguages" :value="language.google_code">
-                                        [[ language.name ]]
-                                    </option>
-                                </select>
-                            </div>
+                        <div class="language-select-wrapper">
+                            <span class="language-flag">[[ getSelectedLanguageFlag() ]]</span>
+                            <select id="languageSelect" v-model="currentLanguageId" @change="changeLanguage" class="form-select">
+                                <option v-for="language in allLanguages" :value="language.google_code">
+                                    [[ language.name ]]
+                                </option>
+                            </select>
                         </div>
                     </div>
                 </div>
@@ -125,7 +125,9 @@
                         </div>
                         <div class="mb-3" v-if="showTitleField">
                             <label for="articleTitle" class="form-label">Title</label>
-                            <input type="text" v-model="form.title" @input="handleTitleChange" class="form-control" placeholder="Leave empty to autofill" :class="{ 'text-muted': !form.title }" required>
+                            <input type="text" v-model="form.title" @input="handleTitleChange" class="form-control"
+                                   placeholder="Leave empty to autofill"
+                                   :class="{ 'text-muted': !form.title }" required>
                         </div>
                         <div class="mb-3">
                             <label for="articleType" class="form-label">Article Type</label>
@@ -285,6 +287,18 @@ new Vue({
         this.loadAIModels();
         this.loadArticles();
     },
+    watch: {
+        'form.parameters.url': function() {
+            if (this.form.type === 'Site') {
+                this.updateTitle();
+            }
+        },
+        'form.parameters.dictionary': function() {
+            if (this.form.type === 'Dictionary') {
+                this.updateTitle();
+            }
+        }
+    },
     methods: {
         changeLanguage() {
             fetch('{% url "api_get_profile_for_language" %}', {
@@ -416,12 +430,21 @@ new Vue({
             }
 
             if (oldType !== this.form.type || oldModel !== this.form.parameters.model || !this.form.title || !this.titleManuallyEdited) {
-                this.form.title = this.generateTitle(this.form.type);
-                this.titleManuallyEdited = false;  // Reset this flag as we've auto-generated the title
+                const newTitle = this.generateTitle(this.form.type);
+                if (!this.form.title || !this.titleManuallyEdited) {
+                    this.form.title = newTitle;
+                    this.titleManuallyEdited = false;
+                }
             }
         },
         handleTitleChange() {
             this.titleManuallyEdited = this.form.title.trim() !== '';
+        },
+        updateTitle() {
+            if (!this.titleManuallyEdited) {
+                const newTitle = this.generateTitle(this.form.type);
+                this.form.title = newTitle;
+            }
         },
         generateTitle(type) {
             let title = type;
