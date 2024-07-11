@@ -267,17 +267,13 @@ def translate(request: HttpRequest, params: TranslateGetParams) -> HttpResponse:
     ]
     selected_text = " ".join(selected_words)
 
-    print("Translating text", selected_text)
     # word_id = request.GET.get("word-id")  # todo: absolute word ID so we can find context
 
     # lexical_articles = LexicalArticles()
     translated = ""
     if params.translate:
-        print("Translating", selected_text)
         translator = get_translator(request.user, book)
-        print("Translator", translator)
         translated = translator.translate(selected_text)
-        print("Translated", translated)
         # todo: get article from the translator
 
     result: Dict[str, Any] = {"translatedText": translated}
@@ -286,9 +282,13 @@ def translate(request: HttpRequest, params: TranslateGetParams) -> HttpResponse:
         language_preferences = LanguagePreferences.get_or_create_language_preferences(
             request.user, book.language
         )
-        try:
-            article = language_preferences.lexical_articles.get(id=int(params.lexical_article))
-        except LexicalArticle.DoesNotExist:
+        all_articles = language_preferences.lexical_articles.all()
+
+        article_index = int(params.lexical_article) - 1  # lexical_article param is 1-based
+
+        if 0 <= article_index < len(all_articles):
+            article = all_articles[article_index]
+        else:
             return JsonResponse({"error": "Lexical article not found"}, status=404)
 
         if article.type == "Site":

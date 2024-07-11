@@ -1,11 +1,11 @@
-import { log } from './utils'; // Assuming log function is used here
-import { viewport } from './viewport'; // If viewport functionalities are required
+import { log } from './utils';
+import { viewport } from './viewport';
 
 interface TranslationResponse {
-  translatedText: string;
-  articles: { [key: string]: string };
-  url: string | null;
-  window: boolean | null;
+  translatedText?: string;
+  articles?: { [key: string]: string };
+  url?: string | null;
+  window?: boolean | null;
 }
 
 let currentSelection: {
@@ -17,6 +17,230 @@ let currentSelection: {
 };
 
 let dictionaryWindows: { [key: string]: Window | null } = {};
+
+function sendTranslationRequest(selectedRange: Range | null = null): void {
+  const activePanelId = getActiveLexicalArticleId();
+  const wordIds = getWordIds(selectedRange);
+
+  if (!shouldSendRequest(selectedRange, activePanelId, wordIds)) {
+    return;
+  }
+
+  if (wordIds === null) {
+    console.log('No word IDs to translate');
+    return;
+  }
+
+  currentSelection.wordIds = wordIds;
+
+  if (selectedRange) {
+    handleInTextTranslation(selectedRange, wordIds);
+  }
+
+  if (activePanelId) {
+    const lexicalArticle = lexicalArticleNumFromId(activePanelId);
+    if (lexicalArticle && !currentSelection.updatedPanels.has(lexicalArticle)) {
+      handleLexicalArticleUpdate(activePanelId, wordIds);
+    }
+  }
+}
+
+function getWordIds(selectedRange: Range | null): string[] | null {
+  return selectedRange ? getWordIdsFromRange(selectedRange) : currentSelection.wordIds;
+}
+
+function shouldSendRequest(selectedRange: Range | null, activePanelId: string | null, wordIds: string[] | null): boolean {
+  if (!selectedRange && (!activePanelId || currentSelection.updatedPanels.has(activePanelId)) && currentSelection.wordIds === null) {
+    return false;
+  }
+  if (!wordIds || wordIds.length === 0) {
+    return false;
+  }
+  return true;
+}
+
+function handleInTextTranslation(selectedRange: Range, wordIds: string[]): void {
+  const translationSpan = createTranslationSpanWithSpinner(selectedRange);
+  const params = createRequestParams(wordIds, true);
+
+  makeRequest(params, true)
+    .then(result => {
+      if (result && result.data.translatedText) {
+        updateTranslationSpan(translationSpan, result.data.translatedText);
+      } else {
+        showErrorInTranslationSpan(translationSpan);
+      }
+    })
+    .catch(() => {
+      showErrorInTranslationSpan(translationSpan);
+    });
+}
+
+function handleLexicalArticleUpdate(activePanelId: string, wordIds: string[]): void {
+  const lexicalArticle = lexicalArticleNumFromId(activePanelId);
+  if (lexicalArticle) {
+    if (currentSelection.updatedPanels.has(lexicalArticle)) {
+      return;
+    }
+    showSpinnerInLexicalPanel(lexicalArticle);
+    const params = createRequestParams(wordIds, false, lexicalArticle);
+
+    makeRequest(params, false)
+      .then(result => {
+        if (result) {
+          updateLexicalPanel(result.data, activePanelId);
+        } else {
+          showErrorInLexicalPanel(lexicalArticle);
+        }
+      })
+      .catch((error) => {
+        console.error('Error in handleLexicalArticleUpdate:', error);
+        showErrorInLexicalPanel(lexicalArticle);
+      });
+  }
+}
+
+function createRequestParams(wordIds: string[], isTranslation: boolean, lexicalArticle?: string): URLSearchParams {
+  const params = new URLSearchParams({
+    'word-ids': wordIds.join('.'),
+    'book-code': viewport.bookCode,
+    'book-page-number': viewport.pageNumber.toString(),
+  });
+
+  if (!isTranslation) {
+    params.append('translate', 'false');
+    if (lexicalArticle) {
+      params.append('lexical-article', lexicalArticle);
+    }
+  }
+
+  return params;
+}
+
+function makeRequest(params: URLSearchParams, isTranslation: boolean): Promise<{ data: TranslationResponse; isTranslation: boolean; } | undefined> {
+  const url = `/translate?${params.toString()}`;
+  return fetch(url)
+    .then(response => {
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+      return response.json();
+    })
+    .then((data: TranslationResponse) => {
+      return { data, isTranslation };
+    })
+    .catch(error => {
+      console.error('Error during translation:', error);
+      throw error;
+    });
+}
+
+function createTranslationSpanWithSpinner(range: Range): HTMLSpanElement {
+  const translationSpan = document.createElement('span');
+  translationSpan.className = 'translation-span';
+
+  const spinnerDiv = document.createElement('div');
+  spinnerDiv.className = 'spinner-border text-primary';
+  spinnerDiv.innerHTML = '<span class="visually-hidden">Loading...</span>';
+
+  translationSpan.appendChild(spinnerDiv);
+
+  // Adjust the range to include full words
+  adjustRangeToWholeWords(range);
+
+  // Clone the contents of the adjusted range
+  const contents = range.cloneContents();
+  translationSpan.appendChild(contents);
+
+  // Replace the range contents with the translation span
+  range.deleteContents();
+  range.insertNode(translationSpan);
+
+  // Assign a unique ID to the translation span
+  const firstWordSpan = translationSpan.querySelector('.word');
+  if (firstWordSpan) {
+    translationSpan.id = 'translation-' + firstWordSpan.id;
+  }
+
+  return translationSpan;
+}
+
+function adjustRangeToWholeWords(range: Range): void {
+  let startNode: Node | null = range.startContainer;
+  let endNode: Node | null = range.endContainer;
+
+  // Adjust start node
+  while (startNode && startNode.nodeType === Node.TEXT_NODE) {
+    if (startNode.parentNode && (startNode.parentNode as HTMLElement).classList.contains('word')) {
+      startNode = startNode.parentNode;
+      break;
+    }
+    startNode = startNode.parentNode;
+  }
+  if (startNode instanceof HTMLElement && !startNode.classList.contains('word')) {
+    const closestWord = startNode.querySelector('.word');
+    startNode = closestWord || startNode;
+  }
+
+  // Adjust end node
+  while (endNode && endNode.nodeType === Node.TEXT_NODE) {
+    if (endNode.parentNode && (endNode.parentNode as HTMLElement).classList.contains('word')) {
+      endNode = endNode.parentNode;
+      break;
+    }
+    endNode = endNode.parentNode;
+  }
+  if (endNode instanceof HTMLElement && !endNode.classList.contains('word')) {
+    const words = endNode.querySelectorAll('.word');
+    endNode = words[words.length - 1] || endNode;
+  }
+
+  if (startNode && endNode) {
+    range.setStartBefore(startNode);
+    range.setEndAfter(endNode);
+  }
+}
+
+function updateTranslationSpan(translationSpan: HTMLSpanElement, translatedText: string): void {
+  // Remove the spinner
+  const spinner = translationSpan.querySelector('.spinner-border');
+  if (spinner) {
+    spinner.remove();
+  }
+
+  // Create and insert the translation text div
+  const translationDiv = document.createElement('div');
+  translationDiv.className = 'translation-text';
+  translationDiv.textContent = translatedText;
+  translationSpan.insertBefore(translationDiv, translationSpan.firstChild);
+
+  ensureVisible(translationSpan);
+}
+
+function showErrorInTranslationSpan(translationSpan: HTMLSpanElement): void {
+  // Remove the spinner
+  const spinner = translationSpan.querySelector('.spinner-border');
+  if (spinner) {
+    spinner.remove();
+  }
+
+  // Add error message
+  const errorDiv = document.createElement('div');
+  errorDiv.className = 'translation-error';
+  errorDiv.textContent = 'Translation failed. Please try again.';
+  translationSpan.insertBefore(errorDiv, translationSpan.firstChild);
+}
+
+function showErrorInLexicalPanel(articleId: string): void {
+  const contentDiv = document.getElementById(`lexical-content-${articleId}`) as HTMLElement;
+  if (contentDiv) {
+    contentDiv.innerHTML = `
+      <div class="alert alert-danger" role="alert">
+        Failed to load lexical article. Please try again.
+      </div>
+    `;
+  }
+}
 
 function getActiveLexicalArticleId(): string | null {
   const infoPanel = document.getElementById('lexical-panel');
@@ -30,25 +254,11 @@ function getActiveLexicalArticleId(): string | null {
   return activeTabContent ? activeTabContent.id : null;
 }
 
-
 function lexicalArticleNumFromId(id: string | null): string {
   // from lexical article div ID get the number of the article
   if (!id) return '';
   const match = id.match(/-(\d+)$/);
   return match ? match[1] : '';
-}
-
-function getNextNode(node: Node): Node | null {
-  if (node.firstChild) {
-    return node.firstChild;
-  }
-  while (node) {
-    if (node.nextSibling) {
-      return node.nextSibling;
-    }
-    node = node.parentNode as Node;
-  }
-  return null;
 }
 
 function getWordIdsFromRange(range: Range): string[] {
@@ -104,94 +314,31 @@ function getWordIdsFromRange(range: Range): string[] {
   return wordIds;
 }
 
-function sendTranslationRequest(
-    selectedRange: Range | null = null,
-  ): void {
-  // if selectedRange is null do not create translation span
-  // if updateLexical is true, update the active lexical panel
-
-  // todo: show "..loading.." in lexical panel if activePanelId is not null
-  // for that we can rename getActiveLexicalArticleId to startLoadingInActivePanel
-  const activePanelId = getActiveLexicalArticleId();
-
-  if (!selectedRange && (!activePanelId || currentSelection.updatedPanels.has(activePanelId)) && currentSelection.wordIds === null) {
-        return;
+function getNextNode(node: Node): Node | null {
+  if (node.firstChild) {
+    return node.firstChild;
   }
-
-  let wordIds = selectedRange ? getWordIdsFromRange(selectedRange) : currentSelection.wordIds;
-  if (!wordIds || wordIds.length === 0) {
-    console.log('No word IDs to translate');
-    return;
-  }
-
-  let urlParams = new URLSearchParams({
-    'word-ids': wordIds.join('.'),
-    'book-code': viewport.bookCode,
-    'book-page-number': viewport.pageNumber.toString(),
-  });
-
-  const translate = selectedRange !== null
-  if (!translate) {
-    urlParams.append('translate', 'false');
-  }
-
-  const lexicalArticle = lexicalArticleNumFromId(activePanelId);
-  if (lexicalArticle) {
-    urlParams.append('lexical-article', lexicalArticle);
-  }
-
-  const url = `/translate?${urlParams.toString()}`;
-
-  fetch(url)
-    .then(response => {
-            if (!response.ok) {
-                throw new Error('Network response was not ok');
-            }
-            return response.json();
-        })
-    .then((data: TranslationResponse) => {
-        log('Translated:', data);
-        currentSelection.wordIds = wordIds;
-        if (selectedRange) {
-            createAndReplaceTranslationSpan(data.translatedText, selectedRange);
-        }
-        if (activePanelId) {
-            updateLexicalPanel(data, activePanelId);
-        }
-    })
-    .catch(error => {
-      console.error('Error during translation:', error);
-    });
-}
-
-function handleOpenLexicalWindow(url: string, windowKey: string, windowFeatures: string): void {
-    let dictionaryWindow = dictionaryWindows[windowKey];
-
-    if (dictionaryWindow && !dictionaryWindow.closed) {
-        dictionaryWindow.location.href = url;
-    } else {
-        dictionaryWindow = window.open(url, windowKey, windowFeatures);
-        dictionaryWindows[windowKey] = dictionaryWindow;
+  while (node) {
+    if (node.nextSibling) {
+      return node.nextSibling;
     }
-    if (dictionaryWindow) {
-        dictionaryWindow.focus();
-    }
+    node = node.parentNode as Node;
+  }
+  return null;
 }
 
 function updateLexicalPanel(data: TranslationResponse, activePanelId: string): void {
   // activePanelId - num of the lexical article
   let articleId = lexicalArticleNumFromId(activePanelId);
 
-  console.log('updateLexicalPanel', data, activePanelId, articleId);
+
   if (currentSelection.updatedPanels.has(articleId)) {
     return;
   }
 
-  console.log(`lexical-content-${articleId}`, `lexical-frame-${articleId}`)
   const contentDiv = document.getElementById(`lexical-content-${articleId}`) as HTMLElement;
   const iframe = document.getElementById(`lexical-frame-${articleId}`) as HTMLIFrameElement;
   const windowKey = `Lexical-${articleId}`;
-  console.log(contentDiv, iframe, windowKey);
 
   // Show spinner
   contentDiv.innerHTML = `
@@ -201,6 +348,7 @@ function updateLexicalPanel(data: TranslationResponse, activePanelId: string): v
   `;
 
   if (data.url) {
+    // Handle Site type article
     const url = data.url;
     const windowFeatures = 'location=no,menubar=no,toolbar=no,scrollbars=yes,width=800,height=600';  // todo: width from window
 
@@ -220,112 +368,77 @@ function updateLexicalPanel(data: TranslationResponse, activePanelId: string): v
       iframe.src = url;
       iframe.style.display = 'block';
     }
-  } else {
-    // Load article content
+  } else if (data.articles && data.articles[articleId]) {
     contentDiv.innerHTML = data.articles[articleId];
     iframe.style.display = 'none';
+  } else {
+    // Handle error case
+    contentDiv.innerHTML = `
+      <div class="alert alert-danger" role="alert">
+        Failed to load lexical article. Please try again.
+      </div>
+    `;
   }
 
   currentSelection.updatedPanels.add(articleId);
 }
 
-function ensureVisible(element: HTMLSpanElement): void {
-    // if the element is not visible, scroll to it
-    if (element.getBoundingClientRect().bottom > viewport.bookPageScroller.getBoundingClientRect().bottom) {
-        viewport.bookPageScroller.scrollTop += element.getBoundingClientRect().bottom - viewport.bookPageScroller.getBoundingClientRect().bottom;
-    }
+function handleOpenLexicalWindow(url: string, windowKey: string, windowFeatures: string): void {
+  let dictionaryWindow = dictionaryWindows[windowKey];
+
+  if (dictionaryWindow && !dictionaryWindow.closed) {
+    dictionaryWindow.location.href = url;
+  } else {
+    dictionaryWindow = window.open(url, windowKey, windowFeatures);
+    dictionaryWindows[windowKey] = dictionaryWindow;
+  }
+  if (dictionaryWindow) {
+    dictionaryWindow.focus();
+  }
 }
 
-function createAndReplaceTranslationSpan(translatedText: string, range: Range): void {
-    const translationSpan = document.createElement('span');
-    translationSpan.className = 'translation-span';
+function ensureVisible(element: HTMLSpanElement): void {
+  if (element.getBoundingClientRect().bottom > viewport.bookPageScroller.getBoundingClientRect().bottom) {
+    viewport.bookPageScroller.scrollTop += element.getBoundingClientRect().bottom - viewport.bookPageScroller.getBoundingClientRect().bottom;
+  }
+}
 
-    const translationDiv = document.createElement('div');
-    translationDiv.className = 'translation-text';
-    translationDiv.textContent = translatedText;
-
-    translationSpan.appendChild(translationDiv);
-
-    // Adjust the range to include full words
-    let startNode: Node | null = range.startContainer;
-    let endNode: Node | null = range.endContainer;
-
-    // Adjust start node
-    while (startNode && startNode.nodeType === Node.TEXT_NODE) {
-      if (startNode.previousSibling && startNode.previousSibling.nodeType === Node.ELEMENT_NODE &&
-          (startNode.previousSibling as HTMLElement).classList.contains('word')) {
-        startNode = startNode.previousSibling;
-        break;
-      }
-      startNode = startNode.parentNode;
-    }
-    if (startNode instanceof HTMLElement && !startNode.classList.contains('word')) {
-      const closestWord = startNode.querySelector('.word');
-      startNode = closestWord || startNode;
-    }
-
-    // Adjust end node
-    while (endNode && endNode.nodeType === Node.TEXT_NODE) {
-      if (endNode.nextSibling && endNode.nextSibling.nodeType === Node.ELEMENT_NODE &&
-          (endNode.nextSibling as HTMLElement).classList.contains('word')) {
-        endNode = endNode.nextSibling;
-        break;
-      }
-      endNode = endNode.parentNode;
-    }
-    if (endNode instanceof HTMLElement && !endNode.classList.contains('word')) {
-      const words = endNode.querySelectorAll('.word');
-      endNode = words[words.length - 1] || endNode;
-    }
-
-    if (startNode && endNode) {
-        range.setStartBefore(startNode);
-        range.setEndAfter(endNode);
-    }
-
-    const contents = range.cloneContents();
-    translationSpan.appendChild(contents);
-
-    // Replace the range contents with the translation span
-    range.deleteContents();
-    range.insertNode(translationSpan);
-
-    // Assign a unique ID to the translation span
-    const firstWordSpan = translationSpan.querySelector('.word');
-    if (firstWordSpan) {
-        translationSpan.id = 'translation-' + firstWordSpan.id;
-    }
-
-    ensureVisible(translationSpan);
+function showSpinnerInLexicalPanel(articleId: string): void {
+  const contentDiv = document.getElementById(`lexical-content-${articleId}`) as HTMLElement;
+  if (contentDiv) {
+    contentDiv.innerHTML = `
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+    `;
+  }
 }
 
 function lexicalPanelSwitched(tabId: string): void {
-    if (currentSelection.wordIds !== null) {
-        sendTranslationRequest(null);
-    }
+  if (currentSelection.wordIds !== null) {
+    sendTranslationRequest(null);
+  }
 }
 
 function clearLexicalPanel(): void {
-    currentSelection.wordIds = null;
-    currentSelection.updatedPanels.clear();
+  currentSelection.wordIds = null;
+  currentSelection.updatedPanels.clear();
 
-    const panelContent = document.getElementById('lexicalPanelContent');
-    if (!panelContent) {
-        console.error('Lexical panel content container is missing');
-        return;
-    }
+  const panelContent = document.getElementById('lexicalPanelContent');
+  if (!panelContent) {
+    console.error('Lexical panel content container is missing');
+    return;
+  }
 
-    // Clear all tab panes
-    const tabPanes = panelContent.querySelectorAll('.lexical-content');
-    tabPanes.forEach((pane) => {
-        pane.innerHTML = '';
-    });
+  const tabPanes = panelContent.querySelectorAll('.lexical-content');
+  tabPanes.forEach((pane) => {
+    pane.innerHTML = '';
+  });
 
-    // If there are any iframes, reset their src
-    const iframes = panelContent.querySelectorAll('iframe');
-    iframes.forEach((iframe) => {
-        iframe.src = '';
-    });
+  const iframes = panelContent.querySelectorAll('iframe');
+  iframes.forEach((iframe) => {
+    iframe.src = '';
+  });
 }
 
-export { sendTranslationRequest, createAndReplaceTranslationSpan, TranslationResponse, lexicalPanelSwitched, clearLexicalPanel };
+export { sendTranslationRequest, TranslationResponse, lexicalPanelSwitched, clearLexicalPanel };

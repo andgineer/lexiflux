@@ -64,9 +64,7 @@
                                     <span class="visually-hidden">Loading...</span>
                                 </div>
                             </div>
-                            {% if article.type == "Site" %}
                             <iframe id="lexical-frame-{{ forloop.counter }}" src="" style="width:100%; height:100%; border:none;"></iframe>
-                            {% endif %}
                         </div>
                         {% endfor %}
                     </div>
