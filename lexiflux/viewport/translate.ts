@@ -170,34 +170,47 @@ function adjustRangeToWholeWords(range: Range): void {
   let endNode: Node | null = range.endContainer;
 
   // Adjust start node
-  while (startNode && startNode.nodeType === Node.TEXT_NODE) {
-    if (startNode.parentNode && (startNode.parentNode as HTMLElement).classList.contains('word')) {
-      startNode = startNode.parentNode;
-      break;
+  if (startNode.nodeType === Node.TEXT_NODE && startNode.parentNode) {
+    if ((startNode.parentNode as HTMLElement).classList.contains('word')) {
+      range.setStartBefore(startNode.parentNode);
+    } else {
+      // Find the first word node after the start of the selection
+      let nextNode = startNode.nextSibling;
+      while (nextNode && !(nextNode instanceof HTMLElement && nextNode.classList.contains('word'))) {
+        nextNode = nextNode.nextSibling;
+      }
+      if (nextNode) {
+        range.setStartBefore(nextNode);
+      }
     }
-    startNode = startNode.parentNode;
-  }
-  if (startNode instanceof HTMLElement && !startNode.classList.contains('word')) {
-    const closestWord = startNode.querySelector('.word');
-    startNode = closestWord || startNode;
+  } else if (startNode instanceof HTMLElement && !startNode.classList.contains('word')) {
+    // Find the first word node within or after the start of the selection
+    const firstWord = startNode.querySelector('.word');
+    if (firstWord) {
+      range.setStartBefore(firstWord);
+    }
   }
 
   // Adjust end node
-  while (endNode && endNode.nodeType === Node.TEXT_NODE) {
-    if (endNode.parentNode && (endNode.parentNode as HTMLElement).classList.contains('word')) {
-      endNode = endNode.parentNode;
-      break;
+  if (endNode.nodeType === Node.TEXT_NODE && endNode.parentNode) {
+    if ((endNode.parentNode as HTMLElement).classList.contains('word')) {
+      range.setEndAfter(endNode.parentNode);
+    } else {
+      // Find the last word node before the end of the selection
+      let previousNode = endNode.previousSibling;
+      while (previousNode && !(previousNode instanceof HTMLElement && previousNode.classList.contains('word'))) {
+        previousNode = previousNode.previousSibling;
+      }
+      if (previousNode) {
+        range.setEndAfter(previousNode);
+      }
     }
-    endNode = endNode.parentNode;
-  }
-  if (endNode instanceof HTMLElement && !endNode.classList.contains('word')) {
+  } else if (endNode instanceof HTMLElement && !endNode.classList.contains('word')) {
+    // Find the last word node within or before the end of the selection
     const words = endNode.querySelectorAll('.word');
-    endNode = words[words.length - 1] || endNode;
-  }
-
-  if (startNode && endNode) {
-    range.setStartBefore(startNode);
-    range.setEndAfter(endNode);
+    if (words.length > 0) {
+      range.setEndAfter(words[words.length - 1]);
+    }
   }
 }
 
