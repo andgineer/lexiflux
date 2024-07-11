@@ -125,7 +125,7 @@
                         </div>
                         <div class="mb-3" v-if="showTitleField">
                             <label for="articleTitle" class="form-label">Title</label>
-                            <input type="text" v-model="form.title" @input="handleTitleChange" class="form-control" required>
+                            <input type="text" v-model="form.title" @input="handleTitleChange" class="form-control" placeholder="Leave empty to autofill" :class="{ 'text-muted': !form.title }" required>
                         </div>
                         <div class="mb-3">
                             <label for="articleType" class="form-label">Article Type</label>
@@ -255,6 +255,7 @@ new Vue({
             deleteArticleId: null,
             deleteArticleTitle: '',
             deleteErrorMessage: '',
+            titlePlaceholder: "Leave empty to autofill",
         };
 
         try {
@@ -368,6 +369,7 @@ new Vue({
                 type: '',
                 parameters: {}
             };
+            this.titleManuallyEdited = false;
         },
         loadAIModels() {
             fetch('{% url "get_models" %}')
@@ -389,7 +391,7 @@ new Vue({
                 return url;  // Return the original string if it's not a valid URL
             }
         },
-       getModelTitle(modelKey) {
+        getModelTitle(modelKey) {
             const model = this.aiModels.find(m => m.key === modelKey);
             return model ? model.title : modelKey;
         },
@@ -419,7 +421,7 @@ new Vue({
             }
         },
         handleTitleChange() {
-            this.titleManuallyEdited = true;
+            this.titleManuallyEdited = this.form.title.trim() !== '';
         },
         generateTitle(type) {
             let title = type;
