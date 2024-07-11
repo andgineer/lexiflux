@@ -1,7 +1,7 @@
 """Sentence extraction utilities for the LexiFlux language module."""
 
 from enum import Enum
-from typing import List, Tuple, Dict
+from typing import List, Tuple, Dict, Optional
 import nltk
 from nltk.tokenize import sent_tokenize
 
@@ -18,7 +18,7 @@ class SentenceTokenizer(Enum):
 def break_into_sentences(
     plain_text: str,
     word_slices: List[Tuple[int, int]],
-    term_word_ids: List[int],  # pylint: disable=unused-argument
+    term_word_ids: Optional[List[int]] = None,  # pylint: disable=unused-argument
     lang_code: str = "en",
     tokenizer: SentenceTokenizer = SentenceTokenizer.NLTK,
 ) -> Tuple[List[str], Dict[int, int]]:
