@@ -16,11 +16,10 @@
 | lexiflux/language/detect\_language\_fasttext.py |       21 |        0 |    100% |           |
 | lexiflux/language/google\_languages.py          |       12 |        0 |    100% |           |
 | lexiflux/language/llm.py                        |      164 |      122 |     26% |57-62, 69, 79-81, 88-93, 100-118, 125-132, 139-147, 157-162, 166, 191, 209-222, 248-291, 300, 305-337, 340-455, 464, 474-492 |
-| lexiflux/language/sentence\_extractor.py        |       25 |       17 |     32% |     44-65 |
+| lexiflux/language/sentence\_extractor.py        |       25 |        2 |     92% |    47, 52 |
 | lexiflux/language/sentence\_extractor\_llm.py   |       52 |       39 |     25% |17, 48-92, 97-128, 133-167 |
 | lexiflux/language/translation.py                |       44 |        0 |    100% |           |
 | lexiflux/language/word\_extractor.py            |       75 |        0 |    100% |           |
-| lexiflux/lexical\_articles.py                   |       11 |       11 |      0% |      3-34 |
 | lexiflux/models.py                              |      207 |       23 |     89% |70, 80, 133, 142-143, 160, 171, 194, 212, 246, 282, 284-285, 288, 372-373, 418-430 |
 | lexiflux/settings.py                            |        0 |        0 |    100% |           |
 | lexiflux/signals.py                             |       21 |        2 |     90% |     41-42 |
@@ -28,7 +27,7 @@
 | lexiflux/urls.py                                |        6 |        0 |    100% |           |
 | lexiflux/utils.py                               |        8 |        0 |    100% |           |
 | lexiflux/views.py                               |      362 |      146 |     60% |71, 78-83, 118, 137, 149, 169-170, 231, 282-324, 375-401, 408-423, 430-436, 448-486, 491-504, 513-536, 543-557, 563-565, 578-582, 589-608, 643-644, 670 |
-|                                       **TOTAL** | **1432** |  **406** | **72%** |           |
+|                                       **TOTAL** | **1421** |  **380** | **73%** |           |
 
 
 ## Setup coverage badge
