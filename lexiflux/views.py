@@ -35,6 +35,7 @@ from lexiflux.models import (
     LanguagePreferences,
     CustomUser,
     LEXICAL_ARTICLE_PARAMETERS,
+    LexicalArticleType,
 )
 
 logger = logging.getLogger(__name__)
@@ -414,6 +415,7 @@ def language_tool_preferences(request: HttpRequest) -> HttpResponse:
         "all_languages": all_languages_json,
         "default_profile": reader_profile,
         "inline_translation": inline_translation_json,
+        "lexical_article_types": LexicalArticleType.choices,
     }
 
     return render(request, "language-tool-preferences.html", context)

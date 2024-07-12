@@ -133,13 +133,9 @@
                             <label for="articleType" class="form-label">Article Type</label>
                             <select v-model="form.type" class="form-select" @change="updateParameters">
                                 <option value="">Select type</option>
-                                <option value="Translate">Translate</option>
-                                <option value="Sentence">Sentence</option>
-                                <option value="Explain">Explain</option>
-                                <option value="Examples">Examples</option>
-                                <option value="Lexical">Lexical</option>
-                                <option value="Dictionary">Dictionary</option>
-                                <option value="Site">Site</option>
+                                {% for value, label in lexical_article_types %}
+                                    <option value="{{ value }}">{{ label }}</option>
+                                {% endfor %}
                             </select>
                         </div>
                         <div v-if="form.type === 'Site'">
