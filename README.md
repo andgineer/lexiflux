@@ -5,7 +5,7 @@
 
 # Lexiflux
 
-Reading foreign texts with dictionary.
+Read foreign texts with an AI-powered dictionary.
 
 <br clear="left"/>
 
