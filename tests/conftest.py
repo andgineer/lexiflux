@@ -312,7 +312,16 @@ USER_PASSWORD = '12345'
 @pytest.fixture
 def user(db):
     User = get_user_model()
-    return User.objects.create_user(username='testuser', password=USER_PASSWORD)
+    user = User.objects.create_user(username='testuser', password=USER_PASSWORD)
+    language = Language.objects.get(name="English")
+    LanguagePreferences.objects.create(
+        user=user,
+        language=language,
+        user_language=language,
+        inline_translation_type="Dictionary",
+        inline_translation_parameters={"dictionary": "GoogleTranslator"},
+    )
+    return user
 
 
 @pytest.fixture

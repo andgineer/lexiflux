@@ -290,6 +290,7 @@ class Llm:  # pylint: disable=too-few-public-methods
             f"{marked_text[term_start:term_end]}{WORD_END_MARK}"
             f"{marked_text[term_end:]}"
         )
+        print(f"Marked text: {marked_text}")
         return {
             "text": marked_text,
             "detected_language": data["text_language"],

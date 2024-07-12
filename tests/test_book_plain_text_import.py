@@ -105,17 +105,17 @@ def test_import_plain_text_e2e():
     with open('tests/resources/alice_1st_page.txt', 'r', encoding="utf8") as f:
         assert book.pages.first().content == f.read()
     expected_toc = [
-        ['CHAPTER I.   Down the Rabbit-Hole', 1, 86],
-        ['CHAPTER II.   The Pool of Tears', 6, 34],
-        ['CHAPTER III.   A Caucus-Race and a Long Tale', 10, 135],
-        ['CHAPTER IV.   The Rabbit Sends in a Little Bill', 14, 100],
-        ['CHAPTER V.   Advice from a Caterpillar', 19, 264],
-        ['CHAPTER VI.   Pig and Pepper', 24, 264],
-        ['CHAPTER VII.   A Mad Tea-Party', 30, 169],
-        ['CHAPTER VIII.   The Queen’s Croquet-Ground', 35, 400],
-        ['CHAPTER IX.   The Mock Turtle’s Story', 41, 236],
-        ['CHAPTER X.   The Lobster Quadrille', 46, 346],
-        ['CHAPTER XI.   Кто украл the Tarts?', 51, 275],
-        ['CHAPTER XII.   Alice’s Evidence', 56, 2],
+        ('CHAPTER I.   Down the Rabbit-Hole', 1, 86),
+        ('CHAPTER II.   The Pool of Tears', 6, 34),
+        ('CHAPTER III.   A Caucus-Race and a Long Tale', 10, 135),
+        ('CHAPTER IV.   The Rabbit Sends in a Little Bill', 14, 100),
+        ('CHAPTER V.   Advice from a Caterpillar', 19, 264),
+        ('CHAPTER VI.   Pig and Pepper', 24, 264),
+        ('CHAPTER VII.   A Mad Tea-Party', 30, 169),
+        ('CHAPTER VIII.   The Queen’s Croquet-Ground', 35, 400),
+        ('CHAPTER IX.   The Mock Turtle’s Story', 41, 236),
+        ('CHAPTER X.   The Lobster Quadrille', 46, 346),
+        ('CHAPTER XI.   Кто украл the Tarts?', 51, 275),
+        ('CHAPTER XII.   Alice’s Evidence', 56, 2),
     ]
     assert book.toc == expected_toc

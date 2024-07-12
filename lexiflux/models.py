@@ -1,6 +1,5 @@
 """Models for the lexiflux app."""
 
-import json
 import re
 from typing import TypeAlias, Tuple, List, Any, Dict, Optional
 
@@ -9,25 +8,40 @@ from django.db import models, transaction
 from django.utils import timezone
 from django.core.exceptions import ValidationError
 from django.contrib.auth.models import AbstractUser
+from django.utils.translation import gettext_lazy as _
 from transliterate import get_available_language_codes, translit
 
 from lexiflux.language.sentence_extractor import break_into_sentences
 from lexiflux.language.word_extractor import parse_words
 
-BOOK_CODE_LENGTH = 100
 
-ARTICLE_TYPES = [
-    ("Translate", "Translate"),
-    ("Sentence", "Sentence"),
-    ("Explain", "Explain"),
-    ("Examples", "Examples"),
-    ("Lexical", "Lexical"),
-    ("Dictionary", "Dictionary"),
-    ("Site", "Site"),
-]
+BOOK_CODE_LENGTH = 100
 
 TocEntry: TypeAlias = Tuple[str, int, int]  # <title>, <page num>, <word on the page num>
 Toc: TypeAlias = List[TocEntry]
+
+
+class LexicalArticleType(models.TextChoices):  # type: ignore  # pylint: disable=too-many-ancestors
+    """Types of lexical articles."""
+
+    TRANSLATE = "Translate", _("Translate")
+    SENTENCE = "Sentence", _("Sentence")
+    EXPLAIN = "Explain", _("Explain")
+    EXAMPLES = "Examples", _("Examples")
+    LEXICAL = "Lexical", _("Lexical")
+    DICTIONARY = "Dictionary", _("Dictionary")
+    SITE = "Site", _("Site")
+
+
+LEXICAL_ARTICLE_PARAMETERS = {
+    "Translate": ["model"],
+    "Sentence": ["model"],
+    "Explain": ["model"],
+    "Examples": ["model"],
+    "Lexical": ["model"],
+    "Dictionary": ["dictionary"],
+    "Site": ["url", "window"],
+}
 
 
 class CustomUser(AbstractUser):  # type: ignore
@@ -101,21 +115,7 @@ class Book(models.Model):  # type: ignore
     title = models.CharField(max_length=200)
     author = models.ForeignKey(Author, on_delete=models.CASCADE)
     language = models.ForeignKey(Language, on_delete=models.SET_NULL, null=True)
-    toc_json = models.TextField(null=True, blank=True, default="{}")
-
-    @property
-    def toc(self) -> Toc:
-        """Property to automatically convert 'toc_json' to/from Python objects.
-
-        (!) Serialization in JSON will return a list of lists instead of a list of tuples.
-        We could convert them back here, but it has no practical benefit
-        """
-        return json.loads(self.toc_json) if self.toc_json else []  # type: ignore
-
-    @toc.setter
-    def toc(self, value: Toc) -> None:
-        """Set 'toc_json' when 'TOC' is updated."""
-        self.toc_json = json.dumps(value)
+    toc = models.JSONField(default=list, blank=True)
 
     @property
     def current_reading_by_count(self) -> int:
@@ -178,11 +178,8 @@ class BookPage(models.Model):  # type: ignore
     number = models.PositiveIntegerField()
     content = models.TextField()
     book = models.ForeignKey("Book", related_name="pages", on_delete=models.CASCADE)
-    word_indices = models.TextField(
-        null=True,
-        blank=True,
-        help_text="Word indices in JSON format. List of tuples with start and end index. "
-        "Index in the list - word index.",
+    word_slices = models.JSONField(
+        null=True, blank=True, help_text="List of tuples with start and end index for each word."
     )
     word_to_sentence_map = models.JSONField(null=True, blank=True)
 
@@ -196,55 +193,47 @@ class BookPage(models.Model):  # type: ignore
     def __str__(self) -> str:
         return f"Page {self.number} of {self.book.title}"
 
+    def clean(self) -> None:
+        super().clean()
+        if self.word_slices is not None:
+            if not isinstance(self.word_slices, list):
+                raise ValidationError({"word_slices": "Must be a list of tuples"})
+            # todo: fail in tests
+            # for item in self.word_slices:
+            #     if not (isinstance(item, list) and len(item) == 2
+            #     and all(isinstance(x, int) for x in item)):
+            #         raise ValidationError(
+            #         {"word_slices": "Each item must be a tuple of two integers"}
+            #         )
+
     def save(self, *args: Any, **kwargs: Any) -> None:
         """Override the save method to clear cache of word indices."""
         self._words_cache = None
         self._word_sentence_mapping_cache = None
+        self.full_clean()
         super().save(*args, **kwargs)
-
-    def _encode_word_indices(self, word_indices: List[Tuple[int, int]]) -> str:
-        """Encode word indices nested list to a compact flat list.
-
-        [[0, 4], [5, 7], [8, 9], [10, 14], [15, 19]] -> "[0, 4, 5, 7, 8, 9, 10, 14, 15, 19]"
-        """
-        flattened = [index for pair in word_indices for index in pair]
-        return json.dumps(flattened)
-
-    def _decode_word_indices(self) -> List[Tuple[int, int]]:
-        """Decode word indices from the flat list to nested list."""
-        if not self.word_indices:
-            return []
-        try:
-            flat_indices = json.loads(self.word_indices)
-            if len(flat_indices) % 2 != 0:
-                raise ValueError("Word indices DB field has an odd number of elements.")
-            return list(zip(flat_indices[::2], flat_indices[1::2]))
-        except json.JSONDecodeError:
-            print(f"Failed to decode word_indices: {self.word_indices}")
-            return []
 
     @property
     def words(self) -> List[Tuple[int, int]]:
         """Property to parse words from the content or retrieve from DB."""
-        if self._words_cache is None or self.word_indices is None:
-            if self.word_indices is None:
+        if self._words_cache is None:
+            if self.word_slices is None:
                 self._parse_and_save_words()
-            self._words_cache = self._decode_word_indices()
-        return self._words_cache
+            else:
+                self._words_cache = self.word_slices
+        return self._words_cache  # type: ignore
 
     def _parse_and_save_words(self) -> None:
         """Parse words from content and save to DB."""
         parsed_words, _ = parse_words(self.content)
-        self.word_indices = self._encode_word_indices(parsed_words)
-        self.save(update_fields=["word_indices"])
+        self.word_slices = parsed_words
+        self.save(update_fields=["word_slices"])
+        self._words_cache = parsed_words
 
     def extract_words(
         self, start_word_id: int, end_word_id: int
     ) -> Tuple[str, List[Tuple[int, int]]]:
-        """Extract a fragment of text from start_word_id to end_word_id (inclusive).
-
-        Returns (text_fragment, word_indices adjusted to the fragment).
-        """
+        """Extract a fragment of text from start_word_id to end_word_id (inclusive)."""
         words = self.words
         if not words:
             return "", []
@@ -258,11 +247,10 @@ class BookPage(models.Model):  # type: ignore
         end_pos = words[end_word_id][1]
 
         text_fragment = self.content[start_pos:end_pos]
-        # todo: clear from the text html tags and add to the result map {position: tag}
-        word_indices = words[start_word_id : end_word_id + 1]
+        word_slices = words[start_word_id : end_word_id + 1]
 
         # Adjust word indices to be relative to the start of the fragment
-        adjusted_indices = [(start - start_pos, end - start_pos) for start, end in word_indices]
+        adjusted_indices = [(start - start_pos, end - start_pos) for start, end in word_slices]
 
         return text_fragment, adjusted_indices
 
@@ -275,7 +263,7 @@ class BookPage(models.Model):  # type: ignore
             assert self.word_to_sentence_map is not None  # mypy
             # Ensure all keys are integers
             self._word_sentence_mapping_cache = {
-                int(k): v for k, v in json.loads(self.word_to_sentence_map).items()
+                int(k): v for k, v in self.word_to_sentence_map.items()
             }
         return self._word_sentence_mapping_cache
 
@@ -283,8 +271,8 @@ class BookPage(models.Model):  # type: ignore
         _, word_to_sentence = break_into_sentences(
             self.content, self.words, lang_code=self.book.language.google_code
         )
-        # Ensure all keys are strings before JSON serialization
-        self.word_to_sentence_map = json.dumps({str(k): v for k, v in word_to_sentence.items()})
+        # Ensure all keys are strings
+        self.word_to_sentence_map = {str(k): v for k, v in word_to_sentence.items()}
         self.save(update_fields=["word_to_sentence_map"])
         # Ensure all keys are integers in the cache
         self._word_sentence_mapping_cache = {int(k): v for k, v in word_to_sentence.items()}
@@ -296,7 +284,10 @@ class LexicalArticle(models.Model):  # type: ignore
     reader_profile = models.ForeignKey(
         "LanguagePreferences", on_delete=models.CASCADE, related_name="lexical_articles"
     )
-    type = models.CharField(max_length=20, choices=ARTICLE_TYPES)
+    type = models.CharField(
+        max_length=20,
+        choices=LexicalArticleType.choices,
+    )
     title = models.CharField(max_length=100)
     parameters = models.JSONField(default=dict)
 
@@ -342,11 +333,32 @@ class LanguagePreferences(models.Model):  # type: ignore
     user_language = models.ForeignKey(
         Language, on_delete=models.SET_NULL, null=True, related_name="profile_user_language"
     )
-    inline_translation_type = models.CharField(max_length=20, choices=ARTICLE_TYPES)
+    inline_translation_type = models.CharField(
+        max_length=20, choices=LexicalArticleType.choices, default=LexicalArticleType.TRANSLATE
+    )
     inline_translation_parameters = models.JSONField(default=dict)
 
     class Meta:
         unique_together = ("user", "language")
+
+    def clean(self) -> None:
+        super().clean()
+        if self.inline_translation_type not in LexicalArticleType.values:
+            raise ValidationError(
+                {
+                    "inline_translation_type": _(
+                        "'%(value)s' is not a valid choice. Valid choices are %(choices)s."
+                    )
+                    % {
+                        "value": self.inline_translation_type,
+                        "choices": ", ".join(LexicalArticleType.values),
+                    }
+                }
+            )
+
+    def save(self, *args: Any, **kwargs: Any) -> None:
+        self.full_clean()
+        super().save(*args, **kwargs)
 
     @classmethod
     @transaction.atomic  # type: ignore
@@ -355,7 +367,7 @@ class LanguagePreferences(models.Model):  # type: ignore
     ) -> "LanguagePreferences":
         """Get or create a Language Preferences for the given user and language."""
         default = user.default_language_preferences
-        profile, created = cls.objects.get_or_create(
+        preferences, created = cls.objects.get_or_create(
             user=user,
             language=language,
             defaults={
@@ -376,28 +388,25 @@ class LanguagePreferences(models.Model):  # type: ignore
             if user.default_language_preferences:
                 for article in user.default_language_preferences.lexical_articles.all():
                     LexicalArticle.objects.create(
-                        reader_profile=profile,
+                        reader_profile=preferences,
                         type=article.type,
                         title=article.title,
                         parameters=article.parameters,
                     )
 
             # Set this new profile as the default
-            user.default_language_preferences = profile
+            user.default_language_preferences = preferences
             user.save()
 
-        return profile  # type: ignore
+        return preferences  # type: ignore
 
     @property
     def inline_translation(self) -> Dict[str, Any]:
-        """Return inline translation as an object."""
-        try:
-            return {
-                "type": self.inline_translation_type,
-                "parameters": json.loads(self.inline_translation_parameters),
-            }
-        except TypeError:
-            return {"type": self.inline_translation_type, "parameters": {}}
+        """Return inline translation configuration."""
+        return {
+            "type": self.inline_translation_type,
+            "parameters": self.inline_translation_parameters,
+        }
 
     def get_lexical_articles(self) -> list[LexicalArticle]:
         """Return all lexical articles for this reader profile."""

@@ -2,7 +2,6 @@ import { log } from './utils';
 import { viewport } from './viewport';
 
 interface TranslationResponse {
-  translatedText?: string;
   article?: string;
   url?: string | null;
   window?: boolean | null;
@@ -61,12 +60,12 @@ function shouldSendRequest(selectedRange: Range | null, activePanelId: string | 
 
 function handleInTextTranslation(selectedRange: Range, wordIds: string[]): void {
   const translationSpan = createTranslationSpanWithSpinner(selectedRange);
-  const params = createRequestParams(wordIds, true);
+  const params = createRequestParams(wordIds, '0');
 
-  makeRequest(params, true)
+  makeRequest(params)
     .then(result => {
-      if (result && result.data.translatedText) {
-        updateTranslationSpan(translationSpan, result.data.translatedText);
+      if (result) {
+        updateTranslationSpan(result.data, translationSpan);
       } else {
         showErrorInTranslationSpan(translationSpan);
       }
@@ -83,9 +82,9 @@ function handleLexicalArticleUpdate(activePanelId: string, wordIds: string[]): v
       return;
     }
     showSpinnerInLexicalPanel(lexicalArticle);
-    const params = createRequestParams(wordIds, false, lexicalArticle);
+    const params = createRequestParams(wordIds, lexicalArticle);
 
-    makeRequest(params, false)
+    makeRequest(params)
       .then(result => {
         if (result) {
           updateLexicalPanel(result.data, activePanelId);
@@ -100,24 +99,18 @@ function handleLexicalArticleUpdate(activePanelId: string, wordIds: string[]): v
   }
 }
 
-function createRequestParams(wordIds: string[], isTranslation: boolean, lexicalArticle?: string): URLSearchParams {
+function createRequestParams(wordIds: string[], lexicalArticle: string): URLSearchParams {
   const params = new URLSearchParams({
     'word-ids': wordIds.join('.'),
     'book-code': viewport.bookCode,
     'book-page-number': viewport.pageNumber.toString(),
+    'lexical-article': lexicalArticle,
   });
-
-  if (!isTranslation) {
-    params.append('translate', 'false');
-    if (lexicalArticle) {
-      params.append('lexical-article', lexicalArticle);
-    }
-  }
 
   return params;
 }
 
-function makeRequest(params: URLSearchParams, isTranslation: boolean): Promise<{ data: TranslationResponse; isTranslation: boolean; } | undefined> {
+function makeRequest(params: URLSearchParams): Promise<{ data: TranslationResponse; } | undefined> {
   const url = `/translate?${params.toString()}`;
   return fetch(url)
     .then(response => {
@@ -127,7 +120,7 @@ function makeRequest(params: URLSearchParams, isTranslation: boolean): Promise<{
       return response.json();
     })
     .then((data: TranslationResponse) => {
-      return { data, isTranslation };
+      return { data };
     })
     .catch(error => {
       console.error('Error during translation:', error);
@@ -214,7 +207,7 @@ function adjustRangeToWholeWords(range: Range): void {
   }
 }
 
-function updateTranslationSpan(translationSpan: HTMLSpanElement, translatedText: string): void {
+function updateTranslationSpan(data: TranslationResponse, translationSpan: HTMLSpanElement): void {
   // Remove the spinner
   const spinner = translationSpan.querySelector('.spinner-border');
   if (spinner) {
@@ -222,11 +215,15 @@ function updateTranslationSpan(translationSpan: HTMLSpanElement, translatedText:
   }
 
   // Create and insert the translation text div
-  const translationDiv = document.createElement('div');
-  translationDiv.className = 'translation-text';
-  translationDiv.textContent = translatedText;
-  translationSpan.insertBefore(translationDiv, translationSpan.firstChild);
-
+  // todo: support also Site response? How to show inlined?
+  if (data.article) {
+      const translationDiv = document.createElement('div');
+      translationDiv.className = 'translation-text';
+      translationDiv.textContent = data.article;
+      translationSpan.insertBefore(translationDiv, translationSpan.firstChild);
+  } else {
+    showErrorInTranslationSpan(translationSpan);
+  }
   ensureVisible(translationSpan);
 }
 

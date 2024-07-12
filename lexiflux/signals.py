@@ -1,6 +1,5 @@
 """Signals for the lexiflux app."""
 
-import json
 from typing import Any
 
 from django.contrib.auth import get_user_model
@@ -48,7 +47,7 @@ def create_user_profile(
             language=serbian_language,
             user_language=english_language,
             inline_translation_type="Dictionary",
-            inline_translation_parameters=json.dumps({"dictionary": "GoogleTranslator"}),
+            inline_translation_parameters={"dictionary": "GoogleTranslator"},
         )
         instance.default_language_preferences = language_preferences
         instance.save()

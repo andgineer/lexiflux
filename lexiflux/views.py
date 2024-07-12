@@ -1,7 +1,7 @@
 """Vies for the Lexiflux app."""
 
 import json
-from typing import Optional, Dict, Any, List, Tuple
+from typing import Dict, Any, List, Tuple
 import urllib.parse
 import logging
 from pydantic import Field
@@ -34,6 +34,7 @@ from lexiflux.models import (
     Language,
     LanguagePreferences,
     CustomUser,
+    LEXICAL_ARTICLE_PARAMETERS,
 )
 
 logger = logging.getLogger(__name__)
@@ -248,8 +249,11 @@ class TranslateGetParams(ViewGetParamsModel):
     word_ids: str = Field(default=None)
     book_code: str = Field(..., min_length=1)
     book_page_number: int = Field(..., ge=1)
-    translate: bool = Field(default=True)
-    lexical_article: Optional[str] = Field(default=None)
+    lexical_article: str = Field(
+        ...,
+        description="Lexical article index. '0' for inline, "
+        "otherwise number of the panel in Sidebar",
+    )
 
 
 def get_context_for_term(
@@ -270,28 +274,33 @@ def get_context_for_term(
     return context_str, context_word_slices, context_term_word_ids, start_word
 
 
-def get_lexical_article(
-    article: LexicalArticle,
+def get_lexical_article(  # pylint: disable=too-many-arguments
+    article_name: str,
+    params: Dict[str, Any],
     selected_text: str,
     book_page: BookPage,
     term_word_ids: List[int],
     language_preferences: LanguagePreferences,
 ) -> Dict[str, Any]:
     """Get the lexical article."""
-    if article.type == "Site":
+    if article_name == "Site":
         return {
-            "url": article.parameters.get("url", "").format(
-                term=urllib.parse.quote(selected_text)
-            ),
-            "window": article.parameters.get("window", True),
+            "url": params.get("url", "").format(term=urllib.parse.quote(selected_text)),
+            "window": params.get("window", True),
         }
+
+    if article_name == "Dictionary":
+        # todo: support more dictionaries
+        translator = get_translator(book_page.book, language_preferences)
+        return {"article": translator.translate(selected_text)}
+
     context_str, context_word_slices, context_term_word_ids, context_start_word = (
         get_context_for_term(book_page, term_word_ids)
     )
     llm = Llm()
     data = llm.generate_article(
-        article_name=article.type,
-        params=article.parameters,
+        article_name=article_name,
+        params=params,
         data={
             "text": context_str,
             "word_slices": context_word_slices,
@@ -315,22 +324,39 @@ def translate(request: HttpRequest, params: TranslateGetParams) -> HttpResponse:
     """
     book = Book.objects.get(code=params.book_code)
     book_page = BookPage.objects.get(book=book, number=params.book_page_number)
+    language_preferences = LanguagePreferences.get_or_create_language_preferences(
+        request.user, book.language
+    )
+
     term_word_ids = [int(id) for id in params.word_ids.split(".")]
-    selected_words = [
-        book_page.content[book_page.words[id][0] : book_page.words[id][1]] for id in term_word_ids
+    # term_words = " ".join(
+    #     [
+    #         book_page.content[book_page.words[id][0] : book_page.words[id][1]]
+    #         for id in term_word_ids
+    #     ]
+    # )
+    term_text = book_page.content[
+        book_page.words[term_word_ids[0]][0] : book_page.words[term_word_ids[-1]][1]
     ]
-    selected_text = " ".join(selected_words)
 
     result: Dict[str, Any] = {}
 
-    if params.translate:
-        translator = get_translator(request.user, book)
-        result["translatedText"] = translator.translate(selected_text)
-
-    if params.lexical_article:
-        language_preferences = LanguagePreferences.get_or_create_language_preferences(
-            request.user, book.language
+    if int(params.lexical_article) == 0:
+        article_type = language_preferences.inline_translation_type
+        article_parameters = language_preferences.inline_translation_parameters
+        result.update(
+            get_lexical_article(
+                article_type,
+                article_parameters,
+                term_text,
+                book_page,
+                term_word_ids,
+                language_preferences,
+            )
         )
+        result["article"] = result["article"].split("<hr>")[0]
+
+    else:
         all_articles = language_preferences.lexical_articles.all()
         article_index = int(params.lexical_article) - 1
 
@@ -338,12 +364,18 @@ def translate(request: HttpRequest, params: TranslateGetParams) -> HttpResponse:
             article = all_articles[article_index]
             result.update(
                 get_lexical_article(
-                    article, selected_text, book_page, term_word_ids, language_preferences
+                    article.type,
+                    article.parameters,
+                    term_text,
+                    book_page,
+                    term_word_ids,
+                    language_preferences,
                 )
             )
         else:
             return JsonResponse({"error": "Lexical article not found"}, status=404)
 
+    print(f"Result: {result}")
     return JsonResponse(result)
 
 
@@ -361,18 +393,15 @@ def language_tool_preferences(request: HttpRequest) -> HttpResponse:
         if reader_profile
         else []
     )
-    all_languages_data = list(
-        all_languages.values("google_code", "name")
-    )  # Changed 'id' to 'google_code'
-    inline_translation = reader_profile.inline_translation if reader_profile else {}
+    all_languages_data = list(all_languages.values("google_code", "name"))
 
     logger.debug(f"Articles: {articles}")
     logger.debug(f"All languages: {all_languages_data}")
-    logger.debug(f"Inline translation: {inline_translation}")
+    logger.debug(f"Inline translation: {reader_profile.inline_translation}")
 
     articles_json = json.dumps(articles)
     all_languages_json = json.dumps(all_languages_data)
-    inline_translation_json = json.dumps(inline_translation)
+    inline_translation_json = json.dumps(reader_profile.inline_translation)
 
     logger.debug(f"Articles JSON: {articles_json}")
     logger.debug(f"All languages JSON: {all_languages_json}")
@@ -451,10 +480,22 @@ def save_inline_translation(request: HttpRequest) -> JsonResponse:
     """Save the inline translation settings."""
     data = json.loads(request.body)
     language_id = data.get("language_id")
-    reader_profile = request.user.language_preferences.get(language_id=language_id)
-    reader_profile.inline_translation_type = data["type"]
-    reader_profile.inline_translation_parameters = json.dumps(data["parameters"])
+    translation_type = data.get("type")
+    parameters = data.get("parameters", {})
+
+    reader_profile = request.user.language_preferences.get(language__google_code=language_id)
+
+    # Filter the parameters to only include valid ones for the selected type
+    filtered_parameters = {
+        k: v
+        for k, v in parameters.items()
+        if k in LEXICAL_ARTICLE_PARAMETERS.get(translation_type, [])
+    }
+
+    reader_profile.inline_translation_type = translation_type
+    reader_profile.inline_translation_parameters = filtered_parameters
     reader_profile.save()
+
     return JsonResponse(
         {
             "status": "success",
