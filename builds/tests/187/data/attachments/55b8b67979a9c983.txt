@@ -1,1 +1,0 @@
-/home/runner/work/lexiflux/lexiflux/.venv/bin/python: No module named pip
