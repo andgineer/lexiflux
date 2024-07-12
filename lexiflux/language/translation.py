@@ -16,12 +16,12 @@ log = logging.getLogger()
 class Translator:  # pylint: disable=too-few-public-methods
     """Translator."""
 
-    def __init__(self, book: Book, profile: LanguagePreferences) -> None:
+    def __init__(self, book: Book, language_preferences: LanguagePreferences) -> None:
         """Initialize Translator."""
         self._book = book
-        self._profile = profile
-        source = "sr"
-        target = "ru"
+        self._profile = language_preferences
+        source = book.language.google_code
+        target = language_preferences.user_language.google_code
         self._translator = GoogleTranslator(source=source, target=target)
 
     @lru_cache(maxsize=128)

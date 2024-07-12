@@ -9,7 +9,7 @@ Reading foreign texts with dictionary.
 
 <br clear="left"/>
 
-![Alice in Wonderland](docs/includes/alice_reading.jpg)
+![Alice in Wonderland](docs/includes/ponedeljak-pocinje-u-subotu.jpg)
 
 
 ## Quick start
