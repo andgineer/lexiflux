@@ -1,6 +1,0 @@
-Parsed words: [(0, 4), (5, 7), (8, 15), (16, 20)]
-Encoded word indices: [0, 4, 5, 7, 8, 15, 16, 20]
-Word indices found: [0, 4, 5, 7, 8, 15, 16, 20]
-Decoded word indices: [(0, 4), (5, 7), (8, 15), (16, 20)]
-Word indices found: [0, 4, 5, 7, 8, 15, 16, 20]
-Decoded word indices: [(0, 4), (5, 7), (8, 15), (16, 20)]
