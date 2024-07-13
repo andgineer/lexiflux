@@ -19,8 +19,8 @@ class TextOutputParser(BaseOutputParser[str]):
 
 SENTENCE_START_MARK = "||"
 SENTENCE_END_MARK = "||"
-WORD_START_MARK = "**"
-WORD_END_MARK = "**"
+WORD_START_MARK = "[HIGHLIGHT]"
+WORD_END_MARK = "[/HIGHLIGHT]"
 
 
 def break_into_sentences(  # pylint: disable=too-many-locals

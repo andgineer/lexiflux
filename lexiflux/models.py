@@ -24,10 +24,10 @@ Toc: TypeAlias = List[TocEntry]
 class LexicalArticleType(models.TextChoices):  # type: ignore  # pylint: disable=too-many-ancestors
     """Types of lexical articles."""
 
+    # todo: extract from Llm.article_names()
     TRANSLATE = "Translate", _("Translate")
     SENTENCE = "Sentence", _("Sentence")
     EXPLAIN = "Explain", _("Explain")
-    EXAMPLES = "Examples", _("Examples")
     LEXICAL = "Lexical", _("Lexical")
     DICTIONARY = "Dictionary", _("Dictionary")
     SITE = "Site", _("Site")

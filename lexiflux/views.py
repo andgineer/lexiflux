@@ -308,7 +308,8 @@ def get_lexical_article(  # pylint: disable=too-many-arguments
             "term_word_ids": context_term_word_ids,
             "text_language": book_page.book.language.google_code,
             "user_language": language_preferences.user_language.google_code,
-            "page": book_page,
+            "book_code": book_page.book.code,
+            "book_page_number": book_page.number,
             "context_start_word": context_start_word,
         },
     )

@@ -1,9 +1,9 @@
 """AI lexical articles."""
 
-import json
 import os
+import traceback
 from functools import lru_cache
-from typing import Any, Dict, List, Iterable, Union, Tuple
+from typing import Any, Dict, List, Tuple
 
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
@@ -13,7 +13,6 @@ from langchain_community.llms import Ollama  # pylint: disable=no-name-in-module
 
 import openai
 from langchain.schema import BaseOutputParser
-from pydantic import Field
 
 from lexiflux.language.sentence_extractor_llm import (
     SENTENCE_START_MARK,
@@ -22,7 +21,7 @@ from lexiflux.language.sentence_extractor_llm import (
     WORD_END_MARK,
 )
 from lexiflux.language.word_extractor import parse_words
-from lexiflux.models import BookPage
+from lexiflux.models import BookPage, Book
 
 ChatModels = {
     "gpt-3.5-turbo": {
@@ -79,89 +78,23 @@ def find_nth_occurrence(substring: str, string: str, occurrence: int) -> int:
     return start
 
 
+def remove_marks(text: str) -> str:
+    """Remove sentence and word marks from text."""
+    for delimiter in (
+        SENTENCE_START_MARK,
+        SENTENCE_END_MARK,
+        WORD_START_MARK,
+        WORD_END_MARK,
+    ):
+        text = text.replace(delimiter, "")
+    return text
+
+
 class TextOutputParser(BaseOutputParser[str]):
     """Simple output parser."""
 
     def parse(self, text: str) -> str:
-        return text
-
-
-class BaseJsonParser(BaseOutputParser[str]):
-    """Base parser for JSON output."""
-
-    retry_count: int = Field(default=1, description="Number of retry attempts for JSON parsing")
-
-    def remove_delimiters(self, text: str, delimiters: Iterable[str] = ("||", "**")) -> str:
-        """Remove delimiters from text."""
-        for delimiter in delimiters:
-            text = text.replace(delimiter, "")
-        return text
-
-    def parse_json(self, text: str) -> Union[Dict[str, Any], str]:
-        """Parse JSON with retry logic.
-
-        Return just text if the retries exhausted.
-        """
-        for _ in range(self.retry_count + 1):
-            try:
-                return json.loads(text)  # type: ignore
-            except json.JSONDecodeError:
-                pass  # ignore up to retry_count
-        return text
-
-
-class SentenceOutputParser(BaseJsonParser):
-    """Sentence output parser."""
-
-    def parse(self, text: str) -> str:
-        json_result = self.parse_json(text)
-        if isinstance(json_result, str) or "translation" not in json_result:
-            return text  # return text if parsing failed
-        detected_language = json_result.get("detected_language", "")
-        expected_language = json_result.get("expected_language", "")
-        comments = json_result.get("comments")
-        if comments is not None:
-            comments = self.remove_delimiters(comments)
-            if "no comments" in comments.lower() or comments.lower().strip() == "none":
-                comments = ""
-        else:
-            comments = ""
-        if comments:
-            comments = f"<hr>{comments}"
-        translation = self.remove_delimiters(json_result["translation"])
-        if detected_language.lower() != expected_language.lower():
-            # todo: if the detected language is in same language group ignore it
-            translation = f"({detected_language}) {translation}"
-        return f"""{translation}<hr>{comments}"""
-
-
-class ExplainOutputParser(BaseJsonParser):
-    """Explain output parser."""
-
-    def parse(self, text: str) -> str:
-        json_result = self.parse_json(text)
-        if isinstance(json_result, str) or "explanation" not in json_result:
-            return text  # return text if parsing failed
-        # detected_language = json_result.get("detected_language", "")
-        # expected_language = json_result.get("expected_language", "")
-        explanation = self.remove_delimiters(json_result["explanation"])
-        translation = self.remove_delimiters(json_result["translation"])
-        return f"""{explanation}<hr>{translation}"""
-
-
-class ExamplesOutputParser(BaseJsonParser):
-    """Examples output parser."""
-
-    def parse(self, text: str) -> str:
-        json_result = self.parse_json(text)
-        if isinstance(json_result, str) or not isinstance(json_result, list):
-            return text  # return text if parsing failed
-        result = []
-        for item in json_result:
-            example = self.remove_delimiters(item["example"])
-            translation = self.remove_delimiters(item["translation"])
-            result.append(f"""<p>{example}</p><p>{translation}</>""")
-        return "<hr>".join(result)
+        return remove_marks(text)
 
 
 class Llm:  # pylint: disable=too-few-public-methods
@@ -190,6 +123,8 @@ class Llm:  # pylint: disable=too-few-public-methods
         Expects in `params`:
         - model: LLM model name from ChatModels.keys()
         Expects in `data`:
+        - book_page:
+        - book_page_number:
         - text:
             highlighted words marked with WORD_START_MARK and WORD_END_MARK
             sentences that contained the highlighted words marked with SENTENCE_START_MARK
@@ -209,15 +144,16 @@ class Llm:  # pylint: disable=too-few-public-methods
             article_name, self._hashable_dict(params), self._hashable_dict(data)
         )
 
-    def prepare_data(
+    def detect_term_words(
         self,
         text: str,
         term: str,
         term_occurence: int = 1,
     ) -> Dict[str, Any]:
-        """From the text given prepare the data to generate an LLM article.
+        """In the text given detect word slices and term words.
 
-        Convenient way to debug the LLM.
+        For debugging plain text without book page.
+
         If term is included in the text multiple times, you can specify which occurrence to use
         (1 - 1st, etc).
 
@@ -246,6 +182,8 @@ class Llm:  # pylint: disable=too-few-public-methods
 
         Expects in `data`:
         - text:
+        - book_code:
+        - book_page_number:
         - word_slices:
             list of tuples with start and end indices of words in the text
         - term_word_ids:
@@ -266,7 +204,8 @@ class Llm:  # pylint: disable=too-few-public-methods
         text = data["text"]
         word_slices: List[Tuple[int, int]] = data["word_slices"]
         term_word_ids: List[int] = data["term_word_ids"]
-        page: BookPage = data["page"]
+        book = Book.objects.get(code=data["book_code"])
+        page = BookPage.objects.get(book=book, number=data["book_page_number"])
         context_start_word = data["context_start_word"]
 
         mapping = page.word_sentence_mapping
@@ -328,145 +267,124 @@ class Llm:  # pylint: disable=too-few-public-methods
                 raise ValueError(f"Unsupported model: {model_name}")
 
             model_class = model_info["model"]
-
-            if model_class == ChatOpenAI:
-                self._model_cache[model_key] = model_class(
-                    model=model_name,
-                    temperature=0.5,
-                )
-            if model_class == Ollama:
-                self._model_cache[model_key] = model_class(
-                    model=model_name,
-                    temperature=0.5,
-                )
-            # elif model_class == ChatAnthropic:
-            #     self._model_cache[model_key] = model_class(
-            #         model=model_name,
-            #         temperature=0.5,
-            #     )
-            # elif model_class == ChatGoogleGenerativeAI:
-            #     self._model_cache[model_key] = model_class(
-            #         model=model_name,
-            #         temperature=0.5,
-            #     )
-            elif model_class == ChatMistralAI:
-                self._model_cache[model_key] = model_class(
-                    model=model_name,
-                    temperature=0.5,
-                )
-            else:
-                raise ValueError(f"Unsupported model class: {model_class}")
+            try:
+                if model_class == ChatOpenAI:
+                    self._model_cache[model_key] = model_class(
+                        model=model_name,
+                        temperature=0.5,
+                        api_key=os.getenv("OPENAI_API_KEY"),
+                    )
+                elif model_class == Ollama:
+                    self._model_cache[model_key] = model_class(
+                        model=model_name,
+                        temperature=0.5,
+                    )
+                # elif model_class == ChatAnthropic:
+                #     self._model_cache[model_key] = model_class(
+                #         model=model_name,
+                #         temperature=0.5,
+                #     )
+                # elif model_class == ChatGoogleGenerativeAI:
+                #     self._model_cache[model_key] = model_class(
+                #         model=model_name,
+                #         temperature=0.5,
+                #     )
+                elif model_class == ChatMistralAI:
+                    self._model_cache[model_key] = model_class(
+                        model=model_name,
+                        temperature=0.5,
+                    )
+                else:
+                    raise ValueError(f"Unsupported model class: {model_class}")
+            except Exception as e:
+                print(f"Error creating model {model_class.__name__}({model_name}): {e}")
+                print(traceback.format_exc())
+                raise
 
         return self._model_cache[model_key]
 
     def _create_article_templates(self) -> Dict[str, Any]:
         text_parser = TextOutputParser()
-        sentence_parser = SentenceOutputParser(retry_count=1)
-        explain_parser = ExplainOutputParser(retry_count=1)
-        examples_parser = ExamplesOutputParser(retry_count=1)
 
-        translation_system_template = """Below given a text with the sentence
-in {detected_language} language
-marked with double vertical bars before and after the sentence, like this:
-||This is the marked sentence containing **the word**.||
-Inside the sentence, the term is marked with double stars - like
-**the word** in the example above.
-Translate to {user_language} language the term.
-Give translation of the term in the exact sentence where the term is (and not all occurrences in the text).
-Put into result only the term translation.
-If the text is not in {text_language}, prefix the result with the text language name in parentheses, like (Latin).
+        translation_system_template = """Below given a text in {detected_language} language.
+Translate to {user_language} language only the term inclosed in [HIGHLIGHT][sHIGHLIGHT] tags - like
+[HIGHLIGHT]the word[/HIGHLIGHT].
+
+Give translation of the term in the exact sentence marked
+with double vertical bars before and after the sentence, like this:
+||This is the marked sentence containing [HIGHLIGHT]the word[/HIGHLIGHT].||
+
+If the term is not {text_language} word(s), prefix the result with the term language name in
+parentheses, like (Latin).
+
+Critical instructions: 
+- place into result only the translation of the term and not the text you translate
+- give translation only for the term in the marked sentence, not in general
+- do not add to the translation any comments except the translation itself.
 """
 
         translation_prompt_template = ChatPromptTemplate.from_messages(
             [("system", translation_system_template), ("user", "The text is: {text}")]
         )
 
-        lexical_system_template = """Below given a text with the sentence
-in {detected_language} language
-marked with double vertical bars before and after the sentence, like this:
-||This is the marked sentence containing **the word**.||
-Inside the sentence, the term is marked with double stars - like
-**the word** in the example above.
-Write {text_language} - {user_language} lexical article for the term. 
+        lexical_system_template = """Below given a text in {detected_language} language.
+
+Write {text_language} - {user_language} lexical article for the ONE word or phrase which is marked with [HIGHLIGHT][/HIGHLIGHT].
+
 The article should be in {user_language}.
 The article includes different meanings, grammar attributes of them - part of the speech,
 genre, number, countability and other.
+
 Article should be in compact nice style like in good dictionaries.
-Include declination table and other information you expect to see in a good dictionary
-like Oxford Dictionary.
-If you are sure the text is in a different language, write the article based on that language and indicate
-it by starting the result with the detected language name in parentheses.
-Give the result in HTML formatting, without any block marks."""
+Include declination table, examples of usage and other information you expect to see in
+a good dictionary like Oxford Dictionary.
+
+Critical instructions: Give the result in HTML formatting, without any block marks."""
 
         lexical_prompt_template = ChatPromptTemplate.from_messages(
             [("system", lexical_system_template), ("user", "The text is: {text}")]
         )
 
-        examples_system_template = """Below given a text with the sentence
-in {detected_language} language
-marked with double vertical bars before and after the sentence, like this:
-||This is the marked sentence containing **the word**.||
-Inside the sentence, the term is marked with double stars - like
-**the word** in the example above.
-Provide up to seven examples in {text_language} language of sentences with the term.
+        explain_system_template = """You are a {text_language} teacher helping a {user_language}
+speaker understand a specific word(s) in context.
 
-Return in JSON format without any additional block marks or labels.
-The JSON should contain array of objects with the following fields:
-"example": the example sentence.
-"translation": translation of the sentence to {user_language} language.
+CRITICAL INSTRUCTIONS:
+1. You will be given a sentence marked with ||. Inside this sentence, ONE word or phrase
+is marked with [HIGHLIGHT][/HIGHLIGHT].
+2. Explain ONLY the [HIGHLIGHT]marked word(s)[/HIGHLIGHT] as it is used in the marked sentence.
+Ignore any other occurrences of this word in the text.
+3. DO NOT repeat the word or any part of the given text in your explanation.
+4. Use ONLY {user_language} in your explanation.
 
-Critical instructions:
-- Recheck language in the fields "translation".
-If is not {user_language}, translate the field to {user_language} language.
-"""
+Your explanation should cover:
+- The specific meaning of the marked word in this exact sentence
+- Its grammatical role in this sentence
+- Any idiomatic aspects of its usage here
+- Cultural context relevant to this specific use (if any)
+- How this usage might differ from other common uses of the same word
 
-        examples_prompt_template = ChatPromptTemplate.from_messages(
-            [("system", examples_system_template), ("user", "The text is: {text}")]
-        )
+Provide 1-2 example sentences in {text_language} that are NOT in the text provided.
 
-        explain_system_template = """Below given a text with the sentence
-in {detected_language} language
-marked with double vertical bars before and after the sentence, like this:
-||This is the marked sentence containing **the word**.||
-Inside the sentence, the term is marked with double stars - like
-**the word** in the example above.
+If there's a {user_language} equivalent that captures the specific meaning and usage
+in this sentence, mention it, but focus on explaining the {text_language} usage.
 
-Return in JSON format without any additional block marks or labels the following fields:
-- "explanation": in {text_language} language explain the usage of the marked term
-in the marked sentence, and not in other occurrences of the text.
-You may use surrounding text for better explanation, but explain the marked usage only.
-- "translation": translation of the explanation to {user_language}.
-- "expected_language": The name of {text_language} language in {user_language}.
-- "detected_language": The name of {detected_language} language in {user_language}.
-
-Critical instructions:
-- Recheck language in the field "translation".
-If is not {user_language}, translate the field to {user_language} language.
-"""
+Remember: Your explanation should be tailored to how the word is used in this particular
+marked sentence, not a general definition of the word."""
 
         explain_prompt_template = ChatPromptTemplate.from_messages(
             [("system", explain_system_template), ("user", "The text is: {text}")]
         )
 
-        sentence_system_template = """Below given a text with the sentence
-marked with double vertical bars before and after the sentence, like this:
-||This is the marked sentence containing **the word**.||
-Return in JSON format without any additional block marks or labels the following fields:
-- "translation": translate the marked sentence only from {detected_language}
-to {user_language} language.
-You may use surrounding text for better translation, but translate the marked sentence only.
-- "comments": explain difficulties (if any) in the marked {detected_language} sentence
-for a {user_language} speaker.
-The explanation should be in {user_language} language
-If there are no comments, set this field to null.
-Do not include phrases like "There are no difficult words" or "No comments".
-- "expected_language": The name of {text_language} language in {user_language}.
-- "detected_language": The name of {detected_language} language in {user_language}.
+        sentence_system_template = """Below given a text in {detected_language} language.
+Give translation to {user_language} of the sentence marked
+with double vertical bars before and after the sentence, like this:
+||This is the marked sentence containing [HIGHLIGHT]marked word(s)[/HIGHLIGHT].||
 
-Critical instructions:
-- Do not add a language name (e.g., "(Serbian)") to translation or comments.
-- Recheck language in fields "translation" and "comments".
-If is not {user_language}, translate the fields to {user_language} language.
+You may use surrounding text for better translation, but translate the marked sentence only.
+
+Critical instructions: 
+- place into result only the translation of the sentence
+- do not add to the translation any comments except the translation itself.
 """
         # todo: still sometimes return translation / comment not in user language
         # add step to translate them
@@ -478,9 +396,8 @@ If is not {user_language}, translate the fields to {user_language} language.
         return {
             "Translate": {"template": translation_prompt_template, "parser": text_parser},
             "Lexical": {"template": lexical_prompt_template, "parser": text_parser},
-            "Examples": {"template": examples_prompt_template, "parser": examples_parser},
-            "Explain": {"template": explain_prompt_template, "parser": explain_parser},
-            "Sentence": {"template": sentence_prompt_template, "parser": sentence_parser},
+            "Explain": {"template": explain_prompt_template, "parser": text_parser},
+            "Sentence": {"template": sentence_prompt_template, "parser": text_parser},
         }
 
     def _hashable_dict(self, d: Dict[str, Any]) -> Tuple[Tuple[str, Any], ...]:
