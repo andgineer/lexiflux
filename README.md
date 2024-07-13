@@ -25,6 +25,38 @@ open in web-browser http://localhost:8000
 ## Scripts
     make help
 
+## Local AI
+Lexiflux use AI models to create Lexical Articles in Sidebar 
+(you open it with blue binocular icon).
+
+Also you can use AI for inline text translation. By default
+it uses Google Translate.
+
+To configure Sidebar and inline translation see Language Tool Preferences.
+There are separate settings for each language, so you can configure
+different settings for different languages.
+
+If you want to use free local AI, you need to install 
+[Ollama](https://ollama.com/download/mac) and preload models.
+
+    ollama pull llama3
+    ollama pull zephyr
+
+But I recommend using paid [openAI](https://openai.com/index/openai-api/) 
+or [Anthropic](https://www.anthropic.com/api-bk).
+
+They are more accurate and faster.
+
+For paid models you should sign up and get API key.
+Place API key into appropriate environment variable.
+
+    export OPENAI_API_KEY=...
+    export ANTHROPIC_API_KEY=...
+
+
+So if you configured using paid models, each time Lexiflux shows you the 
+article in the Sidebar, you are charged by AI provider.
+
 ## New installation
     make migrate
     ./manage createsuperuser

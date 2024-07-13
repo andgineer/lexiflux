@@ -9,6 +9,8 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
 from langchain_openai import ChatOpenAI
 from langchain_mistralai import ChatMistralAI
+from langchain_community.llms import Ollama
+
 import openai
 from langchain.schema import BaseOutputParser
 from pydantic import Field
@@ -37,6 +39,16 @@ ChatModels = {
         "title": "GPT-4 Turbo Preview",
         "model": ChatOpenAI,
         "suffix": "⚙️4+",
+    },
+    "llama3": {
+        "title": "LLAMA 3",
+        "model": Ollama,
+        "suffix": "🦙3",
+    },
+    "zephyr": {
+        "title": "Zephyr 7B",
+        "model": Ollama,
+        "suffix": "🌬️7B",
     },
     # # https://docs.anthropic.com/en/docs/models-overview
     # "claude-3-5-sonnet-20240620": {
@@ -318,7 +330,12 @@ class Llm:  # pylint: disable=too-few-public-methods
             model_class = model_info["model"]
 
             if model_class == ChatOpenAI:
-                self._model_cache[model_key] = model_class(  # type: ignore
+                self._model_cache[model_key] = model_class(
+                    model=model_name,
+                    temperature=0.5,
+                )
+            if model_class == Ollama:
+                self._model_cache[model_key] = model_class(
                     model=model_name,
                     temperature=0.5,
                 )
@@ -333,7 +350,7 @@ class Llm:  # pylint: disable=too-few-public-methods
             #         temperature=0.5,
             #     )
             elif model_class == ChatMistralAI:
-                self._model_cache[model_key] = model_class(  # type: ignore
+                self._model_cache[model_key] = model_class(
                     model=model_name,
                     temperature=0.5,
                 )
