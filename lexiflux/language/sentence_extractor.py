@@ -5,7 +5,12 @@ from typing import List, Tuple, Dict, Optional
 import nltk
 
 
-nltk.download("punkt", quiet=True)
+try:
+    nltk.download("punkt", quiet=True)
+except FileExistsError:
+    # suppress to pass pylint
+    # this is expected to happen when the resource is already downloaded
+    pass
 
 
 class SentenceTokenizer(Enum):
