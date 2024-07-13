@@ -54,8 +54,8 @@
             </div>
         </aside>
         <h2>
-            <span class="text">223 statements &nbsp;</span>
-            <button type="button" class="run button_toggle_run" value="run" data-shortcut="r" title="Toggle lines run">187<span class="text"> run</span></button>
+            <span class="text">222 statements &nbsp;</span>
+            <button type="button" class="run button_toggle_run" value="run" data-shortcut="r" title="Toggle lines run">186<span class="text"> run</span></button>
             <button type="button" class="mis show_mis button_toggle_mis" value="mis" data-shortcut="m" title="Toggle lines missing">36<span class="text"> missing</span></button>
             <button type="button" class="exc show_exc button_toggle_exc" value="exc" data-shortcut="x" title="Toggle lines excluded">0<span class="text"> excluded</span></button>
         </h2>
@@ -65,7 +65,7 @@
             <a id="nextFileLink" class="nav" href="z_816b02d96dab55f8_signals_py.html">&#xbb; next</a>
             &nbsp; &nbsp; &nbsp;
             <a class="nav" href="https://coverage.readthedocs.io/en/7.6.0">coverage.py v7.6.0</a>,
-            created at 2024-07-13 06:35 +0000
+            created at 2024-07-13 15:36 +0000
         </p>
         <aside class="hidden">
             <button type="button" class="button_next_chunk" data-shortcut="j"></button>
@@ -106,10 +106,10 @@
     <p class="run"><span class="n"><a id="t24" href="#t24">24</a></span><span class="t"><span class="key">class</span> <span class="nam">LexicalArticleType</span><span class="op">(</span><span class="nam">models</span><span class="op">.</span><span class="nam">TextChoices</span><span class="op">)</span><span class="op">:</span>  <span class="com"># type: ignore  # pylint: disable=too-many-ancestors</span>&nbsp;</span><span class="r"></span></p>
     <p class="pln"><span class="n"><a id="t25" href="#t25">25</a></span><span class="t">    <span class="str">"""Types of lexical articles."""</span>&nbsp;</span><span class="r"></span></p>
     <p class="pln"><span class="n"><a id="t26" href="#t26">26</a></span><span class="t">&nbsp;</span><span class="r"></span></p>
-    <p class="run"><span class="n"><a id="t27" href="#t27">27</a></span><span class="t">    <span class="nam">TRANSLATE</span> <span class="op">=</span> <span class="str">"Translate"</span><span class="op">,</span> <span class="nam">_</span><span class="op">(</span><span class="str">"Translate"</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
-    <p class="run"><span class="n"><a id="t28" href="#t28">28</a></span><span class="t">    <span class="nam">SENTENCE</span> <span class="op">=</span> <span class="str">"Sentence"</span><span class="op">,</span> <span class="nam">_</span><span class="op">(</span><span class="str">"Sentence"</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
-    <p class="run"><span class="n"><a id="t29" href="#t29">29</a></span><span class="t">    <span class="nam">EXPLAIN</span> <span class="op">=</span> <span class="str">"Explain"</span><span class="op">,</span> <span class="nam">_</span><span class="op">(</span><span class="str">"Explain"</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
-    <p class="run"><span class="n"><a id="t30" href="#t30">30</a></span><span class="t">    <span class="nam">EXAMPLES</span> <span class="op">=</span> <span class="str">"Examples"</span><span class="op">,</span> <span class="nam">_</span><span class="op">(</span><span class="str">"Examples"</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
+    <p class="pln"><span class="n"><a id="t27" href="#t27">27</a></span><span class="t">    <span class="com"># todo: extract from Llm.article_names()</span>&nbsp;</span><span class="r"></span></p>
+    <p class="run"><span class="n"><a id="t28" href="#t28">28</a></span><span class="t">    <span class="nam">TRANSLATE</span> <span class="op">=</span> <span class="str">"Translate"</span><span class="op">,</span> <span class="nam">_</span><span class="op">(</span><span class="str">"Translate"</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
+    <p class="run"><span class="n"><a id="t29" href="#t29">29</a></span><span class="t">    <span class="nam">SENTENCE</span> <span class="op">=</span> <span class="str">"Sentence"</span><span class="op">,</span> <span class="nam">_</span><span class="op">(</span><span class="str">"Sentence"</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
+    <p class="run"><span class="n"><a id="t30" href="#t30">30</a></span><span class="t">    <span class="nam">EXPLAIN</span> <span class="op">=</span> <span class="str">"Explain"</span><span class="op">,</span> <span class="nam">_</span><span class="op">(</span><span class="str">"Explain"</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
     <p class="run"><span class="n"><a id="t31" href="#t31">31</a></span><span class="t">    <span class="nam">LEXICAL</span> <span class="op">=</span> <span class="str">"Lexical"</span><span class="op">,</span> <span class="nam">_</span><span class="op">(</span><span class="str">"Lexical"</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
     <p class="run"><span class="n"><a id="t32" href="#t32">32</a></span><span class="t">    <span class="nam">DICTIONARY</span> <span class="op">=</span> <span class="str">"Dictionary"</span><span class="op">,</span> <span class="nam">_</span><span class="op">(</span><span class="str">"Dictionary"</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
     <p class="run"><span class="n"><a id="t33" href="#t33">33</a></span><span class="t">    <span class="nam">SITE</span> <span class="op">=</span> <span class="str">"Site"</span><span class="op">,</span> <span class="nam">_</span><span class="op">(</span><span class="str">"Site"</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
@@ -579,7 +579,7 @@
             <a class="nav" href="z_816b02d96dab55f8_signals_py.html">&#xbb; next</a>
             &nbsp; &nbsp; &nbsp;
             <a class="nav" href="https://coverage.readthedocs.io/en/7.6.0">coverage.py v7.6.0</a>,
-            created at 2024-07-13 06:35 +0000
+            created at 2024-07-13 15:36 +0000
         </p>
     </div>
 </footer>
