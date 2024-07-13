@@ -1,4 +1,0 @@
-Translating text of page 1
-Translating of page 1
-Translator <MagicMock name='get_translator()' id='139946385002800'>
-Translated Hola

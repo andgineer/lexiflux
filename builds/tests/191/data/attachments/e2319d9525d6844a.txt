@@ -1,2 +1,0 @@
-No spaCy model available for language code: unsupported
-Falling back to NLTK for language: unsupported
