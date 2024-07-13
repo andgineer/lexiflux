@@ -9,7 +9,7 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
 from langchain_openai import ChatOpenAI
 from langchain_mistralai import ChatMistralAI
-from langchain_community.llms import Ollama
+from langchain_community.llms import Ollama  # pylint: disable=no-name-in-module
 
 import openai
 from langchain.schema import BaseOutputParser
