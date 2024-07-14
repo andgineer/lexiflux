@@ -29,17 +29,17 @@ ChatModels = {
     "gpt-3.5-turbo": {
         "title": "GPT-3.5 Turbo",
         "model": ChatOpenAI,
-        "suffix": "⚙️3.5",
+        "suffix": "🔗 3.5",
     },
     "gpt-4-turbo": {
         "title": "GPT-4 Turbo",
         "model": ChatOpenAI,
-        "suffix": "⚙️4",
+        "suffix": "🔗 4",
     },
     "gpt-4-turbo-preview": {
         "title": "GPT-4 Turbo Preview",
         "model": ChatOpenAI,
-        "suffix": "⚙️4+",
+        "suffix": "🔗 4+",
     },
     "llama3": {
         "title": "LLAMA 3",
@@ -90,18 +90,6 @@ def substitute_marks(template: str) -> str:
     )
 
 
-def remove_marks(text: str) -> str:
-    """Remove sentence and word marks from text."""
-    for delimiter in (
-        SENTENCE_START_MARK,
-        SENTENCE_END_MARK,
-        WORD_START_MARK,
-        WORD_END_MARK,
-    ):
-        text = text.replace(delimiter, "")
-    return text
-
-
 def _remove_word_marks(text: str) -> str:
     """Remove word marks from text but keep sentence marks."""
     for delimiter in (WORD_START_MARK, WORD_END_MARK):
@@ -120,7 +108,7 @@ class TextOutputParser(BaseOutputParser[str]):
     """Simple output parser."""
 
     def parse(self, text: str) -> str:
-        return remove_marks(text)
+        return _remove_sentence_marks(_remove_word_marks(text))
 
 
 class Llm:  # pylint: disable=too-few-public-methods
@@ -206,6 +194,7 @@ class Llm:  # pylint: disable=too-few-public-methods
         params = dict(hashable_params)
         data = dict(hashable_data)
         data["model"] = params["model"]
+        data["article_name"] = article_name
 
         if article_name not in self._article_pipelines_factory:
             raise ValueError(f"Lexical article '{article_name}' not found.")

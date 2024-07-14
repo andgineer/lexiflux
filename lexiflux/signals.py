@@ -11,9 +11,15 @@ from lexiflux.models import LanguagePreferences, LexicalArticle, Language
 User = get_user_model()
 
 DEFAULT_LEXICAL_ARTICLES = [
-    {"type": "Sentence", "title": "Sentence", "parameters": {"model": "gpt-3.5-turbo"}},
-    {"type": "Explain", "title": "Explain", "parameters": {"model": "gpt-4-turbo"}},
-    {"type": "Examples", "title": "Examples", "parameters": {"model": "gpt-3.5-turbo"}},
+    {"type": "Explain", "title": "Explain 🦙3", "parameters": {"model": "llama3"}},
+    {"type": "Explain", "title": "Explain 🔗 3.5", "parameters": {"model": "gpt-3.5-turbo"}},
+    {"type": "Explain", "title": "Explain 🔗 4+", "parameters": {"model": "4-turbo-preview"}},
+    {
+        "type": "Sentence",
+        "title": "Sentence 🔗 4+",
+        "parameters": {"model": "gpt-4-turbo-preview"},
+    },
+    {"type": "Lexical", "title": "Lexical 🔗 3.5", "parameters": {"model": "gpt-3.5-turbo"}},
     {
         "type": "Site",
         "title": "glosbe",
