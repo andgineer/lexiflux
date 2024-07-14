@@ -3,9 +3,11 @@
 import os
 import traceback
 from functools import lru_cache
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Tuple, Callable
 
+from django.conf import settings
 from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.runnables import RunnablePassthrough
 from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
 from langchain_openai import ChatOpenAI
 from langchain_mistralai import ChatMistralAI
@@ -44,11 +46,11 @@ ChatModels = {
         "model": Ollama,
         "suffix": "🦙3",
     },
-    "zephyr": {
-        "title": "Zephyr 7B",
-        "model": Ollama,
-        "suffix": "🌬️7B",
-    },
+    # "zephyr": {
+    #     "title": "Zephyr 7B",
+    #     "model": Ollama,
+    #     "suffix": "🌬️7B",
+    # },
     # # https://docs.anthropic.com/en/docs/models-overview
     # "claude-3-5-sonnet-20240620": {
     #     "title": "Claude 3.5 Sonnet",
@@ -78,6 +80,16 @@ def find_nth_occurrence(substring: str, string: str, occurrence: int) -> int:
     return start
 
 
+def substitute_marks(template: str) -> str:
+    """Substitute mark names with actual mark."""
+    return (
+        template.replace("[SENTENCE_START]", SENTENCE_START_MARK)
+        .replace("[SENTENCE_END]", SENTENCE_END_MARK)
+        .replace("[WORD_START]", WORD_START_MARK)
+        .replace("[WORD_END]", WORD_END_MARK)
+    )
+
+
 def remove_marks(text: str) -> str:
     """Remove sentence and word marks from text."""
     for delimiter in (
@@ -86,6 +98,20 @@ def remove_marks(text: str) -> str:
         WORD_START_MARK,
         WORD_END_MARK,
     ):
+        text = text.replace(delimiter, "")
+    return text
+
+
+def _remove_word_marks(text: str) -> str:
+    """Remove word marks from text but keep sentence marks."""
+    for delimiter in (WORD_START_MARK, WORD_END_MARK):
+        text = text.replace(delimiter, "")
+    return text
+
+
+def _remove_sentence_marks(text: str) -> str:
+    """Remove word marks from text but keep sentence marks."""
+    for delimiter in (SENTENCE_START_MARK, SENTENCE_END_MARK):
         text = text.replace(delimiter, "")
     return text
 
@@ -108,12 +134,37 @@ class Llm:  # pylint: disable=too-few-public-methods
         # os.environ["ANTHROPIC_API_KEY"] = os.getenv("ANTHROPIC_API_KEY")
         # os.environ["GOOGLE_API_KEY"] = os.getenv("GOOGLE_API_KEY")
         # os.environ["MISTRAL_API_KEY"] = os.getenv("MISTRAL_API_KEY")
-        self._articles_templates = self._create_article_templates()
+        self._prompt_templates: Dict[str, ChatPromptTemplate] = self._load_prompt_templates()
+        self._article_pipelines_factory = self._create_article_pipelines_factory()
         self._model_cache: Dict[str, Any] = {}
 
     def article_names(self) -> List[str]:
         """Return a list of all available Lexical Article names."""
-        return list(self._articles_templates.keys())
+        return list(self._article_pipelines_factory.keys())
+
+    def _create_article_pipelines_factory(self) -> Dict[str, Callable[[Any], ChatMessages]]:
+        text_parser = TextOutputParser()
+
+        return {
+            "Translate": lambda model: (
+                RunnablePassthrough() | self._prompt_templates["Translate"] | model | text_parser
+            ),
+            "Lexical": lambda model: (
+                RunnablePassthrough(text=lambda x: _remove_sentence_marks(x["text"]))
+                | self._prompt_templates["Lexical"]
+                | model
+                | text_parser
+            ),
+            "Explain": lambda model: (
+                RunnablePassthrough() | self._prompt_templates["Explain"] | model | text_parser
+            ),
+            "Sentence": lambda model: (
+                RunnablePassthrough.assign(text=lambda x: _remove_word_marks(x["text"]))
+                | self._prompt_templates["Sentence"]
+                | model
+                | text_parser
+            ),
+        }
 
     def generate_article(
         self, article_name: str, params: Dict[str, Any], data: Dict[str, Any]
@@ -143,6 +194,48 @@ class Llm:  # pylint: disable=too-few-public-methods
         return self._generate_article_cached(
             article_name, self._hashable_dict(params), self._hashable_dict(data)
         )
+
+    @lru_cache(maxsize=1000)
+    def _generate_article_cached(
+        self,
+        article_name: str,
+        hashable_params: tuple[tuple[str, Any]],
+        hashable_data: tuple[tuple[str, Any]],
+    ) -> str:
+        """Cached get article."""
+        params = dict(hashable_params)
+        data = dict(hashable_data)
+        data["model"] = params["model"]
+
+        if article_name not in self._article_pipelines_factory:
+            raise ValueError(f"Lexical article '{article_name}' not found.")
+
+        marked_text = self.mark_term_and_sentence(hashable_data)
+        data["text"] = marked_text["text"]
+        data["detected_language"] = marked_text["detected_language"]
+
+        model = self._get_or_create_model(data)
+        pipeline = self._article_pipelines_factory[article_name](model)
+
+        return pipeline.invoke(data)  # type: ignore
+
+    def _load_prompt_templates(self) -> Dict[str, ChatPromptTemplate]:
+        prompts = {}
+        prompt_dir = os.path.join(settings.BASE_DIR, "lexiflux", "resources", "prompts")
+
+        for filename in os.listdir(prompt_dir):
+            if filename.endswith(".txt"):
+                article_name = os.path.splitext(filename)[0]
+                file_path = os.path.join(prompt_dir, filename)
+
+                with open(file_path, "r", encoding="utf8") as file:
+                    prompt_text = substitute_marks(file.read().strip())
+
+                prompts[article_name] = ChatPromptTemplate.from_messages(
+                    [("system", prompt_text), ("user", "The text is: {text}")]
+                )
+
+        return prompts
 
     def detect_term_words(
         self,
@@ -256,9 +349,11 @@ class Llm:  # pylint: disable=too-few-public-methods
     ) -> str:
         return f"{model_name}"  # {article_name}_{text_language}_{user_language}_
 
-    def _get_or_create_model(
-        self, article_name: str, text_language: str, user_language: str, model_name: str
-    ) -> Any:
+    def _get_or_create_model(self, data: Dict[str, Any]) -> Any:
+        article_name = data["article_name"]
+        text_language = data["text_language"]
+        user_language = data["user_language"]
+        model_name = data["model"]
         model_key = self._get_model_key(article_name, text_language, user_language, model_name)
 
         if model_key not in self._model_cache:
@@ -303,130 +398,5 @@ class Llm:  # pylint: disable=too-few-public-methods
 
         return self._model_cache[model_key]
 
-    def _create_article_templates(self) -> Dict[str, Any]:
-        text_parser = TextOutputParser()
-
-        translation_system_template = """Below given a text in {detected_language} language.
-Translate to {user_language} language only the term inclosed in [HIGHLIGHT][sHIGHLIGHT] tags - like
-[HIGHLIGHT]the word[/HIGHLIGHT].
-
-Give translation of the term in the exact sentence marked
-with double vertical bars before and after the sentence, like this:
-||This is the marked sentence containing [HIGHLIGHT]the word[/HIGHLIGHT].||
-
-If the term is not {text_language} word(s), prefix the result with the term language name in
-parentheses, like (Latin).
-
-Critical instructions: 
-- place into result only the translation of the term and not the text you translate
-- give translation only for the term in the marked sentence, not in general
-- do not add to the translation any comments except the translation itself.
-"""
-
-        translation_prompt_template = ChatPromptTemplate.from_messages(
-            [("system", translation_system_template), ("user", "The text is: {text}")]
-        )
-
-        lexical_system_template = """Below given a text in {detected_language} language.
-
-Write {text_language} - {user_language} lexical article for the ONE word or phrase which is marked with [HIGHLIGHT][/HIGHLIGHT].
-
-The article should be in {user_language}.
-The article includes different meanings, grammar attributes of them - part of the speech,
-genre, number, countability and other.
-
-Article should be in compact nice style like in good dictionaries.
-Include declination table, examples of usage and other information you expect to see in
-a good dictionary like Oxford Dictionary.
-
-Critical instructions: Give the result in HTML formatting, without any block marks."""
-
-        lexical_prompt_template = ChatPromptTemplate.from_messages(
-            [("system", lexical_system_template), ("user", "The text is: {text}")]
-        )
-
-        explain_system_template = """You are a {text_language} teacher helping a {user_language}
-speaker understand a specific word(s) in context.
-
-CRITICAL INSTRUCTIONS:
-1. You will be given a sentence marked with ||. Inside this sentence, ONE word or phrase
-is marked with [HIGHLIGHT][/HIGHLIGHT].
-2. Explain ONLY the [HIGHLIGHT]marked word(s)[/HIGHLIGHT] as it is used in the marked sentence.
-Ignore any other occurrences of this word in the text.
-3. DO NOT repeat the word or any part of the given text in your explanation.
-4. Use ONLY {user_language} in your explanation.
-
-Your explanation should cover:
-- The specific meaning of the marked word in this exact sentence
-- Its grammatical role in this sentence
-- Any idiomatic aspects of its usage here
-- Cultural context relevant to this specific use (if any)
-- How this usage might differ from other common uses of the same word
-
-Provide 1-2 example sentences in {text_language} that are NOT in the text provided.
-
-If there's a {user_language} equivalent that captures the specific meaning and usage
-in this sentence, mention it, but focus on explaining the {text_language} usage.
-
-Remember: Your explanation should be tailored to how the word is used in this particular
-marked sentence, not a general definition of the word."""
-
-        explain_prompt_template = ChatPromptTemplate.from_messages(
-            [("system", explain_system_template), ("user", "The text is: {text}")]
-        )
-
-        sentence_system_template = """Below given a text in {detected_language} language.
-Give translation to {user_language} of the sentence marked
-with double vertical bars before and after the sentence, like this:
-||This is the marked sentence containing [HIGHLIGHT]marked word(s)[/HIGHLIGHT].||
-
-You may use surrounding text for better translation, but translate the marked sentence only.
-
-Critical instructions: 
-- place into result only the translation of the sentence
-- do not add to the translation any comments except the translation itself.
-"""
-        # todo: still sometimes return translation / comment not in user language
-        # add step to translate them
-
-        sentence_prompt_template = ChatPromptTemplate.from_messages(
-            [("system", sentence_system_template), ("user", "The text is: {text}")]
-        )
-
-        return {
-            "Translate": {"template": translation_prompt_template, "parser": text_parser},
-            "Lexical": {"template": lexical_prompt_template, "parser": text_parser},
-            "Explain": {"template": explain_prompt_template, "parser": text_parser},
-            "Sentence": {"template": sentence_prompt_template, "parser": text_parser},
-        }
-
     def _hashable_dict(self, d: Dict[str, Any]) -> Tuple[Tuple[str, Any], ...]:
         return tuple((k, tuple(v) if isinstance(v, list) else v) for k, v in sorted(d.items()))
-
-    @lru_cache(maxsize=1000)
-    def _generate_article_cached(
-        self,
-        article_name: str,
-        hashable_params: tuple[tuple[str, Any]],
-        hashable_data: tuple[tuple[str, Any]],
-    ) -> str:
-        """Cached get article."""
-        params = dict(hashable_params)
-        data = dict(hashable_data)
-        templates = self._articles_templates[article_name]
-
-        if article_name not in self._articles_templates:
-            raise ValueError(f"Lexical article '{article_name}' not found.")
-
-        marked_text = self.mark_term_and_sentence(hashable_data)
-        data["text"] = marked_text["text"]
-        data["detected_language"] = marked_text["detected_language"]
-
-        model_name = params.get("model", "gpt-3.5-turbo")
-        model = self._get_or_create_model(
-            article_name, data["text_language"], data["user_language"], model_name
-        )
-
-        chain = templates["template"] | model | templates["parser"]
-
-        return chain.invoke(data)  # type: ignore

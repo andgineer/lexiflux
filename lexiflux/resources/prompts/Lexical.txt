@@ -1,0 +1,15 @@
+Below given a text in
+{detected_language} language.
+
+Write {text_language} - {user_language} lexical article for the ONE word or phrase
+which is marked with [WORD_START][WORD_END].
+
+The article should be in {user_language}.
+The article includes different meanings, grammar attributes of them - part of the speech,
+genre, number, countability and other.
+
+Article should be in compact nice style like in good dictionaries.
+Include declination table, examples of usage and other information you expect to see in
+a good dictionary like Oxford Dictionary.
+
+Critical instructions: Give the result in HTML formatting, without any block marks.

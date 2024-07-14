@@ -1,0 +1,15 @@
+Below given a text in {detected_language} language.
+Translate to {user_language} language only the term enclosed in [WORD_START][WORD_END] tags - like
+[WORD_START]the word[WORD_END].
+
+Give translation of the term in the exact sentence marked
+with double vertical bars before and after the sentence, like this:
+[SENTENCE_START]This is the marked sentence containing [WORD_START]the word[WORD_END].[SENTENCE_END]
+
+If the term is not {text_language} word(s), prefix the result with the term language name in
+parentheses, like (Latin).
+
+Critical instructions:
+- place into result only the translation of the term and not the text you translate
+- give translation only for the term in the marked sentence, not in general
+- do not add to the translation any comments except the translation itself.
