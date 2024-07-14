@@ -1,0 +1,1 @@
+ERROR    root:translation.py:47 Please get you API Key at https://detectlanguage.com/documentation and set it to env var DETECTLANGUAGE_API_KEY
