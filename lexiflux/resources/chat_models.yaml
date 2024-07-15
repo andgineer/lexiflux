@@ -1,5 +1,3 @@
-# chat_models.yaml
-
 gpt-3.5-turbo:
   title: GPT-3.5 Turbo
   model: ChatOpenAI

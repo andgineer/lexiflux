@@ -73,7 +73,15 @@ def _remove_sentence_marks(text: str) -> str:
 
 
 def _extract_sentence(text: str) -> str:
-    """Remove word marks from text but keep sentence marks."""
+    """Extract marked sentence only.
+
+    Also remove word marks.
+
+    In many cases NLTK mark a group of sentences as one sentence.
+    AI models im most cases translate only first of the marked sentences if we say
+    "translated marked fragment".
+    So we leave just marked sentences and say "translate the text" and that works fine.
+    """
     text = _remove_word_marks(text)
     if SENTENCE_START_MARK in text:
         text = text.split(SENTENCE_START_MARK)[1]
