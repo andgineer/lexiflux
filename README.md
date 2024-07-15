@@ -16,7 +16,7 @@
 | lexiflux/language/detect\_language\_fasttext.py |       21 |        0 |    100% |           |
 | lexiflux/language/google\_languages.py          |       12 |        0 |    100% |           |
 | lexiflux/language/html\_tags\_cleaner.py        |       32 |        0 |    100% |           |
-| lexiflux/language/llm.py                        |      162 |      119 |     27% |35-38, 43-48, 53, 63-65, 70-72, 77-82, 89, 99-106, 109-111, 115, 118-120, 166-171, 183-199, 202-217, 234-247, 275-316, 328, 331-375, 378 |
+| lexiflux/language/llm.py                        |      162 |      119 |     27% |35-38, 43-48, 53, 63-65, 70-72, 85-90, 97, 107-114, 117-119, 123, 126-128, 174-179, 191-207, 210-225, 242-255, 283-324, 336, 339-383, 386 |
 | lexiflux/language/sentence\_extractor.py        |       28 |        5 |     82% |10-13, 52, 63, 79 |
 | lexiflux/language/sentence\_extractor\_llm.py   |       52 |       39 |     25% |17, 48-92, 97-128, 133-167 |
 | lexiflux/language/translation.py                |       43 |        0 |    100% |           |
