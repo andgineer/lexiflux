@@ -417,8 +417,13 @@ function showSpinnerInLexicalPanel(articleId: string): void {
   const contentDiv = document.getElementById(`lexical-content-${articleId}`) as HTMLElement;
   if (contentDiv) {
     contentDiv.innerHTML = `
-      <div class="spinner-border text-primary" role="status">
-        <span class="visually-hidden">Loading...</span>
+      <div class="d-flex flex-column align-items-center">
+        <div class="spinner-border text-primary mb-3" role="status">
+          <span class="visually-hidden">Loading...</span>
+        </div>
+        <p class="text-center text-muted">
+          <small>Generating AI response. This may take a moment...</small>
+        </p>
       </div>
     `;
   }
