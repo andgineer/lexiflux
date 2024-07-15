@@ -1,0 +1,41 @@
+# chat_models.yaml
+
+gpt-3.5-turbo:
+  title: GPT-3.5 Turbo
+  model: ChatOpenAI
+  suffix: 🔗 3+
+
+gpt-4-turbo:
+  title: GPT-4 Turbo
+  model: ChatOpenAI
+  suffix: 🔗 4
+
+gpt-4-turbo-preview:
+  title: GPT-4 Turbo Preview
+  model: ChatOpenAI
+  suffix: 🔗 4+
+
+llama3:
+  title: LLAMA 3
+  model: Ollama
+  suffix: 🦙3
+
+# zephyr:
+#   title: Zephyr 7B
+#   model: Ollama
+#   suffix: 🌬️7B
+
+# claude-3-5-sonnet-20240620:
+#   title: Claude 3.5 Sonnet
+#   model: ChatAnthropic
+#   suffix: 💡3.5
+
+# gemini-pro:
+#   title: Gemini Pro
+#   model: ChatGoogleGenerativeAI
+#   suffix: 🌀
+
+# mistral-medium:
+#   title: Mistral Medium
+#   model: ChatMistralAI
+#   suffix: 🌪️

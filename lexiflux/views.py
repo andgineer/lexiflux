@@ -23,7 +23,7 @@ from django.contrib.auth.views import LoginView
 from lexiflux.language.translation import get_translator
 from lexiflux.api import get_params, ViewGetParamsModel
 from lexiflux.forms import CustomUserCreationForm
-from lexiflux.language.llm import ChatModels, Llm
+from lexiflux.language.llm import Llm
 
 from lexiflux.models import (
     Book,
@@ -641,9 +641,10 @@ def api_profile(request: HttpRequest) -> JsonResponse:
 @login_required  # type: ignore
 def get_models(request: HttpRequest) -> JsonResponse:
     """Return the available models."""
+    llm = Llm()
     models_list = [
         {"key": key, "title": value["title"], "suffix": value["suffix"]}
-        for key, value in ChatModels.items()
+        for key, value in llm.chat_models.items()
     ]
     return JsonResponse({"models": models_list})
 

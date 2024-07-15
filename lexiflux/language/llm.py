@@ -5,6 +5,7 @@ import traceback
 from functools import lru_cache
 from typing import Any, Dict, List, Tuple, Callable
 
+import yaml
 from django.conf import settings
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import RunnablePassthrough
@@ -25,50 +26,6 @@ from lexiflux.language.sentence_extractor_llm import (
 )
 from lexiflux.language.word_extractor import parse_words
 from lexiflux.models import BookPage, Book
-
-ChatModels = {
-    "gpt-3.5-turbo": {
-        "title": "GPT-3.5 Turbo",
-        "model": ChatOpenAI,
-        "suffix": "🔗 3+",
-    },
-    "gpt-4-turbo": {
-        "title": "GPT-4 Turbo",
-        "model": ChatOpenAI,
-        "suffix": "🔗 4",
-    },
-    "gpt-4-turbo-preview": {
-        "title": "GPT-4 Turbo Preview",
-        "model": ChatOpenAI,
-        "suffix": "🔗 4+",
-    },
-    "llama3": {
-        "title": "LLAMA 3",
-        "model": Ollama,
-        "suffix": "🦙3",
-    },
-    # "zephyr": {
-    #     "title": "Zephyr 7B",
-    #     "model": Ollama,
-    #     "suffix": "🌬️7B",
-    # },
-    # # https://docs.anthropic.com/en/docs/models-overview
-    # "claude-3-5-sonnet-20240620": {
-    #     "title": "Claude 3.5 Sonnet",
-    #     "model": ChatAnthropic,
-    #     "suffix": "💡3.5",  # U+1F4A1
-    # },
-    # "gemini-pro": {
-    #     "title": "Gemini Pro",
-    #     "model": ChatGoogleGenerativeAI,
-    #     "suffix": "🌀",
-    # },
-    # "mistral-medium": {
-    #     "title": "Mistral Medium",
-    #     "model": ChatMistralAI,
-    #     "suffix": "🌪️",
-    # },
-}
 
 
 def find_nth_occurrence(substring: str, string: str, occurrence: int) -> int:
@@ -136,6 +93,12 @@ class Llm:  # pylint: disable=too-few-public-methods
         self._prompt_templates: Dict[str, ChatPromptTemplate] = self._load_prompt_templates()
         self._article_pipelines_factory = self._create_article_pipelines_factory()
         self._model_cache: Dict[str, Any] = {}
+        self.chat_models = self._load_chat_models()
+
+    def _load_chat_models(self) -> Dict[str, Dict[str, Any]]:
+        yaml_path = os.path.join(settings.BASE_DIR, "lexiflux", "resources", "chat_models.yaml")
+        with open(yaml_path, "r", encoding="utf-8") as file:
+            return yaml.safe_load(file)  # type: ignore
 
     def article_names(self) -> List[str]:
         """Return a list of all available Lexical Article names."""
@@ -357,35 +320,34 @@ class Llm:  # pylint: disable=too-few-public-methods
         model_key = self._get_model_key(article_name, text_language, user_language, model_name)
 
         if model_key not in self._model_cache:
-            model_info = ChatModels.get(model_name)
+            model_info = self.chat_models.get(model_name)
             if not model_info:
                 raise ValueError(f"Unsupported model: {model_name}")
 
             model_class = model_info["model"]
             try:
-                if model_class == ChatOpenAI:
-                    self._model_cache[model_key] = model_class(
-                        model=model_name,
-                        temperature=0.5,
-                        api_key=os.getenv("OPENAI_API_KEY"),
-                    )
-                elif model_class == Ollama:
-                    self._model_cache[model_key] = model_class(
+                if model_class == "ChatOpenAI":
+                    self._model_cache[model_key] = ChatOpenAI(
                         model=model_name,
                         temperature=0.5,
                     )
-                # elif model_class == ChatAnthropic:
-                #     self._model_cache[model_key] = model_class(
+                elif model_class == "Ollama":
+                    self._model_cache[model_key] = Ollama(  # pylint: disable=not-callable
+                        model=model_name,
+                        temperature=0.5,
+                    )
+                # elif model_class == "ChatAnthropic":
+                #     self._model_cache[model_key] = ChatAnthropic(
                 #         model=model_name,
                 #         temperature=0.5,
                 #     )
-                # elif model_class == ChatGoogleGenerativeAI:
-                #     self._model_cache[model_key] = model_class(
+                # elif model_class == "ChatGoogleGenerativeAI":
+                #     self._model_cache[model_key] = ChatGoogleGenerativeAI(
                 #         model=model_name,
                 #         temperature=0.5,
                 #     )
-                elif model_class == ChatMistralAI:
-                    self._model_cache[model_key] = model_class(
+                elif model_class == "ChatMistralAI":
+                    self._model_cache[model_key] = ChatMistralAI(  # type: ignore
                         model=model_name,
                         temperature=0.5,
                     )
