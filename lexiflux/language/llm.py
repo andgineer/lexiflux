@@ -28,6 +28,16 @@ from lexiflux.language.word_extractor import parse_words
 from lexiflux.models import BookPage, Book
 
 
+class AIModelError(Exception):
+    """Error in AI model."""
+
+    def __init__(self, model_name: str, model_class: str, error_message: str):
+        self.model_name = model_name
+        self.model_class = model_class
+        self.error_message = error_message
+        super().__init__(f"Error initializing {model_class} model '{model_name}': {error_message}")
+
+
 def find_nth_occurrence(substring: str, string: str, occurrence: int) -> int:
     """Find the nth occurrence (1 - first, etc) of a substring in a string."""
     start = -1
@@ -153,9 +163,14 @@ class Llm:  # pylint: disable=too-few-public-methods
         Returns:
             HTML formatted article.
         """
-        return self._generate_article_cached(
-            article_name, self._hashable_dict(params), self._hashable_dict(data)
-        )
+        try:
+            return self._generate_article_cached(
+                article_name, self._hashable_dict(params), self._hashable_dict(data)
+            )
+        except Exception as e:
+            raise AIModelError(
+                params["model"], self.chat_models[params["model"]]["model"], str(e)
+            ) from e
 
     @lru_cache(maxsize=1000)
     def _generate_article_cached(
@@ -354,9 +369,8 @@ class Llm:  # pylint: disable=too-few-public-methods
                 else:
                     raise ValueError(f"Unsupported model class: {model_class}")
             except Exception as e:
-                print(f"Error creating model {model_class.__name__}({model_name}): {e}")
                 print(traceback.format_exc())
-                raise
+                raise AIModelError(model_name, model_class, str(e)) from e
 
         return self._model_cache[model_key]
 

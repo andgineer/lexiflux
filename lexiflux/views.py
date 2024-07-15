@@ -4,7 +4,11 @@ import json
 from typing import Dict, Any, List, Tuple
 import urllib.parse
 import logging
+
 from pydantic import Field
+from django.template import TemplateDoesNotExist
+from django.template.loader import render_to_string
+
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
 from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
@@ -23,7 +27,7 @@ from django.contrib.auth.views import LoginView
 from lexiflux.language.translation import get_translator
 from lexiflux.api import get_params, ViewGetParamsModel
 from lexiflux.forms import CustomUserCreationForm
-from lexiflux.language.llm import Llm
+from lexiflux.language.llm import Llm, AIModelError
 
 from lexiflux.models import (
     Book,
@@ -298,22 +302,42 @@ def get_lexical_article(  # pylint: disable=too-many-arguments
     context_str, context_word_slices, context_term_word_ids, context_start_word = (
         get_context_for_term(book_page, term_word_ids)
     )
-    llm = Llm()
-    data = llm.generate_article(
-        article_name=article_name,
-        params=params,
-        data={
-            "text": context_str,
-            "word_slices": context_word_slices,
-            "term_word_ids": context_term_word_ids,
-            "text_language": book_page.book.language.google_code,
-            "user_language": language_preferences.user_language.google_code,
-            "book_code": book_page.book.code,
-            "book_page_number": book_page.number,
-            "context_start_word": context_start_word,
-        },
-    )
-    return {"article": str(data)}
+    try:
+        llm = Llm()
+        data = llm.generate_article(
+            article_name=article_name,
+            params=params,
+            data={
+                "text": context_str,
+                "word_slices": context_word_slices,
+                "term_word_ids": context_term_word_ids,
+                "text_language": book_page.book.language.google_code,
+                "user_language": language_preferences.user_language.google_code,
+                "book_code": book_page.book.code,
+                "book_page_number": book_page.number,
+                "context_start_word": context_start_word,
+            },
+        )
+        return {"article": str(data)}
+    except AIModelError as e:
+        try:
+            error_message = render_to_string(
+                f"llm-error/{e.model_class}.html",
+                {"model_name": e.model_name, "error_message": e.error_message},
+            )
+        except TemplateDoesNotExist:
+            # Fallback to generic error template if specific template doesn't exist
+            error_message = render_to_string(
+                "llm-error/generic_error.html",
+                {
+                    "model_class": e.model_class,
+                    "model_name": e.model_name,
+                    "error_message": e.error_message,
+                },
+            )
+        return {"article": error_message, "error": True}
+    except Exception as e:  # pylint: disable=broad-except
+        return {"article": f"An error occurred: {e}", "error": True}
 
 
 @login_required  # type: ignore
