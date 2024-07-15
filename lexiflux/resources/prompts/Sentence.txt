@@ -1,10 +1,7 @@
 Below given a text in {detected_language} language.
-Give translation to {user_language} of the text fragment marked
-with [SENTENCE_START][SENTENCE_END], like this:
-[SENTENCE_START]This is the marked text fragment.[SENTENCE_END]
-
-You may use surrounding text for better translation, but translate the marked text fragment.
+Give translation to {user_language} language.
 
 Critical instructions:
-- place into result only the translation of the marked sentence(s)
-- do not add to the translation any comments except the translation itself.
+- place into result only the translation
+- do not add to the translation any comments except the translation itself
+- translation should be to {user_language} language

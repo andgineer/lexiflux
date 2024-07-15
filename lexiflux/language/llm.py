@@ -105,6 +105,16 @@ def _remove_sentence_marks(text: str) -> str:
     return text
 
 
+def _extract_sentence(text: str) -> str:
+    """Remove word marks from text but keep sentence marks."""
+    text = _remove_word_marks(text)
+    if SENTENCE_START_MARK in text:
+        text = text.split(SENTENCE_START_MARK)[1]
+    if SENTENCE_END_MARK in text:
+        text = text.split(SENTENCE_END_MARK)[0]
+    return text
+
+
 class TextOutputParser(BaseOutputParser[str]):
     """Simple output parser."""
 
@@ -148,7 +158,7 @@ class Llm:  # pylint: disable=too-few-public-methods
                 RunnablePassthrough() | self._prompt_templates["Explain"] | model | text_parser
             ),
             "Sentence": lambda model: (
-                RunnablePassthrough.assign(text=lambda x: _remove_word_marks(x["text"]))
+                RunnablePassthrough.assign(text=lambda x: _extract_sentence(x["text"]))
                 | self._prompt_templates["Sentence"]
                 | model
                 | text_parser
