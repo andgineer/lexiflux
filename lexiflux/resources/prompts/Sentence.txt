@@ -1,10 +1,10 @@
 Below given a text in {detected_language} language.
-Give translation to {user_language} of the sentence marked
-with double vertical bars before and after the sentence, like this:
-[SENTENCE_START]This is the marked sentence containing [WORD_START]marked word(s)[WORD_END].[SENTENCE_END]
+Give translation to {user_language} of the text fragment marked
+with [SENTENCE_START][SENTENCE_END], like this:
+[SENTENCE_START]This is the marked text fragment.[SENTENCE_END]
 
-You may use surrounding text for better translation, but translate the marked sentence only.
+You may use surrounding text for better translation, but translate the marked text fragment.
 
 Critical instructions:
-- place into result only the translation of the sentence
+- place into result only the translation of the marked sentence(s)
 - do not add to the translation any comments except the translation itself.

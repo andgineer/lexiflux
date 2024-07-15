@@ -1,8 +1,8 @@
 Below given a text in
 {detected_language} language.
 
-Write {text_language} - {user_language} lexical article for the ONE word or phrase
-which is marked with [WORD_START][WORD_END].
+Write {text_language} - {user_language} lexical article for the word(s)
+marked with [WORD_START][WORD_END].
 
 The article should be in {user_language}.
 The article includes different meanings, grammar attributes of them - part of the speech,

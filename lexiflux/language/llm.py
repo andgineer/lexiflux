@@ -16,6 +16,7 @@ from langchain_community.llms import Ollama  # pylint: disable=no-name-in-module
 import openai
 from langchain.schema import BaseOutputParser
 
+from lexiflux.language.html_tags_cleaner import clear_html_tags
 from lexiflux.language.sentence_extractor_llm import (
     SENTENCE_START_MARK,
     SENTENCE_END_MARK,
@@ -29,7 +30,7 @@ ChatModels = {
     "gpt-3.5-turbo": {
         "title": "GPT-3.5 Turbo",
         "model": ChatOpenAI,
-        "suffix": "🔗 3.5",
+        "suffix": "🔗 3+",
     },
     "gpt-4-turbo": {
         "title": "GPT-4 Turbo",
@@ -200,12 +201,13 @@ class Llm:  # pylint: disable=too-few-public-methods
             raise ValueError(f"Lexical article '{article_name}' not found.")
 
         marked_text = self.mark_term_and_sentence(hashable_data)
-        data["text"] = marked_text["text"]
+        data["text"] = clear_html_tags(marked_text["text"])
         data["detected_language"] = marked_text["detected_language"]
 
         model = self._get_or_create_model(data)
         pipeline = self._article_pipelines_factory[article_name](model)
 
+        print(data["text"])
         return pipeline.invoke(data)  # type: ignore
 
     def _load_prompt_templates(self) -> Dict[str, ChatPromptTemplate]:
@@ -323,7 +325,6 @@ class Llm:  # pylint: disable=too-few-public-methods
             f"{marked_text[term_start:term_end]}{WORD_END_MARK}"
             f"{marked_text[term_end:]}"
         )
-        print(f"Marked text: {marked_text}")
         return {
             "text": marked_text,
             "detected_language": data["text_language"],

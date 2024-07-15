@@ -17,8 +17,8 @@ class TextOutputParser(BaseOutputParser[str]):
         return text
 
 
-SENTENCE_START_MARK = "||"
-SENTENCE_END_MARK = "||"
+SENTENCE_START_MARK = "[FRAGMENT]"
+SENTENCE_END_MARK = "[/FRAGMENT]"
 WORD_START_MARK = "[HIGHLIGHT]"
 WORD_END_MARK = "[/HIGHLIGHT]"
 
