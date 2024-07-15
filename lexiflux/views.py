@@ -16,7 +16,7 @@ from django.db import models, IntegrityError
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
-from django.views.decorators.http import require_POST, require_http_methods
+from django.views.decorators.http import require_POST, require_http_methods, require_GET
 from django.urls import reverse_lazy
 from django.views import generic
 from django.contrib.auth import authenticate
@@ -686,6 +686,16 @@ def get_models(request: HttpRequest) -> JsonResponse:
         for key, value in llm.chat_models.items()
     ]
     return JsonResponse({"models": models_list})
+
+
+@login_required  # type: ignore
+@require_GET  # type: ignore
+def get_available_dictionaries(request: HttpRequest) -> JsonResponse:
+    """Return the available dictionaries."""
+    dictionaries = [
+        {"value": "GoogleTranslator", "label": "Google Translator"},
+    ]
+    return JsonResponse({"dictionaries": dictionaries})
 
 
 @login_required  # type: ignore

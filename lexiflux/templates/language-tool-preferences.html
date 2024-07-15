@@ -166,11 +166,11 @@
                                 </select>
                             </div>
                         </div>
-                        <div v-if="form.type === 'Dictionary'">
+                       <div v-if="form.type === 'Dictionary'">
                             <div class="mb-3">
                                 <label class="form-label">Dictionary</label>
-                                <select v-model="form.parameters.dictionary" class="form-select">
-                                    <option value="GoogleTranslator">GoogleTranslator</option>
+                                <select v-if="form.type === 'Dictionary'" v-model="form.parameters.dictionary" class="form-select" required>
+                                    <option v-for="dict in availableDictionaries" :key="dict.value" :value="dict.value">[[ dict.label ]]</option>
                                 </select>
                             </div>
                         </div>
@@ -245,6 +245,7 @@ new Vue({
             modalTitle: '',
             titleManuallyEdited: false,
             allLanguages: [],
+            availableDictionaries: [],
             languageFlags: languageFlags,
             currentLanguageId: null,
             userLanguageId: null,
@@ -280,6 +281,7 @@ new Vue({
         return data;
     },
     mounted: function() {
+        this.fetchDictionaries();
         this.loadAIModels();
         this.loadArticles();
     },
@@ -296,6 +298,14 @@ new Vue({
         }
     },
     methods: {
+        fetchDictionaries() {
+            fetch('/api/get-dictionaries/')
+                .then(response => response.json())
+                .then(data => {
+                    this.availableDictionaries = data.dictionaries;
+                })
+                .catch(error => console.error('Error fetching dictionaries:', error));
+        },
         changeLanguage() {
             fetch('{% url "api_get_profile_for_language" %}', {
                 method: 'POST',
@@ -420,9 +430,10 @@ new Vue({
                     this.form.parameters.model = this.aiModels.length > 0 ? this.aiModels[0].key : '';
                 }
             } else if (this.form.type === 'Dictionary') {
-                this.form.parameters = this.form.parameters || {
-                    dictionary: ''
-                };
+                this.form.parameters = this.form.parameters || {};
+                if (!this.form.parameters.dictionary && this.availableDictionaries.length > 0) {
+                    this.form.parameters.dictionary = this.availableDictionaries[0].value;
+                }
             }
 
             if (oldType !== this.form.type || oldModel !== this.form.parameters.model || !this.form.title || !this.titleManuallyEdited) {
@@ -467,7 +478,22 @@ new Vue({
             }
             return uniqueTitle;
         },
+        validateForm() {
+            if (this.form.type === 'Site' && !this.form.parameters.url) {
+                this.errorMessage = 'Please enter a URL for the Site type article.';
+                return false;
+            }
+            if (this.form.type === 'Dictionary' && !this.form.parameters.dictionary) {
+                this.errorMessage = 'Please select a dictionary for the Dictionary type article.';
+                return false;
+            }
+            // Add more validations as needed
+            return true;
+        },
         saveArticle() {
+            if (!this.validateForm()) {
+                return;
+            }
             const action = this.form.id ? 'edit' : 'add';
             const isInlineTranslation = !this.showTitleField;
 
@@ -499,7 +525,12 @@ new Vue({
                 },
                 body: JSON.stringify(data)
             })
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
             .then(data => {
                 if (data.status === 'success') {
                     if (isInlineTranslation) {
@@ -515,7 +546,11 @@ new Vue({
             })
             .catch(error => {
                 console.error('Error:', error);
-                this.errorMessage = `An error occurred while saving the article: ${error.message || 'Unknown error'}`;
+                if (this.form.type === 'Site' && !this.form.parameters.url) {
+                    this.errorMessage = 'Please enter a URL for the Site type article.';
+                } else {
+                    this.errorMessage = 'An error occurred while saving the article. Please check your inputs and try again.';
+                }
             });
         },
         deleteArticle(id) {
