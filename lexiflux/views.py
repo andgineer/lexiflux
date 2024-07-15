@@ -510,6 +510,11 @@ def save_inline_translation(request: HttpRequest) -> JsonResponse:
     translation_type = data.get("type")
     parameters = data.get("parameters", {})
 
+    if translation_type == "Dictionary" and not parameters.get("dictionary"):
+        return JsonResponse(
+            {"status": "error", "message": "Please select a dictionary"}, status=400
+        )
+
     reader_profile = request.user.language_preferences.get(language__google_code=language_id)
 
     # Filter the parameters to only include valid ones for the selected type
@@ -579,6 +584,11 @@ def manage_lexical_article(request: HttpRequest) -> JsonResponse:  # pylint: dis
 def add_lexical_article(reader_profile: LanguagePreferences, data: dict[str, Any]) -> JsonResponse:
     """Add a lexical article."""
     try:
+        if data["type"] == "Dictionary" and not data["parameters"].get("dictionary"):
+            return JsonResponse(
+                {"status": "error", "message": "Please select a dictionary"}, status=400
+            )
+
         article = LexicalArticle.objects.create(
             reader_profile=reader_profile,
             type=data["type"],
@@ -612,6 +622,11 @@ def edit_lexical_article(
         ).first()
         if not article:
             return JsonResponse({"status": "error", "message": "Article not found"}, status=404)
+
+        if data["type"] == "Dictionary" and not data["parameters"].get("dictionary"):
+            return JsonResponse(
+                {"status": "error", "message": "Please select a dictionary"}, status=400
+            )
 
         article.type = data.get("type", article.type)
         article.title = data.get("title", article.title)
