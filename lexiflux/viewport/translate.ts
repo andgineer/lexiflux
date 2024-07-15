@@ -158,53 +158,65 @@ function createTranslationSpanWithSpinner(range: Range): HTMLSpanElement {
   return translationSpan;
 }
 
+function adjustNodeToNearestWord(node: Node, direction: 'forward' | 'backward'): Node {
+  let currentNode: Node | null = node;
+
+  while (currentNode && currentNode.nodeType === Node.TEXT_NODE) {
+    const siblingProp = direction === 'forward' ? 'nextSibling' : 'previousSibling';
+    const sibling = currentNode[siblingProp];
+
+    if (sibling && sibling.nodeType === Node.ELEMENT_NODE &&
+        (sibling as HTMLElement).classList.contains('word')) {
+      return sibling;
+    }
+    currentNode = currentNode.parentNode;
+  }
+
+  if (currentNode instanceof HTMLElement && !currentNode.classList.contains('word')) {
+    const selector = direction === 'forward' ? '.word' : '.word:last-child';
+    const closestWord = direction === 'forward'
+      ? currentNode.querySelector(selector)
+      : currentNode.querySelectorAll(selector)[0];
+    return closestWord || currentNode;
+  }
+
+  return currentNode || node;
+}
+
 function adjustRangeToWholeWords(range: Range): void {
-  let startNode: Node | null = range.startContainer;
-  let endNode: Node | null = range.endContainer;
+  const startNode = adjustNodeToNearestWord(range.startContainer, 'forward');
+  const endNode = adjustNodeToNearestWord(range.endContainer, 'backward');
 
-  // Adjust start node
-  if (startNode.nodeType === Node.TEXT_NODE && startNode.parentNode) {
-    if ((startNode.parentNode as HTMLElement).classList.contains('word')) {
-      range.setStartBefore(startNode.parentNode);
-    } else {
-      // Find the first word node after the start of the selection
-      let nextNode = startNode.nextSibling;
-      while (nextNode && !(nextNode instanceof HTMLElement && nextNode.classList.contains('word'))) {
-        nextNode = nextNode.nextSibling;
+  if (startNode instanceof HTMLElement) {
+    range.setStartBefore(startNode);
+  }
+  if (endNode instanceof HTMLElement) {
+    range.setEndAfter(endNode);
+  }
+}
+
+function getWordIdsFromRange(range: Range): string[] {
+  const container = document.getElementById('words-container');
+  if (!container) return [];
+
+  const wordIds: string[] = [];
+  const startNode = adjustNodeToNearestWord(range.startContainer, 'forward');
+  const endNode = adjustNodeToNearestWord(range.endContainer, 'backward');
+
+  if (startNode && endNode) {
+    let currentNode: Node | null = startNode;
+    while (currentNode) {
+      if (currentNode.nodeType === Node.ELEMENT_NODE &&
+          (currentNode as HTMLElement).classList.contains('word')) {
+        const id = (currentNode as HTMLElement).id.replace('word-', '');
+        if (id) wordIds.push(id);
       }
-      if (nextNode) {
-        range.setStartBefore(nextNode);
-      }
-    }
-  } else if (startNode instanceof HTMLElement && !startNode.classList.contains('word')) {
-    // Find the first word node within or after the start of the selection
-    const firstWord = startNode.querySelector('.word');
-    if (firstWord) {
-      range.setStartBefore(firstWord);
+      if (currentNode === endNode) break;
+      currentNode = getNextNode(currentNode);
     }
   }
 
-  // Adjust end node
-  if (endNode.nodeType === Node.TEXT_NODE && endNode.parentNode) {
-    if ((endNode.parentNode as HTMLElement).classList.contains('word')) {
-      range.setEndAfter(endNode.parentNode);
-    } else {
-      // Find the last word node before the end of the selection
-      let previousNode = endNode.previousSibling;
-      while (previousNode && !(previousNode instanceof HTMLElement && previousNode.classList.contains('word'))) {
-        previousNode = previousNode.previousSibling;
-      }
-      if (previousNode) {
-        range.setEndAfter(previousNode);
-      }
-    }
-  } else if (endNode instanceof HTMLElement && !endNode.classList.contains('word')) {
-    // Find the last word node within or before the end of the selection
-    const words = endNode.querySelectorAll('.word');
-    if (words.length > 0) {
-      range.setEndAfter(words[words.length - 1]);
-    }
-  }
+  return wordIds;
 }
 
 function updateTranslationSpan(data: TranslationResponse, translationSpan: HTMLSpanElement): void {
@@ -269,59 +281,6 @@ function lexicalArticleNumFromId(id: string | null): string {
   if (!id) return '';
   const match = id.match(/-(\d+)$/);
   return match ? match[1] : '';
-}
-
-function getWordIdsFromRange(range: Range): string[] {
-  const container = document.getElementById('words-container');
-  if (!container) return [];
-
-  const wordIds: string[] = [];
-  let startNode: Node | null = range.startContainer;
-  let endNode: Node | null = range.endContainer;
-
-  // Adjust start node to include the whole word
-  while (startNode && startNode.nodeType === Node.TEXT_NODE) {
-    if (startNode.previousSibling && startNode.previousSibling.nodeType === Node.ELEMENT_NODE &&
-        (startNode.previousSibling as HTMLElement).classList.contains('word')) {
-      startNode = startNode.previousSibling;
-      break;
-    }
-    startNode = startNode.parentNode;
-  }
-  if (startNode instanceof HTMLElement && !startNode.classList.contains('word')) {
-    const closestWord = startNode.querySelector('.word');
-    startNode = closestWord || startNode;
-  }
-
-  // Adjust end node to include the whole word
-  while (endNode && endNode.nodeType === Node.TEXT_NODE) {
-    if (endNode.nextSibling && endNode.nextSibling.nodeType === Node.ELEMENT_NODE &&
-        (endNode.nextSibling as HTMLElement).classList.contains('word')) {
-      endNode = endNode.nextSibling;
-      break;
-    }
-    endNode = endNode.parentNode;
-  }
-  if (endNode instanceof HTMLElement && !endNode.classList.contains('word')) {
-    const words = endNode.querySelectorAll('.word');
-    endNode = words[words.length - 1] || endNode;
-  }
-
-  if (startNode && endNode) {
-    let currentNode: Node | null = startNode;
-    while (currentNode) {
-      // todo: replace with select by class
-      if (currentNode.nodeType === Node.ELEMENT_NODE &&
-          (currentNode as HTMLElement).classList.contains('word')) {
-        const id = (currentNode as HTMLElement).id.replace('word-', '');
-        if (id) wordIds.push(id);
-      }
-      if (currentNode === endNode) break;
-      currentNode = getNextNode(currentNode);
-    }
-  }
-
-  return wordIds;
 }
 
 function getNextNode(node: Node): Node | null {
