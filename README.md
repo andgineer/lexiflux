@@ -23,7 +23,7 @@
 | lexiflux/language/word\_extractor.py            |       75 |        0 |    100% |           |
 | lexiflux/models.py                              |      222 |       36 |     84% |85, 95, 134, 143-144, 161, 172, 194, 239, 260-268, 271-278, 300, 302-303, 306, 347, 388-399, 454-466 |
 | lexiflux/settings.py                            |        0 |        0 |    100% |           |
-| lexiflux/signals.py                             |       20 |        2 |     90% |     46-47 |
+| lexiflux/signals.py                             |       20 |        2 |     90% |     45-46 |
 | lexiflux/tests.py                               |        0 |        0 |    100% |           |
 | lexiflux/urls.py                                |        6 |        0 |    100% |           |
 | lexiflux/utils.py                               |        8 |        0 |    100% |           |
