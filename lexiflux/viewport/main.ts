@@ -1,6 +1,6 @@
 import { viewport } from './viewport';
 import {log} from './utils';
-import { sendTranslationRequest, lexicalPanelSwitched, clearLexicalPanel } from './translate';
+import { sendTranslationRequest, lexicalPanelSwitched, clearLexicalPanel, hideTranslation } from './translate';
 
 const CLICK_TIMEOUT_MS = 200;
 
@@ -31,28 +31,9 @@ function handleWordClick(event: MouseEvent): void {
   if (clickedElement.classList.contains('translation-text')) {
     let translationSpan = clickedElement.closest('.translation-span') as HTMLElement | null;
     if (translationSpan) {
-      restoreOriginalSpans(translationSpan);
+      hideTranslation(translationSpan);
     }
   }
-}
-
-function restoreOriginalSpans(translationSpan: HTMLElement): void {
-    const parent = translationSpan.parentNode;
-    if (parent) {
-        // Remove the translation text div
-        const translationTextDiv = translationSpan.querySelector('.translation-text');
-        if (translationTextDiv) {
-            translationTextDiv.remove();
-        }
-
-        // Move all child nodes of the translation span to the parent
-        while (translationSpan.firstChild) {
-            parent.insertBefore(translationSpan.firstChild, translationSpan);
-        }
-
-        // Remove the empty translation span
-        translationSpan.remove();
-    }
 }
 
 function handleWordContainerClick(event: MouseEvent): void {
@@ -84,7 +65,7 @@ function handleMouseUpEvent(event: MouseEvent): void {
 
   if (translationSpan) {
     // If clicked on a translation span, remove it
-    restoreOriginalSpans(translationSpan as HTMLElement);
+    hideTranslation(translationSpan as HTMLElement);
     return; // Exit the function early
   }
 

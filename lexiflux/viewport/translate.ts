@@ -249,8 +249,31 @@ function showErrorInTranslationSpan(translationSpan: HTMLSpanElement): void {
   // Add error message
   const errorDiv = document.createElement('div');
   errorDiv.className = 'translation-error';
-  errorDiv.textContent = 'Translation failed. Please try again.';
+  errorDiv.textContent = 'Translation failed.';
   translationSpan.insertBefore(errorDiv, translationSpan.firstChild);
+}
+
+function hideTranslation(translationSpan: HTMLElement): void {
+    const parent = translationSpan.parentNode;
+    if (parent) {
+        // Remove the translation text div
+        const translationTextDiv = translationSpan.querySelector('.translation-text');
+        const errorDiv = translationSpan.querySelector('.translation-error');
+        if (translationTextDiv) {
+            translationTextDiv.remove();
+        }
+        if (errorDiv) {
+            errorDiv.remove();
+        }
+
+        // Move all child nodes of the translation span to the parent
+        while (translationSpan.firstChild) {
+            parent.insertBefore(translationSpan.firstChild, translationSpan);
+        }
+
+        // Remove the empty translation span
+        translationSpan.remove();
+    }
 }
 
 function showErrorInLexicalPanel(articleId: string): void {
@@ -415,4 +438,4 @@ function clearLexicalPanel(): void {
   });
 }
 
-export { sendTranslationRequest, TranslationResponse, lexicalPanelSwitched, clearLexicalPanel };
+export { sendTranslationRequest, TranslationResponse, lexicalPanelSwitched, clearLexicalPanel, hideTranslation };
