@@ -3,7 +3,7 @@
 import os
 import traceback
 from functools import lru_cache
-from typing import Any, Dict, List, Tuple, Callable
+from typing import Any, Dict, List, Tuple
 
 import yaml
 from django.conf import settings
@@ -122,7 +122,7 @@ class Llm:  # pylint: disable=too-few-public-methods
         """Return a list of all available Lexical Article names."""
         return list(self._article_pipelines_factory.keys())
 
-    def _create_article_pipelines_factory(self) -> Dict[str, Callable[[Any], ChatMessages]]:
+    def _create_article_pipelines_factory(self) -> Dict[str, Any]:
         text_parser = TextOutputParser()
 
         return {
@@ -142,6 +142,16 @@ class Llm:  # pylint: disable=too-few-public-methods
                 RunnablePassthrough.assign(text=lambda x: _extract_sentence(x["text"]))
                 | self._prompt_templates["Sentence"]
                 | model
+                | text_parser
+            ),
+            "AI": lambda model: (
+                RunnablePassthrough.assign(
+                    messages=lambda x: [
+                        SystemMessage(content=x["prompt"]),
+                        HumanMessage(content=f"The text is: {x['text']}"),
+                    ]
+                )
+                | (lambda x: model.invoke(x["messages"]))
                 | text_parser
             ),
         }
@@ -195,6 +205,10 @@ class Llm:  # pylint: disable=too-few-public-methods
 
         if article_name not in self._article_pipelines_factory:
             raise ValueError(f"Lexical article '{article_name}' not found.")
+
+        if article_name == "AI":
+            # Add the prompt to the data dictionary for the "AI" type
+            data["prompt"] = params["prompt"]
 
         marked_text = self.mark_term_and_sentence(hashable_data)
         data["text"] = clear_html_tags(marked_text["text"])

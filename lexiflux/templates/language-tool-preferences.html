@@ -202,7 +202,10 @@
                          </div>
                          <div class="mb-3">
                            Prompt
-                           <textarea v-model="form.parameters.prompt" class="form-control" rows="5"></textarea>
+                           <textarea v-model="form.parameters.prompt" class="form-control" rows="6" :placeholder="aiPromptPlaceholder"></textarea>
+                           <small class="form-text text-muted">
+                              Available fields: {text_language}, {detected_language}, {user_language}, [WORD_START], [WORD_END], [SENTENCE_START], [SENTENCE_END]
+                           </small>
                          </div>
                        </div>
                         <button type="submit" class="btn btn-primary">Save</button>
@@ -286,6 +289,11 @@ new Vue({
             deleteArticleTitle: '',
             deleteErrorMessage: '',
             titlePlaceholder: "Leave empty to autofill",
+            aiPromptPlaceholder: `Enter AI chat prompt here. For example:
+
+You will be given a text in {text_language} language.
+ONE word or phrase is marked with [WORD_START][WORD_END]
+Give in {user_language} language all synonyms and antonyms of the marked word.`
         };
 
         try {
