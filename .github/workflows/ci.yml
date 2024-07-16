@@ -31,7 +31,8 @@ jobs:
     strategy:
       matrix:
         python-version: ["3.10", 3.11, 3.12]
-        platform: [ubuntu-latest, macos-latest, windows-latest]
+        # Facebook fastText does not support windows-latest
+        platform: [ubuntu-latest, macos-latest]
     runs-on: ${{ matrix.platform }}
 
     steps:
