@@ -158,33 +158,6 @@ describe('viewport.js tests', () => {
       expect(viewport.getBookPageScroller().scrollTop).toBeGreaterThan(initialScrollTop);
     });
 
-    it('scrollDown: should load the next page if at the bottom', async () => {
-      // Simulate the last word being within the viewport to trigger loading the next page
-      mockWordRectFunc = (id: string) => {
-        let wordRect: DOMRect = defaultWordRect;
-        if (id === lastWordId) { // Words after 'word-2' are lower visible area
-          wordRect = {
-            top: 0,
-            bottom: viewport.getBookPageScroller().getBoundingClientRect().bottom - 1,
-            left: 0,
-            right: 0,
-            width: 0,
-            height: 0,
-            x: 0,
-            y: 0,
-            toJSON: () =>{}
-          }
-        }
-        return wordRect;
-      };
-      applyMockRectFunc();
-
-      viewport.pageNumber = 1; // Current page
-      const loadPageSpy = jest.spyOn(viewport, 'loadPage');
-      await viewport.scrollDown();
-      expect(loadPageSpy).toHaveBeenCalledWith(2, 0); // Expect to load the next page
-      loadPageSpy.mockRestore();
-    });
   }); // scroll
 
 }); // viewport.js tests

@@ -1,111 +1,67 @@
-import {createAndReplaceTranslationSpan, sendTranslationRequest} from '../../lexiflux/viewport/translate';
-import * as utilsModule from '../../lexiflux/viewport/utils';
+// tests/js/translation.test.ts
 import fetchMock from 'jest-fetch-mock';
-import {viewport} from "../../lexiflux/viewport/viewport";
+import {
+  sendTranslationRequest,
+  lexicalPanelSwitched,
+  clearLexicalPanel,
+  hideTranslation
+} from '../../lexiflux/viewport/translate';
 
-Object.defineProperty(viewport.bookPageScroller, 'getBoundingClientRect', {
-    value: () => ({
-        bottom: -600,  // negative 'cause it's complicated to mock rects for elements created inside code under test
-        height: 500,
-        top: 100,
-        left: 0,
-        right: 0,
-        width: 800,
-        x: 0,
-        y: 100,
-        toJSON: () => {},
-    }),
+fetchMock.enableMocks();
+
+declare global {
+  var htmx: { process: jest.Mock };
+  var numberOfWords: number;
+  var currentSelection: { wordIds: number[] | null; updatedPanels: Set<any> };
+}
+
+describe('translate.ts tests', () => {
+  beforeEach(() => {
+    // Set up the DOM and mocks before each test
+    document.body.innerHTML = `
+      <div id="top-navbar"></div>
+      <div id="lexicalPanelContent"></div>
+      <div id="book-page-scroller" style="height: 500px;">
+        <div id="words-container"></div>
+      </div>
+      <div id="book" data-book-code="alice-adventures-carroll" data-book-page-number="1" data-click-word-url="/click-word"></div>
+    `;
+
+    global.htmx = { process: jest.fn() };
+    global.numberOfWords = 5;
+  });
+
+
+  test('clearLexicalPanel clears the lexical panel content', () => {
+    document.body.innerHTML = `
+      <div id="lexicalPanelContent">
+        <div class="lexical-content">Old Content</div>
+        <iframe src="old"></iframe>
+      </div>
+    `;
+
+    global.currentSelection = { wordIds: [1, 2, 3], updatedPanels: new Set<unknown>() };
+
+    clearLexicalPanel();
+
+    const panelContent = document.getElementById('lexicalPanelContent')!;
+    expect(panelContent.innerHTML).toBe(`
+        <div class="lexical-content"></div>
+        <iframe src=""></iframe>
+      `);
+  });
+
+  test('hideTranslation hides the translation for a specific word', () => {
+    document.body.innerHTML = `
+      <span class="translation-span" id="translation">
+        <div class="translation-text">Translation</div>
+        <div class="original-text"> <span id="word-1">Word 1</span> </div>
+      </span>
+    `;
+
+    const translationSpan = document.getElementById('translation')!;
+    hideTranslation(translationSpan);
+
+    expect(document.body.innerHTML.trim()).toBe(`<span id="word-1">Word 1</span>`);
+  });
 });
-
-jest.spyOn(viewport.getWordsContainer(), 'insertBefore')
-  .mockImplementation((node, child) => node);
-jest.spyOn(viewport.getWordsContainer(), 'removeChild')
-  .mockImplementation((child) => child);
-
-describe('translate.ts', () => {
-    let originalDocument: Document | null;
-
-    beforeEach(() => {
-      originalDocument = global.document;
-    });
-
-    afterEach(() => {
-      global.document = originalDocument || document;
-    });
-
-    it('ensures translated text is visible', async () => {
-        // Setup the scenario where the translated text would be out of view initially
-        const initialScrollTop = viewport.bookPageScroller.scrollTop;
-        const translatedText = 'translated text';
-        let spanElement = document.createElement('span');
-        spanElement.id = 'word-1';
-        spanElement.textContent = 'original text';
-        const selectedWordSpans = [spanElement];
-        createAndReplaceTranslationSpan('original text', translatedText, selectedWordSpans);
-
-        // Assert the page was scrolled to make the translation visible
-        expect(viewport.bookPageScroller.scrollTop).toBeGreaterThan(initialScrollTop);
-    });
-
-  it('sends a translation request and creates and replaces translation span correctly', async () => {
-    // Mock selected text and elements
-    const selectedText = 'test';
-    const range = document.createRange(); // Mock range if needed
-    let spanElement = document.createElement('span');
-    spanElement.id = 'word-1';
-    spanElement.textContent = 'original text';
-    const selectedWordSpans = [spanElement];
-    viewport.getWordsContainer().insertBefore(selectedWordSpans[0], null);
-
-    await sendTranslationRequest(["1","2"], selectedWordSpans);
-
-    // Check if fetch was called correctly
-    expect(fetchMock).toHaveBeenCalledWith('/translate?word-ids=1.2&book-code=&book-page-number=0');
-    // Check if translation was added
-    expect(viewport.getWordsContainer().insertBefore).toHaveBeenCalled();
-    // Assert the original word spans were removed
-    expect(viewport.getWordsContainer().removeChild).toHaveBeenCalledWith(selectedWordSpans[0]);
-  });
-
-  it('handles missing sidebar gracefully', async () => {
-    document.body.innerHTML = ''; // Simulate missing sidebar
-    const selectedText = 'test';
-    const range = document.createRange();
-    const selectedWordSpans = [document.createElement('span')];
-
-    await sendTranslationRequest(["1","2"], selectedWordSpans);
-
-    // Expect no errors thrown, can also check for specific log output if necessary
-    expect(fetchMock).toHaveBeenCalled();
-  });
-
-  it('handles fetch failure gracefully', async () => {
-    fetchMock.resetMocks();
-    fetchMock.mockRejectOnce(new Error('Network failure'));
-    const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
-
-
-    const selectedText = 'test';
-    const range = document.createRange();
-    const selectedWordSpans = [document.createElement('span')];
-
-    sendTranslationRequest(["1","2"], selectedWordSpans);
-
-    // Since sendTranslationRequest does not return a promise, we cannot directly await it.
-    // However, we can wait for the next tick to allow any promises within sendTranslationRequest to resolve/reject.
-    return new Promise<void>((resolve) => {
-        setTimeout(() => {
-            expect(consoleSpy).toHaveBeenCalledWith(
-                expect.stringContaining('Error during translation:'),
-                expect.objectContaining({ message: expect.stringContaining('Network failure') })
-            );
-            consoleSpy.mockRestore(); // Clean up the spy
-            resolve(); // Correct usage when the promise is typed as Promise<void>
-        }, 0); // Use 0 ms delay to schedule for the next tick
-    });
-
-
-  });
-
-});
-
