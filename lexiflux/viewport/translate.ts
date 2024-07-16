@@ -128,35 +128,6 @@ function makeRequest(params: URLSearchParams): Promise<{ data: TranslationRespon
     });
 }
 
-function createTranslationSpanWithSpinner(range: Range): HTMLSpanElement {
-  const translationSpan = document.createElement('span');
-  translationSpan.className = 'translation-span';
-
-  const spinnerDiv = document.createElement('div');
-  spinnerDiv.className = 'spinner-border text-primary';
-  spinnerDiv.innerHTML = '<span class="visually-hidden">Loading...</span>';
-
-  translationSpan.appendChild(spinnerDiv);
-
-  // Adjust the range to include full words
-  adjustRangeToWholeWords(range);
-
-  // Clone the contents of the adjusted range
-  const contents = range.cloneContents();
-  translationSpan.appendChild(contents);
-
-  // Replace the range contents with the translation span
-  range.deleteContents();
-  range.insertNode(translationSpan);
-
-  // Assign a unique ID to the translation span
-  const firstWordSpan = translationSpan.querySelector('.word');
-  if (firstWordSpan) {
-    translationSpan.id = 'translation-' + firstWordSpan.id;
-  }
-
-  return translationSpan;
-}
 
 function adjustNodeToNearestWord(node: Node, direction: 'forward' | 'backward'): Node {
   let currentNode: Node | null = node;
@@ -219,6 +190,44 @@ function getWordIdsFromRange(range: Range): string[] {
   return wordIds;
 }
 
+function createTranslationSpanWithSpinner(range: Range): HTMLSpanElement {
+  const translationSpan = document.createElement('span');
+  translationSpan.className = 'translation-span d-inline-block position-relative';
+
+  const spinnerDiv = document.createElement('div');
+  spinnerDiv.className = 'spinner-border text-primary position-absolute top-0 start-50 translate-middle-x';
+  spinnerDiv.innerHTML = '<span class="visually-hidden">Loading...</span>';
+
+  const translationTextDiv = document.createElement('div');
+  translationTextDiv.className = 'translation-text text-center text-muted small mb-1';
+
+  const originalTextDiv = document.createElement('div');
+  originalTextDiv.className = 'original-text bg-light p-1 rounded';
+
+  translationSpan.appendChild(spinnerDiv);
+  translationSpan.appendChild(translationTextDiv);
+  translationSpan.appendChild(originalTextDiv);
+
+  // Adjust the range to include full words
+  adjustRangeToWholeWords(range);
+
+  // Clone the contents of the adjusted range
+  const contents = range.cloneContents();
+  originalTextDiv.appendChild(contents);
+
+  // Replace the range contents with the translation span
+  range.deleteContents();
+  range.insertNode(translationSpan);
+
+  // Assign a unique ID to the translation span
+  const firstWordSpan = originalTextDiv.querySelector('.word');
+  if (firstWordSpan) {
+    translationSpan.id = 'translation-' + firstWordSpan.id;
+  }
+
+  return translationSpan;
+}
+
 function updateTranslationSpan(data: TranslationResponse, translationSpan: HTMLSpanElement): void {
   // Remove the spinner
   const spinner = translationSpan.querySelector('.spinner-border');
@@ -226,54 +235,68 @@ function updateTranslationSpan(data: TranslationResponse, translationSpan: HTMLS
     spinner.remove();
   }
 
-  // Create and insert the translation text div
-  // todo: support also Site response? How to show inlined?
+  const translationTextDiv = translationSpan.querySelector('.translation-text') as HTMLElement;
+  const originalTextDiv = translationSpan.querySelector('.original-text') as HTMLElement;
+
   if (data.article) {
-      const translationDiv = document.createElement('div');
-      translationDiv.className = 'translation-text';
-      translationDiv.textContent = data.article;
-      translationSpan.insertBefore(translationDiv, translationSpan.firstChild);
+    translationTextDiv.textContent = data.article;
+
+    // Adjust width and wrapping
+    adjustTranslationWidth(translationSpan, translationTextDiv, originalTextDiv);
   } else {
     showErrorInTranslationSpan(translationSpan);
   }
+
   ensureVisible(translationSpan);
 }
 
-function showErrorInTranslationSpan(translationSpan: HTMLSpanElement): void {
-  // Remove the spinner
-  const spinner = translationSpan.querySelector('.spinner-border');
-  if (spinner) {
-    spinner.remove();
+function adjustTranslationWidth(translationSpan: HTMLSpanElement, translationTextDiv: HTMLElement, originalTextDiv: HTMLElement): void {
+  const maxWidth = viewport.bookPageScroller.offsetWidth - 40; // 20px padding on each side
+  const buffer = 10; // Add a small buffer to prevent unnecessary wrapping
+
+  const originalWidth = originalTextDiv.offsetWidth + buffer;
+  const translationWidth = translationTextDiv.offsetWidth + buffer;
+
+  translationSpan.style.maxWidth = `${maxWidth}px`;
+  translationSpan.style.display = 'inline-block';
+
+  if (translationWidth <= originalWidth) {
+    // Translation fits within original text width
+    translationSpan.style.width = `${originalWidth}px`;
+  } else {
+    // Translation is wider than original text
+    translationSpan.style.width = `${Math.min(translationWidth, maxWidth)}px`;
+    translationTextDiv.style.whiteSpace = 'normal';
+    originalTextDiv.style.whiteSpace = 'normal';
+    originalTextDiv.style.overflowX = 'visible';
   }
 
-  // Add error message
-  const errorDiv = document.createElement('div');
-  errorDiv.className = 'translation-error';
-  errorDiv.textContent = 'Translation failed.';
-  translationSpan.insertBefore(errorDiv, translationSpan.firstChild);
+  // Ensure the original text is below the translation
+  originalTextDiv.style.display = 'block';
+  originalTextDiv.style.marginTop = '5px';
 }
 
 function hideTranslation(translationSpan: HTMLElement): void {
-    const parent = translationSpan.parentNode;
-    if (parent) {
-        // Remove the translation text div
-        const translationTextDiv = translationSpan.querySelector('.translation-text');
-        const errorDiv = translationSpan.querySelector('.translation-error');
-        if (translationTextDiv) {
-            translationTextDiv.remove();
-        }
-        if (errorDiv) {
-            errorDiv.remove();
-        }
-
-        // Move all child nodes of the translation span to the parent
-        while (translationSpan.firstChild) {
-            parent.insertBefore(translationSpan.firstChild, translationSpan);
-        }
-
-        // Remove the empty translation span
-        translationSpan.remove();
+  const parent = translationSpan.parentNode;
+  if (parent) {
+    const originalTextDiv = translationSpan.querySelector('.original-text');
+    if (originalTextDiv) {
+      // Move all child nodes of the original text div to the parent
+      while (originalTextDiv.firstChild) {
+        parent.insertBefore(originalTextDiv.firstChild, translationSpan);
+      }
     }
+    // Remove the translation span
+    translationSpan.remove();
+  }
+}
+
+function showErrorInTranslationSpan(translationSpan: HTMLSpanElement): void {
+  const translationTextDiv = translationSpan.querySelector('.translation-text') as HTMLElement;
+  if (translationTextDiv) {
+    translationTextDiv.className = 'translation-text text-danger small mb-1';
+    translationTextDiv.textContent = 'Translation failed.';
+  }
 }
 
 function showErrorInLexicalPanel(articleId: string): void {

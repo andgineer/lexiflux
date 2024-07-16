@@ -21,39 +21,27 @@
 
         <style>
             .translation-span {
+              vertical-align: baseline;
               display: inline-block;
-              background-color: #e0e0e0; /* Slightly darker background */
-              border-radius: 5px; /* Optional: adds rounded corners */
-              padding: 5px;
-              margin-bottom: 5px; /* Space between translation and original text */
+              max-width: 100%;
             }
 
             .translation-text {
-              background-color: #f8f9fa;
-              border: 1px solid #ddd;
-              padding: 5px;
-              font-size: 0.9em;
-              text-align: center;
+              color: #2C5282 !important; /* Dark blue, complementing the light blue background */
+              font-size: 0.875em;
+              word-wrap: break-word;
+              overflow-wrap: break-word;
             }
-
-            .translation-error {
-                font-style: italic;
-                color: darkred;
-                background-color: transparent;
-              }
 
             .original-text {
-              font-style: italic; /* Optional: italicize the original text */
-            }
-
-            .arrow-indicator {
-              text-align: center;
-              font-size: 1.2em; /* Adjust the size of the arrow */
-            }
-
-            #lexical-panel {
-               width: 30%;
-               transition: none;
+              background-color: #E6F3FF; /* Light blue */
+              border: 1px solid #B8E2FF; /* Slightly darker blue for border */
+              border-radius: 4px; /* Rounded corners */
+              padding: 4px 6px; /* Some padding for better appearance */
+              word-wrap: break-word;
+              overflow-wrap: break-word;
+              white-space: normal;
+              overflow-x: visible;
             }
 
             #lexical-panel.collapse:not(.show) {
