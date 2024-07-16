@@ -29,6 +29,7 @@ class LexicalArticleType(models.TextChoices):  # type: ignore  # pylint: disable
     SENTENCE = "Sentence", _("Sentence")
     EXPLAIN = "Explain", _("Explain")
     LEXICAL = "Lexical", _("Lexical")
+    AI = "AI", _("AI")
     DICTIONARY = "Dictionary", _("Dictionary")
     SITE = "Site", _("Site")
 
@@ -41,6 +42,7 @@ LEXICAL_ARTICLE_PARAMETERS = {
     "Lexical": ["model"],
     "Dictionary": ["dictionary"],
     "Site": ["url", "window"],
+    "AI": ["model", "prompt"],
 }
 
 
@@ -301,6 +303,9 @@ class LexicalArticle(models.Model):  # type: ignore
         elif self.type == "Dictionary":
             if "dictionary" not in self.parameters:
                 raise ValidationError("Dictionary article must have 'dictionary' parameter.")
+        elif self.type == "AI":
+            if "prompt" not in self.parameters:
+                raise ValidationError("AI article must have 'prompt' parameter.")
         elif self.type not in ["Dictionary", "Site"]:
             if "model" not in self.parameters:
                 raise ValidationError(f"{self.type} article must have 'model' parameter.")
