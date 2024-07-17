@@ -296,11 +296,21 @@ function hideTranslation(translationSpan: HTMLElement): void {
 }
 
 function showErrorInTranslationSpan(translationSpan: HTMLSpanElement): void {
+  const spinnerDiv = translationSpan.querySelector('div:first-child');
+  if (spinnerDiv) {
+    spinnerDiv.remove();
+  }
+
   const translationTextDiv = translationSpan.querySelector('.translation-text') as HTMLElement;
   if (translationTextDiv) {
-    translationTextDiv.className = 'translation-text text-danger small mb-1';
-    translationTextDiv.textContent = 'Translation failed.';
+    translationTextDiv.className = 'alert alert-danger p-1 mb-1 d-flex align-items-center';
+    translationTextDiv.setAttribute('role', 'alert');
+    translationTextDiv.innerHTML = `
+      <span class="me-2" aria-hidden="true">⚠️</span>
+      <div>Translation failed</div>
+    `;
   }
+
 }
 
 function showErrorInLexicalPanel(articleId: string): void {
