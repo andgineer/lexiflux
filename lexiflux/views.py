@@ -290,7 +290,13 @@ def get_lexical_article(  # pylint: disable=too-many-arguments
     """Get the lexical article."""
     if article_name == "Site":
         return {
-            "url": params.get("url", "").format(term=urllib.parse.quote(selected_text)),
+            "url": params.get("url", "").format(
+                term=urllib.parse.quote(selected_text),
+                lang=book_page.book.language.name,
+                langCode=book_page.book.language.google_code,
+                toLang=language_preferences.user_language.name,
+                toLangCode=language_preferences.user_language.google_code,
+            ),
             "window": params.get("window", True),
         }
 

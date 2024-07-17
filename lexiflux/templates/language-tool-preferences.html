@@ -159,6 +159,9 @@
                                 <label class="form-label">URL</label>
                                 <input type="url" v-model="form.parameters.url" class="form-control">
                             </div>
+                           <small class="form-text text-muted">
+                              Available fields: {term} -words to translate, {lang}, {langCode}, {toLang}, {toLangCode}
+                           </small>
                             <div class="mb-3">
                                 <label class="form-label">Predefined URLs</label>
                                 <select v-model="form.parameters.url" class="form-select">
@@ -263,11 +266,14 @@ new Vue({
             articles: [],
             aiModels: [],
             predefinedUrls: [
-                'https://www.merriam-webster.com/dictionary/{term}',
-                'https://translate.google.com/?sl=en&tl=sr&text={term}&op=translate',
-                'https://glosbe.com/sr/ru/{term}',
-                'https://dictionary.cambridge.org/spellcheck/english/?q={term}',
-                'https://www.oed.com/search/dictionary/?scope=Entries&q={term}'
+                'https://glosbe.com/{langCode}/{toLangCode}/{term}',
+                'https://www.wordreference.com/{langCode}{toLangCode}/{term}',
+                'https://translate.google.com/?sl={langCode}&tl={toLangCode}&text={term}&op=translate',
+                'https://www.linguee.com/{lang}-{toLang}/search?source=auto&query={term}',
+                'https://en.bab.la/dictionary/{lang}-{toLang}/{term}',
+                'https://dictionary.reverso.net/{lang}-{toLang}/{word}',
+                'https://en.pons.com/translate?q={term}&l={langCode}{toLangCode}&in=&lf=en&qnac=',
+                'https://www.multitran.com/m.exe?ll1=114&ll2=2&s={term}',
             ],
             form: {
                 id: null,
