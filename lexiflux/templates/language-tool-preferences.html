@@ -170,8 +170,8 @@
                                 </select>
                             </div>
                             <div class="mb-3 form-check">
-                                <input type="checkbox" v-model="form.parameters.window" class="form-check-input">
-                                <label class="form-check-label">Open in new window</label>
+                                <input type="checkbox" v-model="form.parameters.window" class="form-check-input" id="openInNewWindow">
+                                <label class="form-check-label" for="openInNewWindow">Open in new window</label>
                             </div>
                         </div>
                         <div v-if="['Translate', 'Sentence', 'Explain', 'Examples', 'Lexical'].includes(form.type)">
