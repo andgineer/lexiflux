@@ -78,7 +78,9 @@ coverage==6.5.0
     #   pytest-cov
 coveralls==3.3.1
 cryptography==41.0.7
-    # via pyjwt
+    # via
+    #   pyjwt
+    #   pyopenssl
 dataclasses-json==0.6.7
     # via langchain-community
 debugpy==1.8.1
@@ -100,8 +102,11 @@ distro==1.9.0
     #   anthropic
     #   openai
 django==5.0
-    # via django-allauth
+    # via
+    #   django-allauth
+    #   django-extensions
 django-allauth==0.59.0
+django-extensions==3.2.3
 django-widget-tweaks==1.5.0
 docopt==0.6.2
     # via coveralls
@@ -286,6 +291,7 @@ markupsafe==2.1.5
     # via
     #   jinja2
     #   nbconvert
+    #   werkzeug
 marshmallow==3.21.3
     # via dataclasses-json
 matplotlib-inline==0.1.7
@@ -424,6 +430,7 @@ pylint==3.0.3
 pylint-django==2.5.5
 pylint-plugin-utils==0.8.2
     # via pylint-django
+pyopenssl==24.1.0
 pyparsing==3.1.2
     # via httplib2
 pysocks==1.7.1
@@ -620,6 +627,7 @@ webencodings==0.5.1
     #   tinycss2
 websocket-client==1.8.0
     # via jupyter-server
+werkzeug==3.0.3
 wsproto==1.2.0
     # via trio-websocket
 yarl==1.9.4

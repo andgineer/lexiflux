@@ -33,6 +33,13 @@ admin:
 run:
 	./manage runserver
 
+.HELP: runssl  ## Run local SSL server
+runssl:
+	./manage runserver_plus --cert-file ./localhost+2.pem --key-file ./localhost+2-key.pem
+# 	./manage runserver_plus --cert-file ssl_certs/cert.pem --key-file ssl_certs/key.pem
+
+#	./manage runserver_plus --cert-file ./localhost+2.pem --key-file ./localhost+2-key.pem
+
 .HELP: reqs  ## Upgrade requirements including pre-commit
 reqs:
 	pre-commit autoupdate
@@ -67,6 +74,11 @@ selenium:
 	docker-compose run --rm -it allure allure generate /allure-results -o /allure-report --clean
 	docker-compose restart allure
 	open -a 'Google Chrome' http://localhost:8800
+
+.HELP: keygen  ## Generate SSL key and cert for localhost
+keygen:
+	mkdir -p ssl_certs
+	openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout ssl_certs/localhost.key -out ssl_certs/localhost.crt
 
 .HELP: help  ## Display this message
 help:

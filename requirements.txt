@@ -36,7 +36,9 @@ charset-normalizer==3.3.2
 click==8.1.7
     # via nltk
 cryptography==41.0.7
-    # via pyjwt
+    # via
+    #   pyjwt
+    #   pyopenssl
 dataclasses-json==0.6.7
     # via langchain-community
 deep-translator==1.11.4
@@ -49,8 +51,11 @@ distro==1.9.0
     #   anthropic
     #   openai
 django==5.0
-    # via django-allauth
+    # via
+    #   django-allauth
+    #   django-extensions
 django-allauth==0.59.0
+django-extensions==3.2.3
 django-widget-tweaks==1.5.0
 ebooklib==0.18
 fasttext==0.9.3
@@ -149,6 +154,8 @@ langsmith==0.1.81
     #   langchain-core
 lxml==5.0.0
     # via ebooklib
+markupsafe==2.1.5
+    # via werkzeug
 marshmallow==3.21.3
     # via dataclasses-json
 multidict==6.0.5
@@ -209,6 +216,7 @@ pydantic-core==2.18.4
     # via pydantic
 pyjwt==2.8.0
     # via django-allauth
+pyopenssl==24.1.0
 pyparsing==3.1.2
     # via httplib2
 python3-openid==3.2.0
@@ -292,5 +300,6 @@ uritemplate==4.1.1
     # via google-api-python-client
 urllib3==2.1.0
     # via requests
+werkzeug==3.0.3
 yarl==1.9.4
     # via aiohttp

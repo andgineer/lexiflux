@@ -4,6 +4,9 @@ django
 django-allauth
 deep-translator
 django-widget-tweaks
+django-extensions
+Werkzeug
+pyOpenSSL
 pydantic
 langchain
 langchain-community

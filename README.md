@@ -22,6 +22,25 @@ You need [uv](https://github.com/astral-sh/uv) installed.
 
 open in web-browser http://localhost:8000
 
+## Local SSL
+Generate self-issued keys
+
+    make keygen
+
+Run server with SSL
+
+    make runssl
+
+If you want valid sertificate install mkcert. For macOS
+
+    brew install mkcert
+
+Install root certificate
+
+    mkcert -install
+
+Update `runssl` command in Makefile to use this certificates.
+
 ## Scripts
     make help
 

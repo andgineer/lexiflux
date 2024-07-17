@@ -1,5 +1,6 @@
 .venv/
 db.sqlite3
+ssl_certs/
 .idea/
 bundle.js
 .DS_Store

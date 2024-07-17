@@ -56,6 +56,7 @@ INSTALLED_APPS = [
     # Include providers as needed
     "allauth.socialaccount.providers.google",
     "allauth.socialaccount.providers.apple",
+    "django_extensions",
     "widget_tweaks",
     "core",
     "lexiflux",
