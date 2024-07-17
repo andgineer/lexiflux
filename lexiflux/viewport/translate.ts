@@ -195,8 +195,12 @@ function createTranslationSpanWithSpinner(range: Range): HTMLSpanElement {
   translationSpan.className = 'translation-span d-inline-block position-relative';
 
   const spinnerDiv = document.createElement('div');
-  spinnerDiv.className = 'spinner-border text-primary position-absolute top-0 start-50 translate-middle-x';
-  spinnerDiv.innerHTML = '<span class="visually-hidden">Loading...</span>';
+  spinnerDiv.className = 'd-flex justify-content-center align-items-center';
+  spinnerDiv.innerHTML = `
+    <div class="spinner-border spinner-border-sm text-primary" role="status">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+  `;
 
   const translationTextDiv = document.createElement('div');
   translationTextDiv.className = 'translation-text text-center text-muted small mb-1';
