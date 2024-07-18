@@ -1,0 +1,12 @@
+<div class="alert alert-warning" role="alert">
+    <h4 class="alert-heading">Anthropic API Configuration Required</h4>
+    <p>Error encountered: {{ error_message }}</p>
+    <p>To use Anthropic models, you need to set up your API key:</p>
+    <ol>
+        <li>Sign up for an account at <a href="https://www.anthropic.com" target="_blank">Anthropic</a></li>
+        <li>Request access to the Claude API in your account dashboard</li>
+        <li>Once approved, generate an API key in your account settings</li>
+        <li>Set the ANTHROPIC_API_KEY environment variable with your API key</li>
+    </ol>
+    <p>For more information, visit the <a href="https://docs.anthropic.com" target="_blank">Anthropic API documentation</a>.</p>
+</div>

@@ -13,6 +13,11 @@ gpt-4-turbo-preview:
   model: ChatOpenAI
   suffix: 🔗 4+
 
+claude-3-5-sonnet-20240620:
+  title: Claude 3.5 Sonnet
+  model: ChatAnthropic
+  suffix: 💡3.5
+
 llama3:
   title: LLAMA 3
   model: Ollama
@@ -22,11 +27,6 @@ llama3:
 #   title: Zephyr 7B
 #   model: Ollama
 #   suffix: 🌬️7B
-
-# claude-3-5-sonnet-20240620:
-#   title: Claude 3.5 Sonnet
-#   model: ChatAnthropic
-#   suffix: 💡3.5
 
 # gemini-pro:
 #   title: Gemini Pro

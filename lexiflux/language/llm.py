@@ -12,6 +12,7 @@ from langchain_core.runnables import RunnablePassthrough
 from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
 from langchain_openai import ChatOpenAI
 from langchain_mistralai import ChatMistralAI
+from langchain_anthropic import ChatAnthropic
 from langchain_community.llms import Ollama  # pylint: disable=no-name-in-module
 
 import openai
@@ -104,8 +105,6 @@ class Llm:  # pylint: disable=too-few-public-methods
     _model_cache: Dict[str, Any]
 
     def __init__(self) -> None:
-        openai.api_key = os.getenv("OPENAI_API_KEY")
-        # os.environ["ANTHROPIC_API_KEY"] = os.getenv("ANTHROPIC_API_KEY")
         # os.environ["GOOGLE_API_KEY"] = os.getenv("GOOGLE_API_KEY")
         # os.environ["MISTRAL_API_KEY"] = os.getenv("MISTRAL_API_KEY")
         self._prompt_templates: Dict[str, ChatPromptTemplate] = self._load_prompt_templates()
@@ -373,11 +372,11 @@ class Llm:  # pylint: disable=too-few-public-methods
                         model=model_name,
                         temperature=0.5,
                     )
-                # elif model_class == "ChatAnthropic":
-                #     self._model_cache[model_key] = ChatAnthropic(
-                #         model=model_name,
-                #         temperature=0.5,
-                #     )
+                elif model_class == "ChatAnthropic":
+                    self._model_cache[model_key] = ChatAnthropic(
+                        model=model_name,
+                        temperature=0.5,
+                    )
                 # elif model_class == "ChatGoogleGenerativeAI":
                 #     self._model_cache[model_key] = ChatGoogleGenerativeAI(
                 #         model=model_name,
