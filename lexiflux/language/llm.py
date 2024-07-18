@@ -15,7 +15,6 @@ from langchain_mistralai import ChatMistralAI
 from langchain_anthropic import ChatAnthropic
 from langchain_community.llms import Ollama  # pylint: disable=no-name-in-module
 
-import openai
 from langchain.schema import BaseOutputParser
 
 from lexiflux.language.html_tags_cleaner import clear_html_tags
@@ -374,7 +373,7 @@ class Llm:  # pylint: disable=too-few-public-methods
                     )
                 elif model_class == "ChatAnthropic":
                     self._model_cache[model_key] = ChatAnthropic(
-                        model=model_name,
+                        model=model_name,  # type: ignore
                         temperature=0.5,
                     )
                 # elif model_class == "ChatGoogleGenerativeAI":
