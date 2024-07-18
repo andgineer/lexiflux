@@ -35,10 +35,7 @@ run:
 
 .HELP: runssl  ## Run local SSL server
 runssl:
-	./manage runserver_plus --cert-file ./localhost+2.pem --key-file ./localhost+2-key.pem
-# 	./manage runserver_plus --cert-file ssl_certs/cert.pem --key-file ssl_certs/key.pem
-
-#	./manage runserver_plus --cert-file ./localhost+2.pem --key-file ./localhost+2-key.pem
+	./manage runserver_plus 0.0.0.0:8000 --cert-file ssl_certs/localhost.crt --key-file ssl_certs/localhost.key
 
 .HELP: reqs  ## Upgrade requirements including pre-commit
 reqs:
@@ -79,6 +76,11 @@ selenium:
 keygen:
 	mkdir -p ssl_certs
 	openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout ssl_certs/localhost.key -out ssl_certs/localhost.crt
+
+.HELP: mkcert  ## Generate SSL cert with mkcert
+mkcert:
+	mkdir -p ssl_certs
+	mkcert -cert-file ssl_certs/localhost.crt -key-file ssl_certs/localhost.key  lexiflux.ai localhost 127.0.0.1
 
 .HELP: help  ## Display this message
 help:

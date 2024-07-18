@@ -29,6 +29,7 @@ ALLOWED_HOSTS: List[str] = [
     "localhost",
     "127.0.0.1",
     "host.docker.internal",
+    "lexiflux.ai",
 ]
 SITE_ID = 1
 APPEND_SLASH = False
