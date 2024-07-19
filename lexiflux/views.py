@@ -24,6 +24,7 @@ from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth import get_user_model, login
 from django.contrib.auth.views import LoginView
 
+from lexiflux.language.html_tags_cleaner import clear_html_tags
 from lexiflux.language.translation import get_translator
 from lexiflux.api import get_params, ViewGetParamsModel
 from lexiflux.forms import CustomUserCreationForm
@@ -367,9 +368,11 @@ def translate(request: HttpRequest, params: TranslateGetParams) -> HttpResponse:
     #         for id in term_word_ids
     #     ]
     # )
-    term_text = book_page.content[
-        book_page.words[term_word_ids[0]][0] : book_page.words[term_word_ids[-1]][1]
-    ]
+    term_text = clear_html_tags(
+        book_page.content[
+            book_page.words[term_word_ids[0]][0] : book_page.words[term_word_ids[-1]][1]
+        ]
+    )
 
     result: Dict[str, Any] = {}
 
