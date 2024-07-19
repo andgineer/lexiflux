@@ -34,8 +34,8 @@
                 </div>
             </div>
 
-            <div id="lexical-panel" class="collapse d-md-block col-6 order-md-last">
-                <div class="card h-100">
+            <div id="lexical-panel" class="collapse d-md-block col-6 order-md-last h-100">
+                <div class="card h-100 d-flex flex-column">
                     <div class="card-header">
                         <ul class="nav nav-tabs card-header-tabs" id="lexicalPanelTabs" role="tablist">
                             {% for article in lexical_articles %}
@@ -53,7 +53,7 @@
                             {% endfor %}
                         </ul>
                     </div>
-                    <div class="tab-content card-body" id="lexicalPanelContent">
+                    <div class="tab-content card-body flex-grow-1 overflow-auto" id="lexicalPanelContent">
                         {% for article in lexical_articles %}
                         <div class="tab-pane fade {% if forloop.first %}show active{% endif %}"
                              id="lexical-article-{{ forloop.counter }}"

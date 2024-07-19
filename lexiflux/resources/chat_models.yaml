@@ -1,17 +1,17 @@
-gpt-3.5-turbo:
-  title: GPT-3.5 Turbo
+gpt-4o-mini:
+  title: GPT-4o mini
   model: ChatOpenAI
-  suffix: 🔗 3+
+  suffix: 🔗 4°
 
 gpt-4-turbo:
   title: GPT-4 Turbo
   model: ChatOpenAI
-  suffix: 🔗 4
+  suffix: 🔗 4⁺
 
 gpt-4-turbo-preview:
   title: GPT-4 Turbo Preview
   model: ChatOpenAI
-  suffix: 🔗 4+
+  suffix: 🔗 4⁺+
 
 claude-3-5-sonnet-20240620:
   title: Claude 3.5 Sonnet
