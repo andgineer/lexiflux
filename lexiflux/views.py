@@ -183,7 +183,7 @@ def reader(request: HttpRequest) -> HttpResponse:
             "book": book_page.book,
             "page": book_page,
             "lexical_articles": lexical_articles,
-            "top_word": 0,
+            "top_word": reading_location.word if reading_location else 0,
         },
     )
 

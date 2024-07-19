@@ -414,14 +414,18 @@ function updateLexicalPanel(data: TranslationResponse, activePanelId: string): v
 
 function handleOpenLexicalWindow(url: string, windowKey: string, windowFeatures: string): void {
   let dictionaryWindow = dictionaryWindows[windowKey];
+  console.log('dictionaryWindow:', dictionaryWindow);
 
   if (dictionaryWindow && !dictionaryWindow.closed) {
+    console.log('dictionaryWindow exists');
     dictionaryWindow.location.href = url;
   } else {
     dictionaryWindow = window.open(url, windowKey, windowFeatures);
     dictionaryWindows[windowKey] = dictionaryWindow;
+    console.log('dictionaryWindow created:', dictionaryWindow);
   }
   if (dictionaryWindow) {
+    console.log('dictionaryWindow focus');
     dictionaryWindow.focus();
   }
 }

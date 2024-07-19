@@ -167,7 +167,8 @@ function reInitDom(): void {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    viewport.loadPage(viewport.pageNumber, 0).then(() => {
+    const topWord = parseInt(document.body.getAttribute('data-top-word') || '0');
+    viewport.loadPage(viewport.pageNumber, topWord).then(() => {
         reInitDom();
     }).catch((error: Error) => {
         console.error('Failed to load page:', error);

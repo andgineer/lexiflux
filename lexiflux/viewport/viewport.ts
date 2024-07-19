@@ -65,6 +65,14 @@ export class Viewport {
         log('domChanged. bookCode:', this.bookCode, 'pageNum:', this.pageNumber, 'totalWords:', this.totalWords, 'wordsContainerHeight:', this.getWordsContainerHeight());
     }  // domChanged
 
+    public scrollToWord(wordId: number): void {
+        const word = this.word(wordId);
+        if (word) {
+            const top = this.getWordTop(wordId);
+            this.bookPageScroller.scrollTop = top;
+        }
+    }
+
     public getWordTop(wordId: number = 0): number {
         // find targetLastWord top coordinate
         const word = document.getElementById('word-' + wordId);
@@ -103,7 +111,7 @@ export class Viewport {
                     if (topWord != undefined) {
                         this.topWord = topWord;
                         if (topWord > 0) {
-                            this.bookPageScroller.scrollTop = this.getWordTop(topWord);
+                            this.scrollToWord(topWord);
                             log('scrollTop:', this.bookPageScroller.scrollTop);
                         } else {
                             this.bookPageScroller.scrollTop = 0;
