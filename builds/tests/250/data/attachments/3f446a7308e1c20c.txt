@@ -1,0 +1,4 @@
+Tag: script (0, 8)
+Hidden text: alert('Hello'); (8, 23)
+Tag: style (32, 39)
+Hidden text: body { color: red; } (39, 59)
