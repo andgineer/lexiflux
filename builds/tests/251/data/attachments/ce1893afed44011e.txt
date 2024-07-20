@@ -1,0 +1,4 @@
+INFO:root:Test finished
+INFO:root:Test started
+Forbidden: /book
+WARNING:django.request:Forbidden: /book
