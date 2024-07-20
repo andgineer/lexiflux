@@ -67,7 +67,7 @@ class HTMLCleaner(HTMLParser):
         if tag in VALID_TAGS:
             self.tag_positions.append((start, end))
             self.is_self_closing = tag_text.endswith("/>")
-            print(f"Tag: {tag}", self.tag_positions[-1])
+            logger.debug(f"Tag: {tag} {self.tag_positions[-1]}")
         else:
             self.output.append(tag_text)
         self.current_position = end
