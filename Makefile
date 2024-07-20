@@ -14,12 +14,12 @@ migrate:
 pages:
 	./manage add-pages
 
-.HELP: alice  ## Import Alice in Wonderland
-alice:
-	./manage.py import-text tests/resources/alice_adventure_in_wonderland.txt
+.HELP: alisa  ## Import Alisa u zemlji cuda
+alisa:
+	./manage.py import-text ~/books/Lewis\ Carroll/Alisa\ u\ zemlji\ cuda\ \(437\)/Alisa\ u\ zemlji\ cuda\ -\ Lewis\ Carroll.txt
 
 .HELP: init-db  ## KILL Database and reinit new one
-init-db: kill-db migrate admin alice
+init-db: kill-db migrate admin alisa
 
 .HELP: kill-db  ## KILL Database
 kill-db:

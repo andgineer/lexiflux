@@ -5,70 +5,70 @@ def get_content_by_indices(content, indices):
     return [content[start:end] for start, end in indices]
 
 
-def test_simple_text():
+def test_word_extractor_simple_text():
     content = "This is a simple test."
     words, tags = parse_words(content)
     assert get_content_by_indices(content, words) == ["This", "is", "a", "simple", "test"]
     assert tags == []
 
 
-def test_html_tags():
+def test_word_extractor_html_tags():
     content = "<p>This is a <b>bold</b> statement.</p>"
     words, tags = parse_words(content)
     assert get_content_by_indices(content, words) == ["This", "is", "a", "bold", "statement"]
     assert get_content_by_indices(content, tags) == ["<p>", "<b>", "</b>", "</p>"]
 
 
-def test_math_symbols():
+def test_word_extractor_math_symbols():
     content = "Let's consider the case where a < b and x > y."
     words, tags = parse_words(content)
     assert get_content_by_indices(content, words) == ["Let's", "consider", "the", "case", "where", "a", "<", "b", "and", "x", ">", "y"]
     assert tags == []
 
 
-def test_mixed_content():
+def test_word_extractor_mixed_content():
     content = "<div>Python code: if x < 5 and y > 10:</div><p>This is a test.</p>"
     words, tags = parse_words(content)
     assert get_content_by_indices(content, words) == ["Python", "code", "if", "x", "<", "5", "and", "y", ">", "10", "This", "is", "a", "test"]
     assert get_content_by_indices(content, tags) == ["<div>", "</div>", "<p>", "</p>"]
 
 
-def test_empty_content():
+def test_word_extractor_empty_content():
     content = ""
     words, tags = parse_words(content)
     assert words == []
     assert tags == []
 
 
-def test_only_html():
+def test_word_extractor_only_html():
     content = "<p><br><hr></p>"
     words, tags = parse_words(content)
     assert words == []
     assert get_content_by_indices(content, tags) == ["<p>", "<br>", "<hr>", "</p>"]
 
 
-def test_nested_tags():
+def test_word_extractor_nested_tags():
     content = "<div><p>Nested <span>tags</span> here</p></div>"
     words, tags = parse_words(content)
     assert get_content_by_indices(content, words) == ["Nested", "tags", "here"]
     assert get_content_by_indices(content, tags) == ["<div>", "<p>", "<span>", "</span>", "</p>", "</div>"]
 
 
-def test_self_closing_tags():
+def test_word_extractor_self_closing_tags():
     content = "An image <img src='test.jpg'/> and some <br/> text"
     words, tags = parse_words(content)
     assert get_content_by_indices(content, words) == ["An", "image", "and", "some", "text"]
     assert get_content_by_indices(content, tags) == ["<img src='test.jpg'/>", "<br/>"]
 
 
-def test_attributes_with_spaces():
+def test_word_extractor_attributes_with_spaces():
     content = '<a href="https://example.com" title="Click here">Link</a>'
     words, tags = parse_words(content)
     assert get_content_by_indices(content, words) == ["Link"]
     assert get_content_by_indices(content, tags) == ['<a href="https://example.com" title="Click here">', "</a>"]
 
 
-def test_script_and_style_tags():
+def test_word_extractor_script_and_style_tags():
     content = """
     <style>
         body { font-size: 16px; }
@@ -87,7 +87,7 @@ def test_script_and_style_tags():
     ]
 
 
-def test_remove_html_and_adjust_indices():
+def test_word_extractor_remove_html_and_adjust_indices():
     html_content = "<p>This is a <b>bold</b> statement.</p>"
     words, tags = parse_words(html_content)
 
@@ -97,7 +97,7 @@ def test_remove_html_and_adjust_indices():
     assert [plain_text[start:end] for start, end in adjusted_indices] == ["This", "is", "a", "bold", "statement"]
 
 
-def test_remove_html_and_adjust_indices_with_excluded_tags():
+def test_word_extractor_remove_html_and_adjust_indices_with_excluded_tags():
     html_content = """
     <p>Visible text</p>
     <script>
@@ -113,7 +113,7 @@ def test_remove_html_and_adjust_indices_with_excluded_tags():
     assert [plain_text[start:end] for start, end in adjusted_indices] == ["Visible", "text", "More", "text"]
 
 
-def test_remove_html_and_adjust_indices_with_nested_tags():
+def test_word_extractor_remove_html_and_adjust_indices_with_nested_tags():
     html_content = "<div><p>Nested <span>tags</span> here</p></div>"
     words, tags = parse_words(html_content)
 
@@ -123,7 +123,7 @@ def test_remove_html_and_adjust_indices_with_nested_tags():
     assert [plain_text[start:end] for start, end in adjusted_indices] == ["Nested", "tags", "here"]
 
 
-def test_remove_html_and_adjust_indices_with_self_closing_tags():
+def test_word_extractor_remove_html_and_adjust_indices_with_self_closing_tags():
     html_content = "An image <img src='test.jpg'/> and some <br/> text"
     words, tags = parse_words(html_content)
 
