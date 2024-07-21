@@ -1,0 +1,5 @@
+INFO:root:Test finished
+INFO:root:Test started
+INFO:lexiflux.language.word_extractor:Cleaned content: Nested tags here
+INFO:lexiflux.language.word_extractor:Tag positions: [(0, 5), (5, 8), (15, 21), (25, 32), (37, 41), (41, 47)]
+WARNING:lexiflux.language.word_extractor:NLTK word tokenizer not available for en. Using default.

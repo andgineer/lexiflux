@@ -1,0 +1,5 @@
+INFO:root:Test finished
+INFO:root:Test started
+INFO:lexiflux.language.word_extractor:Cleaned content: 
+INFO:lexiflux.language.word_extractor:Tag positions: []
+WARNING:lexiflux.language.word_extractor:NLTK word tokenizer not available for en. Using default.
