@@ -1,0 +1,4 @@
+INFO:root:Test finished
+INFO:root:Test started
+Bad Request: /location
+WARNING:django.request:Bad Request: /location

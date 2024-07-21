@@ -1,0 +1,4 @@
+INFO:root:Test finished
+INFO:root:Test started
+WARNING:lexiflux.language.word_extractor:NLTK word tokenizer not available for en. Using default.
+Destroying test database for alias 'default'...
