@@ -1,6 +1,7 @@
 """Models for the lexiflux app."""
 
 import re
+from html import unescape
 from typing import TypeAlias, Tuple, List, Any, Dict, Optional
 
 from django.conf import settings
@@ -224,6 +225,13 @@ class BookPage(models.Model):  # type: ignore
             else:
                 self._words_cache = self.word_slices
         return self._words_cache  # type: ignore
+
+    def word_string(self, word_id: int) -> str:
+        """Get an unescaped word string by its ID."""
+        if 0 <= word_id < len(self.words):
+            start, end = self.words[word_id]
+            return unescape(self.content[start:end])  # type: ignore
+        raise ValueError(f"Invalid word ID: {word_id}")
 
     def _parse_and_save_words(self) -> None:
         """Parse words from content and save to DB."""

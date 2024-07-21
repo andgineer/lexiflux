@@ -34,8 +34,9 @@ def parse_words(
     """Extract words and HTML tags from HTML content."""
 
     cleaned_content, tag_positions, escaped_chars = parse_tags(content)
-    logger.info(f"Cleaned content: {cleaned_content}")
-    logger.info(f"Tag positions: {tag_positions}")
+    logger.debug(f"Cleaned content: {cleaned_content}")
+    logger.debug(f"Tag positions: {[content[start:end] for start, end in tag_positions]}")
+    logger.debug(f"Escaped characters: {[content[start:end] for start, end, _ in escaped_chars]}")
 
     if tokenizer == WordTokenizer.NLTK:
         try:
@@ -50,25 +51,31 @@ def parse_words(
         raise ValueError(f"Unsupported tokenizer: {tokenizer}")
 
     # Calculate word positions in the cleaned content
-    word_positions = []
+    word_slices_cleaned_content = []
     current_position = 0
     for word in words:
         if not is_punctuation(word):
             start = cleaned_content.find(word, current_position)
             if start != -1:
                 end = start + len(word)
-                word_positions.append((start, end))
+                word_slices_cleaned_content.append((start, end))
                 current_position = end
         else:
             current_position = cleaned_content.find(word, current_position) + len(word)
+    logger.debug(
+        "Words found: "
+        f"{[cleaned_content[start:end] for start, end in word_slices_cleaned_content]}"
+    )
 
     # Recalculate word positions for the original content
-    original_word_positions = recalculate_positions(word_positions, tag_positions, escaped_chars)
+    original_word_positions = recalculate_positions(
+        word_slices_cleaned_content, tag_positions, escaped_chars
+    )
 
     return original_word_positions, tag_positions
 
 
-def recalculate_positions(  # pylint: disable=too-many-locals
+def recalculate_positions(
     word_positions: List[Tuple[int, int]],
     tag_positions: List[Tuple[int, int]],
     escaped_chars: List[Tuple[int, int, str]],
@@ -84,24 +91,28 @@ def recalculate_positions(  # pylint: disable=too-many-locals
         while tag_index < len(tag_positions) and tag_positions[tag_index][0] <= start + offset:
             offset += tag_positions[tag_index][1] - tag_positions[tag_index][0]
             tag_index += 1
+        logger.debug(f"Word: {start}, {end}, Offset: {offset}, Tag index: {tag_index}")
 
-        # Adjust for escaped characters
-        word_start_offset = 0
-        word_end_offset = 0
+        # Adjust for escaped characters affecting word boundaries
+        new_start = start + offset
+        new_end = end + offset
+
+        # Adjust for escaped characters within the word
         while (
             escaped_char_index < len(escaped_chars)
-            and escaped_chars[escaped_char_index][0] < end + offset
+            and escaped_chars[escaped_char_index][0] < new_end
         ):
             escaped_start, escaped_end, unescaped = escaped_chars[escaped_char_index]
-            if escaped_start <= start + offset:
-                word_start_offset += escaped_end - escaped_start - len(unescaped)
-            if escaped_start < end + offset:
-                word_end_offset += escaped_end - escaped_start - len(unescaped)
+            if new_start <= escaped_start < new_end:
+                # Escaped character is within the word
+                new_end += (escaped_end - escaped_start) - len(unescaped)
+            elif escaped_start < new_start:
+                # Escaped character affects the word start
+                new_start += (escaped_end - escaped_start) - len(unescaped)
+                new_end += (escaped_end - escaped_start) - len(unescaped)
             escaped_char_index += 1
 
-        new_start = start + offset + word_start_offset
-        new_end = end + offset + word_end_offset
-
         original_word_positions.append((new_start, new_end))
+        offset = new_end - end
 
     return original_word_positions

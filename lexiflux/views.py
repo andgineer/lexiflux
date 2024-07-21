@@ -6,6 +6,7 @@ import urllib.parse
 import logging
 
 from pydantic import Field
+from django.core.cache import cache
 from django.template import TemplateDoesNotExist
 from django.template.loader import render_to_string
 
@@ -116,7 +117,6 @@ def render_page(page_db: BookPage) -> str:
     # Add any remaining text after the last word
     if last_end < len(content):
         result.append(content[last_end:])
-
     return "".join(result)
 
 
@@ -213,8 +213,12 @@ def page(request: HttpRequest) -> HttpResponse:
     # Update the reading location
     location(request)
 
-    print(f"Rendering page {page_number} of book {book_code}")
-    page_html = render_page(book_page)
+    cache_key = f"page_html_{book_code}_{page_number}"
+    page_html = cache.get(cache_key)
+    if page_html is None:
+        print(f"Rendering page {page_number} of book {book_code}")
+        page_html = render_page(book_page)
+        cache.set(cache_key, page_html, timeout=3600)  # Cache for 1 hour
 
     return JsonResponse(
         {
