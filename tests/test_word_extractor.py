@@ -85,3 +85,23 @@ def test_word_extractor_script_and_style_tags():
         '<script>', '\n        console.log("Hello");\n    ', '</script>', '<p>', '</p>'
     ]
 
+
+def test_word_extractor_with_entity_and_charref():
+    content = "Entity: &lt; CharRef: &#60;"
+    words, tags = parse_words(content)
+    assert get_content_by_indices(content, words) == ["Entity", "CharRef"]
+    assert get_content_by_indices(content, tags) == []
+
+
+def test_word_extractor_with_cdata():
+    content = "<![CDATA[This is CDATA content]]>Regular content"
+    words, tags = parse_words(content)
+    assert get_content_by_indices(content, words) == ["Regular", "content"]
+    assert get_content_by_indices(content, tags) == ["<![CDATA[This is CDATA content]]>"]
+
+
+def test_word_extractor_alice():
+    content = "1 <br/> <br/> <br/> <br/> ALICE&#x27;S ADVENTURES IN <br/> <br/>"
+    words, tags = parse_words(content)
+    assert get_content_by_indices(content, words) == ["1", "ALICE", "'S'", "ADVENTURES", "IN"]
+    assert get_content_by_indices(content, tags) == ["<br/>", "<br/>", "<br/>", "<br/>", "<br/>", "<br/>"]

@@ -43,7 +43,7 @@ VALID_TAGS = set(HTMLParser.CDATA_CONTENT_ELEMENTS) | {
 logger = logging.getLogger(__name__)
 
 
-class HTMLCleaner(HTMLParser):
+class HTMLCleaner(HTMLParser):  # pylint: disable=too-many-instance-attributes
     """Clean HTML content and extract tag positions."""
 
     def __init__(self) -> None:
@@ -53,6 +53,7 @@ class HTMLCleaner(HTMLParser):
         self.convert_charrefs = False  # Changed to False to handle entities manually
         self.output: List[str] = []
         self.tag_positions: List[Tuple[int, int]] = []
+        self.escaped_chars: List[Tuple[int, int, str]] = []  # (start, end, unescaped)
         self.in_script_or_style = False
         self.current_position = 0
         self.is_self_closing = False
@@ -102,6 +103,9 @@ class HTMLCleaner(HTMLParser):
         entity = f"&{name};"
         unescaped = unescape(entity)
         self.output.append(unescaped)
+        self.escaped_chars.append(
+            (self.current_position, self.current_position + len(entity), unescaped)
+        )
         self.current_position += len(entity)
         logger.debug(
             f"EntityRef: {entity}, Unescaped: {unescaped} "
@@ -112,6 +116,9 @@ class HTMLCleaner(HTMLParser):
         char_ref = f"&#{name};"
         unescaped = unescape(char_ref)
         self.output.append(unescaped)
+        self.escaped_chars.append(
+            (self.current_position, self.current_position + len(char_ref), unescaped)
+        )
         self.current_position += len(char_ref)
         logger.debug(
             f"CharRef: {char_ref}, Unescaped: {unescaped} "
@@ -151,13 +158,13 @@ class HTMLCleaner(HTMLParser):
         self.current_position = end
         logger.debug(f"UnknownDecl: {data} current_position: {self.current_position}")
 
-    def get_cleaned_data(self) -> Tuple[str, List[Tuple[int, int]]]:
-        """Return cleaned data and tag positions."""
-        return "".join(self.output), self.tag_positions
+    def get_cleaned_data(self) -> Tuple[str, List[Tuple[int, int]], List[Tuple[int, int, str]]]:
+        """Return cleaned data, tag positions, and escaped character information."""
+        return "".join(self.output), self.tag_positions, self.escaped_chars
 
 
-def parse_tags(html_content: str) -> Tuple[str, List[Tuple[int, int]]]:
-    """Parse HTML content and return plain text and tag slices."""
+def parse_tags(html_content: str) -> Tuple[str, List[Tuple[int, int]], List[Tuple[int, int, str]]]:
+    """Parse HTML content and return plain text, tag slices, and escaped character information."""
     parser = HTMLCleaner()
     parser.feed(html_content)
     return parser.get_cleaned_data()

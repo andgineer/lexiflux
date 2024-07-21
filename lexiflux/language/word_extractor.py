@@ -33,7 +33,7 @@ def parse_words(
 ) -> Tuple[List[Tuple[int, int]], List[Tuple[int, int]]]:
     """Extract words and HTML tags from HTML content."""
 
-    cleaned_content, tag_positions = parse_tags(content)
+    cleaned_content, tag_positions, escaped_chars = parse_tags(content)
     logger.info(f"Cleaned content: {cleaned_content}")
     logger.info(f"Tag positions: {tag_positions}")
 
@@ -63,28 +63,44 @@ def parse_words(
             current_position = cleaned_content.find(word, current_position) + len(word)
 
     # Recalculate word positions for the original content
-    original_word_positions = recalculate_positions(word_positions, tag_positions)
+    original_word_positions = recalculate_positions(word_positions, tag_positions, escaped_chars)
 
     return original_word_positions, tag_positions
 
 
-def recalculate_positions(
-    word_positions: List[Tuple[int, int]], tag_positions: List[Tuple[int, int]]
+def recalculate_positions(  # pylint: disable=too-many-locals
+    word_positions: List[Tuple[int, int]],
+    tag_positions: List[Tuple[int, int]],
+    escaped_chars: List[Tuple[int, int, str]],
 ) -> List[Tuple[int, int]]:
     """Recalculate word positions for the original content."""
     original_word_positions = []
     tag_index = 0
-    tag_offset = 0
+    escaped_char_index = 0
+    offset = 0
 
     for start, end in word_positions:
         # Adjust for tags before the word
-        while tag_index < len(tag_positions) and tag_positions[tag_index][0] <= start + tag_offset:
-            tag_offset += tag_positions[tag_index][1] - tag_positions[tag_index][0]
+        while tag_index < len(tag_positions) and tag_positions[tag_index][0] <= start + offset:
+            offset += tag_positions[tag_index][1] - tag_positions[tag_index][0]
             tag_index += 1
 
-        # Calculate new start and end positions
-        new_start = start + tag_offset
-        new_end = end + tag_offset
+        # Adjust for escaped characters
+        word_start_offset = 0
+        word_end_offset = 0
+        while (
+            escaped_char_index < len(escaped_chars)
+            and escaped_chars[escaped_char_index][0] < end + offset
+        ):
+            escaped_start, escaped_end, unescaped = escaped_chars[escaped_char_index]
+            if escaped_start <= start + offset:
+                word_start_offset += escaped_end - escaped_start - len(unescaped)
+            if escaped_start < end + offset:
+                word_end_offset += escaped_end - escaped_start - len(unescaped)
+            escaped_char_index += 1
+
+        new_start = start + offset + word_start_offset
+        new_end = end + offset + word_end_offset
 
         original_word_positions.append((new_start, new_end))
 

@@ -4,6 +4,7 @@ import logging
 import random
 import re
 from typing import IO, Any, Dict, Iterator, List, Optional, Tuple, Union
+from html import escape
 
 from chardet.universaldetector import UniversalDetector
 from lexiflux.ebook.book_base import MetadataField, BookBase
@@ -101,6 +102,7 @@ class BookPlainText(BookBase):  # pylint: disable=too-many-instance-attributes
     @staticmethod
     def normalize(text: str) -> str:
         """Make later processing more simple."""
+        text = escape(text)
         text = re.sub(r"(\r?\n|\u2028|\u2029)", " <br/> ", text)
         text = re.sub(r"\r", "", text)
         text = re.sub(r"[ \t]+", " ", text)

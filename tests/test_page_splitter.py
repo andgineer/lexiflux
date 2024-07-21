@@ -136,5 +136,5 @@ def test_split_inside_p_tag(mock_page_splitter):
     # Assert that the split is inside the <p> tag
     print(pages)
     assert len(pages) == 3
-    assert pages[0].endswith("</p>")
-    assert pages[1].startswith("<p>")
+    assert pages[0].endswith("&lt;/p&gt;")  # we escape tags when import plain text
+    assert pages[1].startswith("&lt;p&gt;")
