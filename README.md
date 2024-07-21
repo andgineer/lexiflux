@@ -7,9 +7,10 @@
 | lexiflux/admin.py                               |        6 |        0 |    100% |           |
 | lexiflux/api.py                                 |       24 |        3 |     88% |     37-39 |
 | lexiflux/apps.py                                |       14 |        0 |    100% |           |
-| lexiflux/ebook/book\_base.py                    |       71 |        5 |     93% |43, 50, 91, 130-131 |
+| lexiflux/ebook/book\_base.py                    |       73 |        5 |     93% |54, 61, 102, 141-142 |
 | lexiflux/ebook/book\_epub.py                    |       92 |        8 |     91% |94, 111, 114-116, 176-178 |
-| lexiflux/ebook/book\_plain\_text.py             |      113 |        7 |     94% |59-60, 114-116, 137, 184 |
+| lexiflux/ebook/book\_html.py                    |        3 |        3 |      0% |       3-9 |
+| lexiflux/ebook/book\_plain\_text.py             |      114 |        7 |     94% |61-62, 116-118, 139, 186 |
 | lexiflux/ebook/headings.py                      |       36 |        0 |    100% |           |
 | lexiflux/ebook/page\_splitter.py                |       37 |        5 |     86% |     23-29 |
 | lexiflux/forms.py                               |       33 |       18 |     45% |14-18, 35-51 |
@@ -28,7 +29,7 @@
 | lexiflux/urls.py                                |        6 |        0 |    100% |           |
 | lexiflux/utils.py                               |        8 |        0 |    100% |           |
 | lexiflux/views.py                               |      399 |      165 |     59% |79, 86-91, 125, 144, 156, 242, 273-284, 297, 313-351, 399-415, 466-492, 499-514, 521-544, 556-594, 599-617, 626-654, 661-675, 681-683, 696-701, 708-711, 718-737, 772-773, 799 |
-|                                       **TOTAL** | **1577** |  **426** | **73%** |           |
+|                                       **TOTAL** | **1583** |  **429** | **73%** |           |
 
 
 ## Setup coverage badge
