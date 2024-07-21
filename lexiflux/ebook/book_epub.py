@@ -25,7 +25,7 @@ class BookEpub(BookBase):
 
         file_path - a path to a file with EPUB.
         """
-        self.languages = ["en", "sr"] if languages is None else languages
+        super().__init__(file_path, languages)
         self.epub = epub.read_epub(file_path)
 
         self.meta, self.book_start, self.book_end = self.detect_meta()

@@ -17,6 +17,8 @@ log = logging.getLogger()
 class BookPlainText(BookBase):  # pylint: disable=too-many-instance-attributes
     """Import ebook from plain text."""
 
+    escape_html = True
+
     CHAPTER_HEADER_DISTANCE = 300  # Minimum character distance between chapter headers
     GUTENBERG_ENDING_SIZE = 30 * 1024  # Maximum size of the Gutenberg licence text
     GUTENBERG_START_SIZE = 1024  # Minimum size of the Gutenberg preamble
@@ -37,7 +39,7 @@ class BookPlainText(BookBase):  # pylint: disable=too-many-instance-attributes
         If file_path is a string, it is treated as a path to a file and we try to detect encoding.
         If file_path is a file object, we assume it was opened with correct encoding.
         """
-        self.languages = ["en", "sr"] if languages is None else languages
+        super().__init__(file_path, languages)
         if isinstance(file_path, str):
             self.text = self.read_file(file_path)
         else:
@@ -99,10 +101,10 @@ class BookPlainText(BookBase):  # pylint: disable=too-many-instance-attributes
             words = [fragment[: self.WORD_ESTIMATED_LENGTH * words_num]]
         return " ".join(words)
 
-    @staticmethod
-    def normalize(text: str) -> str:
+    def normalize(self, text: str) -> str:
         """Make later processing more simple."""
-        text = escape(text)
+        if self.escape_html:
+            text = escape(text)
         text = re.sub(r"(\r?\n|\u2028|\u2029)", " <br/> ", text)
         text = re.sub(r"\r", "", text)
         text = re.sub(r"[ \t]+", " ", text)

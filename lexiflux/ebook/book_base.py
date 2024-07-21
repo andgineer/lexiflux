@@ -1,7 +1,7 @@
 """Book base class for importing books from different formats."""
 
 import logging
-from typing import Any, Dict, Optional, Iterator
+from typing import Any, Dict, Optional, Iterator, List, Union, IO
 from collections import Counter
 
 from django.core.management import CommandError
@@ -28,6 +28,17 @@ class BookBase:
 
     toc: Toc = []
     meta: Dict[str, Any]
+
+    def __init__(
+        self,
+        file_path: Union[str, IO[str]],  # pylint: disable=unused-argument
+        languages: Optional[List[str]] = None,
+    ) -> None:
+        """Initialize.
+
+        file_path - a path to a file to import.
+        """
+        self.languages = ["en", "sr"] if languages is None else languages
 
     @staticmethod
     def get_language_group(lang: str) -> str:
