@@ -73,6 +73,9 @@ jobs:
       with:
         node-version: ${{ env.NODE_VERSION }}
 
+    - name: Build scripts
+      run: make js
+
     - name: Start SeleniumHub
       run: |
         mkdir -p allure-results

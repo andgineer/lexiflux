@@ -1,7 +1,4 @@
-import logging
-
 import pytest
-from django.urls import reverse
 import allure
 from tests.conftest import USER_PASSWORD
 from tests.page_models.language_preferences_page import LanguagePreferencesPage
@@ -50,4 +47,3 @@ def test_language_preferences_inline_translation(browser, approved_user):
         assert "Dictionary:" in inline_translation_info
 
     browser.take_screenshot("Final")
-
