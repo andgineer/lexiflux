@@ -1,0 +1,4 @@
+INFO:root:Test finished
+INFO:root:Test started
+Forbidden: /location
+WARNING:django.request:Forbidden: /location
