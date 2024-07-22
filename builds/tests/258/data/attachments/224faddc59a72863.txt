@@ -1,0 +1,1 @@
+Goto URL: from host http://0.0.0.0:35737/language-preferences/ from docker: http://10.1.0.7:35737/language-preferences/
