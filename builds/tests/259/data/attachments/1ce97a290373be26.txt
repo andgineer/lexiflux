@@ -1,0 +1,4 @@
+INFO:root:Test finished
+INFO:root:Test started
+Bad Request: /history
+WARNING:django.request:Bad Request: /history
