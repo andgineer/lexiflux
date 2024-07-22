@@ -145,8 +145,11 @@ def browser(request, with_selenium, django_server: DjangoLiveServer) -> WebDrive
     request.addfinalizer(lambda *args: webdrv.quit())
     # driver.implicitly_wait(Config().WEB_DRIVER_IMPLICITE_WAIT)
     webdrv.maximize_window()
-    return webdrv
-
+    try:
+        yield webdrv
+    except Exception as e:
+        webdrv.take_screenshot(f"Exception {e}")
+    webdrv.check_js_log()
 
 def get_docker_host_ip():
     """Get the IP address of the host accessible from within Docker containers.
@@ -173,6 +176,7 @@ def get_linux_docker_host_ip():
         return host_ip
     except socket.error as e:
         raise RuntimeError(f"Failed to determine host IP address: {e}") from e
+
 
 @pytest.fixture
 def django_server(live_server: LiveServer) -> DjangoLiveServer:

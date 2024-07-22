@@ -16,7 +16,7 @@ from selenium.webdriver.support import expected_conditions as EC
 PAGE_MAX_WAIT_TIME = 20  # second to wait for components
 PAGE_STEP_SLEEP = 0.5  # seconds to delay in component waiting loop
 FIRST_PAGE_MAX_WAIT_TIME = 20  # seconds to wait for components on first page
-MAX_JS_LOG_SIZE = 1024  # longer js log truncated in error messages
+MAX_JS_LOG_SIZE = 5 * 1024  # longer js log truncated in error messages
 
 
 DjangoLiveServer = collections.namedtuple('DjangoLiveServer', ['docker_url', 'host_url'])
@@ -100,12 +100,17 @@ class WebDriverAugmented(RemoteWebDriver):
         """
         check java script log for errors (only `severe` level)
         """
+        if self.name.lower() == 'firefox':
+            print("Skipping JavaScript log check for Firefox")
+            return
         js_log = self.get_log("browser")
         clean_log = []
         total_chars = 0
         idx = 0
         for entry in js_log:
             if entry['level'] in ['SEVERE']:
+                if "Cross-Origin-Opener-Policy header has been ignored" in entry['message']:
+                    continue
                 idx += 1
                 clean_log.append(entry)
                 total_chars += len(entry['message'])

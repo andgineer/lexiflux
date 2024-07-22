@@ -1,3 +1,5 @@
+import logging
+
 import pytest
 from django.urls import reverse
 import allure
@@ -11,7 +13,7 @@ from tests.page_models.language_preferences_page import LanguagePreferencesPage
 @pytest.mark.docker
 @pytest.mark.selenium
 @pytest.mark.django_db
-def test_language_preferences_inline_translation(browser, approved_user, caplog, client):
+def test_language_preferences_inline_translation(browser, approved_user):
     with allure.step("Login and navigate to language preferences"):
         browser.login(approved_user, USER_PASSWORD)
         page = LanguagePreferencesPage(browser)
@@ -48,3 +50,4 @@ def test_language_preferences_inline_translation(browser, approved_user, caplog,
         assert "Dictionary:" in inline_translation_info
 
     browser.take_screenshot("Final")
+
