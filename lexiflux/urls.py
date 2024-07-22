@@ -3,9 +3,12 @@
 from django.urls import path, include
 from django.contrib.auth.views import LogoutView
 from django.contrib import admin
-from lexiflux import views
-from lexiflux.views import SignUpView, CustomLoginView
 
+import lexiflux.views.language_preferences_ajax
+import lexiflux.views.lexical_views
+import lexiflux.views.library_views
+import lexiflux.views.reader_views
+from lexiflux.views.auth_views import SignUpView, CustomLoginView
 
 urlpatterns = [
     path("admin/", admin.site.urls),
@@ -13,38 +16,50 @@ urlpatterns = [
     path("accounts/logout/", LogoutView.as_view(next_page="login"), name="logout"),
     path("accounts/signup/", SignUpView.as_view(), name="signup"),
     path("accounts/", include("django.contrib.auth.urls")),
-    path("", views.redirect_to_reader, name="redirect_to_reader"),
-    path("reader", views.reader, name="reader"),
-    path("library", views.library, name="library"),
-    path("page", views.page, name="page"),
-    path("location", views.location, name="location"),
-    path("history", views.add_to_history, name="history"),
-    path("translate", views.translate, name="translate"),
-    path("book", views.view_book, name="book"),
+    path("", lexiflux.views.reader_views.redirect_to_reader, name="redirect_to_reader"),
+    path("reader", lexiflux.views.reader_views.reader, name="reader"),
+    path("library", lexiflux.views.library_views.library, name="library"),
+    path("page", lexiflux.views.reader_views.page, name="page"),
+    path("location", lexiflux.views.reader_views.location, name="location"),
+    path("history", lexiflux.views.reader_views.add_to_history, name="history"),
+    path("translate", lexiflux.views.lexical_views.translate, name="translate"),
+    path("book", lexiflux.views.library_views.view_book, name="book"),
     path(
-        "language-tool-preferences/",
-        views.language_tool_preferences,
-        name="language-tool-preferences",
-    ),
-    path(
-        "api/get-profile-for-language/",
-        views.api_get_profile_for_language,
-        name="api_get_profile_for_language",
+        "language-preferences/",
+        lexiflux.views.language_preferences_ajax.language_preferences_editor,
+        name="language-preferences",
     ),
     path(
         "api/update-user-language/",
-        views.api_update_user_language,
+        lexiflux.views.language_preferences_ajax.update_user_language,
         name="api_update_user_language",
     ),
-    path("api/profile/", views.api_profile, name="api_profile"),
-    path("manage-lexical-article/", views.manage_lexical_article, name="manage_lexical_article"),
     path(
-        "save-inline-translation/", views.save_inline_translation, name="save_inline_translation"
+        "api/get-language-preferences/",
+        lexiflux.views.language_preferences_ajax.get_language_preferences,
+        name="get_language_preferences",
     ),
-    path("get-models/", views.get_models, name="get_models"),
-    path("api/get-dictionaries/", views.get_available_dictionaries, name="get_dictionaries"),
-    path("update-profile/", views.update_profile, name="update_profile"),
     path(
-        "save-inline-translation/", views.save_inline_translation, name="save_inline_translation"
+        "api/manage-lexical-article/",
+        lexiflux.views.language_preferences_ajax.manage_lexical_article,
+        name="manage_lexical_article",
+    ),
+    path(
+        "api/save-inline-translation/",
+        lexiflux.views.language_preferences_ajax.save_inline_translation,
+        name="save_inline_translation",
+    ),
+    path(
+        "api/get-models/", lexiflux.views.language_preferences_ajax.get_models, name="get_models"
+    ),
+    path(
+        "api/get-dictionaries/",
+        lexiflux.views.language_preferences_ajax.get_available_dictionaries,
+        name="get_dictionaries",
+    ),
+    path(
+        "api/save-inline-translation/",
+        lexiflux.views.language_preferences_ajax.save_inline_translation,
+        name="save_inline_translation",
     ),
 ]

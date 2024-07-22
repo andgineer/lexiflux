@@ -22,6 +22,7 @@ class Translator:  # pylint: disable=too-few-public-methods
         self._profile = language_preferences
         source = book.language.google_code
         target = language_preferences.user_language.google_code
+        print(f"The source is {source} and the target is {target}")
         self._translator = GoogleTranslator(source=source, target=target)
 
     @lru_cache(maxsize=128)

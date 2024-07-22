@@ -5,7 +5,7 @@ from django.contrib.auth import get_user_model
 from django.core.cache import cache as django_cache
 
 from lexiflux.models import Author, Language, Book, BookPage
-from lexiflux.views import render_page
+from lexiflux.views.reader_views import render_page
 
 
 @allure.epic('View: Page')

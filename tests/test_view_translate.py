@@ -3,13 +3,14 @@ import pytest
 from django.urls import reverse
 from unittest.mock import patch
 
+import lexiflux.views.lexical_views
 from lexiflux.language.translation import get_translator, Translator
 from lexiflux.models import LanguagePreferences
 
 
 @allure.epic('Translator')
 @pytest.mark.django_db
-@patch('lexiflux.views.get_translator')
+@patch('lexiflux.views.lexical_views.get_translator')
 def test_translate_view_success(mock_get_translator, client, user, book):
     client.force_login(user)
     language_preferences = LanguagePreferences.get_or_create_language_preferences(user=user, language=book.language)

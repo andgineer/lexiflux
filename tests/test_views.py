@@ -117,8 +117,8 @@ def test_view_book_access_denied(client, book):
 def test_language_preferences_view_success(client, user):
     client.force_login(user)
 
-    response = client.get(reverse('language-tool-preferences'))
+    response = client.get(reverse('language-preferences'))
 
     assert response.status_code == 200
 
-    assertTemplateUsed(response, 'language-tool-preferences.html')
+    assertTemplateUsed(response, 'language-preferences.html')
