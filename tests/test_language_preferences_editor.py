@@ -12,39 +12,39 @@ from tests.page_models.language_preferences_page import LanguagePreferencesPage
 @pytest.mark.selenium
 @pytest.mark.django_db
 def test_language_preferences_inline_translation(browser, approved_user, caplog, client):
-    browser.login(approved_user, USER_PASSWORD)
-    browser.goto(reverse('language-preferences'))
+    with allure.step("Login and navigate to language preferences"):
+        browser.login(approved_user, USER_PASSWORD)
+        page = LanguagePreferencesPage(browser)
+        page.goto()
+        browser.take_screenshot("Initial")
 
-    page = LanguagePreferencesPage(browser)
-    page.wait_for_page_load()
-    browser.take_screenshot("Initial")
+    with allure.step("Verify initial page state"):
+        assert "Language Tool Preferences" in page.get_page_title()
+        assert "English" in page.get_selected_language()
 
-    assert "Language Tool Preferences" in page.get_page_title()
-    assert "English" in page.get_selected_language()
+    with allure.step("Open and configure Translate in inline translation"):
+        page.open_inline_translation_editor()
+        assert page.select_inline_translation_type("Translate") == "Translate"
+        page.select_model()
+        browser.take_screenshot("Before Inline Translation type Translation Save")
+        page.save_changes()
 
-    # Set Inline Translation Type to Translate and save
-    page.open_inline_translation_editor()
-    assert page.select_inline_translation_type("Translate") == "Translate"
-    page.select_model()
-    browser.take_screenshot("Before Inline Translation type Translation Save")
-    page.save_changes()
+        inline_translation_info = page.get_inline_translation_info()
+        assert "Type:" in inline_translation_info
+        assert "Translate" in inline_translation_info
+        assert "model:" in inline_translation_info
 
-    inline_translation_info = page.get_inline_translation_info()
-    assert "Type:" in inline_translation_info
-    assert "Translate" in inline_translation_info
-    assert "model:" in inline_translation_info
+    with allure.step("Open and configure Dictionary in inline translation"):
+        page.open_inline_translation_editor()
+        assert page.select_inline_translation_type("Dictionary") == "Dictionary"
+        assert page.select_dictionary("Google Translator")
 
-    # Set Inline Translation Type to Dictionary and save
-    page.open_inline_translation_editor()
-    assert page.select_inline_translation_type("Dictionary") == "Dictionary"
-    assert page.select_dictionary("Google Translator")
+        browser.take_screenshot("Before Inline Translation type Dictionary Save")
+        page.save_changes()
 
-    browser.take_screenshot("Before Inline Translation type Dictionary Save")
-    page.save_changes()
-
-    inline_translation_info = page.get_inline_translation_info()
-    assert "Type:" in inline_translation_info
-    assert "GoogleTranslator" in inline_translation_info
-    assert "Dictionary:" in inline_translation_info
+        inline_translation_info = page.get_inline_translation_info()
+        assert "Type:" in inline_translation_info
+        assert "GoogleTranslator" in inline_translation_info
+        assert "Dictionary:" in inline_translation_info
 
     browser.take_screenshot("Final")

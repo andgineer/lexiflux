@@ -1,6 +1,9 @@
 from typing import Optional
 
-from selenium.common import TimeoutException, NoSuchElementException
+import allure
+from django.urls import reverse
+from selenium.common import TimeoutException, NoSuchElementException, NoAlertPresentException, \
+    UnexpectedAlertPresentException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -11,9 +14,30 @@ class LanguagePreferencesPage:
         self.browser = browser
 
     def wait_for_page_load(self):
-        WebDriverWait(self.browser, 10).until(
-            EC.presence_of_element_located((By.CLASS_NAME, "language-selection-card"))
-        )
+        try:
+            WebDriverWait(self.browser, 10).until(
+                EC.presence_of_element_located((By.CLASS_NAME, "language-selection-card"))
+            )
+        except TimeoutException as e:
+            alert_text = self.check_for_alert()
+            if alert_text:
+                raise AssertionError(f"Unexpected alert during page load: {alert_text}") from e
+            raise
+
+    def check_for_alert(self):
+        try:
+            WebDriverWait(self.browser, 3).until(EC.alert_is_present())
+            alert = self.browser.switch_to.alert
+            alert_text = alert.text
+            allure.attach(alert_text, name="Unexpected Alert", attachment_type=allure.attachment_type.TEXT)
+            return alert_text
+        except (TimeoutException, NoAlertPresentException):
+            return None
+
+    @allure.step("Navigate to language preferences page")
+    def goto(self):
+        self.browser.goto(reverse('language-preferences'))
+        self.wait_for_page_load()
 
     def get_page_title(self):
         return self.browser.find_element(By.CLASS_NAME, "container-fluid").text
@@ -23,10 +47,15 @@ class LanguagePreferencesPage:
         return language_select.text
 
     def open_inline_translation_editor(self):
-        edit_button = WebDriverWait(self.browser, 10).until(
-            EC.element_to_be_clickable((By.ID, "inline-translation-edit"))
-        )
-        edit_button.click()
+        try:
+            WebDriverWait(self.browser, 10).until(
+                EC.element_to_be_clickable((By.ID, "inline-translation-edit"))
+            ).click()
+        except UnexpectedAlertPresentException as e:
+            alert_text = self.check_for_alert()
+            if alert_text:
+                raise AssertionError(f"Unexpected alert when opening editor: {alert_text}") from e
+            raise
 
     def wait_for_modal(self):
         return WebDriverWait(self.browser, 10).until(
