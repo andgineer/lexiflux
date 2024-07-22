@@ -29,11 +29,11 @@
 | lexiflux/urls.py                                |        9 |        0 |    100% |           |
 | lexiflux/utils.py                               |        8 |        0 |    100% |           |
 | lexiflux/views/auth\_views.py                   |       31 |        3 |     90% | 43, 50-55 |
-| lexiflux/views/language\_preferences\_ajax.py   |      154 |       83 |     46% |95-97, 104-119, 132, 161-199, 204-222, 231-259, 266-280 |
+| lexiflux/views/language\_preferences\_ajax.py   |      154 |       94 |     39% |95-97, 104-119, 126-149, 161-199, 204-222, 231-259, 266-280 |
 | lexiflux/views/lexical\_views.py                |       71 |       31 |     56% |41-52, 65, 81-119, 167-183 |
 | lexiflux/views/library\_views.py                |       30 |        2 |     93% |     45-46 |
 | lexiflux/views/reader\_views.py                 |      107 |        5 |     95% |45, 64, 76, 162, 195 |
-|                                       **TOTAL** | **1581** |  **368** | **77%** |           |
+|                                       **TOTAL** | **1581** |  **379** | **76%** |           |
 
 
 ## Setup coverage badge
