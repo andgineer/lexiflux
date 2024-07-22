@@ -1,6 +1,7 @@
 """Extract words and HTML tags from HTML content."""
 
 import os
+import re
 from enum import Enum
 from typing import List, Tuple
 import logging
@@ -13,7 +14,10 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Set NLTK data path to a writable directory
-nltk_data_dir = os.path.join(os.path.expanduser("~"), "nltk_data")
+if "GITHUB_WORKSPACE" in os.environ:
+    nltk_data_dir = os.path.join(os.environ["GITHUB_WORKSPACE"], "nltk_data")
+else:
+    nltk_data_dir = os.path.join(os.path.expanduser("~"), "nltk_data")
 os.makedirs(nltk_data_dir, exist_ok=True)
 nltk.data.path.append(nltk_data_dir)
 
@@ -38,6 +42,11 @@ class WordTokenizer(Enum):
     """Enum to select the word tokenizer."""
 
     NLTK = "nltk"
+
+
+def simple_word_tokenize(text: str) -> List[str]:
+    """A simple word tokenizer that splits on whitespace and punctuation."""
+    return re.findall(r"\b\w+\b", text)
 
 
 def is_punctuation(token: str) -> bool:
