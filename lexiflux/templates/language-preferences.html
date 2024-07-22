@@ -196,7 +196,7 @@
                        <div v-if="form.type === 'AI'">
                          <div class="mb-3">
                             <label class="form-label">AI Model</label>
-                            <select v-model="form.parameters.model" @change="updateParameters" class="form-select">
+                            <select id="model-select" v-model="form.parameters.model" @change="updateParameters" class="form-select">
                                 <option value="">Select model</option>
                                 <option v-for="model in aiModels" :key="model.key" :value="model.key">
                                     [[ model.title ]]

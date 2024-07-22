@@ -1,6 +1,6 @@
 import collections
 from typing import Optional
-
+import allure
 import requests
 from django.urls import reverse
 from selenium.common.exceptions import TimeoutException
@@ -150,4 +150,12 @@ class WebDriverAugmented(RemoteWebDriver):
         Raise TimeoutException if no error panel appear.
         """
         return self.get_errors_text()
+
+    def take_screenshot(self, name: str = ''):
+        """Take a screenshot and attach it to the allure report."""
+        allure.attach(
+            self.get_screenshot_as_png(),
+            name=name,
+            attachment_type=allure.attachment_type.PNG
+        )
 
