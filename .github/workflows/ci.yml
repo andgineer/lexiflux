@@ -74,7 +74,9 @@ jobs:
         node-version: ${{ env.NODE_VERSION }}
 
     - name: Build scripts
-      run: make js
+      run: |
+        npm install
+        npm run build
 
     - name: Start SeleniumHub
       run: |
