@@ -21,7 +21,7 @@
 | lexiflux/language/sentence\_extractor.py        |       28 |        5 |     82% |10-13, 52, 63, 79 |
 | lexiflux/language/sentence\_extractor\_llm.py   |       52 |       39 |     25% |17, 48-92, 97-128, 133-167 |
 | lexiflux/language/translation.py                |       44 |        0 |    100% |           |
-| lexiflux/language/word\_extractor.py            |       74 |        8 |     89% |25-30, 61, 68 |
+| lexiflux/language/word\_extractor.py            |       79 |       10 |     87% |20, 29-34, 49, 70, 77 |
 | lexiflux/models.py                              |      232 |       35 |     85% |88, 98, 137, 146-147, 164, 175, 197, 231-234, 249, 270-278, 281-288, 310, 312-313, 315-316, 319, 360, 401-412 |
 | lexiflux/settings.py                            |        0 |        0 |    100% |           |
 | lexiflux/signals.py                             |       20 |        2 |     90% |     45-46 |
@@ -33,7 +33,7 @@
 | lexiflux/views/lexical\_views.py                |       71 |       31 |     56% |41-52, 65, 81-119, 167-183 |
 | lexiflux/views/library\_views.py                |       30 |        2 |     93% |     45-46 |
 | lexiflux/views/reader\_views.py                 |      107 |        5 |     95% |45, 64, 76, 162, 195 |
-|                                       **TOTAL** | **1591** |  **365** | **77%** |           |
+|                                       **TOTAL** | **1596** |  **367** | **77%** |           |
 
 
 ## Setup coverage badge
