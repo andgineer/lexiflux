@@ -353,8 +353,30 @@ Add to each translation to {user_language} language.
                 })
                 .catch(error => console.error('Error fetching dictionaries:', error));
         },
+        loadArticles() {
+            fetch('{% url "get_language_preferences" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify({ language_id: this.currentLanguageId })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    this.articles = data.articles;
+                } else {
+                    alert('Failed to load lexical articles');
+                }
+            })
+            .catch(error => {
+                console.error('Error loading articles:', error);
+                alert('Failed to load articles. Please try again.');
+            });
+        },
         changeLanguage() {
-            fetch('{% url "api_get_profile_for_language" %}', {
+            fetch('{% url "get_language_preferences" %}', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -667,30 +689,6 @@ Add to each translation to {user_language} language.
             return text;
           }
           return text.slice(0, 15) + "...";
-        },
-        loadArticles() {
-            fetch(`{% url "api_profile" %}?language_id=${this.currentLanguageId}`)
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! status: ${response.status}`);
-                    }
-                    return response.text();
-                })
-                .then(text => {
-                    try {
-                        return JSON.parse(text);
-                    } catch (e) {
-                        console.error('Server response is not valid JSON:', text);
-                        throw new Error('The server response is not valid JSON');
-                    }
-                })
-                .then(data => {
-                    this.articles = data.articles;
-                })
-                .catch(error => {
-                    console.error('Error loading articles:', error);
-                    alert('Failed to load articles. Please try again.');
-                });
         },
     }
 });

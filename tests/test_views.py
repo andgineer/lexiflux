@@ -112,7 +112,7 @@ def test_view_book_access_denied(client, book):
     assert response.status_code == 403
 
 
-@allure.epic('View: Profile')
+@allure.epic('View: Language Preferences')
 @pytest.mark.django_db
 def test_language_preferences_view_success(client, user):
     client.force_login(user)
