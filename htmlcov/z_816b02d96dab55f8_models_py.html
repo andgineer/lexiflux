@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-    <title>Coverage for lexiflux/models.py: 82%</title>
+    <title>Coverage for lexiflux/models.py: 85%</title>
     <link rel="icon" sizes="32x32" href="favicon_32_cb_58284776.png">
     <link rel="stylesheet" href="style_cb_8e611ae1.css" type="text/css">
     <script src="coverage_html_cb_6fb7b396.js" defer></script>
@@ -12,7 +12,7 @@
     <div class="content">
         <h1>
             <span class="text">Coverage for </span><b>lexiflux/models.py</b>:
-            <span class="pc_cov">82%</span>
+            <span class="pc_cov">85%</span>
         </h1>
         <aside id="help_panel_wrapper">
             <input id="help_panel_state" type="checkbox">
@@ -55,8 +55,8 @@
         </aside>
         <h2>
             <span class="text">232 statements &nbsp;</span>
-            <button type="button" class="run button_toggle_run" value="run" data-shortcut="r" title="Toggle lines run">190<span class="text"> run</span></button>
-            <button type="button" class="mis show_mis button_toggle_mis" value="mis" data-shortcut="m" title="Toggle lines missing">42<span class="text"> missing</span></button>
+            <button type="button" class="run button_toggle_run" value="run" data-shortcut="r" title="Toggle lines run">197<span class="text"> run</span></button>
+            <button type="button" class="mis show_mis button_toggle_mis" value="mis" data-shortcut="m" title="Toggle lines missing">35<span class="text"> missing</span></button>
             <button type="button" class="exc show_exc button_toggle_exc" value="exc" data-shortcut="x" title="Toggle lines excluded">0<span class="text"> excluded</span></button>
         </h2>
         <p class="text">
@@ -65,7 +65,7 @@
             <a id="nextFileLink" class="nav" href="z_816b02d96dab55f8_signals_py.html">&#xbb; next</a>
             &nbsp; &nbsp; &nbsp;
             <a class="nav" href="https://coverage.readthedocs.io/en/7.6.0">coverage.py v7.6.0</a>,
-            created at 2024-07-22 14:50 +0000
+            created at 2024-07-22 15:30 +0000
         </p>
         <aside class="hidden">
             <button type="button" class="button_next_chunk" data-shortcut="j"></button>
@@ -546,19 +546,19 @@
     <p class="pln"><span class="n"><a id="t464" href="#t464">464</a></span><span class="t">        <span class="op">)</span>&nbsp;</span><span class="r"></span></p>
     <p class="pln"><span class="n"><a id="t465" href="#t465">465</a></span><span class="t">&nbsp;</span><span class="r"></span></p>
     <p class="run"><span class="n"><a id="t466" href="#t466">466</a></span><span class="t">        <span class="key">if</span> <span class="key">not</span> <span class="nam">created</span><span class="op">:</span>&nbsp;</span><span class="r"></span></p>
-    <p class="mis show_mis"><span class="n"><a id="t467" href="#t467">467</a></span><span class="t">            <span class="nam">location</span><span class="op">.</span><span class="nam">page_number</span> <span class="op">=</span> <span class="nam">page_number</span>&nbsp;</span><span class="r"></span></p>
-    <p class="mis show_mis"><span class="n"><a id="t468" href="#t468">468</a></span><span class="t">            <span class="nam">location</span><span class="op">.</span><span class="nam">word</span> <span class="op">=</span> <span class="nam">top_word_id</span>&nbsp;</span><span class="r"></span></p>
-    <p class="mis show_mis"><span class="n"><a id="t469" href="#t469">469</a></span><span class="t">            <span class="nam">location</span><span class="op">.</span><span class="nam">updated</span> <span class="op">=</span> <span class="nam">timezone</span><span class="op">.</span><span class="nam">now</span><span class="op">(</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
+    <p class="run"><span class="n"><a id="t467" href="#t467">467</a></span><span class="t">            <span class="nam">location</span><span class="op">.</span><span class="nam">page_number</span> <span class="op">=</span> <span class="nam">page_number</span>&nbsp;</span><span class="r"></span></p>
+    <p class="run"><span class="n"><a id="t468" href="#t468">468</a></span><span class="t">            <span class="nam">location</span><span class="op">.</span><span class="nam">word</span> <span class="op">=</span> <span class="nam">top_word_id</span>&nbsp;</span><span class="r"></span></p>
+    <p class="run"><span class="n"><a id="t469" href="#t469">469</a></span><span class="t">            <span class="nam">location</span><span class="op">.</span><span class="nam">updated</span> <span class="op">=</span> <span class="nam">timezone</span><span class="op">.</span><span class="nam">now</span><span class="op">(</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
     <p class="pln"><span class="n"><a id="t470" href="#t470">470</a></span><span class="t">&nbsp;</span><span class="r"></span></p>
     <p class="pln"><span class="n"><a id="t471" href="#t471">471</a></span><span class="t">            <span class="com"># Check and update the latest reading point</span>&nbsp;</span><span class="r"></span></p>
-    <p class="mis show_mis"><span class="n"><a id="t472" href="#t472">472</a></span><span class="t">            <span class="key">if</span> <span class="nam">page_number</span> <span class="op">></span> <span class="nam">location</span><span class="op">.</span><span class="nam">furthest_reading_page</span> <span class="key">or</span> <span class="op">(</span>&nbsp;</span><span class="r"></span></p>
+    <p class="run"><span class="n"><a id="t472" href="#t472">472</a></span><span class="t">            <span class="key">if</span> <span class="nam">page_number</span> <span class="op">></span> <span class="nam">location</span><span class="op">.</span><span class="nam">furthest_reading_page</span> <span class="key">or</span> <span class="op">(</span>&nbsp;</span><span class="r"></span></p>
     <p class="pln"><span class="n"><a id="t473" href="#t473">473</a></span><span class="t">                <span class="nam">page_number</span> <span class="op">==</span> <span class="nam">location</span><span class="op">.</span><span class="nam">furthest_reading_page</span>&nbsp;</span><span class="r"></span></p>
     <p class="pln"><span class="n"><a id="t474" href="#t474">474</a></span><span class="t">                <span class="key">and</span> <span class="nam">top_word_id</span> <span class="op">></span> <span class="nam">location</span><span class="op">.</span><span class="nam">furthest_reading_page</span>&nbsp;</span><span class="r"></span></p>
     <p class="pln"><span class="n"><a id="t475" href="#t475">475</a></span><span class="t">            <span class="op">)</span><span class="op">:</span>&nbsp;</span><span class="r"></span></p>
-    <p class="mis show_mis"><span class="n"><a id="t476" href="#t476">476</a></span><span class="t">                <span class="nam">location</span><span class="op">.</span><span class="nam">furthest_reading_page</span> <span class="op">=</span> <span class="nam">page_number</span>&nbsp;</span><span class="r"></span></p>
-    <p class="mis show_mis"><span class="n"><a id="t477" href="#t477">477</a></span><span class="t">                <span class="nam">location</span><span class="op">.</span><span class="nam">furthest_reading_word</span> <span class="op">=</span> <span class="nam">top_word_id</span>&nbsp;</span><span class="r"></span></p>
+    <p class="run"><span class="n"><a id="t476" href="#t476">476</a></span><span class="t">                <span class="nam">location</span><span class="op">.</span><span class="nam">furthest_reading_page</span> <span class="op">=</span> <span class="nam">page_number</span>&nbsp;</span><span class="r"></span></p>
+    <p class="run"><span class="n"><a id="t477" href="#t477">477</a></span><span class="t">                <span class="nam">location</span><span class="op">.</span><span class="nam">furthest_reading_word</span> <span class="op">=</span> <span class="nam">top_word_id</span>&nbsp;</span><span class="r"></span></p>
     <p class="pln"><span class="n"><a id="t478" href="#t478">478</a></span><span class="t">&nbsp;</span><span class="r"></span></p>
-    <p class="mis show_mis"><span class="n"><a id="t479" href="#t479">479</a></span><span class="t">            <span class="nam">location</span><span class="op">.</span><span class="nam">save</span><span class="op">(</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
+    <p class="run"><span class="n"><a id="t479" href="#t479">479</a></span><span class="t">            <span class="nam">location</span><span class="op">.</span><span class="nam">save</span><span class="op">(</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
     <p class="pln"><span class="n"><a id="t480" href="#t480">480</a></span><span class="t">&nbsp;</span><span class="r"></span></p>
     <p class="run"><span class="n"><a id="t481" href="#t481">481</a></span><span class="t">    <span class="key">class</span> <span class="nam">Meta</span><span class="op">:</span>&nbsp;</span><span class="r"></span></p>
     <p class="pln"><span class="n"><a id="t482" href="#t482">482</a></span><span class="t">        <span class="str">"""Meta class for ReadingProgress."""</span>&nbsp;</span><span class="r"></span></p>
@@ -592,7 +592,7 @@
             <a class="nav" href="z_816b02d96dab55f8_signals_py.html">&#xbb; next</a>
             &nbsp; &nbsp; &nbsp;
             <a class="nav" href="https://coverage.readthedocs.io/en/7.6.0">coverage.py v7.6.0</a>,
-            created at 2024-07-22 14:50 +0000
+            created at 2024-07-22 15:30 +0000
         </p>
     </div>
 </footer>
