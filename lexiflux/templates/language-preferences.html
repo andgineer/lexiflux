@@ -49,11 +49,11 @@
                         <div class="mb-3">
                             <div class="d-flex justify-content-between align-items-start">
                                 <strong>Inline Translation:</strong>
-                                <button type="button" class="btn btn-primary btn-sm" @click="editInlineTranslation">
+                                <button id="inline-translation-edit" type="button" class="btn btn-primary btn-sm" @click="editInlineTranslation">
                                     Edit
                                 </button>
                             </div>
-                            <div class="mt-2 p-2 bg-light rounded">
+                            <div id="inline-translation-info" class="mt-2 p-2 bg-light rounded">
                                 <div><strong>Type:</strong> [[ inlineTranslation.type ]]</div>
                                 <div v-if="inlineTranslation.type === 'Site'">
                                     <div><strong>URL:</strong> [[ formatUrl(inlineTranslation.parameters.url) ]]</div>
@@ -147,7 +147,7 @@
                         </div>
                         <div class="mb-3">
                             <label for="articleType" class="form-label">Article Type</label>
-                            <select v-model="form.type" class="form-select" @change="updateParameters">
+                            <select id="article-type-select" v-model="form.type" class="form-select" @change="updateParameters">
                                 <option value="">Select type</option>
                                 {% for value, label in lexical_article_types %}
                                     <option value="{{ value }}">{{ label }}</option>
@@ -188,7 +188,7 @@
                        <div v-if="form.type === 'Dictionary'">
                             <div class="mb-3">
                                 <label class="form-label">Dictionary</label>
-                                <select v-if="form.type === 'Dictionary'" v-model="form.parameters.dictionary" class="form-select" required>
+                                <select id="dictionary-select" v-if="form.type === 'Dictionary'" v-model="form.parameters.dictionary" class="form-select" required>
                                     <option v-for="dict in availableDictionaries" :key="dict.value" :value="dict.value">[[ dict.label ]]</option>
                                 </select>
                             </div>
@@ -211,7 +211,7 @@
                            </small>
                          </div>
                        </div>
-                        <button type="submit" class="btn btn-primary">Save</button>
+                        <button id="save-article-button" type="submit" class="btn btn-primary">Save</button>
                     </form>
                 </div>
             </div>

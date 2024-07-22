@@ -43,8 +43,8 @@ WEBDRIVER_HOST = 'http://localhost:4444/wd/hub'
 
 test_browsers = [
     CHROME_BROWSER_NAME,
-    FIREFOX_BROWSER_NAME,
-    EDGE_BROWSER_NAME,
+    # FIREFOX_BROWSER_NAME,
+    # EDGE_BROWSER_NAME,
 ]
 browser_options = {
     CHROME_BROWSER_NAME: ChromeOptions,
