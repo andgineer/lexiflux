@@ -362,17 +362,30 @@ Add to each translation to {user_language} language.
                 },
                 body: JSON.stringify({ language_id: this.currentLanguageId })
             })
-            .then(response => response.json())
-            .then(data => {
-                if (data.status === 'success') {
-                    this.articles = data.articles;
-                } else {
-                    alert('Failed to load lexical articles');
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.text();  // Get the raw text of the response
+            })
+            .then(text => {
+                try {
+                    const data = JSON.parse(text);
+                    if (data.status === 'success') {
+                        this.articles = data.articles;
+                    } else {
+                        console.error('Server responded with an error:', data);
+                        throw new Error('Server responded with an error');
+                    }
+                } catch (e) {
+                    console.error('Error parsing JSON:', e);
+                    console.error('Full response:', text);
+                    throw new Error('Invalid JSON response');
                 }
             })
             .catch(error => {
                 console.error('Error loading articles:', error);
-                alert('Failed to load articles. Please try again.');
+                this.errorMessage = 'Failed to load articles. Please try again.';
             });
         },
         changeLanguage() {
@@ -462,12 +475,25 @@ Add to each translation to {user_language} language.
         },
         loadAIModels() {
             fetch('{% url "get_models" %}')
-                .then(response => response.json())
-                .then(data => {
-                    this.aiModels = data.models;
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.text();  // Get the raw text of the response
+                })
+                .then(text => {
+                    try {
+                        const data = JSON.parse(text);
+                        this.aiModels = data.models;
+                    } catch (e) {
+                        console.error('Error parsing JSON:', e);
+                        console.error('Full response:', text);
+                        throw new Error('Invalid JSON response');
+                    }
                 })
                 .catch(error => {
                     console.error('Error loading AI models:', error);
+                    this.errorMessage = 'Failed to load AI models. Please try again.';
                 });
         },
         formatUrl(url) {

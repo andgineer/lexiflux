@@ -1,4 +1,3 @@
-import collections
 import os
 import platform
 
@@ -44,7 +43,7 @@ WEBDRIVER_HOST = 'http://localhost:4444/wd/hub'
 test_browsers = [
     CHROME_BROWSER_NAME,
     FIREFOX_BROWSER_NAME,
-    # EDGE_BROWSER_NAME,
+    EDGE_BROWSER_NAME,
 ]
 browser_options = {
     CHROME_BROWSER_NAME: ChromeOptions,
@@ -145,10 +144,7 @@ def browser(request, with_selenium, django_server: DjangoLiveServer) -> WebDrive
     request.addfinalizer(lambda *args: webdrv.quit())
     # driver.implicitly_wait(Config().WEB_DRIVER_IMPLICITE_WAIT)
     webdrv.maximize_window()
-    try:
-        yield webdrv
-    except Exception as e:
-        webdrv.take_screenshot(f"Exception {e}")
+    yield webdrv
     webdrv.check_js_log()
 
 def get_docker_host_ip():
