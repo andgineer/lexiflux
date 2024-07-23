@@ -1,4 +1,0 @@
-INFO:root:Test finished
-INFO:root:Test started
-Internal Server Error: /page
-ERROR:django.request:Internal Server Error: /page
