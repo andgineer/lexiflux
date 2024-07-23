@@ -2,15 +2,7 @@
 
 from enum import Enum
 from typing import List, Tuple, Dict, Optional
-import nltk
-
-
-try:
-    nltk.download("punkt", quiet=True)
-except FileExistsError:
-    # suppress to pass pylint
-    # this is expected to happen when the resource is already downloaded
-    pass
+from lexiflux.language.nltk_tokenizer import get_punkt_tokenizer
 
 
 class SentenceTokenizer(Enum):
@@ -47,18 +39,8 @@ def break_into_sentences(
     #  so if we collect only the words that wont be full sentence - we may miss the punctuation
     #  maybe instead of sentence texts we better return the sentences positions
     if tokenizer == SentenceTokenizer.NLTK:
-        try:
-            nltk.data.find(f"tokenizers/punkt/{lang_code}.pickle")
-            sentence_spans = list(
-                nltk.tokenize.punkt.PunktSentenceTokenizer(
-                    lang_vars=nltk.tokenize.punkt.PunktLanguageVars(lang_code)
-                ).span_tokenize(plain_text)
-            )
-        except LookupError:
-            print(f"NLTK punkt tokenizer not available for {lang_code}. Using default.")
-            sentence_spans = list(
-                nltk.tokenize.punkt.PunktSentenceTokenizer().span_tokenize(plain_text)
-            )
+        punkt_tokenizer = get_punkt_tokenizer(lang_code)
+        sentence_spans = list(punkt_tokenizer.span_tokenize(plain_text))
     else:
         raise ValueError(f"Unsupported tokenizer: {tokenizer}")
 

@@ -1,41 +1,17 @@
 """Extract words and HTML tags from HTML content."""
 
-import os
 import re
 from enum import Enum
 from typing import List, Tuple
 import logging
 import nltk
+from lexiflux.language.nltk_tokenizer import ensure_nltk_data
 
 
 from lexiflux.language.html_tags_cleaner import parse_tags
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
-# Set NLTK data path to a writable directory
-if "GITHUB_WORKSPACE" in os.environ:
-    nltk_data_dir = os.path.join(os.environ["GITHUB_WORKSPACE"], "nltk_data")
-else:
-    nltk_data_dir = os.path.join(os.path.expanduser("~"), "nltk_data")
-os.makedirs(nltk_data_dir, exist_ok=True)
-nltk.data.path.append(nltk_data_dir)
-
-
-def download_nltk_data() -> None:
-    """Download NLTK punkt data if not already present."""
-    try:
-        nltk.data.find("tokenizers/punkt")
-    except LookupError:
-        try:
-            nltk.download("punkt", quiet=True, download_dir=nltk_data_dir)
-        except Exception as e:  # pylint: disable=broad-except
-            logger.warning(f"Failed to download NLTK punkt data: {e}")
-            logger.warning("NLTK punkt tokenizer may not be available.")
-
-
-# Attempt to download NLTK data
-download_nltk_data()
 
 
 class WordTokenizer(Enum):
@@ -65,8 +41,8 @@ def parse_words(
     logger.debug(f"Escaped characters: {[content[start:end] for start, end, _ in escaped_chars]}")
 
     if tokenizer == WordTokenizer.NLTK:
+        ensure_nltk_data(f"tokenizers/punkt/{lang_code}.pickle", "punkt")
         try:
-            nltk.data.find(f"tokenizers/punkt/{lang_code}.pickle")
             words = nltk.tokenize.word_tokenize(
                 cleaned_content, language=lang_code, preserve_line=True
             )
