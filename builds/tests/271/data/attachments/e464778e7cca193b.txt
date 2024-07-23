@@ -1,0 +1,1 @@
+ERROR    root:translation.py:85 Failed to detect language: API failure

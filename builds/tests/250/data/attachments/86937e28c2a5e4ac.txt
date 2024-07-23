@@ -1,4 +1,0 @@
-Tag: script (0, 8)
-Hidden text: var x = 5; (8, 18)
-Tag: style (27, 34)
-Hidden text: .cls { color: red; } (34, 54)
