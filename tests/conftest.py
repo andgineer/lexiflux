@@ -147,6 +147,7 @@ def browser(request, with_selenium, django_server: DjangoLiveServer) -> WebDrive
     yield webdrv
     webdrv.check_js_log()
 
+
 def get_docker_host_ip():
     """Get the IP address of the host accessible from within Docker containers.
 
@@ -212,7 +213,7 @@ def pytest_runtest_makereport(item, call):
                 return
             allure.attach(
                 web_driver.get_screenshot_as_png(),
-                name='screenshot',
+                name='post-mortem screenshot',
                 attachment_type=allure.attachment_type.PNG
             )
             if web_driver.browser_name != FIREFOX_BROWSER_NAME:

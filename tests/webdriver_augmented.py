@@ -1,6 +1,7 @@
 import collections
 from typing import Optional
 import allure
+import pytest
 import requests
 from django.urls import reverse
 from selenium.common.exceptions import TimeoutException
@@ -98,28 +99,33 @@ class WebDriverAugmented(RemoteWebDriver):
 
     def check_js_log(self):
         """
-        check java script log for errors (only `severe` level)
+        Check JavaScript log for errors (only `severe` level).
+        Fail the test if errors are found and attach the log to Allure.
         """
         if self.name.lower() == 'firefox':
             print("Skipping JavaScript log check for Firefox")
             return
         js_log = self.get_log("browser")
-        clean_log = []
+        severe_logs = []
         total_chars = 0
-        idx = 0
         for entry in js_log:
-            if entry['level'] in ['SEVERE']:
+            if entry['level'] == 'SEVERE':
                 if "Cross-Origin-Opener-Policy header has been ignored" in entry['message']:
                     continue
-                idx += 1
-                clean_log.append(entry)
+                severe_logs.append(entry)
                 total_chars += len(entry['message'])
                 if total_chars >= MAX_JS_LOG_SIZE:
-                    clean_log.append('<...>')
+                    severe_logs.append({'level': 'INFO', 'message': '<...>'})
                     break
-        assert not clean_log, 'js critical errors: \n{}'.format(
-            pprint.pformat(clean_log, indent=4)
-        )
+
+        if severe_logs:
+            log_text = '\n'.join([f"{entry['level']}: {entry['message']}" for entry in severe_logs])
+            allure.attach(
+                log_text,
+                name='js critical errors',
+                attachment_type=allure.attachment_type.TEXT
+            )
+            pytest.fail(f"JavaScript critical errors:\nSee the attached log in browser's `Tear down` for details")
 
     @property
     def visible_texts(self) -> str:
