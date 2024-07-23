@@ -18,10 +18,11 @@
 | lexiflux/language/google\_languages.py          |       12 |        0 |    100% |           |
 | lexiflux/language/html\_tags\_cleaner.py        |      101 |        1 |     99% |       156 |
 | lexiflux/language/llm.py                        |      165 |      102 |     38% |35-38, 43-48, 63-65, 70-72, 85-90, 97, 121, 182-187, 199-219, 254-267, 295-336, 348, 351-395, 398 |
-| lexiflux/language/sentence\_extractor.py        |       28 |        5 |     82% |10-13, 52, 63, 79 |
+| lexiflux/language/nltk\_tokenizer.py            |       29 |        5 |     83% |25, 37-39, 55 |
+| lexiflux/language/sentence\_extractor.py        |       20 |        2 |     90% |    45, 61 |
 | lexiflux/language/sentence\_extractor\_llm.py   |       52 |       39 |     25% |17, 48-92, 97-128, 133-167 |
 | lexiflux/language/translation.py                |       44 |        0 |    100% |           |
-| lexiflux/language/word\_extractor.py            |       79 |       10 |     87% |20, 29-34, 49, 70, 77 |
+| lexiflux/language/word\_extractor.py            |       64 |        5 |     92% | 25, 49-53 |
 | lexiflux/models.py                              |      232 |       35 |     85% |88, 98, 137, 146-147, 164, 175, 197, 231-234, 249, 270-278, 281-288, 310, 312-313, 315-316, 319, 360, 401-412 |
 | lexiflux/settings.py                            |        0 |        0 |    100% |           |
 | lexiflux/signals.py                             |       20 |        2 |     90% |     45-46 |
@@ -33,7 +34,7 @@
 | lexiflux/views/lexical\_views.py                |       71 |       31 |     56% |41-52, 65, 81-119, 167-183 |
 | lexiflux/views/library\_views.py                |       30 |        2 |     93% |     45-46 |
 | lexiflux/views/reader\_views.py                 |      107 |        5 |     95% |45, 64, 76, 162, 195 |
-|                                       **TOTAL** | **1596** |  **367** | **77%** |           |
+|                                       **TOTAL** | **1602** |  **364** | **77%** |           |
 
 
 ## Setup coverage badge
