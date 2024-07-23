@@ -1,2 +1,0 @@
-INFO:root:Test finished
-INFO:root:Test started
