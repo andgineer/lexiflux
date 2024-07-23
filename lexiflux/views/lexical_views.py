@@ -74,8 +74,11 @@ def get_lexical_article(  # pylint: disable=too-many-arguments
         }
 
     if article_name == "Dictionary":
-        # todo: support more dictionaries
-        translator = get_translator(book_page.book, language_preferences)
+        translator = get_translator(
+            params["dictionary"],
+            book_page.book.language.name.lower(),
+            language_preferences.user_language.name.lower(),
+        )
         return {"article": translator.translate(selected_text)}
 
     context_str, context_word_slices, context_term_word_ids, context_start_word = (

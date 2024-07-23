@@ -11,6 +11,7 @@ from django.shortcuts import render, get_object_or_404
 from django.views.decorators.http import require_http_methods, require_GET
 
 from lexiflux.language.llm import Llm
+from lexiflux.language.translation import Translator
 from lexiflux.models import (
     Language,
     LexicalArticleType,
@@ -295,7 +296,5 @@ def get_models(request: HttpRequest) -> JsonResponse:
 @require_GET  # type: ignore
 def get_available_dictionaries(request: HttpRequest) -> JsonResponse:
     """Ajax to Return the available dictionaries."""
-    dictionaries = [
-        {"value": "GoogleTranslator", "label": "Google Translator"},
-    ]
+    dictionaries = Translator.available_translators()
     return JsonResponse({"dictionaries": dictionaries})
