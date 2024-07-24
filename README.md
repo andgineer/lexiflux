@@ -23,18 +23,18 @@
 | lexiflux/language/sentence\_extractor\_llm.py   |       52 |       39 |     25% |17, 48-92, 97-128, 133-167 |
 | lexiflux/language/translation.py                |       47 |        1 |     98% |        37 |
 | lexiflux/language/word\_extractor.py            |       64 |        5 |     92% | 25, 49-53 |
-| lexiflux/models.py                              |      232 |       35 |     85% |88, 98, 137, 146-147, 164, 175, 197, 231-234, 249, 270-278, 281-288, 310, 312-313, 315-316, 319, 360, 401-412 |
+| lexiflux/models.py                              |      232 |       35 |     85% |88, 98, 137, 146-147, 164, 175, 197, 231-234, 249, 270-278, 281-288, 310, 312-313, 315-316, 319, 363, 404-415 |
 | lexiflux/settings.py                            |        0 |        0 |    100% |           |
 | lexiflux/signals.py                             |       20 |        2 |     90% |     45-46 |
 | lexiflux/tests.py                               |        0 |        0 |    100% |           |
 | lexiflux/urls.py                                |        9 |        0 |    100% |           |
 | lexiflux/utils.py                               |        8 |        0 |    100% |           |
 | lexiflux/views/auth\_views.py                   |       31 |        3 |     90% | 43, 50-55 |
-| lexiflux/views/language\_preferences\_ajax.py   |      155 |       80 |     48% |105-120, 133, 162-200, 205-223, 232-260, 267-281 |
+| lexiflux/views/language\_preferences\_ajax.py   |      165 |       86 |     48% |100-102, 109-126, 138, 147-148, 171, 196-236, 243-261, 270-298, 305-321 |
 | lexiflux/views/lexical\_views.py                |       71 |       31 |     56% |41-52, 65, 84-122, 170-186 |
 | lexiflux/views/library\_views.py                |       30 |        2 |     93% |     45-46 |
 | lexiflux/views/reader\_views.py                 |      107 |        5 |     95% |45, 64, 76, 162, 195 |
-|                                       **TOTAL** | **1606** |  **362** | **77%** |           |
+|                                       **TOTAL** | **1616** |  **368** | **77%** |           |
 
 
 ## Setup coverage badge
