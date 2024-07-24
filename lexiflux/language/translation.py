@@ -1,20 +1,15 @@
 """Translation module."""
 
 import logging
-import os
 from functools import lru_cache
-from typing import Optional, List, Dict, Tuple
+from typing import List, Dict, Tuple
 
 from deep_translator import (
     GoogleTranslator,
     MyMemoryTranslator,
     LingueeTranslator,
     PonsTranslator,
-    single_detection,
 )
-from django.db.models import Q
-
-from lexiflux.models import Language
 
 log = logging.getLogger()
 
@@ -66,47 +61,3 @@ def get_translator(
 ) -> Translator:
     """Get translator."""
     return Translator(translator_name, source_language_code, target_language_code)
-
-
-def detect_language(text: str) -> str:
-    """Detect language."""
-    log.debug("Fragment: %s", text)
-    try:
-        result = single_detection(text, api_key=os.environ["DETECTLANGUAGE_API_KEY"])
-        log.debug("Detected language: %s", result)
-        return result  # type: ignore
-    except KeyError:
-        log.error(
-            "Please get you API Key at https://detectlanguage.com/documentation"
-            " and set it to env var DETECTLANGUAGE_API_KEY"
-        )
-        return "en"
-    except Exception as exc:  # pylint: disable=broad-except
-        log.error("Failed to detect language: %s", exc)
-        return "en"
-
-
-def find_language(
-    name: Optional[str] = None,
-    google_code: Optional[str] = None,
-    epub_code: Optional[str] = None,
-) -> Optional[str]:
-    """Find language.
-
-    Find by provided parameters (which are not None).
-    Return language name if found, None otherwise.
-    """
-    query = Q()
-    if name:
-        query |= Q(name=name)
-    if google_code:
-        query |= Q(google_code=google_code)
-    if epub_code:
-        query |= Q(epub_code=epub_code)
-
-    language = Language.objects.filter(query).first()
-    return language.name if language else None
-
-
-if __name__ == "__main__":  # pragma: no cover
-    print(detect_language("Dobar dan!"))

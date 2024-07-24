@@ -284,14 +284,13 @@ def book_plain_text():
     with patch("builtins.open", new_callable=lambda: custom_open):
         return BookPlainText("dummy_path")
 
-
 @pytest.fixture(autouse=True)
 def mock_detect_language():
-    with patch('lexiflux.language.translation.single_detection') as mock:
-        mock.side_effect = itertools.cycle(['en', 'en', 'fr'])
-        with patch.dict(os.environ, {"DETECTLANGUAGE_API_KEY": 'fake-key'}):
-            yield mock
+    mock_detector = MagicMock()
+    mock_detector.detect.side_effect = itertools.cycle(['en', 'en', 'fr'])
 
+    with patch('lexiflux.ebook.book_base.language_detector', return_value=mock_detector):
+        yield mock_detector.detect
 
 @pytest.fixture
 def book_processor_mock():

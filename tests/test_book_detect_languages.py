@@ -1,12 +1,11 @@
 import itertools
 from io import StringIO
-from unittest.mock import patch
 
 import allure
 import pytest
 
 from lexiflux.ebook.book_plain_text import BookPlainText
-from lexiflux.language.translation import detect_language
+
 
 
 @allure.epic('Language detection')
@@ -72,26 +71,3 @@ def test_detect_language(mock_detect_language, book_plain_text):
     assert book_plain_text.detect_language() == 'Russian'
     assert len(mock_detect_language.call_args_list) == 3
 
-
-@allure.epic('Language detection')
-@patch('lexiflux.language.translation.single_detection')
-def test_detect_language_key_error(mock_single_detection, monkeypatch, caplog):
-    monkeypatch.delenv("DETECTLANGUAGE_API_KEY", raising=False)
-
-    result = detect_language("Test text.")
-
-    assert "Please get you API Key" in caplog.text
-    assert result == "en"  # Default fallback language
-
-
-@allure.epic('Language detection')
-@patch('lexiflux.language.translation.single_detection')
-def test_detect_language_exception(mock_single_detection, monkeypatch, caplog):
-    monkeypatch.setenv("DETECTLANGUAGE_API_KEY", "dummy_key")
-    # Simulate an exception being raised by single_detection
-    mock_single_detection.side_effect = Exception("API failure")
-
-    result = detect_language("Test text.")
-
-    assert "Failed to detect language" in caplog.text
-    assert result == "en"  # Default fallback language

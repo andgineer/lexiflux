@@ -10,6 +10,7 @@ from django.utils import timezone
 from django.core.exceptions import ValidationError
 from django.contrib.auth.models import AbstractUser
 from django.utils.translation import gettext_lazy as _
+from django.db.models import Q
 from transliterate import get_available_language_codes, translit
 
 from lexiflux.language.sentence_extractor import break_into_sentences
@@ -86,6 +87,28 @@ class Language(models.Model):  # type: ignore
     def __str__(self) -> str:
         """Return the string representation of a Language."""
         return self.name  # type: ignore
+
+    @classmethod
+    def find(
+        cls: Any,
+        name: Optional[str] = None,
+        google_code: Optional[str] = None,
+        epub_code: Optional[str] = None,
+    ) -> Optional[str]:
+        """Find language by provided parameters (which are not None).
+
+        Return language name if found, None otherwise.
+        """
+        query = Q()
+        if name:
+            query |= Q(name=name)
+        if google_code:
+            query |= Q(google_code=google_code)
+        if epub_code:
+            query |= Q(epub_code=epub_code)
+
+        language = cls.objects.filter(query).first()
+        return language.name if language else None
 
 
 class Author(models.Model):  # type: ignore

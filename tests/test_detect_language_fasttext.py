@@ -1,5 +1,5 @@
 import pytest
-from lexiflux.language.detect_language_fasttext import detect_language
+from lexiflux.language.detect_language_fasttext import language_detector
 
 
 @pytest.mark.parametrize("text, expected_lang", [
@@ -19,47 +19,19 @@ from lexiflux.language.detect_language_fasttext import detect_language
     ("Je ne parle pas français", "fr"),  # Test sentence with accents
 ])
 def test_detect_language(text, expected_lang):
-    detected_lang, confidence = detect_language(text)
+    detected_lang = language_detector().detect(text)
     assert detected_lang == expected_lang, f"Expected {expected_lang}, but got {detected_lang} for text: '{text}'"
-    assert 0 <= confidence <= 1.00005, f"Confidence should be between 0 and 1, but got {confidence}"
+
 
 def test_confidence_threshold():
     text = "This is a longer English text to ensure high confidence. It contains multiple sentences and should be easily detectable as English."
-    detected_lang, confidence = detect_language(text)
+    detected_lang = language_detector().detect(text)
     assert detected_lang == "en"
-    assert confidence > 0.9, f"Expected confidence > 0.9 for clear English text, but got {confidence}"
 
 
 def test_mixed_case_text():
     text = "Hello नमस्ते Bonjour"
-    detected_lang, confidence = detect_language(text)
-    assert confidence < 0.8, f"Expected lower confidence, but got {confidence}"
+    assert language_detector().detect(text) == "hi"
 
 
-def test_only_numbers():
-    text = "123 456 789"
-    detected_lang, confidence = detect_language(text)
-    assert confidence < 0.8, f"Expected lower confidence, but got {confidence}"
 
-def test_only_punctuation():
-    text = "!!!"
-    detected_lang, confidence = detect_language(text)
-    assert confidence < 0.8, f"Expected lower confidence, but got {confidence}"
-
-
-def test_only_special_characters():
-    text = "🎉🎊🎈"
-    detected_lang, confidence = detect_language(text)
-    assert confidence < 0.8, f"Expected lower confidence, but got {confidence}"
-
-
-def test_very_short_text():
-    text = "Hi"
-    detected_lang, confidence = detect_language(text)
-    assert confidence < 0.8, f"Expected lower confidence, but got {confidence}"
-
-
-def test_empty_text():
-    text = ""
-    detected_lang, confidence = detect_language(text)
-    assert confidence <= 0.8, f"Expected lower confidence, but got {confidence}"

@@ -23,7 +23,7 @@ DEFAULT_LEXICAL_ARTICLES = [
         "type": "Site",
         "title": "glosbe",
         "parameters": {
-            "url": "https://glosbe.com/sr/en/{term}",  # todo: use language placeholders
+            "url": "https://glosbe.com/{langCode}/{toLangCode}/{term}",
             "window": True,
         },
     },

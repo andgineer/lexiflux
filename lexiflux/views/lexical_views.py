@@ -65,9 +65,9 @@ def get_lexical_article(  # pylint: disable=too-many-arguments
         return {
             "url": params.get("url", "").format(
                 term=urllib.parse.quote(selected_text),
-                lang=book_page.book.language.name,
+                lang=book_page.book.language.name.lower(),
                 langCode=book_page.book.language.google_code,
-                toLang=language_preferences.user_language.name,
+                toLang=language_preferences.user_language.name.lower(),
                 toLangCode=language_preferences.user_language.google_code,
             ),
             "window": params.get("window", True),

@@ -6,9 +6,10 @@ from collections import Counter
 
 from django.core.management import CommandError
 
-from lexiflux.language.translation import detect_language, find_language
 from lexiflux.models import Book, Author, Language, BookPage, CustomUser
 from lexiflux.models import Toc
+
+from lexiflux.language.detect_language_fasttext import language_detector
 
 log = logging.getLogger()
 
@@ -65,7 +66,7 @@ class BookBase:
 
         Returns lang code.
         """
-        languages = [detect_language(self.get_random_words()) for _ in range(3)]
+        languages = [language_detector().detect(self.get_random_words()) for _ in range(3)]
 
         # If no clear majority, try additional random fragments
         attempts = 0
@@ -80,7 +81,7 @@ class BookBase:
                 break
 
             random_fragment = self.get_random_words()
-            languages.append(detect_language(random_fragment))
+            languages.append(language_detector().detect(random_fragment))
             attempts += 1
 
         # Count languages considering similarity groups
@@ -97,19 +98,19 @@ class BookBase:
         else:
             result = most_common_lang
 
-        if language_name := find_language(name=result, google_code=result, epub_code=result):
-            return language_name  # type: ignore
+        if language_name := Language.find(name=result, google_code=result, epub_code=result):
+            return language_name
         return None
 
     def get_language(self) -> str:
         """Get language from meta or detect from the book text."""
         if language_value := self.meta.get(MetadataField.LANGUAGE):
-            if language_name := find_language(
+            if language_name := Language.find(
                 name=language_value, google_code=language_value, epub_code=language_value
             ):
                 # Update the language to its name in case it was found by code
                 log.debug("Language '%s' found in meta.", language_name)
-                return language_name  # type: ignore
+                return language_name
         # Detect language if not found in meta
         language_name = self.detect_language()
         log.debug("Language '%s' detected.", language_name)
