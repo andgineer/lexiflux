@@ -291,7 +291,7 @@ class BookPage(models.Model):  # type: ignore
 class LexicalArticle(models.Model):  # type: ignore
     """A lexical article."""
 
-    reader_profile = models.ForeignKey(
+    language_preferences = models.ForeignKey(
         "LanguagePreferences", on_delete=models.CASCADE, related_name="lexical_articles"
     )
     type = models.CharField(
@@ -302,7 +302,7 @@ class LexicalArticle(models.Model):  # type: ignore
     parameters = models.JSONField(default=dict)
 
     class Meta:
-        unique_together = ("reader_profile", "title")
+        unique_together = ("language_preferences", "title")
 
     def clean(self) -> None:
         if self.type == "Site":
@@ -344,7 +344,10 @@ class LanguagePreferences(models.Model):  # type: ignore
         related_name="current_readers",
     )
     user_language = models.ForeignKey(
-        Language, on_delete=models.SET_NULL, null=True, related_name="profile_user_language"
+        Language,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name="language_preferences_user_language",
     )
     inline_translation_type = models.CharField(
         max_length=20, choices=LexicalArticleType.choices, default=LexicalArticleType.TRANSLATE
@@ -397,17 +400,17 @@ class LanguagePreferences(models.Model):  # type: ignore
         )
 
         if created:
-            # Copy lexical articles from the default profile
+            # Copy lexical articles from the default language preferences
             if user.default_language_preferences:
                 for article in user.default_language_preferences.lexical_articles.all():
                     LexicalArticle.objects.create(
-                        reader_profile=preferences,
+                        language_preferences=preferences,
                         type=article.type,
                         title=article.title,
                         parameters=article.parameters,
                     )
 
-            # Set this new profile as the default
+            # Set this new language preferences as the default
             user.default_language_preferences = preferences
             user.save()
 
@@ -422,7 +425,7 @@ class LanguagePreferences(models.Model):  # type: ignore
         }
 
     def get_lexical_articles(self) -> list[LexicalArticle]:
-        """Return all lexical articles for this reader profile."""
+        """Return all lexical articles for this language_preferences."""
         return self.lexical_articles.all()  # type: ignore
 
 

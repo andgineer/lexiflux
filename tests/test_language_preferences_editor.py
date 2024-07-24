@@ -18,7 +18,7 @@ def test_language_preferences_inline_translation(browser, approved_user):
         browser.take_screenshot("Initial")
 
     with allure.step("Verify initial page state"):
-        assert "Language Tool Preferences" in page.get_page_title()
+        assert "Language Preferences" in page.get_page_title()
         assert "English" in page.get_selected_language()
 
     with allure.step("Open and configure Translate in inline translation"):

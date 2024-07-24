@@ -31,13 +31,13 @@ DEFAULT_LEXICAL_ARTICLES = [
 
 
 @receiver(post_save, sender=User)  # type: ignore
-def create_user_profile(
+def create_language_preferences(
     sender: Any,  # pylint: disable=unused-argument
     instance: Any,
     created: Any,
     **kwargs: Any,
 ) -> None:
-    """Create a profile and default lexical articles for a new user."""
+    """Create a language_preferences and default lexical articles for a new user."""
     if created:
         try:
             english_language = Language.objects.get(google_code="en")
@@ -59,7 +59,7 @@ def create_user_profile(
 
         for article in DEFAULT_LEXICAL_ARTICLES:
             LexicalArticle.objects.create(
-                reader_profile=language_preferences,
+                language_preferences=language_preferences,
                 type=article["type"],
                 title=article["title"],
                 parameters=article["parameters"],

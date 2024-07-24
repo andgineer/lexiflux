@@ -1,12 +1,12 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div id="profile-app" class="d-flex flex-column vh-100">
+<div id="language-preferences-editor" class="d-flex flex-column vh-100">
     <nav class="navbar navbar-expand-lg navbar-light bg-light">
         <div class="container-fluid">
-            {% include 'hamburger.html' with current_page='profile' %}
+            {% include 'hamburger.html' with current_page='language-preferences' %}
             <div class="mx-3 text-truncate container-fluid">
-                Language Tool Preferences
+                Language Preferences
             </div>
         </div>
     </nav>
@@ -259,7 +259,7 @@ const languageFlags = {
     'ur': '🇵🇰', 'uz': '🇺🇿', 'vi': '🇻🇳', 'cy': '🇬🇧', 'yi': '🇮🇱'
 };
 new Vue({
-    el: '#profile-app',
+    el: '#language-preferences-editor',
     delimiters: ['[[', ']]'],
     data: function() {
         let data = {
@@ -322,8 +322,8 @@ Add to each translation to {user_language} language.
             console.error('Error parsing inline translation:', e);
         }
 
-        data.currentLanguageId = '{{ default_profile.language.google_code }}' || null;
-        data.userLanguageId = '{{ default_profile.user_language.google_code }}' || null;
+        data.currentLanguageId = '{{ default_language_preferences.language.google_code }}' || null;
+        data.userLanguageId = '{{ default_language_preferences.user_language.google_code }}' || null;
 
         return data;
     },
@@ -412,7 +412,7 @@ Add to each translation to {user_language} language.
                     this.inlineTranslation = data.inline_translation;
                     this.userLanguageId = data.user_language_id;
                 } else {
-                    alert('Failed to change profile');
+                    alert('Failed to change language preferences');
                 }
             });
         },
@@ -429,7 +429,7 @@ Add to each translation to {user_language} language.
                 },
                 body: JSON.stringify({
                     language_id: this.userLanguageId,
-                    profile_language_id: this.currentLanguageId
+                    language_preferences_language_id: this.currentLanguageId
                 }),
                 credentials: 'include'
             })
@@ -638,7 +638,9 @@ Add to each translation to {user_language} language.
             })
             .then(response => {
                 if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
+                    return response.json().then(errorData => {
+                        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+                    });
                 }
                 return response.json();
             })
@@ -660,7 +662,7 @@ Add to each translation to {user_language} language.
                 if (this.form.type === 'Site' && !this.form.parameters.url) {
                     this.errorMessage = 'Please enter a URL for the Site type article.';
                 } else {
-                    this.errorMessage = 'An error occurred while saving the article. Please check your inputs and try again.';
+                    this.errorMessage = error.message || 'An error occurred while saving the article. Please check your inputs and try again.';
                 }
             });
         },
