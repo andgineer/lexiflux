@@ -148,7 +148,7 @@ def check_article_params(
             return JsonResponse(
                 {
                     "status": "error",
-                    "message": f"{parameters.get("dictionary")} cannot translate "
+                    "message": f"{parameters.get('dictionary')} cannot translate "
                     f"from {language_preferences.language.name} "
                     f"to {language_preferences.user_language.name}",
                 },
