@@ -1,3 +1,0 @@
-INFO     lexiflux.language.word_extractor:word_extractor.py:37 Cleaned content: Link
-INFO     lexiflux.language.word_extractor:word_extractor.py:38 Tag positions: [(0, 49), (53, 57)]
-WARNING  lexiflux.language.word_extractor:word_extractor.py:47 NLTK word tokenizer not available for en. Using default.

@@ -1,9 +1,0 @@
-INFO:root:Test finished
-INFO:root:Test started
-INFO:lexiflux.language.word_extractor:Cleaned content: 
-    
-    
-    Visible text
-    
-INFO:lexiflux.language.word_extractor:Tag positions: [(5, 12), (12, 51), (51, 59), (64, 72), (72, 107), (107, 116), (121, 124), (136, 140)]
-WARNING:lexiflux.language.word_extractor:NLTK word tokenizer not available for en. Using default.

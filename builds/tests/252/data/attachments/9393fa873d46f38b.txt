@@ -1,3 +1,0 @@
-INFO     lexiflux.language.word_extractor:word_extractor.py:37 Cleaned content: This is a bold statement.
-INFO     lexiflux.language.word_extractor:word_extractor.py:38 Tag positions: [(0, 3), (13, 16), (20, 24), (35, 39)]
-WARNING  lexiflux.language.word_extractor:word_extractor.py:47 NLTK word tokenizer not available for en. Using default.
