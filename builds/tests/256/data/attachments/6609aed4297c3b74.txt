@@ -1,1 +1,0 @@
-NLTK punkt tokenizer not available for en. Using default.
