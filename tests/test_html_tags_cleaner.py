@@ -150,3 +150,25 @@ def test_html_tags_cleaner_complex():
         'console.log("Hello");', '</script>', '<?php echo "Server-side code"; ?>', '<![CDATA[Some CDATA content]]>',
         '</body>', '</html>'
     ]
+
+
+def test_html_tags_cleaner_with_escaped_chars():
+    html_str = (
+        "&#x27;and what is the use of a book,&#x27; thought Alice &#x27;"
+        "without knjiga&quot;, pomisli Alisa, &quot;kad u njoj nema ni slika"
+        " ni pictures or conversation?&#x27; <br/> <br/> razgovora?"
+    )
+    plain_text, tag_slices, escaped_chars = parse_tags(html_str)
+    assert plain_text == (
+        """'and what is the use of a book,' thought Alice 'without knjiga", pomisli Alisa, "kad u njoj nema ni slika ni pictures or conversation?'   razgovora?"""
+    )
+    assert [html_str[start:end] for start, end in tag_slices] == ['<br/>', '<br/>']
+    assert [html_str[start:end] for start, end, _ in escaped_chars] == ['&#x27;', '&#x27;', '&#x27;', '&quot;', '&quot;', '&#x27;']
+
+# '<span id="word-134" class="word">conversation</span>',
+# '?&#x27; <b',
+# '<span id="word-135" class="word">r/> <br/></span>',
+# ' razgovora?&quot; <b',
+# '<span id="word-136" class="word">r/</span>',
+# '> <br/> So ',
+# '<span id="word-137" class="word">she</span>'

@@ -110,10 +110,12 @@ def test_parse_and_save_words(book_page_with_content):
     assert len(book_page_with_content.words) == 4
     assert book_page_with_content.words == [(0, 4), (5, 7), (8, 15), (16, 20)]
 
+
 def test_word_slices_invalid_type(book_page_with_content):
     with pytest.raises(ValidationError):
         book_page_with_content.word_slices = "invalid type"
         book_page_with_content.save()
+
 
 @pytest.mark.skip(reason="See BooPage.clean()")
 def test_word_slices_invalid_structure(book_page_with_content):
@@ -121,7 +123,45 @@ def test_word_slices_invalid_structure(book_page_with_content):
         book_page_with_content.word_slices = [1, 2, 3]  # Not a list of tuples
         book_page_with_content.full_clean()
 
+
 def test_word_slices_valid_json_invalid_structure(book_page_with_content):
     with pytest.raises(ValidationError):
         book_page_with_content.word_slices = {"key": "value"}  # Valid JSON, invalid structure
         book_page_with_content.full_clean()
+
+
+import pytest
+
+@pytest.fixture
+def book_page_with_tags(book):
+    content = (
+        "&#x27;<br/>razgovora? "
+        "pre<b>fix</b>word "
+        "in&#8211;<i>fix</i> "
+        "<i>full</i> "
+        "suf<span>fix</span> "
+        "&#x22;quo<br/>ted&#x22; "
+        "<br/>new<script>hidden</script>line<br/> "
+        "multi&#x20;<b>ple</b>&#x20;spaces "
+        "<script>hidden</script>visible "
+        "&lt;not&#x2D;a&#x2D;tag&gt; "
+        "com<i>pl&#233;</i>x"
+    )
+    return BookPage.objects.create(number=101, content=content, book=book)
+
+def test_words_content_with_tags(book_page_with_tags):
+    word_slices = book_page_with_tags.words
+    words = [book_page_with_tags.content[start:end] for start, end in word_slices]
+    assert words == [
+        "razgovora",
+        "pre", "fix", "word",
+        "in", "fix",
+        "full",
+        "suf", "fix",
+        "quo", "ted",
+        "new", "line",
+        "multi", "ple", "spaces",
+        "visible",
+        "not", "a", "tag",
+        "com", "pl&#233;", "x"
+    ]
