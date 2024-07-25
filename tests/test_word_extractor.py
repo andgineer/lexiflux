@@ -1,4 +1,4 @@
-from lexiflux.language.word_extractor import parse_words
+from lexiflux.language.word_extractor import parse_words, WordTokenizer
 
 
 def get_content_by_indices(content, indices):
@@ -21,8 +21,8 @@ def test_word_extractor_html_tags():
 
 def test_word_extractor_math_symbols():
     content = "Let's consider the case where a < b and x > y."
-    words, tags = parse_words(content)
-    assert get_content_by_indices(content, words) == ["Let", "'s", "consider", "the", "case", "where", "a", "b", "and", "x", "y"]
+    words, tags = parse_words(content, tokenizer=WordTokenizer.NAIVE)
+    assert get_content_by_indices(content, words) == ["Let", "s", "consider", "the", "case", "where", "a", "b", "and", "x", "y"]
     assert tags == []
 
 
@@ -102,6 +102,6 @@ def test_word_extractor_with_cdata():
 
 def test_word_extractor_alice():
     content = "1 <br/> <br/> <br/> <br/> ALICE&#x27;S ADVENTURES IN <br/> <br/>"
-    words, tags = parse_words(content)
-    assert get_content_by_indices(content, words) == ["1", "ALICE", "&#x27;S", "ADVENTURES", "IN"]
+    words, tags = parse_words(content, tokenizer=WordTokenizer.NAIVE)
+    assert get_content_by_indices(content, words) == ["1", "ALICE", "S", "ADVENTURES", "IN"]
     assert get_content_by_indices(content, tags) == ["<br/>", "<br/>", "<br/>", "<br/>", "<br/>", "<br/>"]

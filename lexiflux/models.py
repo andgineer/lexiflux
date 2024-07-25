@@ -258,7 +258,7 @@ class BookPage(models.Model):  # type: ignore
 
     def _parse_and_save_words(self) -> None:
         """Parse words from content and save to DB."""
-        parsed_words, _ = parse_words(self.content)
+        parsed_words, _ = parse_words(self.content, lang_code=self.book.language.google_code)
         self.word_slices = parsed_words
         self.save(update_fields=["word_slices"])
         self._words_cache = parsed_words

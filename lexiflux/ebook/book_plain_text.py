@@ -105,16 +105,20 @@ class BookPlainText(BookBase):  # pylint: disable=too-many-instance-attributes
         """Make later processing more simple."""
         if self.escape_html:
             text = escape(text)
+        text = self.fix_coding(text)
         text = re.sub(r"(\r?\n|\u2028|\u2029)", " <br/> ", text)
         text = re.sub(r"\r", "", text)
         text = re.sub(r"[ \t]+", " ", text)
         return text
 
-    @staticmethod
-    def fix_coding(text: str) -> str:
-        """Fix common coding issues."""
-        text = text.replace("ţ", "ž")
-        text = text.replace("Ď", "đ")
+    def fix_coding(self, text: str) -> str:
+        """Fix common coding issues in serbian books."""
+        if self.meta[MetadataField.LANGUAGE].lower() in ["serbian", "croatian", "bosnian"]:
+            text = text.replace("ţ", "ž")
+            text = text.replace("Ď", "đ")
+            text = text.replace("ĉ", "č")
+            text = text.replace("Ĉ", "Č")
+            text = text.replace("Ċ", "đ")
         return text
 
     def pages(self) -> Iterator[str]:

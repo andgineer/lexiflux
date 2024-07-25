@@ -241,6 +241,7 @@ class Llm:  # pylint: disable=too-few-public-methods
         text: str,
         term: str,
         term_occurence: int = 1,
+        lang_code: str = "en",
     ) -> Dict[str, Any]:
         """In the text given detect word slices and term words.
 
@@ -251,7 +252,7 @@ class Llm:  # pylint: disable=too-few-public-methods
 
         Return: dict with "term_word_ids" and "word_slices" ready to use in generate_article().
         """
-        word_slices, _ = parse_words(text)
+        word_slices, _ = parse_words(text, lang_code=lang_code)
         term_start = find_nth_occurrence(term, text, term_occurence)
         term_end = term_start + len(term)
         # find the word slices that contain the term

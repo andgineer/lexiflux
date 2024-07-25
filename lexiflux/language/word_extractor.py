@@ -18,10 +18,11 @@ class WordTokenizer(Enum):
     """Enum to select the word tokenizer."""
 
     NLTK = "nltk"
+    NAIVE = "naive"
 
 
-def simple_word_tokenize(text: str) -> List[str]:
-    """A simple word tokenizer that splits on whitespace and punctuation."""
+def naive_word_tokenize(text: str) -> List[str]:
+    """A word tokenizer that splits on whitespace and punctuation."""
     return re.findall(r"\b\w+\b", text)
 
 
@@ -49,6 +50,8 @@ def parse_words(
         except LookupError:
             logger.warning(f"NLTK word tokenizer not available for {lang_code}. Using default.")
             words = nltk.tokenize.word_tokenize(cleaned_content, preserve_line=True)
+    elif tokenizer == WordTokenizer.NAIVE:
+        words = naive_word_tokenize(cleaned_content)
     else:
         raise ValueError(f"Unsupported tokenizer: {tokenizer}")
 
