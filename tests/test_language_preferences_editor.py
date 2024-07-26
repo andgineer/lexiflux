@@ -15,6 +15,7 @@ def test_language_preferences_inline_translation(browser, approved_user):
         browser.login(approved_user, USER_PASSWORD)
         page = LanguagePreferencesPage(browser)
         page.goto()
+        # assert page.wait_for_options(), "Failed to load models/dictionaries options after multiple attempts"
         browser.take_screenshot("Initial")
 
     with allure.step("Verify initial page state"):

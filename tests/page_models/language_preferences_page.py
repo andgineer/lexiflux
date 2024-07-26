@@ -10,18 +10,15 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import Select
 
-class LanguagePreferencesPage:
-    def __init__(self, browser):
-        self.browser = browser
+from tests.page_models.base_page import BasePage
 
+
+class LanguagePreferencesPage(BasePage):
     def wait_for_page_load(self):
         try:
-            WebDriverWait(self.browser, 10).until(
-                EC.presence_of_element_located((By.CLASS_NAME, "language-selection-card"))
-            )
+            self.wait_for_element((By.CLASS_NAME, "language-selection-card"))
         except TimeoutException as e:
-            alert_text = self.check_for_alert()
-            if alert_text:
+            if alert_text := self.check_for_alert():
                 raise AssertionError(f"Unexpected alert during page load: {alert_text}") from e
             raise
 
@@ -49,12 +46,9 @@ class LanguagePreferencesPage:
 
     def open_inline_translation_editor(self):
         try:
-            WebDriverWait(self.browser, 10).until(
-                EC.element_to_be_clickable((By.ID, "inline-translation-edit"))
-            ).click()
+            self.wait_for_clickable((By.ID, "inline-translation-edit")).click()
         except UnexpectedAlertPresentException as e:
-            alert_text = self.check_for_alert()
-            if alert_text:
+            if alert_text := self.check_for_alert():
                 raise AssertionError(f"Unexpected alert when opening editor: {alert_text}") from e
             raise
 
@@ -72,8 +66,9 @@ class LanguagePreferencesPage:
         try:
             select.select_by_visible_text(type_text)
         except NoSuchElementException:
-            options = [option for option in select.options if type_text in option.text]
-            if options:
+            if options := [
+                option for option in select.options if type_text in option.text
+            ]:
                 select.select_by_visible_text(options[0].text)
             else:
                 select.select_by_index(0)
@@ -92,9 +87,7 @@ class LanguagePreferencesPage:
         """
         modal = self.wait_for_modal()
         try:
-            dict_select = WebDriverWait(modal, 10).until(
-                EC.presence_of_element_located((By.ID, selector_id))
-            )
+            dict_select = self.wait_for_element((By.ID, selector_id))
             select = Select(dict_select)
             if option is None:
                 select.select_by_index(0)
@@ -106,9 +99,7 @@ class LanguagePreferencesPage:
 
     def save_changes(self):
         modal = self.wait_for_modal()
-        save_button = WebDriverWait(modal, 10).until(
-            EC.element_to_be_clickable((By.ID, "save-article-button"))
-        )
+        save_button = self.wait_for_clickable((By.ID, "save-article-button"))
         save_button.click()
         WebDriverWait(self.browser, 10).until(
             EC.invisibility_of_element_located((By.ID, "articleModal"))
@@ -120,12 +111,25 @@ class LanguagePreferencesPage:
         )
 
         # Additional check to ensure the page is interactive
-        WebDriverWait(self.browser, 10).until(
-            EC.element_to_be_clickable((By.ID, "inline-translation-edit"))
-        )
+        self.wait_for_clickable((By.ID, "inline-translation-edit"))
 
     def get_inline_translation_info(self):
-        info = WebDriverWait(self.browser, 10).until(
-            EC.presence_of_element_located((By.ID, "inline-translation-info"))
-        )
+        info = self.wait_for_element((By.ID, "inline-translation-info"))
         return info.text
+
+    def wait_for_options(self, max_attempts=3):
+        for _ in range(max_attempts):
+            if self.check_options_present():
+                return True
+            self.browser.refresh()
+        return False
+
+    def check_options_present(self):
+        try:
+            model_select = Select(self.wait_for_element((By.ID, "model-select")))
+            dictionary_select = Select(self.wait_for_element((By.ID, "dictionary-select")))
+            print("$"*20, f"Model options: {json.dumps([option.text for option in model_select.options])}")
+            print("$"*20, f"Dictionary options: {json.dumps([option.text for option in dictionary_select.options])}")
+            return len(model_select.options) > 1 and len(dictionary_select.options) > 1
+        except NoSuchElementException:
+            return False
