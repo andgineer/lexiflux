@@ -7,7 +7,7 @@ import logging
 from deep_translator.exceptions import LanguageNotSupportedException
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
-from django.db import IntegrityError, transaction
+from django.db import IntegrityError
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import render, get_object_or_404
 from django.views.decorators.http import require_http_methods, require_GET
@@ -71,7 +71,6 @@ def language_preferences_editor(request: HttpRequest) -> HttpResponse:
 
 @login_required  # type: ignore
 @require_http_methods(["POST"])  # type: ignore
-@transaction.atomic  # type: ignore
 def get_language_preferences(request: HttpRequest) -> JsonResponse:
     """Ajax to Change or create a new preferences for the selected language."""
     try:
@@ -105,7 +104,6 @@ def get_language_preferences(request: HttpRequest) -> JsonResponse:
 
 @login_required  # type: ignore
 @require_http_methods(["POST"])  # type: ignore
-@transaction.atomic  # type: ignore
 def update_user_language(request: HttpRequest) -> JsonResponse:
     """Ajax to Update the user language."""
     try:
@@ -161,7 +159,6 @@ def check_article_params(
 
 @login_required  # type: ignore
 @require_http_methods(["POST"])  # type: ignore
-@transaction.atomic  # type: ignore
 def save_inline_translation(request: HttpRequest) -> JsonResponse:
     """Ajax to Save the inline translation settings."""
     data = json.loads(request.body)
@@ -194,7 +191,6 @@ def save_inline_translation(request: HttpRequest) -> JsonResponse:
 
 @login_required  # type: ignore
 @require_http_methods(["POST"])  # type: ignore
-@transaction.atomic  # type: ignore
 def manage_lexical_article(request: HttpRequest) -> JsonResponse:  # pylint: disable=too-many-return-statements
     """Ajax to Add, edit, or delete a lexical article."""
     try:
@@ -241,7 +237,6 @@ def manage_lexical_article(request: HttpRequest) -> JsonResponse:  # pylint: dis
 
 
 @login_required  # type: ignore
-@transaction.atomic  # type: ignore
 def add_lexical_article(
     language_preferences: LanguagePreferences, data: dict[str, Any]
 ) -> JsonResponse:
@@ -270,7 +265,6 @@ def add_lexical_article(
 
 
 @login_required  # type: ignore
-@transaction.atomic  # type: ignore
 def edit_lexical_article(
     language_preferences: LanguagePreferences, data: dict[str, Any]
 ) -> JsonResponse:
@@ -307,7 +301,6 @@ def edit_lexical_article(
 
 
 @login_required  # type: ignore
-@transaction.atomic  # type: ignore
 def delete_lexical_article(
     language_preferences: LanguagePreferences, data: dict[str, Any]
 ) -> JsonResponse:
@@ -332,7 +325,6 @@ def delete_lexical_article(
 
 
 @login_required  # type: ignore
-@transaction.atomic  # type: ignore
 def get_models(request: HttpRequest) -> JsonResponse:
     """Ajax to Return the available models."""
     llm = Llm()
@@ -345,7 +337,6 @@ def get_models(request: HttpRequest) -> JsonResponse:
 
 @login_required  # type: ignore
 @require_GET  # type: ignore
-@transaction.atomic  # type: ignore
 def get_available_dictionaries(request: HttpRequest) -> JsonResponse:
     """Ajax to Return the available dictionaries."""
     dictionaries = Translator.available_translators()
