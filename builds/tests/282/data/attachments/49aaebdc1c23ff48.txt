@@ -1,0 +1,3 @@
+SEVERE: http://10.1.0.136:35755/api/get-models/ - Failed to load resource: the server responded with a status of 500 (Internal Server Error)
+SEVERE: http://10.1.0.136:35755/language-preferences/ 675:28 "Error loading AI models:" Error: HTTP error! status: 500
+    at http://10.1.0.136:35755/language-preferences/:661:31
