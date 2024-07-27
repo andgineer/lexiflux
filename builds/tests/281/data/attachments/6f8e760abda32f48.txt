@@ -1,3 +1,0 @@
-INFO:root:Test finished
-INFO:root:Test started
-WARNING:django.request:Bad Request: /history
