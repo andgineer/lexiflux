@@ -1,3 +1,0 @@
-Test finished
-Test started
-Failed to detect language: API failure

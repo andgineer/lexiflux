@@ -1,3 +1,0 @@
-Test finished
-Test started
-Bad Request: /location
