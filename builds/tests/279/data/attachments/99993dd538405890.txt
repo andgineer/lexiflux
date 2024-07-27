@@ -1,0 +1,50 @@
+ERROR    django.request:log.py:241 Internal Server Error: /api/get-models/
+Traceback (most recent call last):
+  File "/home/runner/work/lexiflux/lexiflux/.venv/lib/python3.12/site-packages/django/db/backends/utils.py", line 103, in _execute
+    return self.cursor.execute(sql)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/work/lexiflux/lexiflux/.venv/lib/python3.12/site-packages/django/db/backends/sqlite3/base.py", line 324, in execute
+    return super().execute(query)
+           ^^^^^^^^^^^^^^^^^^^^^^
+sqlite3.OperationalError: no such savepoint: s140136645912128_x271
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/runner/work/lexiflux/lexiflux/.venv/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/work/lexiflux/lexiflux/.venv/lib/python3.12/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/work/lexiflux/lexiflux/.venv/lib/python3.12/site-packages/django/contrib/auth/decorators.py", line 23, in _wrapper_view
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.12.4/x64/lib/python3.12/contextlib.py", line 80, in inner
+    with self._recreate_cm():
+  File "/home/runner/work/lexiflux/lexiflux/.venv/lib/python3.12/site-packages/django/db/transaction.py", line 247, in __exit__
+    connection.savepoint_commit(sid)
+  File "/home/runner/work/lexiflux/lexiflux/.venv/lib/python3.12/site-packages/django/utils/asyncio.py", line 26, in inner
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/work/lexiflux/lexiflux/.venv/lib/python3.12/site-packages/django/db/backends/base/base.py", line 427, in savepoint_commit
+    self._savepoint_commit(sid)
+  File "/home/runner/work/lexiflux/lexiflux/.venv/lib/python3.12/site-packages/django/db/backends/base/base.py", line 371, in _savepoint_commit
+    cursor.execute(self.ops.savepoint_commit_sql(sid))
+  File "/home/runner/work/lexiflux/lexiflux/.venv/lib/python3.12/site-packages/django/db/backends/utils.py", line 79, in execute
+    return self._execute_with_wrappers(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/work/lexiflux/lexiflux/.venv/lib/python3.12/site-packages/django/db/backends/utils.py", line 92, in _execute_with_wrappers
+    return executor(sql, params, many, context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/work/lexiflux/lexiflux/.venv/lib/python3.12/site-packages/django/db/backends/utils.py", line 100, in _execute
+    with self.db.wrap_database_errors:
+  File "/home/runner/work/lexiflux/lexiflux/.venv/lib/python3.12/site-packages/django/db/utils.py", line 91, in __exit__
+    raise dj_exc_value.with_traceback(traceback) from exc_value
+  File "/home/runner/work/lexiflux/lexiflux/.venv/lib/python3.12/site-packages/django/db/backends/utils.py", line 103, in _execute
+    return self.cursor.execute(sql)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/work/lexiflux/lexiflux/.venv/lib/python3.12/site-packages/django/db/backends/sqlite3/base.py", line 324, in execute
+    return super().execute(query)
+           ^^^^^^^^^^^^^^^^^^^^^^
+django.db.utils.OperationalError: no such savepoint: s140136645912128_x271
