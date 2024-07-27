@@ -37,9 +37,6 @@ def parse_words(
     """Extract words and HTML tags from HTML content."""
 
     cleaned_content, tag_positions, escaped_chars = parse_tags(content)
-    logger.debug(f"Cleaned content: {cleaned_content}")
-    logger.debug(f"Tag positions: {[content[start:end] for start, end in tag_positions]}")
-    logger.debug(f"Escaped characters: {[content[start:end] for start, end, _ in escaped_chars]}")
 
     if tokenizer == WordTokenizer.NLTK:
         ensure_nltk_data(f"tokenizers/punkt/{lang_code}.pickle", "punkt")
@@ -67,10 +64,6 @@ def parse_words(
                 current_position = end
         else:
             current_position = cleaned_content.find(word, current_position) + len(word)
-    logger.debug(
-        "Words found: "
-        f"{[cleaned_content[start:end] for start, end in word_slices_cleaned_content]}"
-    )
 
     # Recalculate word positions for the original content
     original_word_positions = recalculate_positions(
@@ -84,7 +77,7 @@ def recalculate_positions(  # pylint: disable=too-many-locals
     word_positions: List[Tuple[int, int]],
     tag_positions: List[Tuple[int, int]],
     escaped_chars: List[Tuple[int, int, str]],
-    content: str,  # just for debugging
+    content: str,
 ) -> List[Tuple[int, int]]:
     """Recalculate word positions for the original content."""
     original_word_positions = []
@@ -93,60 +86,73 @@ def recalculate_positions(  # pylint: disable=too-many-locals
     offset = 0
 
     for start, end in word_positions:
-        # Adjust for tags before the word
-        while tag_index < len(tag_positions) and tag_positions[tag_index][0] <= start + offset:
-            offset += tag_positions[tag_index][1] - tag_positions[tag_index][0]
-            tag_index += 1
-        logger.debug(f"Word: {start}, {end}, Offset: {offset}, Tag index: {tag_index}")
+        # Adjust tags/escaped before word
+        while True:
+            next_tag_pos = (
+                tag_positions[tag_index][0] if tag_index < len(tag_positions) else float("inf")
+            )
+            next_escaped_pos = (
+                escaped_chars[escaped_char_index][0]
+                if escaped_char_index < len(escaped_chars)
+                else float("inf")
+            )
 
-        # Adjust for escaped characters affecting word boundaries
+            if min(next_tag_pos, next_escaped_pos) > start + offset:
+                break
+
+            if next_tag_pos <= next_escaped_pos:
+                offset += tag_positions[tag_index][1] - tag_positions[tag_index][0]
+                tag_index += 1
+            else:
+                escaped_start, escaped_end, unescaped = escaped_chars[escaped_char_index]
+                offset += (escaped_end - escaped_start) - len(unescaped)
+                escaped_char_index += 1
+
         new_start = start + offset
         new_end = end + offset
+        current_position = new_start
 
-        # Adjust for escaped characters before and within the word
-        while (
-            escaped_char_index < len(escaped_chars)
-            and escaped_chars[escaped_char_index][0] < new_end
-        ):
-            escaped_start, escaped_end, unescaped = escaped_chars[escaped_char_index]
-            if new_start <= escaped_start < new_end:
-                logger.debug(
-                    f"Escaped character is within the word {unescaped}: "
-                    f"new start: {new_start}, new end: {new_end}, "
-                    f"escaped start: {escaped_start}, escaped end: {escaped_end}"
-                )
-                new_end += (escaped_end - escaped_start) - len(unescaped)
-                logger.debug(f"new_end: {new_end}")
-            elif escaped_start < new_start:
-                logger.debug(
-                    f"Escaped character affects the word start {unescaped}: "
-                    f"new start: {new_start}, new end: {new_end}, "
-                    f"escaped start: {escaped_start}, escaped end: {escaped_end}"
-                )
-                new_start += (escaped_end - escaped_start) - len(unescaped)
-                new_end += (escaped_end - escaped_start) - len(unescaped)
-                logger.debug(f"new_start: {new_start} new_end: {new_end}")
-            escaped_char_index += 1
-
-        # if tags inside the word we break it into the separate words with this tags
-        while tag_index < len(tag_positions) and tag_positions[tag_index][0] < new_end:
-            tag_start, tag_end = tag_positions[tag_index]
-            new_end += tag_end - tag_start
-            logger.debug(
-                f"Tag inside the word: {tag_start}, {tag_end} "
-                f"({content[tag_start:tag_end]}), new end: {new_end}"
+        # Process tags and escaped chars within the word
+        while current_position < new_end:
+            next_tag_pos = (
+                tag_positions[tag_index][0] if tag_index < len(tag_positions) else float("inf")
             )
-            if new_start < tag_start:  # non-empty word part before the tag
-                original_word_positions.append((new_start, tag_start))
-                logger.debug(
-                    f"Add word part before tag ({content[new_start:tag_end]}), "
-                    f"New start: {new_start}"
-                )
-            new_start = tag_end
-            logger.debug(f"New start: {new_start}")
-            tag_index += 1
+            next_escaped_pos = (
+                escaped_chars[escaped_char_index][0]
+                if escaped_char_index < len(escaped_chars)
+                else float("inf")
+            )
 
-        original_word_positions.append((new_start, new_end))
-        offset = new_end - end
+            next_pos = min(next_tag_pos, next_escaped_pos, new_end)
+
+            if next_pos == new_end:
+                break
+            if next_pos == next_tag_pos:
+                tag_start, tag_end = tag_positions[tag_index]
+                if new_start < tag_start and (
+                    content[new_start:tag_start].strip()
+                    and not is_punctuation(content[new_start:tag_start].strip())
+                ):
+                    original_word_positions.append((new_start, tag_start))
+                new_start = tag_end
+                current_position = tag_end
+                end_offset = tag_end - tag_start
+                new_end += end_offset
+                offset += end_offset
+                tag_index += 1
+
+            else:  # next_pos == next_escaped_pos
+                escaped_start, escaped_end, unescaped = escaped_chars[escaped_char_index]
+                current_position = escaped_end
+                end_offset = (escaped_end - escaped_start) - len(unescaped)
+                new_end += end_offset
+                offset += end_offset
+                escaped_char_index += 1
+
+        if new_start < new_end and (
+            content[new_start:new_end].strip()
+            and not is_punctuation(content[new_start:new_end].strip())
+        ):
+            original_word_positions.append((new_start, new_end))
 
     return original_word_positions

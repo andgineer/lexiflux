@@ -130,8 +130,6 @@ def test_word_slices_valid_json_invalid_structure(book_page_with_content):
         book_page_with_content.full_clean()
 
 
-import pytest
-
 @pytest.fixture
 def book_page_with_tags(book):
     content = (
@@ -146,6 +144,7 @@ def book_page_with_tags(book):
         "<script>hidden</script>visible "
         "&lt;not&#x2D;a&#x2D;tag&gt; "
         "com<i>pl&#233;</i>x"
+        """ Hello world <br/> New line-<span id="word-0" class="word">Hello</span> <span id="word-1" class="word">world</span> <br/> <span id="word-2" class="word">New</span> <span id="word-3" class="word">line</span>"""
     )
     return BookPage.objects.create(number=101, content=content, book=book)
 
@@ -163,5 +162,6 @@ def test_words_content_with_tags(book_page_with_tags):
         "multi", "ple", "spaces",
         "visible",
         "not", "a", "tag",
-        "com", "pl&#233;", "x"
+        "com", "pl&#233;", "x",
+         'Hello', 'world', 'New', 'line', 'Hello', 'world', 'New', 'line',
     ]
