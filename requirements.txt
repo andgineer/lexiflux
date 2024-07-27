@@ -20,7 +20,9 @@ asgiref==3.7.2
 attrs==23.2.0
     # via aiohttp
 beautifulsoup4==4.12.2
-    # via deep-translator
+    # via
+    #   -r requirements.in
+    #   deep-translator
 cachetools==5.3.3
     # via google-auth
 certifi==2023.11.17
@@ -31,6 +33,7 @@ certifi==2023.11.17
 cffi==1.16.0
     # via cryptography
 chardet==5.2.0
+    # via -r requirements.in
 charset-normalizer==3.3.2
     # via requests
 click==8.1.7
@@ -42,6 +45,7 @@ cryptography==41.0.7
 dataclasses-json==0.6.7
     # via langchain-community
 deep-translator==1.11.4
+    # via -r requirements.in
 defusedxml==0.7.1
     # via
     #   langchain-anthropic
@@ -52,13 +56,19 @@ distro==1.9.0
     #   openai
 django==5.0
     # via
+    #   -r requirements.in
     #   django-allauth
     #   django-extensions
 django-allauth==0.59.0
+    # via -r requirements.in
 django-extensions==3.2.3
+    # via -r requirements.in
 django-widget-tweaks==1.5.0
+    # via -r requirements.in
 ebooklib==0.18
+    # via -r requirements.in
 fasttext==0.9.3
+    # via -r requirements.in
 filelock==3.15.4
     # via huggingface-hub
 frozenlist==1.4.1
@@ -130,11 +140,16 @@ jsonpatch==1.33
 jsonpointer==3.0.0
     # via jsonpatch
 langchain==0.2.5
-    # via langchain-community
+    # via
+    #   -r requirements.in
+    #   langchain-community
 langchain-anthropic==0.1.15
+    # via -r requirements.in
 langchain-community==0.2.5
+    # via -r requirements.in
 langchain-core==0.2.9
     # via
+    #   -r requirements.in
     #   langchain
     #   langchain-anthropic
     #   langchain-community
@@ -143,8 +158,11 @@ langchain-core==0.2.9
     #   langchain-openai
     #   langchain-text-splitters
 langchain-google-genai==1.0.7
+    # via -r requirements.in
 langchain-mistralai==0.1.9
+    # via -r requirements.in
 langchain-openai==0.1.9
+    # via -r requirements.in
 langchain-text-splitters==0.2.1
     # via langchain
 langsmith==0.1.81
@@ -165,6 +183,7 @@ multidict==6.0.5
 mypy-extensions==1.0.0
     # via typing-inspect
 nltk==3.8.1
+    # via -r requirements.in
 numpy==1.26.4
     # via
     #   fasttext
@@ -173,8 +192,11 @@ numpy==1.26.4
 oauthlib==3.2.2
     # via requests-oauthlib
 ollama==0.2.1
+    # via -r requirements.in
 openai==1.35.3
-    # via langchain-openai
+    # via
+    #   -r requirements.in
+    #   langchain-openai
 orjson==3.10.5
     # via langsmith
 packaging==24.1
@@ -206,6 +228,7 @@ pycparser==2.21
     # via cffi
 pydantic==2.7.4
     # via
+    #   -r requirements.in
     #   anthropic
     #   google-generativeai
     #   langchain
@@ -217,6 +240,7 @@ pydantic-core==2.18.4
 pyjwt==2.8.0
     # via django-allauth
 pyopenssl==24.1.0
+    # via -r requirements.in
 pyparsing==3.1.2
     # via httplib2
 python3-openid==3.2.0
@@ -284,6 +308,7 @@ tqdm==4.66.4
     #   nltk
     #   openai
 transliterate==1.10.2
+    # via -r requirements.in
 typing-extensions==4.12.2
     # via
     #   anthropic
@@ -301,5 +326,6 @@ uritemplate==4.1.1
 urllib3==2.1.0
     # via requests
 werkzeug==3.0.3
+    # via -r requirements.in
 yarl==1.9.4
     # via aiohttp
