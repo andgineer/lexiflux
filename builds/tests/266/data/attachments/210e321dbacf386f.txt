@@ -1,3 +1,0 @@
-Goto URL: from host http://0.0.0.0:41529/reader?book-code=some-book-code from docker: http://10.1.0.132:41529/reader?book-code=some-book-code
-Opening book some-book-code at page 1 for user testuser
-Skipping JavaScript log check for Firefox
