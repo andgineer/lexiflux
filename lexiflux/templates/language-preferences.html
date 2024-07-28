@@ -328,7 +328,7 @@ Add to each translation to {user_language} language.
         return data;
     },
     mounted: function() {
-        this.loadArticles();
+        this.updateLanguagePreferences();
     },
     watch: {
         'form.parameters.url': function() {
@@ -343,7 +343,7 @@ Add to each translation to {user_language} language.
         }
     },
     methods: {
-        loadArticles() {
+        updateLanguagePreferences() {
             fetch('{% url "get_language_preferences" %}', {
                 method: 'POST',
                 headers: {
@@ -357,48 +357,24 @@ Add to each translation to {user_language} language.
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
-                return response.text();  // Get the raw text of the response
+                return response.json();
             })
-            .then(text => {
-                try {
-                    const data = JSON.parse(text);
-                    if (data.status === 'success') {
-                        this.articles = data.articles;
-                    } else {
-                        console.error('Server responded with an error:', data);
-                        throw new Error('Server responded with an error');
-                    }
-                } catch (e) {
-                    console.error('Error parsing JSON:', e);
-                    console.error('Full response:', text);
-                    throw new Error('Invalid JSON response');
-                }
-            })
-            .catch(error => {
-                console.error('Error loading articles:', error);
-                this.errorMessage = 'Failed to load articles. Please try again.';
-            });
-        },
-        changeLanguage() {
-            fetch('{% url "get_language_preferences" %}', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': '{{ csrf_token }}'
-                },
-                body: JSON.stringify({ language_id: this.currentLanguageId }),
-                credentials: 'include'
-            })
-            .then(response => response.json())
             .then(data => {
                 if (data.status === 'success') {
                     this.articles = data.articles;
                     this.inlineTranslation = data.inline_translation;
                     this.userLanguageId = data.user_language_id;
                 } else {
-                    alert('Failed to change language preferences');
+                    throw new Error(data.message || 'Failed to update language preferences');
                 }
+            })
+            .catch(error => {
+                console.error('Error updating language preferences:', error);
+                this.errorMessage = 'Failed to update language preferences. Please try again.';
             });
+        },
+        changeLanguage() {
+            this.updateLanguagePreferences();
         },
         getSelectedLanguageFlag() {
             const selectedLanguage = this.allLanguages.find(lang => lang.google_code === this.currentLanguageId);
@@ -604,7 +580,7 @@ Add to each translation to {user_language} language.
                     if (isInlineTranslation) {
                         this.inlineTranslation = data.inline_translation;
                     } else {
-                        this.loadArticles();
+                        this.updateLanguagePreferences();
                     }
                     const modal = bootstrap.Modal.getInstance(this.$refs.articleModal);
                     modal.hide();
@@ -650,7 +626,7 @@ Add to each translation to {user_language} language.
             .then(response => response.json())
             .then(data => {
                 if (data.status === 'success') {
-                    this.loadArticles();
+                    this.updateLanguagePreferences();
                     bootstrap.Modal.getInstance(this.$refs.deleteConfirmModal).hide();
                 } else {
                     this.deleteErrorMessage = data.message || 'An error occurred while deleting the article';
