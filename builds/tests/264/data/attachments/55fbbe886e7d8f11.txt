@@ -1,3 +1,0 @@
-Test finished
-Test started
-Internal Server Error: /page
