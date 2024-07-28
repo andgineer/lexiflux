@@ -46,7 +46,8 @@ def test_viewport_view_book(browser, approved_user, book):
 
     with allure.step("Verify page content is loaded"):
         page_content = reader_page.get_page_content()
-        assert "Content of page 1" in page_content, "Expected content not found on the page"
+        allure.attach(page_content, name="Page Content", attachment_type=allure.attachment_type.TEXT)
+        assert "Content of page 1" in page_content, f"Expected content not found. Actual content: {page_content}"
 
     with allure.step("Click on a word and verify translation"):
         reader_page.click_word("page")

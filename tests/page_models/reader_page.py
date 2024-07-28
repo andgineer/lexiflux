@@ -1,3 +1,5 @@
+# tests/page_models/reader_page.py
+
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
@@ -12,8 +14,16 @@ class ReaderPage(BasePage):
     def __init__(self, browser):
         super().__init__(browser)
 
-    def wait_for_page_load(self):
-        return self.wait_for_element(self.WORDS_CONTAINER)
+    def wait_for_page_load(self, timeout=20):
+        # Wait for the words container to be present
+        words_container = self.wait_for_element(self.WORDS_CONTAINER, timeout)
+
+        # Now wait for the content to actually be loaded
+        WebDriverWait(self.browser, timeout).until(
+            lambda driver: len(words_container.text.strip()) > 0,
+            message="Content did not load within the specified time"
+        )
+        return words_container
 
     def get_page_content(self):
         words_container = self.wait_for_page_load()
