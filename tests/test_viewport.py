@@ -7,6 +7,9 @@ from tests.conftest import USER_PASSWORD
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
+from tests.page_models.reader_page import ReaderPage
+
+
 @allure.epic('End-to-end (selenium)')
 @allure.feature('Reader')
 @allure.story('Un-approved user cannot access reader view')
@@ -35,28 +38,37 @@ def test_upapproved_user_cannot_access_reader_view(browser, user):
 @pytest.mark.docker
 @pytest.mark.selenium
 @pytest.mark.django_db
-def test_viewport_view_book(browser, approved_user, caplog, client, book):
-    browser.login(approved_user, USER_PASSWORD)
+def test_viewport_view_book(browser, approved_user, book):
+    with allure.step("Login and navigate to reader"):
+        browser.login(approved_user, USER_PASSWORD)
+        browser.goto(reverse('reader') + f'?book-code={book.code}')
+        reader_page = ReaderPage(browser)
 
-    browser.goto(reverse('reader') + f'?book-code={book.code}')
+    with allure.step("Verify page content is loaded"):
+        page_content = reader_page.get_page_content()
+        assert "Content of page 1" in page_content, "Expected content not found on the page"
 
-    allure.attach(
-        browser.get_screenshot_as_png(),
-        name='reader_screenshot',
-        attachment_type=allure.attachment_type.PNG
-    )
+    with allure.step("Click on a word and verify translation"):
+        reader_page.click_word("page")
 
-    assert browser.get_errors_text(no_errors_exception=False, wait_seconds=None) == ""
+        try:
+            translation = reader_page.wait_for_translation()
+            assert translation is not None, "Translation span did not appear"
 
-    # # Test book page scrolling
-    # book_page_scroller = WebDriverWait(browser, 10).until(
-    #     EC.presence_of_element_located((By.ID, 'book-page-scroller'))
-    # )
-    # assert book_page_scroller.text.startswith('This is the first page.')
-    #
-    # # Scroll to the next page
-    # browser.execute_script("arguments[0].scrollTop = arguments[0].scrollHeight", book_page_scroller)
-    # WebDriverWait(browser, 10).until(
-    #     EC.text_to_be_present_in_element((By.ID, 'book-page-scroller'), 'This is the second page.')
-    # )
+            translation_text = reader_page.get_translation()
+            assert translation_text != "", "Translation is empty"
 
+            allure.attach(
+                browser.get_screenshot_as_png(),
+                name='translation_screenshot',
+                attachment_type=allure.attachment_type.PNG
+            )
+        except Exception as e:
+            allure.attach(
+                browser.get_screenshot_as_png(),
+                name='translation_error_screenshot',
+                attachment_type=allure.attachment_type.PNG
+            )
+            raise e
+
+    browser.take_screenshot("Final")
