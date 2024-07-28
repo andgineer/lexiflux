@@ -5,7 +5,7 @@
 | Name                                                  |    Stmts |     Miss |   Cover |   Missing |
 |------------------------------------------------------ | -------: | -------: | ------: | --------: |
 | lexiflux/admin.py                                     |        6 |        0 |    100% |           |
-| lexiflux/api.py                                       |       24 |        3 |     88% |     37-39 |
+| lexiflux/api.py                                       |       24 |        2 |     92% |     38-39 |
 | lexiflux/apps.py                                      |       14 |        0 |    100% |           |
 | lexiflux/ebook/book\_base.py                          |       73 |        5 |     93% |55, 62, 103, 142-143 |
 | lexiflux/ebook/book\_epub.py                          |       92 |        8 |     91% |94, 111, 114-116, 176-178 |
@@ -25,7 +25,7 @@
 | lexiflux/language/translation.py                      |       22 |        1 |     95% |        32 |
 | lexiflux/language/word\_extractor.py                  |       85 |        8 |     91% |42-49, 53, 66 |
 | lexiflux/middleware.py                                |       26 |       10 |     62% |26-27, 29-33, 37-41 |
-| lexiflux/models.py                                    |      244 |       34 |     86% |89, 121, 160, 169-170, 198, 220, 254-257, 272, 293-301, 304-311, 333, 335-336, 338-339, 342, 386, 427-438 |
+| lexiflux/models.py                                    |      244 |       35 |     86% |89, 121, 160, 169-170, 187, 198, 220, 254-257, 272, 293-301, 304-311, 333, 335-336, 338-339, 342, 386, 427-438 |
 | lexiflux/settings.py                                  |        0 |        0 |    100% |           |
 | lexiflux/signals.py                                   |       20 |        2 |     90% |     45-46 |
 | lexiflux/tests.py                                     |        0 |        0 |    100% |           |
