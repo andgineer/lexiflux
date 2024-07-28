@@ -1,3 +1,5 @@
+from unittest.mock import patch, MagicMock
+
 import pytest
 from django.urls import reverse
 import allure
@@ -32,13 +34,31 @@ def test_upapproved_user_cannot_access_reader_view(browser, user):
     )
 
 
+
+def mock_translate(text):
+    return "Mocked translation of: " + text
+
+def mock_generate_article(**kwargs):
+    return "Mocked article content"
+
+
 @allure.epic('End-to-end (selenium)')
 @allure.feature('Reader')
 @allure.story('Reader view')
 @pytest.mark.docker
 @pytest.mark.selenium
 @pytest.mark.django_db
-def test_viewport_view_book(browser, approved_user, book):
+@patch('lexiflux.views.lexical_views.get_translator')
+@patch('lexiflux.views.lexical_views.Llm')
+def test_viewport_view_book(mock_llm, mock_get_translator, browser, approved_user, book):
+    mock_translator = MagicMock()
+    mock_translator.translate.side_effect = mock_translate
+    mock_get_translator.return_value = mock_translator
+
+    mock_llm_instance = MagicMock()
+    mock_llm_instance.generate_article.side_effect = mock_generate_article
+    mock_llm.return_value = mock_llm_instance
+
     with allure.step("Login and navigate to reader"):
         browser.login(approved_user, USER_PASSWORD)
         browser.goto(reverse('reader') + f'?book-code={book.code}')
