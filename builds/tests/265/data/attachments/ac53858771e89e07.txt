@@ -1,3 +1,0 @@
-Test finished
-Test started
-Please get you API Key at https://detectlanguage.com/documentation and set it to env var DETECTLANGUAGE_API_KEY
