@@ -25,7 +25,7 @@
 | lexiflux/language/translation.py                      |       22 |        1 |     95% |        32 |
 | lexiflux/language/word\_extractor.py                  |       85 |        8 |     91% |42-49, 53, 66 |
 | lexiflux/middleware.py                                |       26 |       10 |     62% |26-27, 29-33, 37-41 |
-| lexiflux/models.py                                    |      244 |       35 |     86% |89, 121, 160, 169-170, 187, 198, 220, 254-257, 272, 293-301, 304-311, 333, 335-336, 338-339, 342, 386, 427-438 |
+| lexiflux/models.py                                    |      244 |       34 |     86% |89, 121, 160, 169-170, 198, 220, 254-257, 272, 293-301, 304-311, 333, 335-336, 338-339, 342, 386, 427-438 |
 | lexiflux/settings.py                                  |        0 |        0 |    100% |           |
 | lexiflux/signals.py                                   |       20 |        2 |     90% |     45-46 |
 | lexiflux/tests.py                                     |        0 |        0 |    100% |           |
@@ -36,7 +36,7 @@
 | lexiflux/views/lexical\_views.py                      |       71 |       31 |     56% |41-52, 65, 84-122, 170-186 |
 | lexiflux/views/library\_views.py                      |       30 |        2 |     93% |     45-46 |
 | lexiflux/views/reader\_views.py                       |      107 |        5 |     95% |45, 64, 76, 162, 195 |
-|                                             **TOTAL** | **1677** |  **388** | **77%** |           |
+|                                             **TOTAL** | **1677** |  **387** | **77%** |           |
 
 
 ## Setup coverage badge
