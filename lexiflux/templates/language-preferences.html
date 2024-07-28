@@ -264,7 +264,8 @@ new Vue({
     data: function() {
         let data = {
             articles: [],
-            aiModels: [],
+            aiModels: JSON.parse('{{ ai_models|escapejs }}'),
+            availableDictionaries: JSON.parse('{{ translators|escapejs }}'),
             predefinedUrls: [
                 'https://glosbe.com/{langCode}/{toLangCode}/{term}',
                 'https://www.wordreference.com/{langCode}{toLangCode}/{term}',
@@ -285,7 +286,6 @@ new Vue({
             modalTitle: '',
             titleManuallyEdited: false,
             allLanguages: [],
-            availableDictionaries: [],
             languageFlags: languageFlags,
             currentLanguageId: null,
             userLanguageId: null,
@@ -328,8 +328,6 @@ Add to each translation to {user_language} language.
         return data;
     },
     mounted: function() {
-        this.fetchDictionaries();
-        this.loadAIModels();
         this.loadArticles();
     },
     watch: {
@@ -345,20 +343,6 @@ Add to each translation to {user_language} language.
         }
     },
     methods: {
-        fetchDictionaries() {
-            fetch('/api/get-dictionaries/', {
-                    method: 'GET',
-                    headers: {
-                        'X-CSRFToken': '{{ csrf_token }}'
-                    },
-                    credentials: 'include'
-                })
-                .then(response => response.json())
-                .then(data => {
-                    this.availableDictionaries = data.dictionaries;
-                })
-                .catch(error => console.error('Error fetching dictionaries:', error));
-        },
         loadArticles() {
             fetch('{% url "get_language_preferences" %}', {
                 method: 'POST',
@@ -481,35 +465,6 @@ Add to each translation to {user_language} language.
                 parameters: {}
             };
             this.titleManuallyEdited = false;
-        },
-        loadAIModels() {
-            fetch('{% url "get_models" %}', {
-                    method: 'GET',
-                    headers: {
-                        'X-CSRFToken': '{{ csrf_token }}'
-                    },
-                    credentials: 'include'
-                })
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! status: ${response.status}`);
-                    }
-                    return response.text();  // Get the raw text of the response
-                })
-                .then(text => {
-                    try {
-                        const data = JSON.parse(text);
-                        this.aiModels = data.models;
-                    } catch (e) {
-                        console.error('Error parsing JSON:', e);
-                        console.error('Full response:', text);
-                        throw new Error('Invalid JSON response');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error loading AI models:', error);
-                    this.errorMessage = 'Failed to load AI models. Please try again.';
-                });
         },
         formatUrl(url) {
             try {

@@ -50,14 +50,6 @@ urlpatterns = [
         name="save_inline_translation",
     ),
     path(
-        "api/get-models/", lexiflux.views.language_preferences_ajax.get_models, name="get_models"
-    ),
-    path(
-        "api/get-dictionaries/",
-        lexiflux.views.language_preferences_ajax.get_available_dictionaries,
-        name="get_dictionaries",
-    ),
-    path(
         "api/save-inline-translation/",
         lexiflux.views.language_preferences_ajax.save_inline_translation,
         name="save_inline_translation",

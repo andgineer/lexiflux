@@ -10,7 +10,7 @@ from django.core.exceptions import ValidationError
 from django.db import IntegrityError
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import render, get_object_or_404
-from django.views.decorators.http import require_http_methods, require_GET
+from django.views.decorators.http import require_http_methods
 
 from lexiflux.language.llm import Llm
 from lexiflux.language.translation import Translator, get_translator
@@ -44,17 +44,16 @@ def language_preferences_editor(request: HttpRequest) -> HttpResponse:
     )
     all_languages_data = list(all_languages.values("google_code", "name"))
 
-    logger.debug(f"Articles: {articles}")
-    logger.debug(f"All languages: {all_languages_data}")
-    logger.debug(f"Inline translation: {language_preferences.inline_translation}")
-
     articles_json = json.dumps(articles)
     all_languages_json = json.dumps(all_languages_data)
     inline_translation_json = json.dumps(language_preferences.inline_translation)
 
-    logger.debug(f"Articles JSON: {articles_json}")
-    logger.debug(f"All languages JSON: {all_languages_json}")
-    logger.debug(f"Inline translation JSON: {inline_translation_json}")
+    llm = Llm()
+    ai_models = [
+        {"key": key, "title": value["title"], "suffix": value["suffix"]}
+        for key, value in llm.chat_models.items()
+    ]
+    translators = Translator.available_translators()
 
     context = {
         "user": request.user,
@@ -64,6 +63,8 @@ def language_preferences_editor(request: HttpRequest) -> HttpResponse:
         "default_language_preferences": language_preferences,
         "inline_translation": inline_translation_json,
         "lexical_article_types": LexicalArticleType.choices,
+        "ai_models": json.dumps(ai_models),
+        "translators": json.dumps(translators),
     }
 
     return render(request, "language-preferences.html", context)
@@ -322,22 +323,3 @@ def delete_lexical_article(
     except Exception as e:  # pylint: disable=broad-except
         logger.exception(f"Error deleting article: {str(e)}")
         return JsonResponse({"status": "error", "message": "Failed to delete article"}, status=500)
-
-
-@login_required  # type: ignore
-def get_models(request: HttpRequest) -> JsonResponse:
-    """Ajax to Return the available models."""
-    llm = Llm()
-    models_list = [
-        {"key": key, "title": value["title"], "suffix": value["suffix"]}
-        for key, value in llm.chat_models.items()
-    ]
-    return JsonResponse({"models": models_list})
-
-
-@login_required  # type: ignore
-@require_GET  # type: ignore
-def get_available_dictionaries(request: HttpRequest) -> JsonResponse:
-    """Ajax to Return the available dictionaries."""
-    dictionaries = Translator.available_translators()
-    return JsonResponse({"dictionaries": dictionaries})
