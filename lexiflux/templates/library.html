@@ -138,6 +138,11 @@
             successMessage: '',
             searchTimeout: null
         },
+        watch: {
+            authorSearch(newValue) {
+                this.editedBook.author = newValue;
+            }
+        },
         methods: {
             showImportModal() {
                 this.errorMessage = '';
@@ -181,8 +186,8 @@
                 fetch(`/api/books/${bookId}/`)
                     .then(response => response.json())
                     .then(data => {
-                        this.editedBook = data;
                         this.authorSearch = data.author;
+                        this.editedBook = data;
                         new bootstrap.Modal(document.getElementById('editBookModal')).show();
                     })
                     .catch(error => {
@@ -215,8 +220,8 @@
                 }, 300);
             },
             selectAuthor(author) {
-                this.editedBook.author = author;
                 this.authorSearch = author;
+                this.editedBook.author = author;
                 this.authorSuggestions = [];
             },
             saveChanges() {

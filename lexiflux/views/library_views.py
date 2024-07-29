@@ -7,7 +7,8 @@ from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.db import models
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import render, get_object_or_404
-from django.views.decorators.csrf import csrf_exempt
+from django.utils.decorators import method_decorator
+from django.views import View
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 
@@ -84,7 +85,6 @@ def view_book(request: HttpRequest) -> HttpResponse:
     return render(request, "book.html", context)
 
 
-@csrf_exempt  # type: ignore
 @login_required  # type: ignore
 def import_book(request: HttpRequest) -> JsonResponse:
     """Import a book from a file."""
@@ -121,28 +121,27 @@ def import_book(request: HttpRequest) -> JsonResponse:
     return JsonResponse({"error": "Invalid request method"}, status=405)
 
 
-@login_required  # type: ignore
-def get_book(request: HttpRequest, book_id: str) -> JsonResponse:
-    """Get book details."""
-    try:
-        book = Book.objects.get(id=book_id)
-        return JsonResponse(
-            {
-                "id": book.id,
-                "title": book.title,
-                "author": book.author.name,
-                "language": book.language.google_code,
-            }
-        )
-    except Book.DoesNotExist:
-        return JsonResponse({"error": "Book not found"}, status=404)
+@method_decorator(login_required, name="dispatch")
+class BookDetailView(View):  # type: ignore
+    """View for book details."""
 
+    def get(self, request: HttpRequest, book_id: int) -> JsonResponse:
+        """Get book details."""
+        try:
+            book = Book.objects.get(id=book_id)
+            return JsonResponse(
+                {
+                    "id": book.id,
+                    "title": book.title,
+                    "author": book.author.name,
+                    "language": book.language.google_code,
+                }
+            )
+        except Book.DoesNotExist:
+            return JsonResponse({"error": "Book not found"}, status=404)
 
-@csrf_exempt  # type: ignore
-@login_required  # type: ignore
-def update_book(request: HttpRequest, book_id: str) -> JsonResponse:
-    """Update book details."""
-    if request.method == "PUT":
+    def put(self, request: HttpRequest, book_id: int) -> JsonResponse:
+        """Update book details."""
         try:
             book = Book.objects.get(id=book_id)
             data = json.loads(request.body)
@@ -173,7 +172,7 @@ def update_book(request: HttpRequest, book_id: str) -> JsonResponse:
         except Exception as e:  # pylint: disable=broad-except
             return JsonResponse({"error": str(e)}, status=500)
 
-    return JsonResponse({"error": "Invalid request method"}, status=405)
+        return JsonResponse({"error": "Invalid request method"}, status=405)
 
 
 @login_required  # type: ignore
