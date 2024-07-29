@@ -57,61 +57,62 @@
         </div>
     </div>
 
-<!-- Import Modal -->
-<div class="modal fade" id="importModal" tabindex="-1" aria-labelledby="importModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="importModalLabel">Import Book</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <div v-if="errorMessage" class="alert alert-danger" role="alert">
-                    ${ errorMessage }
+    <!-- Import Modal -->
+    <div class="modal fade" id="importModal" tabindex="-1" aria-labelledby="importModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="importModalLabel">Import Book</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="mb-3">
-                    <label for="bookFile" class="form-label">Select Book File</label>
-                    <input type="file" class="form-control" id="bookFile" @change="handleFileUpload">
+                <div class="modal-body">
+                    <div v-if="errorMessage" class="alert alert-danger" role="alert">
+                        ${ errorMessage }
+                    </div>
+                    <div class="mb-3">
+                        <label for="bookFile" class="form-label">Select Book File</label>
+                        <input type="file" class="form-control" id="bookFile" @change="handleFileUpload">
+                    </div>
+                    <button class="btn btn-primary" @click="importBook">Import</button>
                 </div>
-                <button class="btn btn-primary" @click="importBook">Import</button>
             </div>
         </div>
     </div>
-</div>
 
-<!-- Edit Book Modal -->
-<div class="modal fade" id="editBookModal" tabindex="-1" aria-labelledby="editBookModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="editBookModalLabel">Edit Book</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <div v-if="errorMessage" class="alert alert-danger" role="alert">
-                    ${ errorMessage }
+    <!-- Edit Book Modal -->
+    <div class="modal fade" id="editBookModal" tabindex="-1" aria-labelledby="editBookModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editBookModalLabel">Edit Book</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="mb-3">
-                    <label for="bookTitle" class="form-label">Title</label>
-                    <input type="text" class="form-control" id="bookTitle" v-model="editedBook.title">
+                <div class="modal-body">
+                    <div v-if="errorMessage" class="alert alert-danger" role="alert">
+                        ${ errorMessage }
+                    </div>
+                    <div class="mb-3">
+                        <label for="bookTitle" class="form-label">Title</label>
+                        <input type="text" class="form-control" id="bookTitle" v-model="editedBook.title">
+                    </div>
+                    <div class="mb-3">
+                        <label for="bookAuthor" class="form-label">Author</label>
+                        <input type="text" class="form-control" id="bookAuthor" v-model="authorSearch" @input="searchAuthors">
+                        <ul class="list-group mt-2" v-if="authorSuggestions.length">
+                            <li class="list-group-item list-group-item-action" v-for="author in authorSuggestions" @click="selectAuthor(author)">
+                                ${ author }
+                            </li>
+                            <li class="list-group-item" v-if="hasMoreAuthors">...</li>
+                        </ul>
+                    </div>
+                    <div class="mb-3">
+                        <label for="bookLanguage" class="form-label">Language</label>
+                        <select class="form-select" id="bookLanguage" v-model="editedBook.language">
+                            <option v-for="lang in languages" :value="lang.google_code">${ lang.name }</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-primary" @click="saveChanges">Save Changes</button>
                 </div>
-                <div class="mb-3">
-                    <label for="bookAuthor" class="form-label">Author</label>
-                    <input type="text" class="form-control" id="bookAuthor" v-model="authorSearch" @input="searchAuthors">
-                    <ul class="list-group mt-2" v-if="authorSuggestions.length">
-                        <li class="list-group-item" v-for="author in authorSuggestions" @click="selectAuthor(author)">
-                            ${ author }
-                        </li>
-                        <li class="list-group-item" v-if="hasMoreAuthors">...</li>
-                    </ul>
-                </div>
-                <div class="mb-3">
-                    <label for="bookLanguage" class="form-label">Language</label>
-                    <select class="form-select" id="bookLanguage" v-model="editedBook.language">
-                        <option v-for="lang in languages" :value="lang.google_code">${ lang.name }</option>
-                    </select>
-                </div>
-                <button class="btn btn-primary" @click="saveChanges">Save Changes</button>
             </div>
         </div>
     </div>
@@ -134,7 +135,8 @@
             languages: JSON.parse('{{ languages|safe }}'),
             importFile: null,
             errorMessage: '',
-            successMessage: ''
+            successMessage: '',
+            searchTimeout: null
         },
         methods: {
             showImportModal() {
@@ -189,16 +191,28 @@
                     });
             },
             searchAuthors() {
-                fetch(`/api/search-authors/?q=${this.authorSearch}`)
-                    .then(response => response.json())
-                    .then(data => {
-                        this.authorSuggestions = data.authors;
-                        this.hasMoreAuthors = data.has_more;
-                    })
-                    .catch(error => {
-                        console.error('Error:', error);
-                        this.errorMessage = 'An error occurred while searching for authors.';
-                    });
+                console.log('searchAuthors called with:', this.authorSearch);
+                clearTimeout(this.searchTimeout);
+                this.searchTimeout = setTimeout(() => {
+                    if (this.authorSearch.length < 2) {
+                        console.log('Search term too short');
+                        this.authorSuggestions = [];
+                        this.hasMoreAuthors = false;
+                        return;
+                    }
+                    console.log('Fetching authors for:', this.authorSearch);
+                    fetch(`/api/search-authors/?q=${encodeURIComponent(this.authorSearch)}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            console.log('Received data:', data);
+                            this.authorSuggestions = data.authors;
+                            this.hasMoreAuthors = data.has_more;
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            this.errorMessage = 'An error occurred while searching for authors.';
+                        });
+                }, 300);
             },
             selectAuthor(author) {
                 this.editedBook.author = author;

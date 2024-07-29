@@ -9,6 +9,7 @@ from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import render, get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.decorators import login_required
+from django.db.models import Q
 
 from lexiflux.ebook.book_base import BookBase
 from lexiflux.views.reader_views import can_see_book
@@ -178,8 +179,24 @@ def update_book(request: HttpRequest, book_id: str) -> JsonResponse:
 @login_required  # type: ignore
 def search_authors(request: HttpRequest) -> JsonResponse:
     """Search authors based on input string."""
-    query = request.GET.get("q", "")
-    authors = Author.objects.filter(name__icontains=query)[:101]  # Get up to 101 results
+    query = request.GET.get("q", "").strip()
+    if not query:
+        return JsonResponse({"authors": [], "has_more": False})
+
+    # If the query contains spaces (more than one word), search for the entire string
+    if " " in query:
+        authors = Author.objects.filter(name__icontains=query)[:101]
+    else:
+        # For single words, search for the word at the start of any word in the name
+        # including words separated by hyphens and periods
+        authors = Author.objects.filter(
+            Q(name__istartswith=query)  # Starts with the query
+            | Q(name__icontains=f" {query}")  # Space before query
+            | Q(name__icontains=f"-{query}")  # Hyphen before query
+            | Q(name__icontains=f".{query}")  # Period before query
+        )[:101]
+
     has_more = len(authors) > 100
     authors = authors[:100]  # Trim to 100 if there are more
+
     return JsonResponse({"authors": [author.name for author in authors], "has_more": has_more})
