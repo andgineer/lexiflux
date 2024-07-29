@@ -5,9 +5,8 @@ from typing import Type
 
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.db import models
-from django.http import HttpRequest, HttpResponse
+from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import render, get_object_or_404
-from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.decorators import login_required
 
@@ -57,10 +56,17 @@ def library(request: HttpRequest) -> HttpResponse:
             paginator.num_pages
         )  # Go to the last page if the page is out of range
 
-    return render(request, "library.html", {"books": books})
+    # Get languages for the dropdown
+    languages = list(Language.objects.values("google_code", "name"))
+
+    context = {
+        "books": books,
+        "languages": json.dumps(languages),
+    }
+    return render(request, "library.html", context)
 
 
-# rodo: obsolete
+# todo: obsolete
 @login_required  # type: ignore
 def view_book(request: HttpRequest) -> HttpResponse:
     """Book detail page."""
@@ -105,7 +111,7 @@ def import_book(request: HttpRequest) -> JsonResponse:
                     "id": book.id,
                     "title": book.title,
                     "author": book.author.name,
-                    "language": book.language.name,
+                    "language": book.language.google_code,
                 }
             )
         except Exception as e:  # pylint: disable=broad-except
@@ -124,7 +130,7 @@ def get_book(request: HttpRequest, book_id: str) -> JsonResponse:
                 "id": book.id,
                 "title": book.title,
                 "author": book.author.name,
-                "language": book.language.name,
+                "language": book.language.google_code,
             }
         )
     except Book.DoesNotExist:
@@ -142,11 +148,12 @@ def update_book(request: HttpRequest, book_id: str) -> JsonResponse:
 
             book.title = data.get("title", book.title)
 
-            author, _ = Author.objects.get_or_create(name=data.get("author", book.author.name))
+            author_name = data.get("author", book.author.name)
+            author, _ = Author.objects.get_or_create(name=author_name)
             book.author = author
 
-            language, _ = Language.objects.get_or_create(
-                name=data.get("language", book.language.name)
+            language = Language.objects.get(
+                google_code=data.get("language", book.language.google_code)
             )
             book.language = language
 
@@ -157,7 +164,7 @@ def update_book(request: HttpRequest, book_id: str) -> JsonResponse:
                     "id": book.id,
                     "title": book.title,
                     "author": book.author.name,
-                    "language": book.language.name,
+                    "language": book.language.google_code,
                 }
             )
         except Book.DoesNotExist:
@@ -166,3 +173,13 @@ def update_book(request: HttpRequest, book_id: str) -> JsonResponse:
             return JsonResponse({"error": str(e)}, status=500)
 
     return JsonResponse({"error": "Invalid request method"}, status=405)
+
+
+@login_required  # type: ignore
+def search_authors(request: HttpRequest) -> JsonResponse:
+    """Search authors based on input string."""
+    query = request.GET.get("q", "")
+    authors = Author.objects.filter(name__icontains=query)[:101]  # Get up to 101 results
+    has_more = len(authors) > 100
+    authors = authors[:100]  # Trim to 100 if there are more
+    return JsonResponse({"authors": [author.name for author in authors], "has_more": has_more})

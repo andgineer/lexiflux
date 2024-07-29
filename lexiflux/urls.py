@@ -57,4 +57,7 @@ urlpatterns = [
     path("api/import-book/", lexiflux.views.library_views.import_book, name="import_book"),
     path("api/books/<int:book_id>/", lexiflux.views.library_views.get_book, name="get_book"),
     path("api/books/<int:book_id>/", lexiflux.views.library_views.update_book, name="update_book"),
+    path(
+        "api/search-authors/", lexiflux.views.library_views.search_authors, name="search_authors"
+    ),
 ]
