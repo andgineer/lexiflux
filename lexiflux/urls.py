@@ -23,7 +23,7 @@ urlpatterns = [
     path("location", lexiflux.views.reader_views.location, name="location"),
     path("history", lexiflux.views.reader_views.add_to_history, name="history"),
     path("translate", lexiflux.views.lexical_views.translate, name="translate"),
-    path("book", lexiflux.views.library_views.view_book, name="book"),
+    path("book", lexiflux.views.library_views.view_book, name="book"),  # todo: obsolete
     path(
         "language-preferences/",
         lexiflux.views.language_preferences_ajax.language_preferences_editor,
@@ -54,4 +54,7 @@ urlpatterns = [
         lexiflux.views.language_preferences_ajax.save_inline_translation,
         name="save_inline_translation",
     ),
+    path("api/import-book/", lexiflux.views.library_views.import_book, name="import_book"),
+    path("api/books/<int:book_id>/", lexiflux.views.library_views.get_book, name="get_book"),
+    path("api/books/<int:book_id>/", lexiflux.views.library_views.update_book, name="update_book"),
 ]

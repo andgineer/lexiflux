@@ -1,13 +1,23 @@
 """Views for the library and Book pages."""
 
-from django.contrib.auth.decorators import login_required
+import json
+from typing import Type
+
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.db import models
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render, get_object_or_404
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.contrib.auth.decorators import login_required
 
-from lexiflux.models import Book
+from lexiflux.ebook.book_base import BookBase
 from lexiflux.views.reader_views import can_see_book
+from lexiflux.models import Book, Author, Language
+from lexiflux.ebook.book_plain_text import BookPlainText
+from lexiflux.ebook.book_html import BookHtml
+from lexiflux.ebook.book_epub import BookEpub
+from lexiflux.ebook import book_base
 
 
 @login_required  # type: ignore
@@ -50,6 +60,7 @@ def library(request: HttpRequest) -> HttpResponse:
     return render(request, "library.html", {"books": books})
 
 
+# rodo: obsolete
 @login_required  # type: ignore
 def view_book(request: HttpRequest) -> HttpResponse:
     """Book detail page."""
@@ -64,3 +75,94 @@ def view_book(request: HttpRequest) -> HttpResponse:
     }
 
     return render(request, "book.html", context)
+
+
+@csrf_exempt  # type: ignore
+@login_required  # type: ignore
+def import_book(request: HttpRequest) -> JsonResponse:
+    """Import a book from a file."""
+    if request.method == "POST":
+        file = request.FILES.get("file")
+        if not file:
+            return JsonResponse({"error": "No file provided"}, status=400)
+
+        book_class: Type[BookBase]
+        file_extension = file.name.split(".")[-1].lower()
+        if file_extension == "txt":
+            book_class = BookPlainText
+        elif file_extension == "html":
+            book_class = BookHtml
+        elif file_extension == "epub":
+            book_class = BookEpub
+        else:
+            return JsonResponse({"error": "Unsupported file format"}, status=400)
+
+        try:
+            book_processor = book_class(file)
+            book = book_base.import_book(book_processor, request.user.email)
+            return JsonResponse(
+                {
+                    "id": book.id,
+                    "title": book.title,
+                    "author": book.author.name,
+                    "language": book.language.name,
+                }
+            )
+        except Exception as e:  # pylint: disable=broad-except
+            return JsonResponse({"error": str(e)}, status=500)
+
+    return JsonResponse({"error": "Invalid request method"}, status=405)
+
+
+@login_required  # type: ignore
+def get_book(request: HttpRequest, book_id: str) -> JsonResponse:
+    """Get book details."""
+    try:
+        book = Book.objects.get(id=book_id)
+        return JsonResponse(
+            {
+                "id": book.id,
+                "title": book.title,
+                "author": book.author.name,
+                "language": book.language.name,
+            }
+        )
+    except Book.DoesNotExist:
+        return JsonResponse({"error": "Book not found"}, status=404)
+
+
+@csrf_exempt  # type: ignore
+@login_required  # type: ignore
+def update_book(request: HttpRequest, book_id: str) -> JsonResponse:
+    """Update book details."""
+    if request.method == "PUT":
+        try:
+            book = Book.objects.get(id=book_id)
+            data = json.loads(request.body)
+
+            book.title = data.get("title", book.title)
+
+            author, _ = Author.objects.get_or_create(name=data.get("author", book.author.name))
+            book.author = author
+
+            language, _ = Language.objects.get_or_create(
+                name=data.get("language", book.language.name)
+            )
+            book.language = language
+
+            book.save()
+
+            return JsonResponse(
+                {
+                    "id": book.id,
+                    "title": book.title,
+                    "author": book.author.name,
+                    "language": book.language.name,
+                }
+            )
+        except Book.DoesNotExist:
+            return JsonResponse({"error": "Book not found"}, status=404)
+        except Exception as e:  # pylint: disable=broad-except
+            return JsonResponse({"error": str(e)}, status=500)
+
+    return JsonResponse({"error": "Invalid request method"}, status=405)

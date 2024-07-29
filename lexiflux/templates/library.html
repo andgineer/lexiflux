@@ -1,58 +1,210 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block content %}
 <div id="book" class="d-flex flex-column vh-100">
-    <nav class="navbar navbar-expand-lg navbar-light bg-light">
-        <div class="container-fluid">
-            {% include 'hamburger.html' with current_page='library' %}
-
-            <div class="mx-3 text-truncate container-fluid">
-                {{ book.title }}
-            </div>
-        </div>
-    </nav>
-
-    <div class="container-fluid flex-grow-1">
-        <div class="row justify-content-center">
-        <div class="card shadow col-md-10">
-            <div class="card-body">
-                <h2 class="text-center my-4">Your Books</h2>
-                <div class="d-flex justify-content-end mb-3">
-                    <button class="btn btn-primary" id="import-button">Import Books</button>
-                </div>
-                <div class="list-group">
-                       {% for book in books %}
-                            <div class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
-                                <a href="{% url 'reader' %}?book-code={{ book.code }}">{{ book.title }} by {{ book.author.name }}</a>
-                                <button onclick="location.href='{% url 'book' %}?book-code={{ book.code }}'" class="btn btn-secondary">
-                                    <i class="bi bi-gear-fill"></i>
-                                </button>
-                            </div>
-                    {% empty %}
-                        <p>No books available.</p>
-                    {% endfor %}
-                </div>
-                <nav aria-label="Page navigation" class="mt-4">
-                    <ul class="pagination justify-content-center">
-                        {% if books.has_previous %}
-                            <li class="page-item"><a class="page-link" href="?page={{ books.previous_page_number }}">Previous</a></li>
-                        {% endif %}
-                        {% for num in books.paginator.page_range %}
-                            {% if books.number == num %}
-                                <li class="page-item active"><a class="page-link" href="#">{{ num }}</a></li>
-                            {% else %}
-                                <li class="page-item"><a class="page-link" href="?page={{ num }}">{{ num }}</a></li>
-                            {% endif %}
-                        {% endfor %}
-                        {% if books.has_next %}
-                            <li class="page-item"><a class="page-link" href="?page={{ books.next_page_number }}">Next</a></li>
-                        {% endif %}
-                    </ul>
-                </nav>
-            </div>
-        </div>
+    <div class="container-fluid">
+        {% include 'hamburger.html' with current_page='library' %}
+        <div class="mx-3 text-truncate container-fluid">
+            {{ book.title }}
         </div>
     </div>
 
+    <div class="container-fluid flex-grow-1">
+        <div class="row justify-content-center">
+            <div class="card shadow col-md-10">
+                <div class="card-body">
+                    <h2 id="your-books" class="text-center my-4">Your Books</h2>
+
+                    <div class="d-flex justify-content-end mb-3">
+                        <button @click="showImportModal" class="btn btn-primary">Import Books</button>
+                    </div>
+
+                    <div class="list-group">
+                        {% for book in books %}
+                        <div class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                            <a href="{% url 'reader' %}?book-code={{ book.code }}">
+                                {{ book.title }} by {{ book.author.name }}
+                            </a>
+                            <button @click="editBook({{ book.id }})" class="btn btn-sm btn-outline-primary">Edit</button>
+                        </div>
+                        {% empty %}
+                        <p>No books available.</p>
+                        {% endfor %}
+                    </div>
+
+                    <!-- Pagination -->
+                    <nav aria-label="Page navigation">
+                        <ul class="pagination justify-content-center mt-4">
+                            {% if books.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ books.previous_page_number }}">Previous</a>
+                            </li>
+                            {% endif %}
+                            {% for num in books.paginator.page_range %}
+                            <li class="page-item {% if num == books.number %}active{% endif %}">
+                                <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                            </li>
+                            {% endfor %}
+                            {% if books.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ books.next_page_number }}">Next</a>
+                            </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Import Modal -->
+    <div class="modal fade" id="importModal" tabindex="-1" aria-labelledby="importModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="importModalLabel">Import Book</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form @submit.prevent="importBook">
+                        <div class="mb-3">
+                            <label for="bookFile" class="form-label">Select Book File</label>
+                            <input type="file" class="form-control" id="bookFile" @change="handleFileChange" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Import</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Book Modal -->
+    <div class="modal fade" id="editBookModal" tabindex="-1" aria-labelledby="editBookModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editBookModalLabel">Edit Book</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form @submit.prevent="updateBook">
+                        <div class="mb-3">
+                            <label for="bookTitle" class="form-label">Title</label>
+                            <input type="text" class="form-control" id="bookTitle" v-model="editingBook.title" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="bookAuthor" class="form-label">Author</label>
+                            <input type="text" class="form-control" id="bookAuthor" v-model="editingBook.author" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="bookLanguage" class="form-label">Language</label>
+                            <input type="text" class="form-control" id="bookLanguage" v-model="editingBook.language" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Save Changes</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
+
+<script>
+    new Vue({
+        el: '#book',
+        data: {
+            selectedFile: null,
+            editingBook: {
+                id: null,
+                title: '',
+                author: '',
+                language: ''
+            },
+            csrfToken: '{{ csrf_token }}'
+        },
+        mounted() {
+            // Initialize Bootstrap modals
+            this.importModal = new bootstrap.Modal(document.getElementById('importModal'));
+            this.editBookModal = new bootstrap.Modal(document.getElementById('editBookModal'));
+        },
+        methods: {
+            showImportModal() {
+                this.importModal.show();
+            },
+            handleFileChange(event) {
+                this.selectedFile = event.target.files[0];
+            },
+            importBook() {
+                const formData = new FormData();
+                formData.append('file', this.selectedFile);
+
+                fetch('{% url "import_book" %}', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': this.csrfToken
+                    },
+                    body: formData
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Book imported successfully:', data);
+                    this.editingBook = data;
+                    this.importModal.hide();
+                    this.editBookModal.show();
+                })
+                .catch(error => {
+                    console.error('Error importing book:', error);
+                    alert('Error importing book. Please try again.');
+                });
+            },
+            editBook(bookId) {
+                fetch(`{% url "get_book" book_id=12345 %}`.replace('12345', bookId))
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    this.editingBook = data;
+                    this.editBookModal.show();
+                })
+                .catch(error => {
+                    console.error('Error fetching book details:', error);
+                    alert('Error fetching book details. Please try again.');
+                });
+            },
+            updateBook() {
+                fetch(`{% url "update_book" book_id=12345 %}`.replace('12345', this.editingBook.id), {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': this.csrfToken
+                    },
+                    body: JSON.stringify(this.editingBook)
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Book updated successfully:', data);
+                    this.editBookModal.hide();
+                    location.reload(); // Refresh the page to show updated book list
+                })
+                .catch(error => {
+                    console.error('Error updating book:', error);
+                    alert('Error updating book. Please try again.');
+                });
+            }
+        }
+    });
+</script>
 {% endblock %}
