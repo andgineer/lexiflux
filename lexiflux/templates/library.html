@@ -93,6 +93,9 @@
                         <label for="bookFile" class="form-label">Select Book File</label>
                         <input type="file" class="form-control" id="bookFile" @change="handleFileUpload">
                     </div>
+                    <small class="form-text text-muted d-block mb-3">
+                       Supported formats: EPUB, TXT, HTML (defined by file extension)
+                    </small>
                     <button class="btn btn-primary" @click="importBook">Import</button>
                 </div>
             </div>
