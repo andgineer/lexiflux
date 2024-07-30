@@ -6,6 +6,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from tests.conftest import USER_PASSWORD
 from tests.page_models.library_page import LibraryPage
 
+
 @allure.epic('End-to-end (selenium)')
 @allure.feature('Library Page')
 @allure.story('Book Editing')
@@ -37,15 +38,15 @@ def test_e2e_library_page_edit_book(browser, approved_user, book):
 
     new_title = f"Updated: {initial_title}"
     new_author = f"Updated: {initial_author}"
-    with allure.step(f"Change book title to '{new_title}' and save"):
+    with allure.step(f"Change book title to '{new_title}' and author to '{new_author}' and save"):
         page.edit_book_title(new_title)
         page.edit_book_author(new_author)
         page.save_book_changes()
         browser.take_screenshot("After Saving Changes")
 
-    with allure.step("Verify the book title has been updated"):
+    with allure.step("Verify the book title and author have been updated"):
         updated_title, updated_author = page.get_first_book_info()
         assert updated_title == new_title, f"Expected title '{new_title}', but got '{updated_title}'"
-        assert updated_author == new_author, f"Author should not change. Expected '{new_author}', but got '{updated_author}'"
+        assert updated_author == new_author, f"Expected author '{new_author}', but got '{updated_author}'"
 
     browser.take_screenshot("Final Library Page")

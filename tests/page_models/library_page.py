@@ -4,6 +4,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from tests.page_models.base_page import BasePage
 
+
 class LibraryPage(BasePage):
     @allure.step("Navigate to library page")
     def goto(self):
@@ -17,17 +18,15 @@ class LibraryPage(BasePage):
         return self.browser.find_element(By.TAG_NAME, "h2").text
 
     def get_first_book_info(self):
-        books = self.browser.find_elements(By.CLASS_NAME, "list-group-item")
+        books = self.browser.find_elements(By.CSS_SELECTOR, "table tbody tr")
         if books:
-            full_text = books[0].find_element(By.TAG_NAME, "a").text
-            parts = full_text.split(" by ", 1)
-            title = parts[0].strip()
-            author = parts[1].strip() if len(parts) > 1 else ""
-            return title, author
+            title = books[0].find_element(By.CSS_SELECTOR, "td:first-child a").text
+            author = books[0].find_element(By.CSS_SELECTOR, "td:nth-child(2)").text
+            return title.strip(), author.strip()
         return None, None
 
     def open_edit_modal_for_first_book(self):
-        edit_buttons = self.browser.find_elements(By.CSS_SELECTOR, ".list-group-item .btn-secondary")
+        edit_buttons = self.browser.find_elements(By.CSS_SELECTOR, "table tbody tr .btn-outline-secondary")
         if edit_buttons:
             edit_buttons[0].click()
             self.wait_for_modal()
@@ -47,10 +46,10 @@ class LibraryPage(BasePage):
         title_input.clear()
         title_input.send_keys(new_title)
 
-    def edit_book_author(self, new_title):
+    def edit_book_author(self, new_author):
         author_input = self.wait_for_element((By.ID, "bookAuthor"))
         author_input.clear()
-        author_input.send_keys(new_title)
+        author_input.send_keys(new_author)
 
     def save_book_changes(self):
         save_button = self.wait_for_clickable((By.CSS_SELECTOR, "#editBookModal .btn-primary"))

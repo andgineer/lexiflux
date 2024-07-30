@@ -20,17 +20,37 @@
                         <button class="btn btn-primary" @click="showImportModal">Import Books</button>
                     </div>
 
-                    <div class="list-group">
-                        {% for book in books %}
-                        <div class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
-                            <a href="{% url 'reader' %}?book-code={{ book.code }}">
-                                {{ book.title }} by {{ book.author.name }}
-                            </a>
-                            <button class="btn btn-secondary btn-sm" @click="editBook('{{ book.id }}')">Edit</button>
-                        </div>
-                        {% empty %}
-                        <div class="list-group-item">No books available.</div>
-                        {% endfor %}
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Title</th>
+                                    <th>Author</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for book in books %}
+                                <tr>
+                                    <td>
+                                        <a href="{% url 'reader' %}?book-code={{ book.code }}" class="text-decoration-none">
+                                            {{ book.title }}
+                                        </a>
+                                    </td>
+                                    <td>{{ book.author.name }}</td>
+                                    <td>
+                                        <button class="btn btn-outline-secondary btn-sm" @click="editBook('{{ book.id }}')">
+                                            Edit
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="3" class="text-center">No books available.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
                     </div>
 
                     <nav aria-label="Page navigation" class="mt-4">
@@ -196,20 +216,16 @@
                     });
             },
             searchAuthors() {
-                console.log('searchAuthors called with:', this.authorSearch);
                 clearTimeout(this.searchTimeout);
                 this.searchTimeout = setTimeout(() => {
                     if (this.authorSearch.length < 2) {
-                        console.log('Search term too short');
                         this.authorSuggestions = [];
                         this.hasMoreAuthors = false;
                         return;
                     }
-                    console.log('Fetching authors for:', this.authorSearch);
                     fetch(`/api/search-authors/?q=${encodeURIComponent(this.authorSearch)}`)
                         .then(response => response.json())
                         .then(data => {
-                            console.log('Received data:', data);
                             this.authorSuggestions = data.authors;
                             this.hasMoreAuthors = data.has_more;
                         })
