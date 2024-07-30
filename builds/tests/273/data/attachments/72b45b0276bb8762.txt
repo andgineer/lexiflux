@@ -1,3 +1,0 @@
-INFO:root:Test finished
-INFO:root:Test started
-INFO:lexiflux.language.nltk_tokenizer:Downloaded NLTK data: punkt
