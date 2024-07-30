@@ -1,8 +1,11 @@
 """Views for the library and Book pages."""
 
 import json
+import traceback
 from typing import Type
 
+from django.core.files.storage import FileSystemStorage
+from django.core.files.uploadedfile import TemporaryUploadedFile
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.db import models
 from django.http import HttpRequest, HttpResponse, JsonResponse
@@ -105,8 +108,19 @@ def import_book(request: HttpRequest) -> JsonResponse:
             return JsonResponse({"error": "Unsupported file format"}, status=400)
 
         try:
-            book_processor = book_class(file)
-            book = book_base.import_book(book_processor, request.user.email)
+            if isinstance(file, TemporaryUploadedFile):
+                book_processor = book_class(file.temporary_file_path())
+                book = book_base.import_book(book_processor, request.user.email)
+            else:
+                # For in-memory files, save to disk
+                fs = FileSystemStorage(location="/tmp")
+                filename = fs.save(file.name, file)
+                try:
+                    book_processor = book_class(fs.path(filename))
+                    book = book_base.import_book(book_processor, request.user.email)
+                finally:
+                    fs.delete(filename)
+
             return JsonResponse(
                 {
                     "id": book.id,
@@ -116,6 +130,9 @@ def import_book(request: HttpRequest) -> JsonResponse:
                 }
             )
         except Exception as e:  # pylint: disable=broad-except
+            print(e)
+            traceback_str = traceback.format_exc()
+            print(traceback_str)
             return JsonResponse({"error": str(e)}, status=500)
 
     return JsonResponse({"error": "Invalid request method"}, status=405)
