@@ -174,6 +174,21 @@ class BookDetailView(View):  # type: ignore
 
         return JsonResponse({"error": "Invalid request method"}, status=405)
 
+    def delete(self, request: HttpRequest, book_id: int) -> JsonResponse:
+        """Delete a book."""
+        try:
+            book = Book.objects.get(id=book_id)
+            if book.owner != request.user and not request.user.is_superuser:
+                return JsonResponse(
+                    {"error": "You don't have permission to delete this book"}, status=403
+                )
+            book.delete()
+            return JsonResponse({"success": "Book deleted successfully"})
+        except Book.DoesNotExist:
+            return JsonResponse({"error": "Book not found"}, status=404)
+        except Exception as e:  # pylint: disable=broad-except
+            return JsonResponse({"error": str(e)}, status=500)
+
 
 @login_required  # type: ignore
 def search_authors(request: HttpRequest) -> JsonResponse:
