@@ -23,7 +23,6 @@ urlpatterns = [
     path("location", lexiflux.views.reader_views.location, name="location"),
     path("history", lexiflux.views.reader_views.add_to_history, name="history"),
     path("translate", lexiflux.views.lexical_views.translate, name="translate"),
-    path("book", lexiflux.views.library_views.view_book, name="book"),  # todo: obsolete
     path(
         "language-preferences/",
         lexiflux.views.language_preferences_ajax.language_preferences_editor,

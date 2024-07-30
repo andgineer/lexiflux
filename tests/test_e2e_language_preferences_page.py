@@ -5,12 +5,12 @@ from tests.page_models.language_preferences_page import LanguagePreferencesPage
 
 
 @allure.epic('End-to-end (selenium)')
-@allure.feature('Language Preferences')
+@allure.feature('Language Preferences Page')
 @allure.story('Inline Translation Editor')
 @pytest.mark.docker
 @pytest.mark.selenium
 @pytest.mark.django_db
-def test_language_preferences_inline_translation(browser, approved_user):
+def test_e2e_language_preferences_page_inline_translation(browser, approved_user):
     with allure.step("Login and navigate to language preferences"):
         browser.login(approved_user, USER_PASSWORD)
         page = LanguagePreferencesPage(browser)

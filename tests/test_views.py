@@ -89,27 +89,25 @@ def test_add_to_history_invalid_input(client, user):
     assert response.json() == {"error": "Invalid input"}
 
 
-@allure.epic('View: Book')
+@allure.epic('View: Reader')
 @pytest.mark.django_db
-def test_view_book_success(client, user, book):
-    client.force_login(user)
-    response = client.get(reverse('book'), {'book-code': book.code})
-
-    assert response.status_code == 200
-    assert 'book' in response.context
-    assert response.context['book'].id == book.id
-    assertTemplateUsed(response, 'book.html')
-
-
-@allure.epic('View: Book')
-@pytest.mark.django_db
-def test_view_book_access_denied(client, book):
+def test_reader_access_denied(client, book):
     # Assuming another_user does not have access to the book
     another_user = get_user_model().objects.create_user('another_user', 'another@example.com', 'password')
     client.force_login(another_user)
-    response = client.get(reverse('book'), {'book-code': book.code})
+    response = client.get(reverse('reader'), {'book-code': book.code})
 
     assert response.status_code == 403
+
+
+@allure.epic('View: Language Preferences')
+@pytest.mark.django_db
+def test_language_preferences_access_denied(client, book):
+    # Access without login
+    response = client.get(reverse('language-preferences'), {'book-code': book.code})
+
+    assert response.status_code == 302
+    assert response.url.startswith('/accounts/login'), "User should be redirected to login page"
 
 
 @allure.epic('View: Language Preferences')

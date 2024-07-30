@@ -9,14 +9,13 @@ from django.core.files.uploadedfile import TemporaryUploadedFile
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.db import models
 from django.http import HttpRequest, HttpResponse, JsonResponse
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render
 from django.utils.decorators import method_decorator
 from django.views import View
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 
 from lexiflux.ebook.book_base import BookBase
-from lexiflux.views.reader_views import can_see_book
 from lexiflux.models import Book, Author, Language
 from lexiflux.ebook.book_plain_text import BookPlainText
 from lexiflux.ebook.book_html import BookHtml
@@ -69,23 +68,6 @@ def library(request: HttpRequest) -> HttpResponse:
         "languages": json.dumps(languages),
     }
     return render(request, "library.html", context)
-
-
-# todo: obsolete
-@login_required  # type: ignore
-def view_book(request: HttpRequest) -> HttpResponse:
-    """Book detail page."""
-    book_code = request.GET.get("book-code")
-    book = get_object_or_404(Book, code=book_code)
-
-    if not can_see_book(request.user, book):
-        return HttpResponse(status=403)  # Forbidden
-
-    context = {
-        "book": book,
-    }
-
-    return render(request, "book.html", context)
 
 
 @login_required  # type: ignore
