@@ -134,6 +134,7 @@ class BookDetailView(View):  # type: ignore
                     "title": book.title,
                     "author": book.author.name,
                     "language": book.language.google_code,
+                    "code": book.code,
                 }
             )
         except Book.DoesNotExist:

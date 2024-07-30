@@ -107,7 +107,12 @@
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="editBookModalLabel">Edit Book</h5>
+                    <div>
+                        <h5 class="modal-title" id="editBookModalLabel">Edit Book</h5>
+                        <div class="text-muted small">
+                            <span class="font-monospace">${ bookCode }</span>
+                        </div>
+                    </div>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
@@ -152,6 +157,7 @@
                 author: '',
                 language: ''
             },
+            bookCode: '',
             authorSearch: '',
             authorSuggestions: [],
             hasMoreAuthors: false,
@@ -211,6 +217,7 @@
                     .then(data => {
                         this.authorSearch = data.author;
                         this.editedBook = data;
+                        this.bookCode = data.code;
                         new bootstrap.Modal(document.getElementById('editBookModal')).show();
                     })
                     .catch(error => {
