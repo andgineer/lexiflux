@@ -1,3 +1,0 @@
-SEVERE: http://10.1.0.93:49237/api/get-language-preferences/ - Failed to load resource: the server responded with a status of 400 (Bad Request)
-SEVERE: http://10.1.0.93:49237/language-preferences/ 559:24 "Error loading articles:" Error: HTTP error! status: 400
-    at http://10.1.0.93:49237/language-preferences/:540:27
