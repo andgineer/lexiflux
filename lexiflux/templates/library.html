@@ -108,7 +108,9 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <div>
-                        <h5 class="modal-title" id="editBookModalLabel">Edit Book</h5>
+                        <h5 class="modal-title" id="editBookModalLabel">
+                            ${ isNewlyImported ? 'Imported Book' : 'Edit Book' }
+                        </h5>
                         <div class="text-muted small">
                             <span class="font-monospace">${ bookCode }</span>
                         </div>
@@ -140,15 +142,15 @@
                         </select>
                     </div>
                     <div class="modal-footer justify-content-between">
-                      <button type="button" class="btn btn-outline-danger" @click="showDeleteConfirmation" title="Delete Book">
-                        <i class="bi bi-trash"></i>
-                      </button>
-                      <div>
-                        <button type="button" class="btn btn-outline-secondary me-2" data-bs-dismiss="modal">Close</button>
-                        <button type="button" class="btn btn-primary" @click="saveChanges">
-                          <i class="bi bi-check-lg me-1"></i>Save
+                        <button type="button" class="btn btn-outline-danger" @click="showDeleteConfirmation" title="Delete Book">
+                            <i class="bi bi-trash"></i>
                         </button>
-                      </div>
+                        <div>
+                            <button v-if="!isNewlyImported" type="button" class="btn btn-outline-secondary me-2" data-bs-dismiss="modal">Close</button>
+                            <button type="button" class="btn btn-primary" @click="saveChanges">
+                                <i class="bi bi-check-lg me-1"></i>Save
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -196,7 +198,8 @@
             importFile: null,
             errorMessage: '',
             successMessage: '',
-            searchTimeout: null
+            searchTimeout: null,
+            isNewlyImported: false
         },
         watch: {
             authorSearch(newValue) {
@@ -232,8 +235,13 @@
                     if (data.error) {
                         this.errorMessage = data.error;
                     } else {
-                        bootstrap.Modal.getInstance(document.getElementById('importModal')).hide();
-                        location.reload();
+                        if (data.error) {
+                            this.errorMessage = data.error;
+                        } else {
+                            this.isNewlyImported = true;  // Set the flag
+                            this.editBook(data.id);  // Open edit modal with the new book's ID
+                            bootstrap.Modal.getInstance(document.getElementById('importModal')).hide();
+                        }
                     }
                 })
                 .catch(error => {
