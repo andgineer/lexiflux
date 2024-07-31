@@ -5,6 +5,7 @@ from html.parser import HTMLParser
 from html import unescape
 from typing import List, Tuple
 
+TAGS_EXCLUDED_CONTENT = {"script", "style", "svg"}
 VALID_TAGS = set(HTMLParser.CDATA_CONTENT_ELEMENTS) | {
     "html",
     "head",
@@ -54,7 +55,7 @@ class HTMLCleaner(HTMLParser):  # pylint: disable=too-many-instance-attributes
         self.output: List[str] = []
         self.tag_positions: List[Tuple[int, int]] = []
         self.escaped_chars: List[Tuple[int, int, str]] = []  # (start, end, unescaped)
-        self.in_script_or_style = False
+        self.excluded_content = False
         self.current_position = 0
         self.is_self_closing = False
 
@@ -63,8 +64,8 @@ class HTMLCleaner(HTMLParser):  # pylint: disable=too-many-instance-attributes
         assert tag_text is not None
         start = self.current_position
         end = start + len(tag_text)
-        if tag in ("script", "style"):
-            self.in_script_or_style = True
+        if tag in TAGS_EXCLUDED_CONTENT:
+            self.excluded_content = True
         if tag in VALID_TAGS:
             self.tag_positions.append((start, end))
             self.is_self_closing = tag_text.endswith("/>")
@@ -81,7 +82,7 @@ class HTMLCleaner(HTMLParser):  # pylint: disable=too-many-instance-attributes
         start = self.current_position
         end = start + len(f"</{tag}>")
         if tag in ("script", "style"):
-            self.in_script_or_style = False
+            self.excluded_content = False
         if tag in VALID_TAGS:
             self.tag_positions.append((start, end))
             logger.debug(f"End Tag: {tag} {self.tag_positions[-1]}")
@@ -91,7 +92,7 @@ class HTMLCleaner(HTMLParser):  # pylint: disable=too-many-instance-attributes
         logger.debug(f"EndTag: {tag} current_position: {self.current_position}")
 
     def handle_data(self, data: str) -> None:
-        if not self.in_script_or_style:
+        if not self.excluded_content:
             self.output.append(data)
         else:
             self.tag_positions.append((self.current_position, self.current_position + len(data)))

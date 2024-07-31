@@ -69,7 +69,7 @@ def test_import_epub_e2e():
     assert book.author.name == 'Theodore Dreiser'
     assert book.language.name == 'English'
     assert book.public is True
-    assert book.pages.count() == 111
+    assert book.pages.count() == 104
     with open('tests/resources/genius_1st_page.txt', 'r', encoding="utf8") as f:
         assert book.pages.first().content == f.read()
     expected_toc = [

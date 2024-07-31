@@ -67,6 +67,7 @@ class BookEpub(BookBase):
         """
         self.toc = []
         page_num = 0
+        content_accumulator = ""
         for spine_id in self.epub.spine:
             item: epub.EpubItem = self.epub.get_item_with_id(spine_id[0])
             if item.get_type() == ITEM_DOCUMENT:
@@ -80,12 +81,17 @@ class BookEpub(BookBase):
                 )
                 # todo: split epub item to pages
                 page_num += 1
-                item_content = clear_html(item.get_body_content().decode("utf-8"))
+                content_accumulator += (
+                    f"{content_accumulator} "
+                    + clear_html(item.get_body_content().decode("utf-8")).strip()
+                )
                 if item.file_name in self.heading_hrefs:
                     header_anchors = self.heading_hrefs[item.file_name]
                     if "#" in header_anchors:
                         self.toc.append((header_anchors["#"], page_num, 0))
-                yield item_content
+                if len(content_accumulator) > 1000:
+                    yield content_accumulator
+                    content_accumulator = ""
                 # todo: detect headings inside pages text and store them in self._detected_toc
         #  set self._detected_toc as TOC if epab.toc too small
 
@@ -149,7 +155,7 @@ def href_hierarchy(input_dict: Dict[str, str]) -> Dict[str, Dict[str, str]]:
 
 def clear_html(  # pylint: disable=dangerous-default-value  # we do not modify it
     input_html: str,
-    tags_to_remove_with_content: Iterable[str] = ("head",),
+    tags_to_remove_with_content: Iterable[str] = ("head", "style", "script", "svg", "noscript"),
     tags_to_remove_keeping_content: Iterable[str] = ("body", "html", "span", "div"),
     tags_to_clear_attributes: Iterable[str] = ("p", "br", "h1", "h2", "h3", "h4", "h5", "h6"),
     tag_to_partially_clear_attributes: Dict[str, List[str]] = {"img": ["src", "alt", "style"]},
