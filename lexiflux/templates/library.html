@@ -314,11 +314,16 @@
                 });
             },
             showDeleteConfirmation() {
-                // Close the edit modal before showing the confirmation modal
-                bootstrap.Modal.getInstance(document.getElementById('editBookModal')).hide();
-                this.$nextTick(() => {
-                    new bootstrap.Modal(document.getElementById('deleteConfirmationModal')).show();
-                });
+                if (this.isNewlyImported) {
+                    // If it's a newly imported book, delete it directly without confirmation
+                    this.deleteBook();
+                } else {
+                    // For existing books, close the edit modal before showing the confirmation modal
+                    bootstrap.Modal.getInstance(document.getElementById('editBookModal')).hide();
+                    this.$nextTick(() => {
+                        new bootstrap.Modal(document.getElementById('deleteConfirmationModal')).show();
+                    });
+                }
             },
             deleteBook() {
                 fetch(`/api/books/${this.editedBook.id}/`, {
