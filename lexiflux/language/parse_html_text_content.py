@@ -1,4 +1,4 @@
-"""Clean HTML content and extract tag positions."""
+"""Get text from HTML page and detect tag positions."""
 
 import logging
 from html.parser import HTMLParser
@@ -44,8 +44,8 @@ VALID_TAGS = set(HTMLParser.CDATA_CONTENT_ELEMENTS) | {
 logger = logging.getLogger(__name__)
 
 
-class HTMLCleaner(HTMLParser):  # pylint: disable=too-many-instance-attributes
-    """Clean HTML content and extract tag positions."""
+class HTMLTextContentParser(HTMLParser):  # pylint: disable=too-many-instance-attributes
+    """Get text content from HTML string and detect tag positions."""
 
     def __init__(self) -> None:
         super().__init__()
@@ -164,13 +164,15 @@ class HTMLCleaner(HTMLParser):  # pylint: disable=too-many-instance-attributes
         return "".join(self.output), self.tag_positions, self.escaped_chars
 
 
-def parse_tags(html_content: str) -> Tuple[str, List[Tuple[int, int]], List[Tuple[int, int, str]]]:
+def parse_html_content(
+    html_content: str,
+) -> Tuple[str, List[Tuple[int, int]], List[Tuple[int, int, str]]]:
     """Parse HTML content and return plain text, tag slices, and escaped character information."""
-    parser = HTMLCleaner()
+    parser = HTMLTextContentParser()
     parser.feed(html_content)
     return parser.get_cleaned_data()
 
 
-def clear_html_tags(html_content: str) -> str:
-    """Remove HTML tags from content"""
-    return parse_tags(html_content)[0]
+def extract_content_from_html(html_content: str) -> str:
+    """Get just text content from HTML string."""
+    return parse_html_content(html_content)[0]

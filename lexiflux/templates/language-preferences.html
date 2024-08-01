@@ -461,10 +461,14 @@ Add to each translation to {user_language} language.
             const oldModel = this.form.parameters ? this.form.parameters.model : null;
 
             if (this.form.type === 'Site') {
-                this.form.parameters = this.form.parameters || {
-                    url: '',
-                    window: false
-                };
+                this.form.parameters = this.form.parameters || {};
+                if (!('url' in this.form.parameters)) {
+                    this.form.parameters.url = '';
+                }
+                // Set window to true if it's not already defined
+                if (!('window' in this.form.parameters)) {
+                    this.form.parameters.window = true;
+                }
             } else if (['Translate', 'Sentence', 'Explain', 'Examples', 'Lexical'].includes(this.form.type)) {
                 if (!this.form.parameters || !this.form.parameters.model) {
                     this.form.parameters = this.form.parameters || {};

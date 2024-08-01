@@ -17,7 +17,7 @@ from langchain_community.llms import Ollama  # pylint: disable=no-name-in-module
 
 from langchain.schema import BaseOutputParser
 
-from lexiflux.language.html_tags_cleaner import clear_html_tags
+from lexiflux.language.parse_html_text_content import extract_content_from_html
 from lexiflux.language.sentence_extractor_llm import (
     SENTENCE_START_MARK,
     SENTENCE_END_MARK,
@@ -209,7 +209,7 @@ class Llm:  # pylint: disable=too-few-public-methods
             data["prompt"] = params["prompt"]
 
         marked_text = self.mark_term_and_sentence(hashable_data)
-        data["text"] = clear_html_tags(marked_text["text"])
+        data["text"] = extract_content_from_html(marked_text["text"])
         data["detected_language"] = marked_text["detected_language"]
 
         model = self._get_or_create_model(data)

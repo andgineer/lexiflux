@@ -12,7 +12,7 @@ from django.template.loader import render_to_string
 from pydantic import Field
 
 from lexiflux.api import ViewGetParamsModel, get_params
-from lexiflux.language.html_tags_cleaner import clear_html_tags
+from lexiflux.language.parse_html_text_content import extract_content_from_html
 from lexiflux.language.llm import Llm, AIModelError
 from lexiflux.language.translation import get_translator
 from lexiflux.models import BookPage, LanguagePreferences, Book
@@ -143,7 +143,7 @@ def translate(request: HttpRequest, params: TranslateGetParams) -> HttpResponse:
     #         for id in term_word_ids
     #     ]
     # )
-    term_text = clear_html_tags(
+    term_text = extract_content_from_html(
         book_page.content[
             book_page.words[term_word_ids[0]][0] : book_page.words[term_word_ids[-1]][1]
         ]

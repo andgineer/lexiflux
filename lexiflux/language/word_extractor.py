@@ -8,7 +8,7 @@ import nltk
 from lexiflux.language.nltk_tokenizer import ensure_nltk_data
 
 
-from lexiflux.language.html_tags_cleaner import parse_tags
+from lexiflux.language.parse_html_text_content import parse_html_content
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -36,7 +36,7 @@ def parse_words(
 ) -> Tuple[List[Tuple[int, int]], List[Tuple[int, int]]]:
     """Extract words and HTML tags from HTML content."""
 
-    cleaned_content, tag_positions, escaped_chars = parse_tags(content)
+    cleaned_content, tag_positions, escaped_chars = parse_html_content(content)
 
     if tokenizer == WordTokenizer.NLTK:
         ensure_nltk_data(f"tokenizers/punkt/{lang_code}.pickle", "punkt")
