@@ -65,7 +65,7 @@
             <a id="nextFileLink" class="nav" href="z_934ba73b639b2840_library_views_py.html">&#xbb; next</a>
             &nbsp; &nbsp; &nbsp;
             <a class="nav" href="https://coverage.readthedocs.io/en/7.6.0">coverage.py v7.6.0</a>,
-            created at 2024-07-31 14:46 +0000
+            created at 2024-08-01 04:45 +0000
         </p>
         <aside class="hidden">
             <button type="button" class="button_next_chunk" data-shortcut="j"></button>
@@ -94,7 +94,7 @@
     <p class="run"><span class="n"><a id="t12" href="#t12">12</a></span><span class="t"><span class="key">from</span> <span class="nam">pydantic</span> <span class="key">import</span> <span class="nam">Field</span>&nbsp;</span><span class="r"></span></p>
     <p class="pln"><span class="n"><a id="t13" href="#t13">13</a></span><span class="t">&nbsp;</span><span class="r"></span></p>
     <p class="run"><span class="n"><a id="t14" href="#t14">14</a></span><span class="t"><span class="key">from</span> <span class="nam">lexiflux</span><span class="op">.</span><span class="nam">api</span> <span class="key">import</span> <span class="nam">ViewGetParamsModel</span><span class="op">,</span> <span class="nam">get_params</span>&nbsp;</span><span class="r"></span></p>
-    <p class="run"><span class="n"><a id="t15" href="#t15">15</a></span><span class="t"><span class="key">from</span> <span class="nam">lexiflux</span><span class="op">.</span><span class="nam">language</span><span class="op">.</span><span class="nam">html_tags_cleaner</span> <span class="key">import</span> <span class="nam">clear_html_tags</span>&nbsp;</span><span class="r"></span></p>
+    <p class="run"><span class="n"><a id="t15" href="#t15">15</a></span><span class="t"><span class="key">from</span> <span class="nam">lexiflux</span><span class="op">.</span><span class="nam">language</span><span class="op">.</span><span class="nam">parse_html_text_content</span> <span class="key">import</span> <span class="nam">extract_content_from_html</span>&nbsp;</span><span class="r"></span></p>
     <p class="run"><span class="n"><a id="t16" href="#t16">16</a></span><span class="t"><span class="key">from</span> <span class="nam">lexiflux</span><span class="op">.</span><span class="nam">language</span><span class="op">.</span><span class="nam">llm</span> <span class="key">import</span> <span class="nam">Llm</span><span class="op">,</span> <span class="nam">AIModelError</span>&nbsp;</span><span class="r"></span></p>
     <p class="run"><span class="n"><a id="t17" href="#t17">17</a></span><span class="t"><span class="key">from</span> <span class="nam">lexiflux</span><span class="op">.</span><span class="nam">language</span><span class="op">.</span><span class="nam">translation</span> <span class="key">import</span> <span class="nam">get_translator</span>&nbsp;</span><span class="r"></span></p>
     <p class="run"><span class="n"><a id="t18" href="#t18">18</a></span><span class="t"><span class="key">from</span> <span class="nam">lexiflux</span><span class="op">.</span><span class="nam">models</span> <span class="key">import</span> <span class="nam">BookPage</span><span class="op">,</span> <span class="nam">LanguagePreferences</span><span class="op">,</span> <span class="nam">Book</span>&nbsp;</span><span class="r"></span></p>
@@ -225,7 +225,7 @@
     <p class="pln"><span class="n"><a id="t143" href="#t143">143</a></span><span class="t">    <span class="com">#         for id in term_word_ids</span>&nbsp;</span><span class="r"></span></p>
     <p class="pln"><span class="n"><a id="t144" href="#t144">144</a></span><span class="t">    <span class="com">#     ]</span>&nbsp;</span><span class="r"></span></p>
     <p class="pln"><span class="n"><a id="t145" href="#t145">145</a></span><span class="t">    <span class="com"># )</span>&nbsp;</span><span class="r"></span></p>
-    <p class="run"><span class="n"><a id="t146" href="#t146">146</a></span><span class="t">    <span class="nam">term_text</span> <span class="op">=</span> <span class="nam">clear_html_tags</span><span class="op">(</span>&nbsp;</span><span class="r"></span></p>
+    <p class="run"><span class="n"><a id="t146" href="#t146">146</a></span><span class="t">    <span class="nam">term_text</span> <span class="op">=</span> <span class="nam">extract_content_from_html</span><span class="op">(</span>&nbsp;</span><span class="r"></span></p>
     <p class="pln"><span class="n"><a id="t147" href="#t147">147</a></span><span class="t">        <span class="nam">book_page</span><span class="op">.</span><span class="nam">content</span><span class="op">[</span>&nbsp;</span><span class="r"></span></p>
     <p class="pln"><span class="n"><a id="t148" href="#t148">148</a></span><span class="t">            <span class="nam">book_page</span><span class="op">.</span><span class="nam">words</span><span class="op">[</span><span class="nam">term_word_ids</span><span class="op">[</span><span class="num">0</span><span class="op">]</span><span class="op">]</span><span class="op">[</span><span class="num">0</span><span class="op">]</span> <span class="op">:</span> <span class="nam">book_page</span><span class="op">.</span><span class="nam">words</span><span class="op">[</span><span class="nam">term_word_ids</span><span class="op">[</span><span class="op">-</span><span class="num">1</span><span class="op">]</span><span class="op">]</span><span class="op">[</span><span class="num">1</span><span class="op">]</span>&nbsp;</span><span class="r"></span></p>
     <p class="pln"><span class="n"><a id="t149" href="#t149">149</a></span><span class="t">        <span class="op">]</span>&nbsp;</span><span class="r"></span></p>
@@ -278,7 +278,7 @@
             <a class="nav" href="z_934ba73b639b2840_library_views_py.html">&#xbb; next</a>
             &nbsp; &nbsp; &nbsp;
             <a class="nav" href="https://coverage.readthedocs.io/en/7.6.0">coverage.py v7.6.0</a>,
-            created at 2024-07-31 14:46 +0000
+            created at 2024-08-01 04:45 +0000
         </p>
     </div>
 </footer>

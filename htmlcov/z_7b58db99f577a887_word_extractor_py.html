@@ -65,7 +65,7 @@
             <a id="nextFileLink" class="nav" href="z_816b02d96dab55f8_middleware_py.html">&#xbb; next</a>
             &nbsp; &nbsp; &nbsp;
             <a class="nav" href="https://coverage.readthedocs.io/en/7.6.0">coverage.py v7.6.0</a>,
-            created at 2024-07-31 14:46 +0000
+            created at 2024-08-01 04:45 +0000
         </p>
         <aside class="hidden">
             <button type="button" class="button_next_chunk" data-shortcut="j"></button>
@@ -90,7 +90,7 @@
     <p class="run"><span class="n"><a id="t8" href="#t8">8</a></span><span class="t"><span class="key">from</span> <span class="nam">lexiflux</span><span class="op">.</span><span class="nam">language</span><span class="op">.</span><span class="nam">nltk_tokenizer</span> <span class="key">import</span> <span class="nam">ensure_nltk_data</span>&nbsp;</span><span class="r"></span></p>
     <p class="pln"><span class="n"><a id="t9" href="#t9">9</a></span><span class="t">&nbsp;</span><span class="r"></span></p>
     <p class="pln"><span class="n"><a id="t10" href="#t10">10</a></span><span class="t">&nbsp;</span><span class="r"></span></p>
-    <p class="run"><span class="n"><a id="t11" href="#t11">11</a></span><span class="t"><span class="key">from</span> <span class="nam">lexiflux</span><span class="op">.</span><span class="nam">language</span><span class="op">.</span><span class="nam">html_tags_cleaner</span> <span class="key">import</span> <span class="nam">parse_tags</span>&nbsp;</span><span class="r"></span></p>
+    <p class="run"><span class="n"><a id="t11" href="#t11">11</a></span><span class="t"><span class="key">from</span> <span class="nam">lexiflux</span><span class="op">.</span><span class="nam">language</span><span class="op">.</span><span class="nam">parse_html_text_content</span> <span class="key">import</span> <span class="nam">parse_html_content</span>&nbsp;</span><span class="r"></span></p>
     <p class="pln"><span class="n"><a id="t12" href="#t12">12</a></span><span class="t">&nbsp;</span><span class="r"></span></p>
     <p class="run"><span class="n"><a id="t13" href="#t13">13</a></span><span class="t"><span class="nam">logging</span><span class="op">.</span><span class="nam">basicConfig</span><span class="op">(</span><span class="nam">level</span><span class="op">=</span><span class="nam">logging</span><span class="op">.</span><span class="nam">INFO</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
     <p class="run"><span class="n"><a id="t14" href="#t14">14</a></span><span class="t"><span class="nam">logger</span> <span class="op">=</span> <span class="nam">logging</span><span class="op">.</span><span class="nam">getLogger</span><span class="op">(</span><span class="nam">__name__</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
@@ -118,7 +118,7 @@
     <p class="pln"><span class="n"><a id="t36" href="#t36">36</a></span><span class="t"><span class="op">)</span> <span class="op">-></span> <span class="nam">Tuple</span><span class="op">[</span><span class="nam">List</span><span class="op">[</span><span class="nam">Tuple</span><span class="op">[</span><span class="nam">int</span><span class="op">,</span> <span class="nam">int</span><span class="op">]</span><span class="op">]</span><span class="op">,</span> <span class="nam">List</span><span class="op">[</span><span class="nam">Tuple</span><span class="op">[</span><span class="nam">int</span><span class="op">,</span> <span class="nam">int</span><span class="op">]</span><span class="op">]</span><span class="op">]</span><span class="op">:</span>&nbsp;</span><span class="r"></span></p>
     <p class="pln"><span class="n"><a id="t37" href="#t37">37</a></span><span class="t">    <span class="str">"""Extract words and HTML tags from HTML content."""</span>&nbsp;</span><span class="r"></span></p>
     <p class="pln"><span class="n"><a id="t38" href="#t38">38</a></span><span class="t">&nbsp;</span><span class="r"></span></p>
-    <p class="run"><span class="n"><a id="t39" href="#t39">39</a></span><span class="t">    <span class="nam">cleaned_content</span><span class="op">,</span> <span class="nam">tag_positions</span><span class="op">,</span> <span class="nam">escaped_chars</span> <span class="op">=</span> <span class="nam">parse_tags</span><span class="op">(</span><span class="nam">content</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
+    <p class="run"><span class="n"><a id="t39" href="#t39">39</a></span><span class="t">    <span class="nam">cleaned_content</span><span class="op">,</span> <span class="nam">tag_positions</span><span class="op">,</span> <span class="nam">escaped_chars</span> <span class="op">=</span> <span class="nam">parse_html_content</span><span class="op">(</span><span class="nam">content</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
     <p class="pln"><span class="n"><a id="t40" href="#t40">40</a></span><span class="t">&nbsp;</span><span class="r"></span></p>
     <p class="run"><span class="n"><a id="t41" href="#t41">41</a></span><span class="t">    <span class="key">if</span> <span class="nam">tokenizer</span> <span class="op">==</span> <span class="nam">WordTokenizer</span><span class="op">.</span><span class="nam">NLTK</span><span class="op">:</span>&nbsp;</span><span class="r"></span></p>
     <p class="mis show_mis"><span class="n"><a id="t42" href="#t42">42</a></span><span class="t">        <span class="nam">ensure_nltk_data</span><span class="op">(</span><span class="fst">f"</span><span class="fst">tokenizers/punkt/</span><span class="op">{</span><span class="nam">lang_code</span><span class="op">}</span><span class="fst">.pickle</span><span class="fst">"</span><span class="op">,</span> <span class="str">"punkt"</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
@@ -247,7 +247,7 @@
             <a class="nav" href="z_816b02d96dab55f8_middleware_py.html">&#xbb; next</a>
             &nbsp; &nbsp; &nbsp;
             <a class="nav" href="https://coverage.readthedocs.io/en/7.6.0">coverage.py v7.6.0</a>,
-            created at 2024-07-31 14:46 +0000
+            created at 2024-08-01 04:45 +0000
         </p>
     </div>
 </footer>

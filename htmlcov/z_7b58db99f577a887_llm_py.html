@@ -60,12 +60,12 @@
             <button type="button" class="exc show_exc button_toggle_exc" value="exc" data-shortcut="x" title="Toggle lines excluded">0<span class="text"> excluded</span></button>
         </h2>
         <p class="text">
-            <a id="prevFileLink" class="nav" href="z_7b58db99f577a887_html_tags_cleaner_py.html">&#xab; prev</a> &nbsp; &nbsp;
+            <a id="prevFileLink" class="nav" href="z_7b58db99f577a887_google_languages_py.html">&#xab; prev</a> &nbsp; &nbsp;
             <a id="indexLink" class="nav" href="index.html">&Hat; index</a> &nbsp; &nbsp;
             <a id="nextFileLink" class="nav" href="z_7b58db99f577a887_nltk_tokenizer_py.html">&#xbb; next</a>
             &nbsp; &nbsp; &nbsp;
             <a class="nav" href="https://coverage.readthedocs.io/en/7.6.0">coverage.py v7.6.0</a>,
-            created at 2024-07-31 14:46 +0000
+            created at 2024-08-01 04:45 +0000
         </p>
         <aside class="hidden">
             <button type="button" class="button_next_chunk" data-shortcut="j"></button>
@@ -99,7 +99,7 @@
     <p class="pln"><span class="n"><a id="t17" href="#t17">17</a></span><span class="t">&nbsp;</span><span class="r"></span></p>
     <p class="run"><span class="n"><a id="t18" href="#t18">18</a></span><span class="t"><span class="key">from</span> <span class="nam">langchain</span><span class="op">.</span><span class="nam">schema</span> <span class="key">import</span> <span class="nam">BaseOutputParser</span>&nbsp;</span><span class="r"></span></p>
     <p class="pln"><span class="n"><a id="t19" href="#t19">19</a></span><span class="t">&nbsp;</span><span class="r"></span></p>
-    <p class="run"><span class="n"><a id="t20" href="#t20">20</a></span><span class="t"><span class="key">from</span> <span class="nam">lexiflux</span><span class="op">.</span><span class="nam">language</span><span class="op">.</span><span class="nam">html_tags_cleaner</span> <span class="key">import</span> <span class="nam">clear_html_tags</span>&nbsp;</span><span class="r"></span></p>
+    <p class="run"><span class="n"><a id="t20" href="#t20">20</a></span><span class="t"><span class="key">from</span> <span class="nam">lexiflux</span><span class="op">.</span><span class="nam">language</span><span class="op">.</span><span class="nam">parse_html_text_content</span> <span class="key">import</span> <span class="nam">extract_content_from_html</span>&nbsp;</span><span class="r"></span></p>
     <p class="run"><span class="n"><a id="t21" href="#t21">21</a></span><span class="t"><span class="key">from</span> <span class="nam">lexiflux</span><span class="op">.</span><span class="nam">language</span><span class="op">.</span><span class="nam">sentence_extractor_llm</span> <span class="key">import</span> <span class="op">(</span>&nbsp;</span><span class="r"></span></p>
     <p class="pln"><span class="n"><a id="t22" href="#t22">22</a></span><span class="t">    <span class="nam">SENTENCE_START_MARK</span><span class="op">,</span>&nbsp;</span><span class="r"></span></p>
     <p class="pln"><span class="n"><a id="t23" href="#t23">23</a></span><span class="t">    <span class="nam">SENTENCE_END_MARK</span><span class="op">,</span>&nbsp;</span><span class="r"></span></p>
@@ -291,7 +291,7 @@
     <p class="mis show_mis"><span class="n"><a id="t209" href="#t209">209</a></span><span class="t">            <span class="nam">data</span><span class="op">[</span><span class="str">"prompt"</span><span class="op">]</span> <span class="op">=</span> <span class="nam">params</span><span class="op">[</span><span class="str">"prompt"</span><span class="op">]</span>&nbsp;</span><span class="r"></span></p>
     <p class="pln"><span class="n"><a id="t210" href="#t210">210</a></span><span class="t">&nbsp;</span><span class="r"></span></p>
     <p class="mis show_mis"><span class="n"><a id="t211" href="#t211">211</a></span><span class="t">        <span class="nam">marked_text</span> <span class="op">=</span> <span class="nam">self</span><span class="op">.</span><span class="nam">mark_term_and_sentence</span><span class="op">(</span><span class="nam">hashable_data</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
-    <p class="mis show_mis"><span class="n"><a id="t212" href="#t212">212</a></span><span class="t">        <span class="nam">data</span><span class="op">[</span><span class="str">"text"</span><span class="op">]</span> <span class="op">=</span> <span class="nam">clear_html_tags</span><span class="op">(</span><span class="nam">marked_text</span><span class="op">[</span><span class="str">"text"</span><span class="op">]</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
+    <p class="mis show_mis"><span class="n"><a id="t212" href="#t212">212</a></span><span class="t">        <span class="nam">data</span><span class="op">[</span><span class="str">"text"</span><span class="op">]</span> <span class="op">=</span> <span class="nam">extract_content_from_html</span><span class="op">(</span><span class="nam">marked_text</span><span class="op">[</span><span class="str">"text"</span><span class="op">]</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
     <p class="mis show_mis"><span class="n"><a id="t213" href="#t213">213</a></span><span class="t">        <span class="nam">data</span><span class="op">[</span><span class="str">"detected_language"</span><span class="op">]</span> <span class="op">=</span> <span class="nam">marked_text</span><span class="op">[</span><span class="str">"detected_language"</span><span class="op">]</span>&nbsp;</span><span class="r"></span></p>
     <p class="pln"><span class="n"><a id="t214" href="#t214">214</a></span><span class="t">&nbsp;</span><span class="r"></span></p>
     <p class="mis show_mis"><span class="n"><a id="t215" href="#t215">215</a></span><span class="t">        <span class="nam">model</span> <span class="op">=</span> <span class="nam">self</span><span class="op">.</span><span class="nam">_get_or_create_model</span><span class="op">(</span><span class="nam">data</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
@@ -483,12 +483,12 @@
 <footer>
     <div class="content">
         <p>
-            <a class="nav" href="z_7b58db99f577a887_html_tags_cleaner_py.html">&#xab; prev</a> &nbsp; &nbsp;
+            <a class="nav" href="z_7b58db99f577a887_google_languages_py.html">&#xab; prev</a> &nbsp; &nbsp;
             <a class="nav" href="index.html">&Hat; index</a> &nbsp; &nbsp;
             <a class="nav" href="z_7b58db99f577a887_nltk_tokenizer_py.html">&#xbb; next</a>
             &nbsp; &nbsp; &nbsp;
             <a class="nav" href="https://coverage.readthedocs.io/en/7.6.0">coverage.py v7.6.0</a>,
-            created at 2024-07-31 14:46 +0000
+            created at 2024-08-01 04:45 +0000
         </p>
     </div>
 </footer>
