@@ -10,13 +10,13 @@
                     <button class="btn btn-link dropdown-toggle" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-expanded="false">
                         {{ book.title }}
                     </button>
-                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownMenuButton">
-                        {% for toc_item in book.toc %}
-                            <li>
+                    <div class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownMenuButton">
+                        <div class="px-3 py-2" style="max-height: 90vh; overflow-y: auto;">
+                            {% for toc_item in book.toc %}
                                 <a class="dropdown-item" href="#" onclick="goToPage({{ toc_item.1 }}, {{ toc_item.2 }})">{{ toc_item.0 }}</a>
-                            </li>
-                        {% endfor %}
-                    </ul>
+                            {% endfor %}
+                        </div>
+                    </div>
                     <button id="lexical-panel-button" class="btn btn-primary" type="button"
                             data-bs-toggle="collapse" data-bs-target="#lexical-panel"
                             aria-expanded="false" aria-controls="lexical-panel"
