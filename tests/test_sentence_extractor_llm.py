@@ -1,3 +1,4 @@
+import allure
 import pytest
 from typing import List, Tuple, Dict
 
@@ -7,6 +8,8 @@ from lexiflux.language.sentence_extractor_llm import break_into_sentences
 SKIP_LLM = True
 
 
+@allure.epic('Book import')
+@allure.feature('LLM: Break text into sentences')
 @pytest.mark.skipif(SKIP_LLM, reason="Skipping LLM tests")
 @pytest.mark.parametrize("text, word_ids, highlighted_word_id, expected_sentences, expected_word_to_sentence", [
     # Test case 1: Basic sentence
@@ -67,6 +70,8 @@ def test_break_into_sentences_llm(
     assert word_to_sentence == expected_word_to_sentence, f"Expected {expected_word_to_sentence}, but got {word_to_sentence} for text: '{text}'"
 
 
+@allure.epic('Book import')
+@allure.feature('LLM: Break text into sentences')
 @pytest.mark.skipif(SKIP_LLM, reason="Skipping LLM tests")
 @pytest.mark.parametrize("text, word_ids, highlighted_word_id", [
     # Test case 6: Empty text

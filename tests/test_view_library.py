@@ -8,7 +8,7 @@ from pytest_django.asserts import assertTemplateUsed
 from lexiflux.models import Book, Author, Language
 
 
-@allure.epic('Pages')
+@allure.epic('Pages endpoints')
 @allure.feature('Library')
 @pytest.mark.django_db
 def test_library_view_for_regular_user(client, user, book):
@@ -31,7 +31,7 @@ def test_library_view_for_regular_user(client, user, book):
     assertTemplateUsed(response, 'library.html')
 
 
-@allure.epic('Pages')
+@allure.epic('Pages endpoints')
 @allure.feature('Library')
 @pytest.mark.django_db
 def test_library_view_for_superuser(client, book):
@@ -54,7 +54,7 @@ def test_library_view_for_superuser(client, book):
     assert len(books) >= 3, "Superuser should see all books in the library"
 
 
-@allure.epic('Pages')
+@allure.epic('Pages endpoints')
 @allure.feature('Library')
 @pytest.mark.django_db
 def test_library_view_pagination(client, user, author, book):

@@ -8,7 +8,7 @@ from lexiflux.models import Author, Language, Book, BookPage
 from lexiflux.views.reader_views import render_page
 
 
-@allure.epic('Pages')
+@allure.epic('Pages endpoints')
 @allure.feature('Reader')
 @pytest.mark.django_db
 def test_page_view_retrieves_book_page_successfully(client, user, book):
@@ -23,7 +23,7 @@ def test_page_view_retrieves_book_page_successfully(client, user, book):
     assert response.json()['data']['pageNumber'] == page_number
 
 
-@allure.epic('Pages')
+@allure.epic('Pages endpoints')
 @allure.feature('Reader')
 @pytest.mark.django_db
 def test_page_view_handles_nonexistent_book_page(client, user, book):
@@ -36,7 +36,7 @@ def test_page_view_handles_nonexistent_book_page(client, user, book):
     assert "error: Page" in response.content.decode()
 
 
-@allure.epic('Pages')
+@allure.epic('Pages endpoints')
 @allure.feature('Reader')
 @pytest.mark.django_db
 def test_page_view_respects_access_control(client, user, book):
@@ -51,7 +51,7 @@ def test_page_view_respects_access_control(client, user, book):
     assert response.status_code == 403
 
 
-@allure.epic('Pages')
+@allure.epic('Pages endpoints')
 @allure.feature('Reader')
 @pytest.mark.parametrize("content,expected_output", [
     (

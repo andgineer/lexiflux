@@ -7,15 +7,16 @@ import pytest
 from lexiflux.ebook.book_plain_text import BookPlainText
 
 
-
-@allure.epic('Language detection')
+@allure.epic('Book import')
+@allure.feature('Plain text: Language detection')
 @pytest.mark.django_db
 def test_get_language_group(book_plain_text):
     assert book_plain_text.get_language_group('bs') == 'group:bs-hr-sr'
     assert book_plain_text.get_language_group('en') == 'en'
 
 
-@allure.epic('Language detection')
+@allure.epic('Book import')
+@allure.feature('Plain text: Language detection')
 @pytest.mark.django_db
 def test_get_random_words_success(book_plain_text):
     random_words = book_plain_text.get_random_words(words_num=3)
@@ -24,7 +25,8 @@ def test_get_random_words_success(book_plain_text):
     assert book_plain_text.get_random_words(words_num=3) != random_words
 
 
-@allure.epic('Language detection')
+@allure.epic('Book import')
+@allure.feature('Plain text: Language detection')
 @pytest.mark.django_db
 def test_get_random_words_no_separators():
     text = "a"*1000
@@ -33,7 +35,8 @@ def test_get_random_words_no_separators():
     assert len(random_words) == BookPlainText.WORD_ESTIMATED_LENGTH * words_num
 
 
-@allure.epic('Language detection')
+@allure.epic('Book import')
+@allure.feature('Plain text: Language detection')
 @pytest.mark.django_db
 def test_detect_language(mock_detect_language, book_plain_text):
     # majority in first 3 tries

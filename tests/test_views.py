@@ -8,7 +8,7 @@ from pytest_django.asserts import assertTemplateUsed
 from lexiflux.models import ReadingLoc, ReadingHistory
 
 
-@allure.epic('Pages')
+@allure.epic('Pages endpoints')
 @allure.feature('Reader')
 @pytest.mark.django_db
 def test_location_view_updates_reading_location_successfully(client, user, book):
@@ -32,7 +32,7 @@ def test_location_view_updates_reading_location_successfully(client, user, book)
     ).exists(), "Reading location should be updated in the database"
 
 
-@allure.epic('Pages')
+@allure.epic('Pages endpoints')
 @allure.feature('Reader')
 @pytest.mark.django_db
 def test_location_view_handles_invalid_parameters(client, user):
@@ -47,7 +47,7 @@ def test_location_view_handles_invalid_parameters(client, user):
     assert response.status_code == 400
 
 
-@allure.epic('Pages')
+@allure.epic('Pages endpoints')
 @allure.feature('Reader')
 @pytest.mark.django_db
 def test_location_view_enforces_access_control(client, user, book):
@@ -65,7 +65,7 @@ def test_location_view_enforces_access_control(client, user, book):
     assert response.status_code == 403, f"User should not be able to update reading location for a book they don't have access to: {response.content}"
 
 
-@allure.epic('Pages')
+@allure.epic('Pages endpoints')
 @allure.feature('Reader')
 @pytest.mark.django_db
 def test_add_to_history_success(client, user, book):
@@ -82,7 +82,7 @@ def test_add_to_history_success(client, user, book):
     assert response.json() == {"message": "Reading history added successfully"}
 
 
-@allure.epic('Pages')
+@allure.epic('Pages endpoints')
 @allure.feature('Reader')
 @pytest.mark.django_db
 def test_add_to_history_invalid_input(client, user):
@@ -94,7 +94,7 @@ def test_add_to_history_invalid_input(client, user):
     assert response.json() == {"error": "Invalid input"}
 
 
-@allure.epic('Pages')
+@allure.epic('Pages endpoints')
 @allure.feature('Reader')
 @pytest.mark.django_db
 def test_reader_access_denied(client, book):
@@ -106,7 +106,7 @@ def test_reader_access_denied(client, book):
     assert response.status_code == 403
 
 
-@allure.epic('Pages')
+@allure.epic('Pages endpoints')
 @allure.feature('Language Preferences')
 @pytest.mark.django_db
 def test_language_preferences_access_denied(client, book):
@@ -117,7 +117,7 @@ def test_language_preferences_access_denied(client, book):
     assert response.url.startswith('/accounts/login'), "User should be redirected to login page"
 
 
-@allure.epic('Pages')
+@allure.epic('Pages endpoints')
 @allure.feature('Language Preferences')
 @pytest.mark.django_db
 def test_language_preferences_view_success(client, user):

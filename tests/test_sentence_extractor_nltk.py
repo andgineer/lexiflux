@@ -1,3 +1,4 @@
+import allure
 import pytest
 from lexiflux.language.sentence_extractor import break_into_sentences, SentenceTokenizer
 
@@ -20,6 +21,9 @@ def sample_text_and_word_ids():
     ]
     return text, word_ids
 
+
+@allure.epic('Book import')
+@allure.feature('NLTK: Break text into sentences')
 def test_break_into_sentences_nltk(sample_text_and_word_ids):
     text, word_ids = sample_text_and_word_ids
     sentences, word_to_sentence = break_into_sentences(text, word_ids, tokenizer=SentenceTokenizer.NLTK)
@@ -28,6 +32,8 @@ def test_break_into_sentences_nltk(sample_text_and_word_ids):
     assert word_to_sentence == {0: 0, 1: 0, 2: 0, 3: 1, 4: 1, 5: 1, 6: 1, 7: 2, 8: 2, 9: 2, 10: 3}
 
 
+@allure.epic('Book import')
+@allure.feature('NLTK: Break text into sentences')
 def test_break_into_sentences_unsupported_language():
     text = "This is a test in an unsupported language."
     word_ids = [(0, 4), (5, 7), (8, 9), (10, 14), (15, 17), (18, 20), (21, 32), (33, 41)]

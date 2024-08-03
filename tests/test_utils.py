@@ -5,7 +5,8 @@ from lexiflux.utils import validate_log_level
 import logging
 
 
-@allure.epic('Logging')
+@allure.epic('Book import')
+@allure.feature('Logging')
 @pytest.mark.parametrize("level_name,expected", [
     ("DEBUG", logging.DEBUG),
     ("INFO", logging.INFO),
@@ -18,7 +19,8 @@ def test_validate_log_level_valid(level_name, expected):
     assert validate_log_level(level_name) == expected
 
 
-@allure.epic('Logging')
+@allure.epic('Book import')
+@allure.feature('Logging')
 @pytest.mark.parametrize("level_name", [
     "INVALID",  # Completely invalid
     "debugg",   # Misspelled
