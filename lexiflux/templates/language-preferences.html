@@ -23,9 +23,11 @@
                         <div class="language-select-wrapper">
                             <span class="language-flag">[[ getSelectedLanguageFlag() ]]</span>
                             <select id="languageSelect" v-model="currentLanguageId" @change="changeLanguage" class="form-select">
-                                <option v-for="language in allLanguages" :value="language.google_code">
-                                    [[ language.name ]]
-                                </option>
+                                <optgroup v-for="group in groupedLanguages" :label="group.label">
+                                    <option v-for="language in group.options" :value="language.google_code">
+                                        [[ language.name ]]
+                                    </option>
+                                </optgroup>
                             </select>
                         </div>
                     </div>
@@ -41,7 +43,7 @@
                         <div class="mb-3 d-flex align-items-center">
                             <label for="userLanguageSelect" class="form-label me-3 mb-0 text-nowrap">Translate to:</label>
                             <select id="userLanguageSelect" v-model="userLanguageId" @change="changeUserLanguage" class="form-select">
-                                <option v-for="language in allLanguages" :value="language.google_code">
+                                <option v-for="language in allLanguagesFlat" :value="language.google_code">
                                     [[ language.name ]]
                                 </option>
                             </select>
@@ -285,7 +287,11 @@ new Vue({
             showTitleField: true,
             modalTitle: '',
             titleManuallyEdited: false,
-            allLanguages: [],
+            allLanguages: {
+                withPreferences: [],
+                withoutPreferences: []
+            },
+            allLanguagesFlat: [],
             languageFlags: languageFlags,
             currentLanguageId: null,
             userLanguageId: null,
@@ -310,11 +316,7 @@ Add to each translation to {user_language} language.
             console.error('Error parsing articles:', e);
         }
 
-        try {
-            data.allLanguages = JSON.parse('{{ all_languages|escapejs }}' || '[]');
-        } catch (e) {
-            console.error('Error parsing languages:', e);
-        }
+        this.loadLanguages('{{ all_languages|escapejs }}', '{{ all_languages_flat|escapejs }}');
 
         try {
             data.inlineTranslation = JSON.parse('{{ inline_translation|escapejs }}' || '{}');
@@ -329,6 +331,14 @@ Add to each translation to {user_language} language.
     },
     mounted: function() {
         this.updateLanguagePreferences();
+    },
+    computed: {
+        groupedLanguages() {
+            return [
+                { label: 'Languages with Preferences', options: this.allLanguages.withPreferences },
+                { label: 'Other Languages', options: this.allLanguages.withoutPreferences }
+            ];
+        }
     },
     watch: {
         'form.parameters.url': function() {
@@ -364,6 +374,7 @@ Add to each translation to {user_language} language.
                     this.articles = data.articles;
                     this.inlineTranslation = data.inline_translation;
                     this.userLanguageId = data.user_language_id;
+                    this.loadLanguages(JSON.stringify(data.all_languages), JSON.stringify(data.all_languages_flat));
                 } else {
                     throw new Error(data.message || 'Failed to update language preferences');
                 }
@@ -377,8 +388,23 @@ Add to each translation to {user_language} language.
             this.updateLanguagePreferences();
         },
         getSelectedLanguageFlag() {
-            const selectedLanguage = this.allLanguages.find(lang => lang.google_code === this.currentLanguageId);
+            const selectedLanguage = this.allLanguagesFlat.find(lang => lang.google_code === this.currentLanguageId);
             return selectedLanguage ? languageFlags[selectedLanguage.google_code] : '🏳️';
+        },
+        loadLanguages(groupedLanguagesJson, flatLanguagesJson) {
+            try {
+                let parsedLanguages = JSON.parse(groupedLanguagesJson || '{}');
+                this.allLanguages.withPreferences = parsedLanguages.with_preferences || [];
+                this.allLanguages.withoutPreferences = parsedLanguages.without_preferences || [];
+            } catch (e) {
+                console.error('Error parsing grouped languages:', e);
+            }
+
+            try {
+                this.allLanguagesFlat = JSON.parse(flatLanguagesJson || '[]');
+            } catch (e) {
+                console.error('Error parsing flat languages:', e);
+            }
         },
         changeUserLanguage() {
             fetch('{% url "api_update_user_language" %}', {

@@ -5,6 +5,8 @@ from typing import Any, Dict, Optional
 import logging
 
 from deep_translator.exceptions import LanguageNotSupportedException
+from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError
@@ -26,14 +28,44 @@ from lexiflux.models import (
 logger = logging.getLogger()
 
 
+def get_grouped_languages(user: settings.AUTH_USER_MODEL) -> Dict[str, Any]:
+    """
+    Get grouped languages for the given user.
+
+    Returns a dictionary with two keys:
+    - 'with_preferences': list of languages with existing preferences
+    - 'without_preferences': list of languages without existing preferences
+    """
+    assert isinstance(user, get_user_model())  # Type check for mypy
+
+    languages_with_preferences = set(
+        user.language_preferences.values_list("language__google_code", flat=True)
+    )
+    all_languages = Language.objects.all()
+
+    languages_with_prefs = []
+    languages_without_prefs = []
+    for lang in all_languages:
+        lang_data = {"google_code": lang.google_code, "name": lang.name}
+        if lang.google_code in languages_with_preferences:
+            languages_with_prefs.append(lang_data)
+        else:
+            languages_without_prefs.append(lang_data)
+
+    return {
+        "with_preferences": languages_with_prefs,
+        "without_preferences": languages_without_prefs,
+    }
+
+
 @login_required  # type: ignore
 def language_preferences_editor(request: HttpRequest) -> HttpResponse:
     """Language preferences editor."""
-    language_preferences = (
-        request.user.default_language_preferences
-        or request.user.language_preferences.all().first()
-    )
-    all_languages = Language.objects.all()
+    user = request.user
+    language_preferences = user.default_language_preferences or user.language_preferences.first()
+
+    all_languages_data = get_grouped_languages(request.user)
+    all_languages_flat = list(Language.objects.values("google_code", "name"))
 
     articles = (
         list(
@@ -42,10 +74,8 @@ def language_preferences_editor(request: HttpRequest) -> HttpResponse:
         if language_preferences
         else []
     )
-    all_languages_data = list(all_languages.values("google_code", "name"))
 
     articles_json = json.dumps(articles)
-    all_languages_json = json.dumps(all_languages_data)
     inline_translation_json = json.dumps(language_preferences.inline_translation)
 
     llm = Llm()
@@ -59,7 +89,8 @@ def language_preferences_editor(request: HttpRequest) -> HttpResponse:
         "user": request.user,
         "language_preferences": language_preferences,
         "articles": articles_json,
-        "all_languages": all_languages_json,
+        "all_languages": all_languages_data,
+        "all_languages_flat": all_languages_flat,
         "default_language_preferences": language_preferences,
         "inline_translation": inline_translation_json,
         "lexical_article_types": LexicalArticleType.choices,
@@ -83,6 +114,9 @@ def get_language_preferences(request: HttpRequest) -> JsonResponse:
             request.user, language
         )
 
+        all_languages_data = get_grouped_languages(request.user)
+        all_languages_flat = list(Language.objects.values("google_code", "name"))
+
         return JsonResponse(
             {
                 "status": "success",
@@ -96,6 +130,8 @@ def get_language_preferences(request: HttpRequest) -> JsonResponse:
                 "user_language_id": language_preferences.user_language.google_code
                 if language_preferences.user_language
                 else None,
+                "all_languages": all_languages_data,
+                "all_languages_flat": all_languages_flat,
             }
         )
     except Exception as e:  # pylint: disable=broad-except
