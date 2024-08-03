@@ -316,8 +316,6 @@ Add to each translation to {user_language} language.
             console.error('Error parsing articles:', e);
         }
 
-        this.loadLanguages('{{ all_languages|escapejs }}', '{{ all_languages_flat|escapejs }}');
-
         try {
             data.inlineTranslation = JSON.parse('{{ inline_translation|escapejs }}' || '{}');
         } catch (e) {
