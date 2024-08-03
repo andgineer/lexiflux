@@ -1,7 +1,10 @@
+import allure
 import pytest
 from lexiflux.language.detect_language_fasttext import language_detector
 
 
+@allure.epic('Book import')
+@allure.feature('Language detection')
 @pytest.mark.parametrize("text, expected_lang", [
     ("Hello, how are you?", "en"),
     ("Bonjour, comment allez-vous?", "fr"),
@@ -23,12 +26,16 @@ def test_detect_language(text, expected_lang):
     assert detected_lang == expected_lang, f"Expected {expected_lang}, but got {detected_lang} for text: '{text}'"
 
 
+@allure.epic('Book import')
+@allure.feature('Language detection')
 def test_confidence_threshold():
     text = "This is a longer English text to ensure high confidence. It contains multiple sentences and should be easily detectable as English."
     detected_lang = language_detector().detect(text)
     assert detected_lang == "en"
 
 
+@allure.epic('Book import')
+@allure.feature('Language detection')
 def test_mixed_case_text():
     text = "Hello नमस्ते Bonjour"
     assert language_detector().detect(text) == "hi"

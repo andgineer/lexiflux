@@ -56,7 +56,7 @@ def is_docker_compose_running(service_name: str) -> bool:
     """Check if a Docker service is running."""
     try:
         result = subprocess.run(
-            ['docker-compose', 'ps', '-q', service_name],
+            ['docker', 'compose', 'ps', '-q', service_name],
             stdout=subprocess.PIPE, text=True, check=True
         )
         # If the service is running, it will return its container ID thanks to the '-q' flag
@@ -70,7 +70,7 @@ def start_docker_compose():
     """Starts the docker-compose services and logs output directly."""
     try:
         result = subprocess.run(
-            ["docker-compose", "up", "-d"],
+            ["docker", "compose", "up", "-d"],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True,
@@ -111,7 +111,7 @@ def get_web_driver(browser_name: str, django_server: DjangoLiveServer, retry_int
     Fail to connect to selenium webdriver remote host {WEBDRIVER_HOST}.
 
     To run local selenium hub from tests_e2e folder: 
-        docker-compose up -d
+        docker compose up -d
     '''
     end_time = time.time() + timeout
     while True:

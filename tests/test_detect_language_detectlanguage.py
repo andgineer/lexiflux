@@ -4,8 +4,8 @@ import allure
 
 from lexiflux.language.detect_language_detectlanguage import language_detector
 
-
-@allure.epic('Language detection')
+@allure.epic('Book import')
+@allure.feature('Language detection')
 @patch('lexiflux.language.detect_language_detectlanguage.language_detector')
 def test_detect_language_key_error(mock_single_detection, monkeypatch, caplog):
     monkeypatch.delenv("DETECTLANGUAGE_API_KEY", raising=False)
@@ -16,7 +16,8 @@ def test_detect_language_key_error(mock_single_detection, monkeypatch, caplog):
     assert result == "en"  # Default fallback language
 
 
-@allure.epic('Language detection')
+@allure.epic('Book import')
+@allure.feature('Language detection')
 @patch('lexiflux.language.detect_language_detectlanguage.language_detector')
 def test_detect_language_exception(mock_single_detection, monkeypatch, caplog):
     monkeypatch.setenv("DETECTLANGUAGE_API_KEY", "dummy_key")

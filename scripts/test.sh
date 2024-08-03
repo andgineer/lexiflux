@@ -6,10 +6,10 @@
 # The report will be available at http://localhost:8800
 
 python -m pytest --alluredir=allure-results tests $@
-docker-compose run --rm -it \
+docker compose run --rm -it \
     allure \
     allure generate /allure-results -o /allure-report --clean
 
-docker-compose restart allure
+docker compose restart allure
 
 echo "The report is on http://localhost:8800/"

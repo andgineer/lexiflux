@@ -81,7 +81,7 @@ jobs:
     - name: Start SeleniumHub
       run: |
         mkdir -p allure-results
-        docker-compose up -d
+        docker compose up -d
         scripts/wait_selenium.sh
 
     - name: Test with pytest and Allure report

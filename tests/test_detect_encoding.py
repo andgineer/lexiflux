@@ -11,8 +11,8 @@ def create_temp_file(content, encoding, tmpdir):
     return file_path
 
 
-@allure.epic('Encoding detection')
-@allure.feature('File with various encodings')
+@allure.epic('Book import')
+@allure.feature('Encoding detection')
 @pytest.mark.django_db
 @pytest.mark.parametrize("encoding", ["utf-8", "iso-8859-1", "utf-16"])
 def test_read_file_with_various_encodings(encoding, tmpdir):
@@ -23,7 +23,8 @@ def test_read_file_with_various_encodings(encoding, tmpdir):
     assert book.read_file(str(file_path)) == content
 
 
-@allure.epic('Encoding detection')
+@allure.epic('Book import')
+@allure.feature('Encoding detection')
 def test_read_file_nonexistent(tmpdir):
     non_existent_file = tmpdir.join("non_existent.txt")
 
@@ -31,7 +32,8 @@ def test_read_file_nonexistent(tmpdir):
         book = BookPlainText(str(non_existent_file))
 
 
-@allure.epic('Encoding detection')
+@allure.epic('Book import')
+@allure.feature('Encoding detection')
 @pytest.mark.django_db
 def test_read_file_undetectable_encoding(tmpdir):
     # Create a file with content that's difficult to detect encoding-wise
