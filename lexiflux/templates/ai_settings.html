@@ -32,10 +32,27 @@
                         </ul>
                         <div class="tab-content" id="myTabContent">
                             <div v-for="(config, index) in aiConfigs" :key="config.chat_model" class="tab-pane fade" :class="{ 'show active': index === 0 }" :id="config.chat_model" role="tabpanel" :aria-labelledby="config.chat_model + '-tab'">
-                                <div class="mt-3">
-                                    <h3>${ config.chat_model }</h3>
+                                <div class="mt-4">
+                                    <h3 class="mb-3">${ config.chat_model }</h3>
+                                    <div v-if="config.chat_model !== 'Ollama'" class="mb-4">
+                                        <p v-if="config.chat_model === 'ChatOpenAI'" class="text-muted fs-6">
+                                            <i class="bi bi-info-circle me-2"></i>To get an API key for OpenAI, visit
+                                            <a href="https://platform.openai.com/signup" target="_blank" class="text-decoration-none">platform.openai.com/signup</a>
+                                            and create an account.
+                                        </p>
+                                        <p v-else-if="config.chat_model === 'ChatMistralAI'" class="text-muted fs-6">
+                                            <i class="bi bi-info-circle me-2"></i>To obtain an API key for Mistral AI, go to
+                                            <a href="https://console.mistral.ai/" target="_blank" class="text-decoration-none">console.mistral.ai</a>
+                                            and sign up for an account.
+                                        </p>
+                                        <p v-else-if="config.chat_model === 'ChatAnthropic'" class="text-muted fs-6">
+                                            <i class="bi bi-info-circle me-2"></i>For an Anthropic API key, visit
+                                            <a href="https://www.anthropic.com" target="_blank" class="text-decoration-none">anthropic.com</a>
+                                            and follow their instructions to get access.
+                                        </p>
+                                    </div>
                                     <div v-for="(value, key) in config.settings" :key="key" class="mb-3">
-                                        <label :for="'setting-' + config.chat_model + '-' + key" class="form-label">${ key }</label>
+                                        <label :for="'setting-' + config.chat_model + '-' + key" class="form-label fw-semibold">${ key }</label>
                                         <input
                                             :id="'setting-' + config.chat_model + '-' + key"
                                             v-model="config.settings[key]"
