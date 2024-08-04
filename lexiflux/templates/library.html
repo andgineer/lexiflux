@@ -3,12 +3,14 @@
 
 {% block content %}
 <div id="app" class="d-flex flex-column vh-100">
-    <div class="container-fluid">
-        {% include 'hamburger.html' with current_page='library' %}
-        <div class="mx-3 text-truncate container-fluid">
-            {{ book.title }}
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <div class="container-fluid">
+            {% include 'hamburger.html' with current_page='library' %}
+            <div class="mx-3 text-truncate container-fluid">
+                {{ book.title }}
+            </div>
         </div>
-    </div>
+    </nav>
 
     <div class="container-fluid flex-grow-1">
         <div class="row justify-content-center">

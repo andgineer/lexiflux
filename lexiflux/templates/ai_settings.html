@@ -17,8 +17,13 @@
             <div class="col-md-8">
                 <div class="card shadow">
                     <div class="card-body">
-                        <div v-if="errorMessage" class="alert alert-danger" role="alert">
+                        <div v-if="successMessage" class="alert alert-success alert-dismissible fade show" role="alert">
+                            ${ successMessage }
+                            <button type="button" class="btn-close" @click="successMessage = ''" aria-label="Close"></button>
+                        </div>
+                        <div v-if="errorMessage" class="alert alert-danger alert-dismissible fade show" role="alert">
                             ${ errorMessage }
+                            <button type="button" class="btn-close" @click="errorMessage = ''" aria-label="Close"></button>
                         </div>
                         <ul class="nav nav-tabs" id="myTab" role="tablist">
                             <li class="nav-item" v-for="(config, index) in aiConfigs" :key="config.chat_model">
@@ -31,12 +36,19 @@
                                     <h3>${ config.chat_model }</h3>
                                     <div v-for="(value, key) in config.settings" :key="key" class="mb-3">
                                         <label :for="'setting-' + config.chat_model + '-' + key" class="form-label">${ key }</label>
-                                        <input :id="'setting-' + config.chat_model + '-' + key" v-model="config.settings[key]" class="form-control" :type="key === 'api_key' ? 'password' : 'text'">
+                                        <input
+                                            :id="'setting-' + config.chat_model + '-' + key"
+                                            v-model="config.settings[key]"
+                                            class="form-control"
+                                            :class="{ 'border-primary': isFieldChanged(config.chat_model, key) }"
+                                            :type="key === 'api_key' ? 'password' : 'text'"
+                                            @input="fieldChanged(config.chat_model, key)"
+                                        >
                                     </div>
                                 </div>
                             </div>
                         </div>
-                        <button @click="saveSettings" class="btn btn-primary mt-3">Save Settings</button>
+                        <button @click="saveSettings" class="btn btn-primary mt-3" :disabled="!hasChanges">Save Settings</button>
                     </div>
                 </div>
             </div>
@@ -51,7 +63,15 @@ new Vue({
     delimiters: ['${', '}'],
     data: {
         aiConfigs: [],
-        errorMessage: ''
+        originalConfigs: [],
+        errorMessage: '',
+        successMessage: '',
+        changedFields: {},
+    },
+    computed: {
+        hasChanges() {
+            return Object.keys(this.changedFields).length > 0;
+        }
     },
     methods: {
         loadSettings() {
@@ -65,6 +85,7 @@ new Vue({
             .then(response => response.json())
             .then(data => {
                 this.aiConfigs = data;
+                this.originalConfigs = JSON.parse(JSON.stringify(data));
             })
             .catch(error => {
                 this.errorMessage = 'Error loading settings: ' + error.message;
@@ -82,7 +103,9 @@ new Vue({
             .then(response => response.json())
             .then(data => {
                 if (data.status === 'success') {
-                    alert('Settings saved successfully!');
+                    this.successMessage = 'Settings saved successfully!';
+                    this.originalConfigs = JSON.parse(JSON.stringify(this.aiConfigs));
+                    this.changedFields = {};
                 } else {
                     this.errorMessage = 'Error saving settings: ' + data.error;
                 }
@@ -90,10 +113,35 @@ new Vue({
             .catch(error => {
                 this.errorMessage = 'Error saving settings: ' + error.message;
             });
+        },
+        fieldChanged(chatModel, key) {
+            if (!this.changedFields[chatModel]) {
+                this.$set(this.changedFields, chatModel, {});
+            }
+            this.$set(this.changedFields[chatModel], key, true);
+        },
+        isFieldChanged(chatModel, key) {
+            return this.changedFields[chatModel] && this.changedFields[chatModel][key];
+        },
+        setupBeforeUnloadListener() {
+            window.addEventListener('beforeunload', this.handleBeforeUnload);
+        },
+        teardownBeforeUnloadListener() {
+            window.removeEventListener('beforeunload', this.handleBeforeUnload);
+        },
+        handleBeforeUnload(e) {
+            if (this.hasChanges) {
+                e.preventDefault();
+                e.returnValue = '';
+            }
         }
     },
     mounted() {
         this.loadSettings();
+        this.setupBeforeUnloadListener();
+    },
+    beforeDestroy() {
+        this.teardownBeforeUnloadListener();
     }
 });
 </script>
