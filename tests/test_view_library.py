@@ -9,7 +9,7 @@ from lexiflux.models import Book, Author, Language
 
 
 @allure.epic('Pages endpoints')
-@allure.feature('Library')
+@allure.story('Library')
 @pytest.mark.django_db
 def test_library_view_for_regular_user(client, user, book):
     # Assuming 'user' fixture creates a regular user and 'book' fixture creates a book owned by the user
@@ -32,7 +32,7 @@ def test_library_view_for_regular_user(client, user, book):
 
 
 @allure.epic('Pages endpoints')
-@allure.feature('Library')
+@allure.story('Library')
 @pytest.mark.django_db
 def test_library_view_for_superuser(client, book):
     # Create a separate superuser who does not own any book
@@ -55,7 +55,7 @@ def test_library_view_for_superuser(client, book):
 
 
 @allure.epic('Pages endpoints')
-@allure.feature('Library')
+@allure.story('Library')
 @pytest.mark.django_db
 def test_library_view_pagination(client, user, author, book):
     client.force_login(user)

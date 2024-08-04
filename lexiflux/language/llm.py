@@ -25,7 +25,22 @@ from lexiflux.language.sentence_extractor_llm import (
     WORD_END_MARK,
 )
 from lexiflux.language.word_extractor import parse_words
-from lexiflux.models import BookPage, Book
+from lexiflux.models import BookPage, Book, AIModelConfig, CustomUser
+
+
+# Mapping of AI model names to their corresponding API KEY environment variable names
+AI_MODEL_API_KEY_ENV_VAR = {
+    "ChatOpenAI": "OPENAI_API_KEY",
+    "ChatAnthropic": "ANTHROPIC_API_KEY",
+    "ChatMistralAI": "MISTRAL_API_KEY",
+}
+
+
+class AIModelSettings:  # pylint: disable=too-few-public-methods
+    """Constants for keys in AIModelConfig.settings."""
+
+    API_KEY = "api_key"
+    TEMPERATURE = "temperature"
 
 
 class AIModelError(Exception):
@@ -161,6 +176,7 @@ class Llm:  # pylint: disable=too-few-public-methods
 
         Expects in `params`:
         - model: LLM model name from ChatModels.keys()
+        - user: User object
         Expects in `data`:
         - book_page:
         - book_page_number:
@@ -198,7 +214,6 @@ class Llm:  # pylint: disable=too-few-public-methods
         """Cached get article."""
         params = dict(hashable_params)
         data = dict(hashable_data)
-        data["model"] = params["model"]
         data["article_name"] = article_name
 
         if article_name not in self._article_pipelines_factory:
@@ -212,7 +227,7 @@ class Llm:  # pylint: disable=too-few-public-methods
         data["text"] = extract_content_from_html(marked_text["text"])
         data["detected_language"] = marked_text["detected_language"]
 
-        model = self._get_or_create_model(data)
+        model = self._get_or_create_model(params)
         pipeline = self._article_pipelines_factory[article_name](model)
 
         print(data["text"])
@@ -339,21 +354,30 @@ class Llm:  # pylint: disable=too-few-public-methods
             "detected_language": data["text_language"],
         }
 
-    def _get_model_key(
-        self,
-        article_name: str,  # pylint: disable=unused-argument
-        text_language: str,  # pylint: disable=unused-argument
-        user_language: str,  # pylint: disable=unused-argument
-        model_name: str,
-    ) -> str:
-        return f"{model_name}"  # {article_name}_{text_language}_{user_language}_
+    def get_model_settings(self, user: CustomUser, model_name: str) -> Dict[str, Any]:
+        """Get AI model settings for the given user and model"""
+        ai_model_config, _ = AIModelConfig.objects.get_or_create(
+            user=user, model_name=model_name, defaults={"settings": {}}
+        )
 
-    def _get_or_create_model(self, data: Dict[str, Any]) -> Any:
-        article_name = data["article_name"]
-        text_language = data["text_language"]
-        user_language = data["user_language"]
-        model_name = data["model"]
-        model_key = self._get_model_key(article_name, text_language, user_language, model_name)
+        settings_dict = ai_model_config.settings.copy()
+
+        if not settings_dict.get(AIModelSettings.API_KEY):
+            # If there's no API key in the database, try to get it from env vars
+            if env_var_name := AI_MODEL_API_KEY_ENV_VAR.get(model_name):
+                if api_key := getattr(settings, env_var_name, None):
+                    settings_dict[AIModelSettings.API_KEY] = api_key
+
+        return settings_dict  # type: ignore
+
+    def _get_or_create_model(self, params: Dict[str, Any]) -> Any:
+        """Get or create AI model instance.
+
+        in params["user"] - CustomUser object
+        """
+        model_name = params["model"]
+        user = params["user"]
+        model_key = f"{model_name}_{user.id}"
 
         if model_key not in self._model_cache:
             model_info = self.chat_models.get(model_name)
@@ -362,20 +386,27 @@ class Llm:  # pylint: disable=too-few-public-methods
 
             model_class = model_info["model"]
             try:
+                model_settings = self.get_model_settings(user, model_name)
+                common_params = {
+                    "temperature": model_settings.get(AIModelSettings.TEMPERATURE, 0.5),
+                }
+
                 if model_class == "ChatOpenAI":
-                    self._model_cache[model_key] = ChatOpenAI(
+                    self._model_cache[model_key] = ChatOpenAI(  # type: ignore
                         model=model_name,
-                        temperature=0.5,
+                        openai_api_key=model_settings.get(AIModelSettings.API_KEY),
+                        **common_params,
                     )
                 elif model_class == "Ollama":
                     self._model_cache[model_key] = Ollama(  # pylint: disable=not-callable
                         model=model_name,
-                        temperature=0.5,
+                        **common_params,
                     )
                 elif model_class == "ChatAnthropic":
                     self._model_cache[model_key] = ChatAnthropic(
                         model=model_name,  # type: ignore
-                        temperature=0.5,
+                        api_key=model_settings.get(AIModelSettings.API_KEY),
+                        **common_params,
                     )
                 # elif model_class == "ChatGoogleGenerativeAI":
                 #     self._model_cache[model_key] = ChatGoogleGenerativeAI(
@@ -383,9 +414,9 @@ class Llm:  # pylint: disable=too-few-public-methods
                 #         temperature=0.5,
                 #     )
                 elif model_class == "ChatMistralAI":
-                    self._model_cache[model_key] = ChatMistralAI(  # type: ignore
-                        model=model_name,
-                        temperature=0.5,
+                    self._model_cache[model_key] = ChatMistralAI(
+                        api_key=model_settings.get(AIModelSettings.API_KEY),
+                        **common_params,
                     )
                 else:
                     raise ValueError(f"Unsupported model class: {model_class}")
@@ -396,4 +427,11 @@ class Llm:  # pylint: disable=too-few-public-methods
         return self._model_cache[model_key]
 
     def _hashable_dict(self, d: Dict[str, Any]) -> Tuple[Tuple[str, Any], ...]:
-        return tuple((k, tuple(v) if isinstance(v, list) else v) for k, v in sorted(d.items()))
+        def make_hashable(v: Any) -> Any:
+            if isinstance(v, dict):
+                return self._hashable_dict(v)
+            if isinstance(v, list):
+                return tuple(make_hashable(i) for i in v)
+            return v  # __hash__ method of Django model objects uses id so it's fine
+
+        return tuple((k, make_hashable(v)) for k, v in sorted(d.items()))

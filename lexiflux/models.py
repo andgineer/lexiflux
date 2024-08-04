@@ -19,13 +19,6 @@ from lexiflux.language.word_extractor import parse_words
 
 BOOK_CODE_LENGTH = 100
 
-# Mapping of AI model names to their corresponding API KEY environment variable names
-AI_MODEL_API_KEY_ENV_VAR = {
-    "ChatOpenAI": "OPENAI_API_KEY",
-    "ChatAnthropic": "ANTHROPIC_API_KEY",
-    "ChatMistralAI": "MISTRAL_API_KEY",
-}
-
 TocEntry: TypeAlias = Tuple[str, int, int]  # <title>, <page num>, <word on the page num>
 Toc: TypeAlias = List[TocEntry]
 
@@ -318,22 +311,6 @@ class BookPage(models.Model):  # type: ignore
         self._word_sentence_mapping_cache = {int(k): v for k, v in word_to_sentence.items()}
 
 
-class AIModelSettings:  # pylint: disable=too-few-public-methods
-    """Constants for keys in AIModelConfig.settings."""
-
-    API_KEY = "api_key"
-    TEMPERATURE = "temperature"
-
-    @classmethod
-    def get_all_keys(cls: Any) -> List[str]:
-        """Return a list of all keys in this class."""
-        return [
-            getattr(cls, attr)
-            for attr in dir(cls)
-            if not callable(getattr(cls, attr)) and not attr.startswith("__")
-        ]
-
-
 class AIModelConfig(models.Model):  # type: ignore
     """Model to store settings for AI models used in the application."""
 
@@ -344,9 +321,7 @@ class AIModelConfig(models.Model):  # type: ignore
     settings = models.JSONField(
         default=dict,
         blank=True,
-        help_text=(
-            f"AI model settings. " f"Possible keys: {', '.join(AIModelSettings.get_all_keys())}. "
-        ),
+        help_text="AI model settings.",
     )
 
     class Meta:
@@ -354,23 +329,6 @@ class AIModelConfig(models.Model):  # type: ignore
 
     def __str__(self) -> str:
         return f"{self.user.username} - {self.model_name} Settings"
-
-    @classmethod
-    def get_settings(cls, user: CustomUser, model_name: str) -> Dict[str, Any]:
-        """Get AI model settings for the given user and model"""
-        ai_model_settings, _ = cls.objects.get_or_create(
-            user=user, model_name=model_name, defaults={"settings": {}}
-        )
-
-        settings_dict = ai_model_settings.settings.copy()
-
-        if not settings_dict.get(AIModelSettings.API_KEY):
-            # If there's no API key in the database, try to get it from env vars
-            if env_var_name := AI_MODEL_API_KEY_ENV_VAR.get(model_name):
-                if api_key := getattr(settings, env_var_name, None):
-                    settings_dict[AIModelSettings.API_KEY] = api_key
-
-        return settings_dict  # type: ignore
 
 
 class LexicalArticle(models.Model):  # type: ignore

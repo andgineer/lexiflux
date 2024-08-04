@@ -15,8 +15,7 @@ from lexiflux.api import ViewGetParamsModel, get_params
 from lexiflux.language.parse_html_text_content import extract_content_from_html
 from lexiflux.language.llm import Llm, AIModelError
 from lexiflux.language.translation import get_translator
-from lexiflux.models import BookPage, LanguagePreferences, Book
-
+from lexiflux.models import BookPage, LanguagePreferences, Book, CustomUser
 
 MAX_SENTENCE_LENGTH = 100
 
@@ -52,30 +51,31 @@ def get_context_for_term(
     return context_str, context_word_slices, context_term_word_ids, start_word
 
 
-def get_lexical_article(  # pylint: disable=too-many-arguments
+def get_lexical_article(  # pylint: disable=too-many-arguments, too-many-locals
     article_name: str,
-    params: Dict[str, Any],
+    article_params: Dict[str, Any],
     selected_text: str,
     book_page: BookPage,
     term_word_ids: List[int],
     language_preferences: LanguagePreferences,
+    user: CustomUser,
 ) -> Dict[str, Any]:
     """Get the lexical article."""
     if article_name == "Site":
         return {
-            "url": params.get("url", "").format(
+            "url": article_params.get("url", "").format(
                 term=urllib.parse.quote(selected_text),
                 lang=book_page.book.language.name.lower(),
                 langCode=book_page.book.language.google_code,
                 toLang=language_preferences.user_language.name.lower(),
                 toLangCode=language_preferences.user_language.google_code,
             ),
-            "window": params.get("window", True),
+            "window": article_params.get("window", True),
         }
 
     if article_name == "Dictionary":
         translator = get_translator(
-            params["dictionary"],
+            article_params["dictionary"],
             book_page.book.language.name.lower(),
             language_preferences.user_language.name.lower(),
         )
@@ -88,7 +88,7 @@ def get_lexical_article(  # pylint: disable=too-many-arguments
         llm = Llm()
         data = llm.generate_article(
             article_name=article_name,
-            params=params,
+            params={**article_params, "user": user},
             data={
                 "text": context_str,
                 "word_slices": context_word_slices,
@@ -132,6 +132,7 @@ def translate(request: HttpRequest, params: TranslateGetParams) -> HttpResponse:
     """
     book = Book.objects.get(code=params.book_code)
     book_page = BookPage.objects.get(book=book, number=params.book_page_number)
+
     language_preferences = LanguagePreferences.get_or_create_language_preferences(
         request.user, book.language
     )
@@ -162,6 +163,7 @@ def translate(request: HttpRequest, params: TranslateGetParams) -> HttpResponse:
                 book_page,
                 term_word_ids,
                 language_preferences,
+                request.user,
             )
         )
         result["article"] = result["article"].split("<hr>")[0]
@@ -180,6 +182,7 @@ def translate(request: HttpRequest, params: TranslateGetParams) -> HttpResponse:
                     book_page,
                     term_word_ids,
                     language_preferences,
+                    request.user,
                 )
             )
         else:

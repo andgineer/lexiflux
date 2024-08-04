@@ -9,7 +9,7 @@ from lexiflux.models import LanguagePreferences
 
 
 @allure.epic('Pages endpoints')
-@allure.feature('Reader')
+@allure.story('Reader')
 @pytest.mark.django_db
 @patch('lexiflux.views.lexical_views.get_translator')
 def test_translate_view_success(mock_get_translator, client, user, book):
@@ -35,7 +35,7 @@ def test_translate_view_success(mock_get_translator, client, user, book):
 
 
 @allure.epic('Pages endpoints')
-@allure.feature('Reader')
+@allure.story('Reader')
 @patch('lexiflux.language.translation.Translator')  # Adjust the import path as necessary
 def test_get_translator(mock_translator, book, user):
     language_preferences = LanguagePreferences.get_or_create_language_preferences(user=user, language=book.language)
@@ -46,7 +46,7 @@ def test_get_translator(mock_translator, book, user):
 
 
 @allure.epic('Pages endpoints')
-@allure.feature('Reader')
+@allure.story('Reader')
 @pytest.mark.django_db
 def test_translator_translate(book, user):
     mock_translation = "This is a test translation."
