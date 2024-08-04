@@ -9,7 +9,7 @@ from lexiflux.views.reader_views import render_page
 
 
 @allure.epic('Pages endpoints')
-@allure.story('Reader')
+@allure.feature('Reader')
 @pytest.mark.django_db
 def test_page_view_retrieves_book_page_successfully(client, user, book):
     client.force_login(user)
@@ -24,7 +24,7 @@ def test_page_view_retrieves_book_page_successfully(client, user, book):
 
 
 @allure.epic('Pages endpoints')
-@allure.story('Reader')
+@allure.feature('Reader')
 @pytest.mark.django_db
 def test_page_view_handles_nonexistent_book_page(client, user, book):
     client.force_login(user)
@@ -37,7 +37,7 @@ def test_page_view_handles_nonexistent_book_page(client, user, book):
 
 
 @allure.epic('Pages endpoints')
-@allure.story('Reader')
+@allure.feature('Reader')
 @pytest.mark.django_db
 def test_page_view_respects_access_control(client, user, book):
     # Assuming the setup creates a book not shared with or owned by 'another_user'
@@ -52,7 +52,7 @@ def test_page_view_respects_access_control(client, user, book):
 
 
 @allure.epic('Pages endpoints')
-@allure.story('Reader')
+@allure.feature('Reader')
 @pytest.mark.parametrize("content,expected_output", [
     (
         "Hello world <br/> New line",

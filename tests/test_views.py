@@ -9,7 +9,7 @@ from lexiflux.models import ReadingLoc, ReadingHistory
 
 
 @allure.epic('Pages endpoints')
-@allure.story('Reader')
+@allure.feature('Reader')
 @pytest.mark.django_db
 def test_location_view_updates_reading_location_successfully(client, user, book):
     client.force_login(user)
@@ -33,7 +33,7 @@ def test_location_view_updates_reading_location_successfully(client, user, book)
 
 
 @allure.epic('Pages endpoints')
-@allure.story('Reader')
+@allure.feature('Reader')
 @pytest.mark.django_db
 def test_location_view_handles_invalid_parameters(client, user):
     client.force_login(user)
@@ -48,7 +48,7 @@ def test_location_view_handles_invalid_parameters(client, user):
 
 
 @allure.epic('Pages endpoints')
-@allure.story('Reader')
+@allure.feature('Reader')
 @pytest.mark.django_db
 def test_location_view_enforces_access_control(client, user, book):
     # Create another user who does not have access to the book
@@ -66,7 +66,7 @@ def test_location_view_enforces_access_control(client, user, book):
 
 
 @allure.epic('Pages endpoints')
-@allure.story('Reader')
+@allure.feature('Reader')
 @pytest.mark.django_db
 def test_add_to_history_success(client, user, book):
     client.force_login(user)
@@ -83,7 +83,7 @@ def test_add_to_history_success(client, user, book):
 
 
 @allure.epic('Pages endpoints')
-@allure.story('Reader')
+@allure.feature('Reader')
 @pytest.mark.django_db
 def test_add_to_history_invalid_input(client, user):
     client.force_login(user)
@@ -95,7 +95,7 @@ def test_add_to_history_invalid_input(client, user):
 
 
 @allure.epic('Pages endpoints')
-@allure.story('Reader')
+@allure.feature('Reader')
 @pytest.mark.django_db
 def test_reader_access_denied(client, book):
     # Assuming another_user does not have access to the book
