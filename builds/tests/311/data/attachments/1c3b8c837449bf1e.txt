@@ -1,0 +1,3 @@
+Goto URL: from host http://0.0.0.0:46329/reader?book-code=some-book-code from docker: http://10.1.0.48:46329/reader?book-code=some-book-code
+Opening book some-book-code at page 1 for user testuser
+Result: {'article': 'Mocked translation of: page'}
