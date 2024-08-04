@@ -8,6 +8,7 @@ import lexiflux.views.language_preferences_ajax
 import lexiflux.views.lexical_views
 import lexiflux.views.library_views
 import lexiflux.views.reader_views
+import lexiflux.views.ai_settings_views
 from lexiflux.views.auth_views import SignUpView, CustomLoginView
 
 urlpatterns = [
@@ -61,5 +62,11 @@ urlpatterns = [
     ),
     path(
         "api/search-authors/", lexiflux.views.library_views.search_authors, name="search_authors"
+    ),
+    path("ai-settings/", lexiflux.views.ai_settings_views.ai_settings, name="ai-settings"),
+    path(
+        "api/ai-settings/",
+        lexiflux.views.ai_settings_views.ai_settings_api,
+        name="ai_settings_api",
     ),
 ]

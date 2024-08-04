@@ -354,17 +354,17 @@ class Llm:  # pylint: disable=too-few-public-methods
             "detected_language": data["text_language"],
         }
 
-    def get_model_settings(self, user: CustomUser, model_name: str) -> Dict[str, Any]:
+    def get_model_settings(self, user: CustomUser, model_class: str) -> Dict[str, Any]:
         """Get AI model settings for the given user and model"""
         ai_model_config, _ = AIModelConfig.objects.get_or_create(
-            user=user, model_name=model_name, defaults={"settings": {}}
+            user=user, chat_model=model_class, defaults={"settings": {}}
         )
 
         settings_dict = ai_model_config.settings.copy()
 
         if not settings_dict.get(AIModelSettings.API_KEY):
             # If there's no API key in the database, try to get it from env vars
-            if env_var_name := AI_MODEL_API_KEY_ENV_VAR.get(model_name):
+            if env_var_name := AI_MODEL_API_KEY_ENV_VAR.get(model_class):
                 if api_key := getattr(settings, env_var_name, None):
                     settings_dict[AIModelSettings.API_KEY] = api_key
 
@@ -386,7 +386,7 @@ class Llm:  # pylint: disable=too-few-public-methods
 
             model_class = model_info["model"]
             try:
-                model_settings = self.get_model_settings(user, model_name)
+                model_settings = self.get_model_settings(user, model_class)
                 common_params = {
                     "temperature": model_settings.get(AIModelSettings.TEMPERATURE, 0.5),
                 }

@@ -317,7 +317,7 @@ class AIModelConfig(models.Model):  # type: ignore
     user = models.ForeignKey(
         CustomUser, on_delete=models.CASCADE, related_name="ai_model_settings"
     )
-    model_name = models.CharField(max_length=100)
+    chat_model = models.CharField(max_length=100, help_text="LangChain Chat model class")
     settings = models.JSONField(
         default=dict,
         blank=True,
@@ -325,10 +325,10 @@ class AIModelConfig(models.Model):  # type: ignore
     )
 
     class Meta:
-        unique_together = ("user", "model_name")
+        unique_together = ("user", "chat_model")
 
     def __str__(self) -> str:
-        return f"{self.user.username} - {self.model_name} Settings"
+        return f"{self.user.username} - {self.chat_model} Settings"
 
 
 class LexicalArticle(models.Model):  # type: ignore
