@@ -3,7 +3,6 @@
 import urllib.parse
 from typing import List, Tuple, Dict, Any
 
-from django.contrib.auth.decorators import login_required
 from django.http import HttpRequest, HttpResponse, JsonResponse
 
 from django.template import TemplateDoesNotExist
@@ -11,6 +10,8 @@ from django.template.loader import render_to_string
 
 from pydantic import Field
 
+from lexiflux.lexiflux_settings import settings
+from lexiflux.decorators import smart_login_required
 from lexiflux.api import ViewGetParamsModel, get_params
 from lexiflux.language.parse_html_text_content import extract_content_from_html
 from lexiflux.language.llm import Llm, AIModelError
@@ -49,6 +50,11 @@ def get_context_for_term(
     context_str, context_word_slices = book_page.extract_words(start_word, end_word)
     context_term_word_ids = [word_id - start_word for word_id in term_word_ids]
     return context_str, context_word_slices, context_term_word_ids, start_word
+
+
+def get_llm_errors_folder() -> str:
+    """Get the folder for LLM errors."""
+    return "llm-error-env" if settings.env.env_settings else "llm-error"
 
 
 def get_lexical_article(  # pylint: disable=too-many-arguments, too-many-locals
@@ -102,15 +108,16 @@ def get_lexical_article(  # pylint: disable=too-many-arguments, too-many-locals
         )
         return {"article": str(data)}
     except AIModelError as e:
+        error_template_folder = get_llm_errors_folder()
         try:
             error_message = render_to_string(
-                f"llm-error/{e.model_class}.html",
+                f"{error_template_folder}/{e.model_class}.html",
                 {"model_name": e.model_name, "error_message": e.error_message},
             )
         except TemplateDoesNotExist:
             # Fallback to generic error template if specific template doesn't exist
             error_message = render_to_string(
-                "llm-error/generic_error.html",
+                f"{error_template_folder}/generic_error.html",
                 {
                     "model_class": e.model_class,
                     "model_name": e.model_name,
@@ -122,7 +129,7 @@ def get_lexical_article(  # pylint: disable=too-many-arguments, too-many-locals
         return {"article": f"An error occurred: {e}", "error": True}
 
 
-@login_required  # type: ignore
+@smart_login_required
 @get_params(TranslateGetParams)
 def translate(request: HttpRequest, params: TranslateGetParams) -> HttpResponse:
     """Translate the selected text.

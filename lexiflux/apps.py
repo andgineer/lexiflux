@@ -1,10 +1,6 @@
 """Lexiflux app config."""
 
-from typing import Any
-
 from django.apps import AppConfig
-from django.db.models.signals import post_migrate
-from django.dispatch import receiver
 
 
 class LexifluxConfig(AppConfig):  # type: ignore
@@ -16,13 +12,8 @@ class LexifluxConfig(AppConfig):  # type: ignore
     def ready(self) -> None:
         """Run when the app is ready."""
         import lexiflux.signals  # pylint: disable=import-outside-toplevel,unused-import  # noqa: F401
+        from lexiflux.signals import run_startup_tasks  # pylint: disable=import-outside-toplevel
+        from lexiflux.lexiflux_settings import settings  # pylint: disable=import-outside-toplevel
 
-        @receiver(post_migrate)  # type: ignore
-        def populate_languages(sender: Any, **kwargs: Any) -> None:
-            # todo move to migration script
-            if sender.name == "lexiflux":
-                from .language.google_languages import (  # pylint: disable=import-outside-toplevel
-                    update_languages,
-                )
-
-                update_languages()
+        settings.env.validate()
+        run_startup_tasks(self)

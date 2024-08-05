@@ -7,13 +7,13 @@ import logging
 from deep_translator.exceptions import LanguageNotSupportedException
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import render, get_object_or_404
 from django.views.decorators.http import require_http_methods
 
+from lexiflux.decorators import smart_login_required
 from lexiflux.language.llm import Llm
 from lexiflux.language.translation import Translator, get_translator
 from lexiflux.models import (
@@ -58,7 +58,7 @@ def get_grouped_languages(user: settings.AUTH_USER_MODEL) -> Dict[str, Any]:
     }
 
 
-@login_required  # type: ignore
+@smart_login_required  # type: ignore
 def language_preferences_editor(request: HttpRequest) -> HttpResponse:
     """Language preferences editor."""
     user = request.user
@@ -101,7 +101,7 @@ def language_preferences_editor(request: HttpRequest) -> HttpResponse:
     return render(request, "language-preferences.html", context)
 
 
-@login_required  # type: ignore
+@smart_login_required
 @require_http_methods(["POST"])  # type: ignore
 def get_language_preferences(request: HttpRequest) -> JsonResponse:
     """Ajax to Change or create a new preferences for the selected language."""
@@ -139,7 +139,7 @@ def get_language_preferences(request: HttpRequest) -> JsonResponse:
         return JsonResponse({"status": "error", "message": str(e)}, status=500)
 
 
-@login_required  # type: ignore
+@smart_login_required
 @require_http_methods(["POST"])  # type: ignore
 def update_user_language(request: HttpRequest) -> JsonResponse:
     """Ajax to Update the user language."""
@@ -194,7 +194,7 @@ def check_article_params(
     return None
 
 
-@login_required  # type: ignore
+@smart_login_required
 @require_http_methods(["POST"])  # type: ignore
 def save_inline_translation(request: HttpRequest) -> JsonResponse:
     """Ajax to Save the inline translation settings."""
@@ -226,7 +226,7 @@ def save_inline_translation(request: HttpRequest) -> JsonResponse:
     )
 
 
-@login_required  # type: ignore
+@smart_login_required
 @require_http_methods(["POST"])  # type: ignore
 def manage_lexical_article(request: HttpRequest) -> JsonResponse:  # pylint: disable=too-many-return-statements
     """Ajax to Add, edit, or delete a lexical article."""
@@ -273,7 +273,7 @@ def manage_lexical_article(request: HttpRequest) -> JsonResponse:  # pylint: dis
         return JsonResponse({"status": "error", "message": str(e)}, status=500)
 
 
-@login_required  # type: ignore
+@smart_login_required
 def add_lexical_article(
     language_preferences: LanguagePreferences, data: dict[str, Any]
 ) -> JsonResponse:
@@ -301,7 +301,7 @@ def add_lexical_article(
         )
 
 
-@login_required  # type: ignore
+@smart_login_required
 def edit_lexical_article(
     language_preferences: LanguagePreferences, data: dict[str, Any]
 ) -> JsonResponse:
@@ -337,7 +337,7 @@ def edit_lexical_article(
         return JsonResponse({"status": "error", "message": "Failed to edit article"}, status=500)
 
 
-@login_required  # type: ignore
+@smart_login_required
 def delete_lexical_article(
     language_preferences: LanguagePreferences, data: dict[str, Any]
 ) -> JsonResponse:

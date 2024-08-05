@@ -3,6 +3,7 @@
 from typing import Any
 
 from django.contrib.auth import get_user_model
+from django.core.management import call_command
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 
@@ -64,3 +65,12 @@ def create_language_preferences(
                 title=article["title"],
                 parameters=article["parameters"],
             )
+
+
+def run_startup_tasks(sender: Any, **kwargs: Any) -> None:  # pylint: disable=unused-argument
+    """Run the startup tasks."""
+    # Check if we're inside a migrate command
+    if not kwargs.get("interactive", True):
+        return
+    call_command("migrate")
+    call_command("startup")

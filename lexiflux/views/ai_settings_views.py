@@ -1,10 +1,11 @@
 """AI settings views for the LexiFlux app."""
 
 import json
-from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse, HttpRequest, HttpResponse
 from django.views.decorators.http import require_http_methods
 from django.shortcuts import render
+
+from lexiflux.decorators import smart_login_required
 from lexiflux.models import AIModelConfig
 
 # Define the supported chat models and their settings
@@ -16,13 +17,13 @@ SUPPORTED_CHAT_MODELS = {
 }
 
 
-@login_required  # type: ignore
+@smart_login_required  # type: ignore
 def ai_settings(request: HttpRequest) -> HttpResponse:
     """Render the AI settings page."""
     return render(request, "ai_settings.html")
 
 
-@login_required  # type: ignore
+@smart_login_required
 @require_http_methods(["GET", "POST"])  # type: ignore
 def ai_settings_api(request: HttpRequest) -> JsonResponse:
     """API for getting and setting AI model settings."""

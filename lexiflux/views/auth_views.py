@@ -9,6 +9,7 @@ from django.http import HttpRequest, HttpResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse_lazy
 from django.views import generic
+from django.core.exceptions import ObjectDoesNotExist
 
 from lexiflux.forms import CustomUserCreationForm
 
@@ -31,31 +32,30 @@ class CustomLoginView(LoginView):  # type: ignore
 
     def post(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
         """Handle post request."""
-        username = request.POST.get("username")
-        password = request.POST.get("password")
+        form = AuthenticationForm(request, data=request.POST)
 
-        if user := UserModel.objects.get(username=username):
-            if user.check_password(password):
+        if form.is_valid():
+            username = form.cleaned_data.get("username")
+            password = form.cleaned_data.get("password")
+
+            try:
+                user = UserModel.objects.get(username=username)
                 if user.is_approved or user.is_superuser:
                     if user := authenticate(request, username=username, password=password):
                         login(request, user)
                         return redirect(self.get_success_url())
-                    error_message = "Internal auth error."
+                    error_message = "Invalid username or password."
                 else:
                     error_message = (
                         "Your account is not approved yet. "
                         "Please wait for an administrator to approve your account."
                     )
-            else:
-                error_message = (
-                    "Please enter a correct username and password! "
-                    "Note that both fields may be case-sensitive."
-                )
+            except ObjectDoesNotExist:
+                error_message = "Invalid username or password."
         else:
             error_message = (
-                "Please enter a correct username and password! "
+                "Please enter a correct username and password. "
                 "Note that both fields may be case-sensitive."
             )
 
-        form = AuthenticationForm(initial={"username": username})
         return render(request, self.template_name, {"form": form, "error_message": error_message})

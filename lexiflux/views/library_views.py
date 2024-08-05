@@ -21,9 +21,10 @@ from lexiflux.ebook.book_plain_text import BookPlainText
 from lexiflux.ebook.book_html import BookHtml
 from lexiflux.ebook.book_epub import BookEpub
 from lexiflux.ebook import book_base
+from lexiflux.decorators import smart_login_required
 
 
-@login_required  # type: ignore
+@smart_login_required  # type: ignore
 def library(request: HttpRequest) -> HttpResponse:
     """Library page."""
     if request.user.is_superuser:
@@ -70,7 +71,7 @@ def library(request: HttpRequest) -> HttpResponse:
     return render(request, "library.html", context)
 
 
-@login_required  # type: ignore
+@smart_login_required  # type: ignore
 def import_book(request: HttpRequest) -> JsonResponse:
     """Import a book from a file."""
     if request.method == "POST":
@@ -190,7 +191,7 @@ class BookDetailView(View):  # type: ignore
             return JsonResponse({"error": str(e)}, status=500)
 
 
-@login_required  # type: ignore
+@smart_login_required  # type: ignore
 def search_authors(request: HttpRequest) -> JsonResponse:
     """Search authors based on input string."""
     query = request.GET.get("q", "").strip()

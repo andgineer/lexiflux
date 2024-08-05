@@ -1,12 +1,12 @@
 """Views for the reader page."""
 
-from django.contrib.auth.decorators import login_required
 from django.core.cache import cache
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import redirect, render, get_object_or_404
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 
+from lexiflux.decorators import smart_login_required
 from lexiflux.models import (
     BookPage,
     CustomUser,
@@ -50,7 +50,7 @@ def can_see_book(user: CustomUser, book: Book) -> bool:
     return user.is_superuser or book.owner == user or user in book.shared_with.all() or book.public
 
 
-@login_required  # type: ignore
+@smart_login_required  # type: ignore
 def reader(request: HttpRequest) -> HttpResponse:
     """Open the book in reader.
 
@@ -109,7 +109,7 @@ def reader(request: HttpRequest) -> HttpResponse:
     )
 
 
-@login_required  # type: ignore
+@smart_login_required  # type: ignore
 def page(request: HttpRequest) -> HttpResponse:
     """Book page.
 
@@ -131,7 +131,7 @@ def page(request: HttpRequest) -> HttpResponse:
         return HttpResponse(status=403)
 
     # Update the reading location
-    location(request)
+    location(request)  # type: ignore
 
     cache_key = f"page_html_{book_code}_{page_number}"
     page_html = cache.get(cache_key)
@@ -151,13 +151,15 @@ def page(request: HttpRequest) -> HttpResponse:
     )
 
 
-@login_required  # type: ignore
+@smart_login_required  # type: ignore
 def location(request: HttpRequest) -> HttpResponse:
     """Read location changed."""
     try:
-        book_code = request.GET.get("book-code")
-        page_number = int(request.GET.get("book-page-number"))
-        top_word = int(request.GET.get("top-word", 0))
+        book_code = request.GET.get("book-code") or request.POST.get("book-code")
+        page_number = int(
+            request.GET.get("book-page-number") or request.POST.get("book-page-number")
+        )
+        top_word = int(request.GET.get("top-word", 0) or request.POST.get("top-word", 0))
         if not book_code:
             raise ValueError("book-code is missing")
     except (TypeError, ValueError, KeyError):
@@ -173,7 +175,7 @@ def location(request: HttpRequest) -> HttpResponse:
     return HttpResponse(status=200)
 
 
-@login_required  # type: ignore
+@smart_login_required
 @require_POST  # type: ignore
 def add_to_history(request: HttpRequest) -> JsonResponse:
     """Add the location to History."""
