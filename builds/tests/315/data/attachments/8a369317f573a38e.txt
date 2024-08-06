@@ -1,0 +1,49 @@
+INFO:root:Test finished
+INFO:root:Test started
+ERROR:django.request:Internal Server Error: /reader
+Traceback (most recent call last):
+  File "/home/runner/work/lexiflux/lexiflux/.venv/lib/python3.12/site-packages/django/db/models/query.py", line 946, in get_or_create
+    return self.get(**kwargs), False
+           ^^^^^^^^^^^^^^^^^^
+  File "/home/runner/work/lexiflux/lexiflux/.venv/lib/python3.12/site-packages/django/db/models/query.py", line 647, in get
+    raise self.model.DoesNotExist(
+lexiflux.models.LanguagePreferences.DoesNotExist: LanguagePreferences matching query does not exist.
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/runner/work/lexiflux/lexiflux/.venv/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/work/lexiflux/lexiflux/.venv/lib/python3.12/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/work/lexiflux/lexiflux/lexiflux/decorators.py", line 29, in wrapper
+    return login_required(view_func)(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/work/lexiflux/lexiflux/.venv/lib/python3.12/site-packages/django/contrib/auth/decorators.py", line 23, in _wrapper_view
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/work/lexiflux/lexiflux/lexiflux/views/reader_views.py", line 88, in reader
+    language_preferences = LanguagePreferences.get_or_create_language_preferences(
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.12.4/x64/lib/python3.12/contextlib.py", line 81, in inner
+    return func(*args, **kwds)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/work/lexiflux/lexiflux/lexiflux/models.py", line 429, in get_or_create_language_preferences
+    preferences, created = cls.objects.get_or_create(
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/work/lexiflux/lexiflux/.venv/lib/python3.12/site-packages/django/db/models/manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/work/lexiflux/lexiflux/.venv/lib/python3.12/site-packages/django/db/models/query.py", line 953, in get_or_create
+    return self.create(**params), True
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/work/lexiflux/lexiflux/.venv/lib/python3.12/site-packages/django/db/models/query.py", line 677, in create
+    obj.save(force_insert=True, using=self.db)
+  File "/home/runner/work/lexiflux/lexiflux/lexiflux/models.py", line 419, in save
+    self.full_clean()
+  File "/home/runner/work/lexiflux/lexiflux/.venv/lib/python3.12/site-packages/django/db/models/base.py", line 1544, in full_clean
+    raise ValidationError(errors)
+django.core.exceptions.ValidationError: {'user_language': ['This field cannot be blank.'], 'inline_translation_type': ['This field cannot be blank.', "'' is not a valid choice. Valid choices are Translate, Sentence, Explain, Lexical, AI, Dictionary, Site."], 'inline_translation_parameters': ['This field cannot be blank.']}
+WARNING:django.request:Not Found: /favicon.ico
