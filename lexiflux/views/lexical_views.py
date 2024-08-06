@@ -54,7 +54,7 @@ def get_context_for_term(
 
 def get_llm_errors_folder() -> str:
     """Get the folder for LLM errors."""
-    return "llm-error-env" if settings.env.env_settings else "llm-error"
+    return "llm-error-env" if settings.env.user_control_env else "llm-error"
 
 
 def get_lexical_article(  # pylint: disable=too-many-arguments, too-many-locals

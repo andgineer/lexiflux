@@ -8,12 +8,11 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AnonymousUser
 
 from lexiflux.lexiflux_settings import settings
-from lexiflux.management.commands.startup import DEFAULT_USER_NAME
 
 
 def get_default_user() -> Any:
     """Get the default user."""
-    return get_user_model().objects.get_or_create(username=DEFAULT_USER_NAME)[0]
+    return get_user_model().objects.get_or_create(username=settings.env.default_user_name)[0]
 
 
 def smart_login_required(

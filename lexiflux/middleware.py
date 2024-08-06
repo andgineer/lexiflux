@@ -5,7 +5,6 @@ from typing import Any
 
 from django.contrib.auth import authenticate, login
 from lexiflux.lexiflux_settings import settings
-from lexiflux.management.commands.startup import DEFAULT_USER_NAME, DEFAULT_USER_PASSWORD
 
 
 logger = logging.getLogger(__name__)
@@ -18,7 +17,10 @@ class AutoLoginMiddleware:  # pylint: disable=too-few-public-methods
         self.get_response = get_response
 
     def __call__(self, request: Any) -> Any:
-        if not request.user.is_authenticated and settings.env.is_single_user:
-            if user := authenticate(username=DEFAULT_USER_NAME, password=DEFAULT_USER_PASSWORD):
+        if not request.user.is_authenticated and settings.env.skip_auth:
+            if user := authenticate(
+                username=settings.env.default_user_name,
+                password=settings.env.default_user_password,
+            ):
                 login(request, user)
         return self.get_response(request)

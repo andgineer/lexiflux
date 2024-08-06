@@ -1,6 +1,8 @@
 import os
 import platform
 
+from lexiflux.language.google_languages import populate_languages
+
 # Bind Django test server to all network interfaces so Selenium Hub could connect from Docker.
 # For unknown reasons that does not work in pytest.ini so should be here
 # https://github.com/pytest-dev/pytest-django/issues/300
@@ -310,18 +312,14 @@ USER_PASSWORD = '12345'
 
 
 @pytest.fixture
-def user(db):
-    User = get_user_model()
-    user = User.objects.create_user(username='testuser', password=USER_PASSWORD)
-    language = Language.objects.get(name="English")
-    LanguagePreferences.objects.create(
-        user=user,
-        language=language,
-        user_language=language,
-        inline_translation_type="Dictionary",
-        inline_translation_parameters={"dictionary": "GoogleTranslator"},
-    )
-    return user
+def db_init(db):
+    """Fixture to populate the database with languages."""
+    populate_languages()
+
+
+@pytest.fixture
+def user(db_init):
+    return get_user_model().objects.create_user(username='testuser', password=USER_PASSWORD)
 
 
 @pytest.fixture
@@ -332,12 +330,12 @@ def approved_user(user):
 
 
 @pytest.fixture
-def author(db):
+def author(db_init):
     return Author.objects.create(name="Lewis Carroll")
 
 
 @pytest.fixture
-def book(db, user, author):
+def book(db_init, user, author):
     language = Language.objects.get(name="English")
     book = Book.objects.create(
         title="Alice in Wonderland",

@@ -19,7 +19,7 @@ alisa:
 	./manage.py import-text ~/books/Lewis\ Carroll/Alisa\ u\ zemlji\ cuda\ \(437\)/Alisa\ u\ zemlji\ cuda\ -\ Lewis\ Carroll.txt
 
 .HELP: init-db  ## KILL Database and reinit new one
-init-db: kill-db migrate admin alisa
+init-db: kill-db migrate admin user alisa
 
 .HELP: kill-db  ## KILL Database
 kill-db:
@@ -28,6 +28,10 @@ kill-db:
 .HELP: admin  ## Create admin
 admin:
 	DJANGO_SUPERUSER_PASSWORD=admin python manage.py createsuperuser --username admin --email admin@example.com --noinput
+
+.HELP: user  ## Create default user for auto-login
+user:
+	./manage default-user
 
 .HELP: run  ## Run local server
 run:

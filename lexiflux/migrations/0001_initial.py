@@ -7,7 +7,7 @@ import django.utils.timezone
 from django.conf import settings
 from django.db import migrations, models
 
-from lexiflux.language.google_languages import update_languages
+from lexiflux.language.google_languages import populate_languages
 
 
 class Migration(migrations.Migration):
@@ -34,6 +34,7 @@ class Migration(migrations.Migration):
                 ('name', models.CharField(max_length=100, unique=True)),
             ],
         ),
+        migrations.RunPython(populate_languages, None),
         migrations.CreateModel(
             name='CustomUser',
             fields=[
@@ -173,5 +174,4 @@ class Migration(migrations.Migration):
                 'unique_together': {('user', 'book')},
             },
         ),
-        migrations.RunPython(update_languages, None)
     ]

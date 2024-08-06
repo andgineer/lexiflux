@@ -1,7 +1,9 @@
 """Fill the database with languages from Google Translate."""
 
 import json
-from typing import Any
+from typing import Any, Optional
+
+from django.apps import apps as django_apps
 
 SPECIAL_LANGUAGE_CODE_MAPPING = {
     "zh-CN": "zh",  # Chinese (Simplified)
@@ -9,9 +11,18 @@ SPECIAL_LANGUAGE_CODE_MAPPING = {
 }
 
 
-def update_languages(apps: Any, schema_editor: Any) -> None:  # pylint: disable=unused-argument
-    """Load languages from the JSON file."""
-    language_class = apps.get_model("lexiflux", "Language")
+def populate_languages(apps: Optional[django_apps] = None, *args: Any) -> None:  # pylint: disable=keyword-arg-before-vararg
+    """Load languages from the JSON file.
+
+    Can be used in RunPython migrations or without params.
+    """
+    if apps is None:
+        language_class = django_apps.get_model("lexiflux", "Language")
+    else:
+        language_class = apps.get_model("lexiflux", "Language")
+
+    if language_class.objects.exists():
+        return  # Languages already populated, no need to do it again
 
     with open("lexiflux/resources/google_translate_languages.json", "r", encoding="utf8") as file:
         data = json.load(file)

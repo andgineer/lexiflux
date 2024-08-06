@@ -5,31 +5,57 @@ import os
 import warnings
 from typing import Any
 from django.conf import settings as django_settings
+import requests
 
-
-SINGLE_USER_ENV = "LEXIFLUX_SINGLE_USER"
 SKIP_AUTH_ENV = "LEXIFLUX_SKIP_AUTH"
-ENV_SETTINGS_ENV = "LEXIFLUX_ENV_SETTINGS"
+USER_CONTROL_ENV_ENV = "LEXIFLUX_USER_CONTROL_ENV"
+
+
+def is_running_in_cloud() -> bool:
+    """Check if the code is running in a cloud environment."""
+    cloud_env_vars = [
+        "AWS_EXECUTION_ENV",
+        "GAE_ENV",
+        "GCP_PROJECT",
+        "WEBSITE_INSTANCE_ID",
+        "WEBSITE_SITE_NAME",
+    ]
+    return any(var in os.environ for var in cloud_env_vars)
+
+
+def is_running_in_aws() -> bool:
+    """Check if the code is running in AWS."""
+    try:
+        response = requests.get("http://169.254.169.254/latest/meta-data/", timeout=0.1)
+        return response.status_code == 200
+    except requests.exceptions.RequestException:
+        return False
 
 
 @dataclass
 class EnvironmentVars:
     """Environment variables for Lexiflux."""
 
-    is_single_user: bool
     skip_auth: bool
-    env_settings: bool  # if user can edit environment vars, basically for local run without Docker
+    user_control_env: (
+        bool  # if user can edit environment vars, basically for local run without Docker
+    )
+
+    default_user_name: str
+    default_user_password: str
+    default_user_email: str
 
     @classmethod
     def from_environment(cls) -> "EnvironmentVars":
         """Create an instance from environment variables."""
-        is_single_user = os.environ.get(SINGLE_USER_ENV, "").lower() == "true"
         skip_auth = os.environ.get(SKIP_AUTH_ENV, "").lower() == "true"
 
         return cls(
-            is_single_user=is_single_user,
             skip_auth=skip_auth,
-            env_settings=os.environ.get(ENV_SETTINGS_ENV, "").lower() == "true",
+            user_control_env=os.environ.get(USER_CONTROL_ENV_ENV, "").lower() == "true",
+            default_user_name="lexiflux",
+            default_user_password="lexiflux",
+            default_user_email="lexiflux@example.com",
         )
 
     def validate(self) -> None:
@@ -37,13 +63,8 @@ class EnvironmentVars:
 
         Raises exception if env vars are not consistent.
         """
-        if self.skip_auth and not self.is_single_user:
-            raise ValueError(
-                "`LEXIFLUX_SKIP_AUTH` should not be used in multi-user environment "
-                "(`LEXIFLUX_SINGLE_USER` is not `true`)!"
-            )
-
         if self.skip_auth:
+            # todo: if we are in cloud then clear the skip_auth and write explanation
             warnings.warn(
                 "(!) Authentication is being skipped (`LEXIFLUX_SKIP_AUTH` set to True).",
                 RuntimeWarning,

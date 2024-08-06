@@ -5,22 +5,16 @@ from lexiflux.ebook.book_plain_text import BookPlainText
 from lexiflux.ebook.page_splitter import PageSplitter
 
 
-@allure.epic('Book import')
-@allure.feature('Page Splitter')
 @pytest.fixture
-def mock_page_splitter():
+def mock_page_splitter(db_init):
     yield from mock_book_plain_text(30)
 
 
-@allure.epic('Book import')
-@allure.feature('Page Splitter')
 @pytest.fixture
-def mock_page100_splitter():
+def mock_page100_splitter(db_init):
     yield from mock_book_plain_text(100)
 
 
-@allure.epic('Book import')
-@allure.feature('Page Splitter')
 def mock_book_plain_text(page_length: int):
     original_target = PageSplitter.PAGE_LENGTH_TARGET
     set_book_page_length(page_length)
@@ -28,8 +22,6 @@ def mock_book_plain_text(page_length: int):
     set_book_page_length(original_target)
 
 
-@allure.epic('Book import')
-@allure.feature('Page Splitter')
 def set_book_page_length(page_length):
     PageSplitter.PAGE_LENGTH_TARGET = page_length  # Mocked target length for testing
     PageSplitter.PAGE_LENGTH_ERROR_TOLERANCE = 0.5

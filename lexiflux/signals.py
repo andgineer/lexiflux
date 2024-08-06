@@ -3,10 +3,10 @@
 from typing import Any
 
 from django.contrib.auth import get_user_model
-from django.core.management import call_command
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 
+from lexiflux.language.google_languages import populate_languages
 from lexiflux.models import LanguagePreferences, LexicalArticle, Language
 
 User = get_user_model()
@@ -40,6 +40,7 @@ def create_language_preferences(
 ) -> None:
     """Create a language_preferences and default lexical articles for a new user."""
     if created:
+        populate_languages()
         try:
             english_language = Language.objects.get(google_code="en")
             serbian_language = Language.objects.get(google_code="sr")
@@ -65,12 +66,4 @@ def create_language_preferences(
                 title=article["title"],
                 parameters=article["parameters"],
             )
-
-
-def run_startup_tasks(sender: Any, **kwargs: Any) -> None:  # pylint: disable=unused-argument
-    """Run the startup tasks."""
-    # Check if we're inside a migrate command
-    if not kwargs.get("interactive", True):
-        return
-    call_command("migrate")
-    call_command("startup")
+        print(f"Created language preferences for {instance.username}")
