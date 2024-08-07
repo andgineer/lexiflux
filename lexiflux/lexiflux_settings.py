@@ -8,7 +8,7 @@ from django.conf import settings as django_settings
 import requests
 
 SKIP_AUTH_ENV = "LEXIFLUX_SKIP_AUTH"
-USER_CONTROL_ENV_ENV = "LEXIFLUX_USER_CONTROL_ENV"
+UI_SETTINGS_ONLY_ENV = "LEXIFLUX_UI_SETTINGS_ONLY"
 
 
 def is_running_in_cloud() -> bool:
@@ -20,7 +20,7 @@ def is_running_in_cloud() -> bool:
         "WEBSITE_INSTANCE_ID",
         "WEBSITE_SITE_NAME",
     ]
-    return any(var in os.environ for var in cloud_env_vars)
+    return any(var in os.environ for var in cloud_env_vars) or is_running_in_aws()
 
 
 def is_running_in_aws() -> bool:
@@ -37,8 +37,8 @@ class EnvironmentVars:
     """Environment variables for Lexiflux."""
 
     skip_auth: bool
-    user_control_env: (  # todo: ui_settings_only
-        bool  # if user can edit environment vars, basically for local run without Docker
+    ui_settings_only: (  # user cannot edit environment vars
+        bool
     )
 
     default_user_name: str
@@ -49,10 +49,22 @@ class EnvironmentVars:
     def from_environment(cls) -> "EnvironmentVars":
         """Create an instance from environment variables."""
         skip_auth = os.environ.get(SKIP_AUTH_ENV, "").lower() == "true"
+        if skip_auth:
+            if is_running_in_cloud():
+                skip_auth = False
+                warnings.warn(
+                    "(!) Authentication is NOT skipped - cloud environment detected.",
+                    RuntimeWarning,
+                )
+            warnings.warn(
+                "(!) Authentication is being skipped (`LEXIFLUX_SKIP_AUTH` set to True) "
+                "but this is not recommended in a cloud environment.",
+                RuntimeWarning,
+            )
 
         return cls(
             skip_auth=skip_auth,
-            user_control_env=os.environ.get(USER_CONTROL_ENV_ENV, "").lower() == "true",
+            ui_settings_only=os.environ.get(UI_SETTINGS_ONLY_ENV, "").lower() == "true",
             default_user_name="lexiflux",
             default_user_password="lexiflux",
             default_user_email="lexiflux@example.com",
