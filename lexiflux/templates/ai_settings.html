@@ -27,11 +27,26 @@
                         </div>
                         <ul class="nav nav-tabs" id="myTab" role="tablist">
                             <li class="nav-item" v-for="(config, index) in aiConfigs" :key="config.chat_model">
-                                <a class="nav-link" :class="{ active: index === 0 }" :id="config.chat_model + '-tab'" data-bs-toggle="tab" :href="'#' + config.chat_model" role="tab" :aria-controls="config.chat_model" aria-selected="true">${ config.chat_model }</a>
+                                <a class="nav-link"
+                                   :class="{ active: isActiveTab(config.chat_model) }"
+                                   :id="config.chat_model + '-tab'" data-bs-toggle="tab"
+                                   :href="'#' + config.chat_model" role="tab"
+                                   :aria-controls="config.chat_model"
+                                   aria-selected="isActiveTab(config.chat_model)"
+                                >
+                                    ${ config.chat_model }
+                                </a>
                             </li>
                         </ul>
                         <div class="tab-content" id="myTabContent">
-                            <div v-for="(config, index) in aiConfigs" :key="config.chat_model" class="tab-pane fade" :class="{ 'show active': index === 0 }" :id="config.chat_model" role="tabpanel" :aria-labelledby="config.chat_model + '-tab'">
+                            <div v-for="(config, index) in aiConfigs"
+                                 :key="config.chat_model"
+                                 class="tab-pane fade"
+                                 :class="{ 'show active': isActiveTab(config.chat_model) }"
+                                 :id="config.chat_model"
+                                 role="tabpanel"
+                                 :aria-labelledby="config.chat_model + '-tab'"
+                            >
                                 <div class="mt-4">
                                     <h3 class="mb-3">${ config.chat_model }</h3>
                                     <div v-if="config.chat_model !== 'Ollama'" class="mb-4">
@@ -88,13 +103,22 @@ new Vue({
         successMessage: '',
         changedFields: {},
         errors: {},
+        activeTab: '{{ selected_tab }}' || '',
     },
     computed: {
         hasChanges() {
             return Object.keys(this.changedFields).length > 0;
         }
     },
+    mounted() {
+      if (!this.activeTab && this.aiConfigs.length > 0) {
+        this.activeTab = this.aiConfigs[0].chat_model;
+      }
+    },
     methods: {
+        isActiveTab(tabName) {
+            return this.activeTab === tabName || (this.activeTab === '' && this.aiConfigs.indexOf(this.aiConfigs.find(config => config.chat_model === tabName)) === 0);
+        },
         loadSettings() {
             fetch('{% url "ai_settings_api" %}', {
                 method: 'GET',

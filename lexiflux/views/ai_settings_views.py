@@ -14,7 +14,8 @@ from lexiflux.models import AIModelConfig, SUPPORTED_CHAT_MODELS
 @smart_login_required  # type: ignore
 def ai_settings(request: HttpRequest) -> HttpResponse:
     """Render the AI settings page."""
-    return render(request, "ai_settings.html")
+    selected_tab = request.GET.get("tab", "")
+    return render(request, "ai_settings.html", {"selected_tab": selected_tab})
 
 
 @smart_login_required
