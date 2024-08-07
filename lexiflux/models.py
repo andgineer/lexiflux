@@ -15,7 +15,7 @@ from transliterate import get_available_language_codes, translit
 
 from lexiflux.language.sentence_extractor import break_into_sentences
 from lexiflux.language.word_extractor import parse_words
-
+from lexiflux.language_preferences_default import create_default_language_preferences
 
 BOOK_CODE_LENGTH = 100
 
@@ -426,36 +426,33 @@ class LanguagePreferences(models.Model):  # type: ignore
     ) -> "LanguagePreferences":
         """Get or create a Language Preferences for the given user and language."""
         default = user.default_language_preferences
+        if default is None:
+            # Use the first existing record or create a new default
+            default = cls.objects.filter(user=user).first() or create_default_language_preferences(
+                user
+            )
+            user.default_language_preferences = default
+            user.save()
+
         preferences, created = cls.objects.get_or_create(
             user=user,
             language=language,
             defaults={
-                "user_language": default.user_language
-                if user.default_language_preferences
-                else None,
-                "inline_translation_type": default.inline_translation_type
-                if user.default_language_preferences
-                else "",
-                "inline_translation_parameters": default.inline_translation_parameters
-                if user.default_language_preferences
-                else {},
+                "user_language": default.user_language,
+                "inline_translation_type": default.inline_translation_type,
+                "inline_translation_parameters": default.inline_translation_parameters,
             },
         )
 
         if created:
             # Copy lexical articles from the default language preferences
-            if user.default_language_preferences:
-                for article in user.default_language_preferences.lexical_articles.all():
-                    LexicalArticle.objects.create(
-                        language_preferences=preferences,
-                        type=article.type,
-                        title=article.title,
-                        parameters=article.parameters,
-                    )
-
-            # Set this new language preferences as the default
-            user.default_language_preferences = preferences
-            user.save()
+            for article in default.lexical_articles.all():
+                LexicalArticle.objects.create(
+                    language_preferences=preferences,
+                    type=article.type,
+                    title=article.title,
+                    parameters=article.parameters,
+                )
 
         return preferences  # type: ignore
 

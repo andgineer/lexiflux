@@ -16,6 +16,7 @@ from django.views.decorators.http import require_http_methods
 from lexiflux.decorators import smart_login_required
 from lexiflux.language.llm import Llm
 from lexiflux.language.translation import Translator, get_translator
+from lexiflux.language_preferences_default import create_default_language_preferences
 from lexiflux.models import (
     Language,
     LexicalArticleType,
@@ -62,7 +63,11 @@ def get_grouped_languages(user: settings.AUTH_USER_MODEL) -> Dict[str, Any]:
 def language_preferences_editor(request: HttpRequest) -> HttpResponse:
     """Language preferences editor."""
     user = request.user
-    language_preferences = user.default_language_preferences or user.language_preferences.first()
+    if not user.default_language_preferences:  # todo: do that in model
+        user.default_language_preferences = create_default_language_preferences(user)
+        user.save()
+
+    language_preferences = user.default_language_preferences
 
     all_languages_data = get_grouped_languages(request.user)
     all_languages_flat = list(Language.objects.values("google_code", "name"))
