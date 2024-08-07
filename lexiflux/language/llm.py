@@ -36,6 +36,14 @@ AI_MODEL_API_KEY_ENV_VAR = {
 }
 
 
+def safe_float(value: Any, default: float = 0.5) -> float:
+    """Convert value to float or return default."""
+    try:
+        return float(value)
+    except (ValueError, TypeError):
+        return default
+
+
 class AIModelSettings:  # pylint: disable=too-few-public-methods
     """Constants for keys in AIModelConfig.settings."""
 
@@ -356,10 +364,7 @@ class Llm:  # pylint: disable=too-few-public-methods
 
     def get_model_settings(self, user: CustomUser, model_class: str) -> Dict[str, Any]:
         """Get AI model settings for the given user and model"""
-        ai_model_config, _ = AIModelConfig.objects.get_or_create(
-            user=user, chat_model=model_class, defaults={"settings": {}}
-        )
-
+        ai_model_config = AIModelConfig.get_or_create_ai_model_config(user, model_class)
         settings_dict = ai_model_config.settings.copy()
 
         if not settings_dict.get(AIModelSettings.API_KEY):
@@ -388,14 +393,16 @@ class Llm:  # pylint: disable=too-few-public-methods
             try:
                 model_settings = self.get_model_settings(user, model_class)
                 common_params = {
-                    "temperature": model_settings.get(AIModelSettings.TEMPERATURE, 0.5),
+                    "temperature": safe_float(
+                        model_settings.get(AIModelSettings.TEMPERATURE, 0.5)
+                    ),
                 }
 
                 if model_class == "ChatOpenAI":
                     self._model_cache[model_key] = ChatOpenAI(  # type: ignore
                         model=model_name,
                         openai_api_key=model_settings.get(AIModelSettings.API_KEY),
-                        **common_params,
+                        **common_params,  # type: ignore
                     )
                 elif model_class == "Ollama":
                     self._model_cache[model_key] = Ollama(  # pylint: disable=not-callable
@@ -406,7 +413,7 @@ class Llm:  # pylint: disable=too-few-public-methods
                     self._model_cache[model_key] = ChatAnthropic(
                         model=model_name,  # type: ignore
                         api_key=model_settings.get(AIModelSettings.API_KEY),
-                        **common_params,
+                        **common_params,  # type: ignore
                     )
                 # elif model_class == "ChatGoogleGenerativeAI":
                 #     self._model_cache[model_key] = ChatGoogleGenerativeAI(
@@ -416,7 +423,7 @@ class Llm:  # pylint: disable=too-few-public-methods
                 elif model_class == "ChatMistralAI":
                     self._model_cache[model_key] = ChatMistralAI(
                         api_key=model_settings.get(AIModelSettings.API_KEY),
-                        **common_params,
+                        **common_params,  # type: ignore
                     )
                 else:
                     raise ValueError(f"Unsupported model class: {model_class}")

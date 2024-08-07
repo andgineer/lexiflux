@@ -18,6 +18,12 @@ from lexiflux.language.word_extractor import parse_words
 from lexiflux.language_preferences_default import create_default_language_preferences
 
 BOOK_CODE_LENGTH = 100
+SUPPORTED_CHAT_MODELS = {
+    "ChatOpenAI": ["api_key", "temperature"],
+    "ChatMistralAI": ["api_key", "temperature"],
+    "ChatAnthropic": ["api_key", "temperature"],
+    "Ollama": ["temperature"],
+}
 
 TocEntry: TypeAlias = Tuple[str, int, int]  # <title>, <page num>, <word on the page num>
 Toc: TypeAlias = List[TocEntry]
@@ -326,6 +332,38 @@ class AIModelConfig(models.Model):  # type: ignore
 
     class Meta:
         unique_together = ("user", "chat_model")
+
+    @classmethod
+    def get_or_create_ai_model_config(cls, user: CustomUser, chat_model: str) -> "AIModelConfig":
+        """Get or create AI model config for the given user and chat model."""
+        supported_settings = SUPPORTED_CHAT_MODELS.get(chat_model, [])
+        config, created = AIModelConfig.objects.get_or_create(
+            user=user,
+            chat_model=chat_model,
+            defaults={"settings": {setting: "" for setting in supported_settings}},
+        )
+        if created:
+            config.save()
+        return config  # type: ignore
+
+    def clean(self) -> None:
+        super().clean()
+        errors = {}
+        for key, value in self.settings.items():
+            if key == "temperature" and value:
+                try:
+                    float_value = float(value)
+                    if not 0 <= float_value <= 1:
+                        errors[key] = f"Temperature must be between 0 and 1, got {float_value}"
+                except ValueError:
+                    errors[key] = f"Temperature must be a number, got {value}"
+
+        if errors:
+            raise ValidationError(errors)
+
+    def save(self, *args: Any, **kwargs: Any) -> None:
+        self.full_clean()
+        super().save(*args, **kwargs)
 
     def __str__(self) -> str:
         return f"{self.user.username} - {self.chat_model} Settings"

@@ -61,6 +61,9 @@
                                             :type="key === 'api_key' ? 'password' : 'text'"
                                             @input="fieldChanged(config.chat_model, key)"
                                         >
+                                        <div class="alert alert-danger mt-2" v-if="errors && errors[config.chat_model] && errors[config.chat_model][key]">
+                                          ${ errors[config.chat_model][key][0] }
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -84,6 +87,7 @@ new Vue({
         errorMessage: '',
         successMessage: '',
         changedFields: {},
+        errors: {},
     },
     computed: {
         hasChanges() {
@@ -112,23 +116,29 @@ new Vue({
             fetch('{% url "ai_settings_api" %}', {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': '{{ csrf_token }}'
+                  'Content-Type': 'application/json',
+                  'X-CSRFToken': '{{ csrf_token }}'
                 },
                 body: JSON.stringify(this.aiConfigs)
             })
-            .then(response => response.json())
+            .then(response => {
+              if (!response.ok) {
+                return response.json().then(err => { throw err; });
+              }
+              return response.json();
+            })
             .then(data => {
-                if (data.status === 'success') {
-                    this.successMessage = 'Settings saved successfully!';
-                    this.originalConfigs = JSON.parse(JSON.stringify(this.aiConfigs));
-                    this.changedFields = {};
-                } else {
-                    this.errorMessage = 'Error saving settings: ' + data.error;
-                }
+              console.log('Settings updated successfully');
+              this.errors = {}; // Clear any existing errors
+              this.changedFields = {};
             })
             .catch(error => {
-                this.errorMessage = 'Error saving settings: ' + error.message;
+              console.error('Error updating settings:', error);
+              if (error.errors) {
+                this.errors = error.errors;
+              } else {
+                this.errorMessage = 'Error updating settings: ' + error;
+              }
             });
         },
         fieldChanged(chatModel, key) {

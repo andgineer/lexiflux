@@ -37,7 +37,7 @@ class EnvironmentVars:
     """Environment variables for Lexiflux."""
 
     skip_auth: bool
-    user_control_env: (
+    user_control_env: (  # todo: ui_settings_only
         bool  # if user can edit environment vars, basically for local run without Docker
     )
 
