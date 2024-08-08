@@ -1,6 +1,6 @@
-from core.settings import *
-
 # Override ALLOWED_HOSTS to allow all hosts during testing
+from lexiflux.settings import *
+
 ALLOWED_HOSTS = ['*']
 
 LOGGING = {

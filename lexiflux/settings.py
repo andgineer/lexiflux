@@ -37,7 +37,7 @@ LOGIN_REDIRECT_URL = "reader"
 LOGOUT_REDIRECT_URL = "login"
 
 AUTH_USER_MODEL = "lexiflux.CustomUser"
-AUTHENTICATION_BACKENDS = ["core.backends.CustomUserBackend"]
+AUTHENTICATION_BACKENDS = ["lexiflux.backends.CustomUserBackend"]
 
 
 # Application definition
@@ -58,7 +58,6 @@ INSTALLED_APPS = [
     "allauth.socialaccount.providers.apple",
     "django_extensions",
     "widget_tweaks",
-    "core",
     "lexiflux",
 ]
 
@@ -75,7 +74,7 @@ MIDDLEWARE = [
     "lexiflux.middleware.AutoLoginMiddleware",
 ]
 
-ROOT_URLCONF = "core.urls"
+ROOT_URLCONF = "lexiflux.urls"
 
 TEMPLATES = [
     {
@@ -93,7 +92,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = "core.wsgi.application"
+WSGI_APPLICATION = "lexiflux.wsgi.application"
 
 
 # Database

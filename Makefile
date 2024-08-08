@@ -7,7 +7,6 @@ shell:
 .HELP: migrate  ## Migrate DB to current models
 migrate:
 	./manage makemigrations lexiflux
-	./manage makemigrations core
 	./manage migrate
 
 .HELP: pages  ## Create random book with random pages

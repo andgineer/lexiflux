@@ -19,7 +19,7 @@ from unittest.mock import mock_open, patch, MagicMock
 from lexiflux.ebook.book_base import BookBase
 from lexiflux.ebook.book_plain_text import BookPlainText
 from django.contrib.auth import get_user_model
-from lexiflux.models import Author, Language, Book, BookPage, LanguagePreferences
+from lexiflux.models import Author, Language, Book, BookPage
 from pytest_django.live_server_helper import LiveServer
 import subprocess
 import time
@@ -286,6 +286,7 @@ def book_plain_text():
     with patch("builtins.open", new_callable=lambda: custom_open):
         return BookPlainText("dummy_path")
 
+
 @pytest.fixture(autouse=True)
 def mock_detect_language():
     mock_detector = MagicMock()
@@ -293,6 +294,7 @@ def mock_detect_language():
 
     with patch('lexiflux.ebook.book_base.language_detector', return_value=mock_detector):
         yield mock_detector.detect
+
 
 @pytest.fixture
 def book_processor_mock():

@@ -1,14 +1,21 @@
 """Settings for Lexiflux."""
 
+import contextlib
 from dataclasses import dataclass
 import os
 import warnings
 from typing import Any
-from django.conf import settings as django_settings
 import requests
+from django.conf import settings as django_settings
+from django.contrib.auth import get_user_model
+from django.core.exceptions import ObjectDoesNotExist
 
 SKIP_AUTH_ENV = "LEXIFLUX_SKIP_AUTH"
 UI_SETTINGS_ONLY_ENV = "LEXIFLUX_UI_SETTINGS_ONLY"
+
+AUTOLOGIN_USER_NAME = "lexiflux"
+AUTOLOGIN_USER_PASSWORD = "lexiflux"
+AUTOLOGIN_USER_EMAIL = "lexiflux@example.com"
 
 
 def is_running_in_cloud() -> bool:
@@ -61,13 +68,23 @@ class EnvironmentVars:
                 "but this is not recommended in a cloud environment.",
                 RuntimeWarning,
             )
+        if not skip_auth:
+            with contextlib.suppress(ObjectDoesNotExist):
+                user = get_user_model().objects.get(username=AUTOLOGIN_USER_NAME)
+                if user.check_password(AUTOLOGIN_USER_PASSWORD):
+                    raise ValueError(
+                        "We are in multi-user environment but the auto-login user "
+                        "with hard-coded password exists. "
+                        "Please change the password for the user "
+                        f"`{AUTOLOGIN_USER_NAME}` or delete it."
+                    )
 
         return cls(
             skip_auth=skip_auth,
             ui_settings_only=os.environ.get(UI_SETTINGS_ONLY_ENV, "").lower() == "true",
-            default_user_name="lexiflux",
-            default_user_password="lexiflux",
-            default_user_email="lexiflux@example.com",
+            default_user_name=AUTOLOGIN_USER_NAME,
+            default_user_password=AUTOLOGIN_USER_PASSWORD,
+            default_user_email=AUTOLOGIN_USER_EMAIL,
         )
 
     def validate(self) -> None:
@@ -75,12 +92,6 @@ class EnvironmentVars:
 
         Raises exception if env vars are not consistent.
         """
-        if self.skip_auth:
-            # todo: if we are in cloud then clear the skip_auth and write explanation
-            warnings.warn(
-                "(!) Authentication is being skipped (`LEXIFLUX_SKIP_AUTH` set to True).",
-                RuntimeWarning,
-            )
 
 
 class LexifluxSettings:  # pylint: disable=too-few-public-methods

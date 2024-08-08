@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       PRIMARY_PYTHON_VERSION: '3.12'
-      DJANGO_SETTINGS_MODULE: 'core.settings'
+      DJANGO_SETTINGS_MODULE: 'lexiflux.settings'
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-python@v3
