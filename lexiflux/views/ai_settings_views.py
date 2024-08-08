@@ -10,6 +10,14 @@ from django.shortcuts import render
 from lexiflux.decorators import smart_login_required
 from lexiflux.models import AIModelConfig, SUPPORTED_CHAT_MODELS
 
+# Define custom captions for chat models
+CHAT_MODEL_CAPTIONS = {
+    "ChatOpenAI": "OpenAI (ChatGPT)",
+    "ChatMistralAI": "Mistral AI",
+    "ChatAnthropic": "Anthropic (Claude)",
+    "Ollama": "Ollama",
+}
+
 
 @smart_login_required  # type: ignore
 def ai_settings(request: HttpRequest) -> HttpResponse:
@@ -26,7 +34,13 @@ def ai_settings_api(request: HttpRequest) -> JsonResponse:
         configs = []
         for chat_model in SUPPORTED_CHAT_MODELS:
             config = AIModelConfig.get_or_create_ai_model_config(request.user, chat_model)
-            configs.append({"chat_model": config.chat_model, "settings": config.settings})
+            configs.append(
+                {
+                    "chat_model": chat_model,
+                    "caption": CHAT_MODEL_CAPTIONS.get(chat_model, chat_model),
+                    "settings": config.settings,
+                }
+            )
         return JsonResponse(configs, safe=False)
     if request.method == "POST":
         try:

@@ -27,14 +27,12 @@
                         </div>
                         <ul class="nav nav-tabs" id="myTab" role="tablist">
                             <li class="nav-item" v-for="(config, index) in aiConfigs" :key="config.chat_model">
-                                <a class="nav-link"
-                                   :class="{ active: isActiveTab(config.chat_model) }"
+                                <a class="nav-link" :class="{ active: isActiveTab(config.chat_model) }"
                                    :id="config.chat_model + '-tab'" data-bs-toggle="tab"
                                    :href="'#' + config.chat_model" role="tab"
                                    :aria-controls="config.chat_model"
-                                   aria-selected="isActiveTab(config.chat_model)"
-                                >
-                                    ${ config.chat_model }
+                                   :aria-selected="isActiveTab(config.chat_model)">
+                                    ${ config.caption }
                                 </a>
                             </li>
                         </ul>

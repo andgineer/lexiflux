@@ -33,7 +33,7 @@ llama3:
 #   model: ChatGoogleGenerativeAI
 #   suffix: 🌀
 
-# mistral-medium:
-#   title: Mistral Medium
-#   model: ChatMistralAI
-#   suffix: 🌪️
+mistral-medium:
+  title: Mistral Medium
+  model: ChatMistralAI
+  suffix: 🌪️

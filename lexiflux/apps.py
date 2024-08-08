@@ -21,4 +21,4 @@ class LexifluxConfig(AppConfig):  # type: ignore
         """Callback for post_migrate signal."""
         from lexiflux.lexiflux_settings import settings  # pylint: disable=import-outside-toplevel
 
-        settings.env.validate()
+        settings.lexiflux.validate()

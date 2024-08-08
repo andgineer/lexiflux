@@ -17,10 +17,10 @@ class AutoLoginMiddleware:  # pylint: disable=too-few-public-methods
         self.get_response = get_response
 
     def __call__(self, request: Any) -> Any:
-        if not request.user.is_authenticated and settings.env.skip_auth:
+        if not request.user.is_authenticated and settings.lexiflux.skip_auth:
             if user := authenticate(
-                username=settings.env.default_user_name,
-                password=settings.env.default_user_password,
+                username=settings.lexiflux.default_user_name,
+                password=settings.lexiflux.default_user_password,
             ):
                 login(request, user)
         return self.get_response(request)

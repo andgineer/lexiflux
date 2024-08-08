@@ -12,7 +12,7 @@ from lexiflux.lexiflux_settings import settings
 
 def get_default_user() -> Any:
     """Get the default user."""
-    return get_user_model().objects.get_or_create(username=settings.env.default_user_name)[0]
+    return get_user_model().objects.get_or_create(username=settings.lexiflux.default_user_name)[0]
 
 
 def smart_login_required(
@@ -22,7 +22,7 @@ def smart_login_required(
 
     @wraps(view_func)
     def wrapper(request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
-        if settings.env.skip_auth:
+        if settings.lexiflux.skip_auth:
             if isinstance(request.user, AnonymousUser):
                 request.user = get_default_user()
             return view_func(request, *args, **kwargs)

@@ -17,10 +17,10 @@ class Command(BaseCommand):  # type: ignore
     def handle(self, *args: Any, **options: Any) -> None:
         user_class = get_user_model()
 
-        if settings.env.skip_auth:
-            username = settings.env.default_user_name
-            email = settings.env.default_user_email
-            password = settings.env.default_user_password
+        if settings.lexiflux.skip_auth:
+            username = settings.lexiflux.default_user_name
+            email = settings.lexiflux.default_user_email
+            password = settings.lexiflux.default_user_password
 
             if not user_class.objects.filter(username=username).exists():
                 user = user_class.objects.create_user(
@@ -35,8 +35,8 @@ class Command(BaseCommand):  # type: ignore
                 )
             else:
                 with contextlib.suppress(ObjectDoesNotExist):
-                    user = user_class.objects.get(username=settings.env.default_user_name)
-                    if user.check_password(settings.env.default_user_password):
+                    user = user_class.objects.get(username=settings.lexiflux.default_user_name)
+                    if user.check_password(settings.lexiflux.default_user_password):
                         self.stdout.write("Default user already exists")
                     else:
                         self.stdout.write(
@@ -46,13 +46,13 @@ class Command(BaseCommand):  # type: ignore
         else:
             # if in auth mode the default user has the default password, raise an error
             with contextlib.suppress(ObjectDoesNotExist):
-                user = user_class.objects.get(username=settings.env.default_user_name)
-                if user.check_password(settings.env.default_user_password):
+                user = user_class.objects.get(username=settings.lexiflux.default_user_name)
+                if user.check_password(settings.lexiflux.default_user_password):
                     raise ValueError(
                         "We are in multi-user environment but the auto-login user "
                         "with hard-coded password exists. "
                         "Please change the password for the user "
-                        f"`{settings.env.default_user_name}` or delete it."
+                        f"`{settings.lexiflux.default_user_name}` or delete it."
                     )
             self.stdout.write(
                 "Authentication is not skipped (LEXIFLUX_SKIP_AUTH is not true)."

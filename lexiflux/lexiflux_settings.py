@@ -98,7 +98,7 @@ class LexifluxSettings:  # pylint: disable=too-few-public-methods
     """Settings for Lexiflux."""
 
     def __init__(self) -> None:
-        self.env = EnvironmentVars.from_environment()
+        self.lexiflux = EnvironmentVars.from_environment()
 
     def __getattr__(self, name: str) -> Any:
         return getattr(django_settings, name)
