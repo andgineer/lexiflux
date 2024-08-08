@@ -1,0 +1,2 @@
+Goto URL: from host http://0.0.0.0:45791/language-preferences/ from docker: http://10.1.0.91:45791/language-preferences/
+Skipping JavaScript log check for Firefox

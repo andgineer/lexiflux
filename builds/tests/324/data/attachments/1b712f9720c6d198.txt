@@ -1,0 +1,4 @@
+Goto URL: from host http://0.0.0.0:45791/reader?book-code=some-book-code from docker: http://10.1.0.91:45791/reader?book-code=some-book-code
+Opening book some-book-code at page 1 for user testuser
+Result: {'article': 'Mocked translation of: page'}
+Skipping JavaScript log check for Firefox
