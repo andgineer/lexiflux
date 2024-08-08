@@ -36,14 +36,14 @@
 | lexiflux/tests.py                                     |        0 |        0 |    100% |           |
 | lexiflux/urls.py                                      |       10 |        0 |    100% |           |
 | lexiflux/utils.py                                     |        8 |        0 |    100% |           |
-| lexiflux/views/ai\_settings\_views.py                 |       40 |       28 |     30% |17-18, 25-66 |
+| lexiflux/views/ai\_settings\_views.py                 |       41 |       28 |     32% |25-26, 33-80 |
 | lexiflux/views/auth\_views.py                         |       32 |        3 |     91% | 43, 49-50 |
 | lexiflux/views/language\_preferences\_ajax.py         |      175 |       86 |     51% |142-144, 151-168, 180, 189-190, 213, 238-278, 286-304, 314-342, 350-366 |
 | lexiflux/views/lexical\_views.py                      |       75 |       33 |     56% |41-52, 57, 71, 90-129, 179-196 |
 | lexiflux/views/library\_views.py                      |      114 |       56 |     51% |59-60, 77-121, 141-142, 171-174, 180-191, 197-217 |
 | lexiflux/views/reader\_views.py                       |      107 |        4 |     96% |45, 64, 164, 197 |
 | lexiflux/wsgi.py                                      |        4 |        4 |      0% |      9-15 |
-|                                             **TOTAL** | **2007** |  **527** | **74%** |           |
+|                                             **TOTAL** | **2008** |  **527** | **74%** |           |
 
 
 ## Setup coverage badge
