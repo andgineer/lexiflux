@@ -68,16 +68,6 @@ class EnvironmentVars:
                 "but this is not recommended in a cloud environment.",
                 RuntimeWarning,
             )
-        if not skip_auth:
-            with contextlib.suppress(ObjectDoesNotExist):
-                user = get_user_model().objects.get(username=AUTOLOGIN_USER_NAME)
-                if user.check_password(AUTOLOGIN_USER_PASSWORD):
-                    raise ValueError(
-                        "We are in multi-user environment but the auto-login user "
-                        "with hard-coded password exists. "
-                        "Please change the password for the user "
-                        f"`{AUTOLOGIN_USER_NAME}` or delete it."
-                    )
 
         return cls(
             skip_auth=skip_auth,
@@ -92,6 +82,16 @@ class EnvironmentVars:
 
         Raises exception if env vars are not consistent.
         """
+        if not self.skip_auth:
+            with contextlib.suppress(ObjectDoesNotExist):
+                user = get_user_model().objects.get(username=AUTOLOGIN_USER_NAME)
+                if user.check_password(AUTOLOGIN_USER_PASSWORD):
+                    raise ValueError(
+                        "We are in multi-user environment but the auto-login user "
+                        "with hard-coded password exists. "
+                        "Please change the password for the user "
+                        f"`{AUTOLOGIN_USER_NAME}` or delete it."
+                    )
 
 
 class LexifluxSettings:  # pylint: disable=too-few-public-methods
