@@ -1,0 +1,15 @@
+.venv
+node_modules
+experiments
+docs
+.git
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+coverage.xml
+*.cover
+*.log
+.mypy_cache
+.pytest_cache
+.hypothesis

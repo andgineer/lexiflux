@@ -13,10 +13,23 @@ Read foreign texts with an AI-powered dictionary.
 
 
 ## Quick start
+(!) Be aware that the container at start will load about 5Gb Ollama AI model.
+If you do not need AU models, you can disable by adding `OLLAMA_LOAD_MODEL=false` to the command.
+Alternatively you can specify different model to load in the same var.
 
-You need [uv](https://github.com/astral-sh/uv) installed.
+    docker run --name lexiflux -d -p 8000:8000 andgineer/lexiflux:latest || docker start lexiflux
+
+Open the lexiflux at http://localhost:8000
+
+(!) About two minutes the app will be very slow or unresponsive because it is loading AI models.
+
+## Build from sources
+Clone [the repo](https://github.com/andgineer/lexiflux).
+
+Install [uv](https://github.com/astral-sh/uv).
 
     . ./activete.sh  # note space between . and ./activate.sh
+    make js
     ./manage createsuperuser  # create admin user
     make run
 

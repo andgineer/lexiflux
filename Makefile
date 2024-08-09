@@ -85,6 +85,11 @@ mkcert:
 	mkdir -p ssl_certs
 	mkcert -cert-file ssl_certs/localhost.crt -key-file ssl_certs/localhost.key  lexiflux.ai localhost 127.0.0.1
 
+.PHONY: docker # mark as phony so it always runs even we have a docker folder
+.HELP: docker  ## Build docker image
+docker:
+	docker build -t lexiflux:latest -f docker/Dockerfile .
+
 .HELP: help  ## Display this message
 help:
 	@grep -E \
