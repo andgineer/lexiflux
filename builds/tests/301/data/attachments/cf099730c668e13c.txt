@@ -1,1 +1,0 @@
-Goto URL: from host http://0.0.0.0:34379/library from docker: http://10.1.0.36:34379/library
