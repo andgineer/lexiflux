@@ -48,4 +48,3 @@ def test_reader_view_loads_default_when_no_books_read_and_book_code_is_none(clie
     response = client.get(reverse('reader'))
     assert response.status_code == 302
     assert response.url == reverse('library')
-

@@ -3,9 +3,9 @@ import pytest
 from django.urls import reverse
 from unittest.mock import patch, MagicMock
 
-import lexiflux.views.lexical_views
 from lexiflux.language.translation import get_translator, Translator, AVAILABLE_TRANSLATORS
 from lexiflux.models import LanguagePreferences
+from tests.conftest import USER_PASSWORD
 
 
 @allure.epic('Pages endpoints')
@@ -36,13 +36,32 @@ def test_translate_view_success(mock_get_translator, client, user, book):
 
 @allure.epic('Pages endpoints')
 @allure.feature('Reader')
-@patch('lexiflux.language.translation.Translator')  # Adjust the import path as necessary
+@patch('lexiflux.language.translation.Translator')
 def test_get_translator(mock_translator, book, user):
     language_preferences = LanguagePreferences.get_or_create_language_preferences(user=user, language=book.language)
 
     result = get_translator("GoogleTranslator", book.language.name.lower(), language_preferences.user_language.name.lower())
     mock_translator.assert_called_once_with("GoogleTranslator", book.language.name.lower(), language_preferences.user_language.name.lower())
     assert isinstance(result, mock_translator.return_value.__class__)
+
+
+@allure.epic('Pages endpoints')
+@allure.feature('Reader')
+@pytest.mark.django_db
+def test_translate_view_approved_users_only(client, user, book):
+    # force_login() skip auth backed, so we do full login here
+    client.login(username=user.username, password=USER_PASSWORD)  # user.password is hashed
+
+    book_code = 'some-book-code'
+    response = client.get(reverse('translate'), {
+        "lexical-article": "0",
+        'text': 'Hello',
+        'book-code': book_code,
+        'book-page-number': '1',
+        'word-ids': '1.2.3',
+    })
+    assert response.status_code == 302
+    assert "login/?next=" in response.url
 
 
 @allure.epic('Pages endpoints')

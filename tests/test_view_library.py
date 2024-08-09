@@ -2,7 +2,6 @@ import allure
 import pytest
 from django.contrib.auth import get_user_model
 from django.urls import reverse
-from django.contrib.auth.models import User
 from pytest_django.asserts import assertTemplateUsed
 
 from lexiflux.models import Book, Author, Language
