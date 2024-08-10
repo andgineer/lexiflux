@@ -307,6 +307,7 @@ def book_processor_mock():
         'language': 'English'
     }
     book_processor.toc = []
+    book_processor.get_title_author.return_value = ('Test Book', 'Test Author')
     return book_processor
 
 

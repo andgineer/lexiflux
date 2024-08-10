@@ -163,7 +163,7 @@ def import_book(
     if forced_language:
         language_name = forced_language
     else:
-        language_name = book_processor.get_language()
+        language_name = book_processor.meta.get(MetadataField.LANGUAGE, "Unknown Language")
     language, _ = Language.objects.get_or_create(name=language_name)
 
     book_instance = Book.objects.create(title=title, author=author, language=language)
