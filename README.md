@@ -4,9 +4,10 @@
 
 | Name                                                  |    Stmts |     Miss |   Cover |   Missing |
 |------------------------------------------------------ | -------: | -------: | ------: | --------: |
+| lexiflux/\_\_about\_\_.py                             |        1 |        0 |    100% |           |
 | lexiflux/admin.py                                     |        6 |        0 |    100% |           |
 | lexiflux/api.py                                       |       24 |        3 |     88% |     37-39 |
-| lexiflux/apps.py                                      |       11 |        0 |    100% |           |
+| lexiflux/apps.py                                      |       13 |        0 |    100% |           |
 | lexiflux/asgi.py                                      |        4 |        4 |      0% |      9-15 |
 | lexiflux/backends.py                                  |       15 |        2 |     87% |     27-28 |
 | lexiflux/decorators.py                                |       18 |        4 |     78% | 15, 26-28 |
@@ -43,7 +44,7 @@
 | lexiflux/views/library\_views.py                      |      114 |       56 |     51% |59-60, 77-121, 141-142, 171-174, 180-191, 197-217 |
 | lexiflux/views/reader\_views.py                       |      107 |        4 |     96% |45, 64, 164, 197 |
 | lexiflux/wsgi.py                                      |        4 |        4 |      0% |      9-15 |
-|                                             **TOTAL** | **2008** |  **526** | **74%** |           |
+|                                             **TOTAL** | **2011** |  **526** | **74%** |           |
 
 
 ## Setup coverage badge
