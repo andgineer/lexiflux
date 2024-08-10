@@ -3,6 +3,7 @@
 from typing import Any
 
 from django.apps import AppConfig
+from lexiflux import __version__
 
 
 class LexifluxConfig(AppConfig):  # type: ignore
@@ -22,3 +23,4 @@ class LexifluxConfig(AppConfig):  # type: ignore
         from lexiflux.lexiflux_settings import settings  # pylint: disable=import-outside-toplevel
 
         settings.lexiflux.validate()
+        print(f"Lexiflux {__version__} is ready.")

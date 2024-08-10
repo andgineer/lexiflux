@@ -11,17 +11,19 @@ Read foreign texts with an AI-powered dictionary.
 
 ![Alice in Wonderland](docs/includes/ponedeljak-pocinje-u-subotu.jpg)
 
-
 ## Quick start
-(!) Be aware that the container at start will load about 5Gb Ollama AI model.
-If you do not need AU models, you can disable by adding `OLLAMA_LOAD_MODEL=false` to the command.
-Alternatively you can specify different model to load in the same var.
 
-    docker run --name lexiflux -d -p 8000:8000 andgineer/lexiflux:latest || docker start lexiflux
+    docker run --name lexiflux -d -p 6100:8000 andgineer/lexiflux:latest || docker start lexiflux
 
-Open the lexiflux at http://localhost:8000
+Open the lexiflux at http://localhost:6100
 
-(!) About two minutes the app will be very slow or unresponsive because it is loading AI models.
+## AI Models
+(!) To install in the docker local AI Ollama model add `OLLAMA_LOAD_MODEL=llama3` to the `docker run` command.
+
+Please note it will download about 5Gb Ollama AI model and require about 6G RAM for the Docker container to run.
+
+Alternatively you can use ChatGPT, Claude or other managed AI solutions. 
+See [AI Settings](http://localhost:6100/ai-settings/) section.
 
 ## Build from sources
 Clone [the repo](https://github.com/andgineer/lexiflux).
