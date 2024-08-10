@@ -90,6 +90,18 @@ mkcert:
 docker:
 	docker build -t lexiflux:latest -f docker/Dockerfile .
 
+.HELP: ver-bug ## Bump the version for a bug
+ver-bug:
+	bash ./scripts/verup.sh bug
+
+.HELP: ver-feature ## Bump the version for a feature
+ver-feature:
+	bash ./scripts/verup.sh feature
+
+.HELP: ver-release ## Bump the version for a release
+ver-release:
+	bash ./scripts/verup.sh release
+
 .HELP: help  ## Display this message
 help:
 	@grep -E \
