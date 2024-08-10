@@ -18,11 +18,18 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Extract version from tag
+      - name: Check for tag and extract version
+        id: check_tag
         run: |
-          echo "RELEASE_VERSION=$(echo ${GITHUB_REF#refs/*/} | cut -c 2-)" >> $GITHUB_ENV
-        env:
-          GITHUB_REF: ${{ github.event.workflow_run.head_branch }}
+          COMMIT_SHA="${{ github.event.workflow_run.head_sha }}"
+          TAG=$(git tag --points-at $COMMIT_SHA | grep '^v' | sort -V | tail -n 1)
+          if [ -n "$TAG" ]; then
+            VERSION=$(echo $TAG | cut -c 2-)
+            echo "RELEASE_VERSION=$VERSION" >> $GITHUB_ENV
+            echo "Tag found: $TAG, Version: $VERSION"
+          else
+            echo "No tag found for commit $COMMIT_SHA"
+          fi
 
       - name: Set up QEMU
         if: env.RELEASE_VERSION != ''
