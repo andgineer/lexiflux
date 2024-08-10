@@ -5,13 +5,16 @@
 
 # Lexiflux
 
-Read foreign texts with an AI-powered dictionary.
+Master languages faster with our AI-powered reading companion. 
+
+Instantly translate and understand foreign texts as you read, building your vocabulary and comprehension skills effortlessly.
 
 <br clear="left"/>
 
 ![Alice in Wonderland](docs/includes/ponedeljak-pocinje-u-subotu.jpg)
 
 ## Quick start
+You need to have [Docker](https://docs.docker.com/get-docker/) installed.
 
     docker start lexiflux > null 2>&1 || docker run -d -p 6100:8000 --name lexiflux andgineer/lexiflux
 

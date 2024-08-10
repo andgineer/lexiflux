@@ -32,14 +32,19 @@ class BookPlainText(BookBase):  # pylint: disable=too-many-instance-attributes
     book_end: int
 
     def __init__(
-        self, file_path: Union[str, IO[str]], languages: Optional[List[str]] = None
+        self,
+        file_path: Union[str, IO[str]],  # pylint: disable=unused-argument
+        languages: Optional[List[str]] = None,
+        original_filename: Optional[str] = None,
     ) -> None:
         """Initialize.
 
         If file_path is a string, it is treated as a path to a file and we try to detect encoding.
         If file_path is a file object, we assume it was opened with correct encoding.
         """
-        super().__init__(file_path, languages)
+        super().__init__(
+            file_path=file_path, languages=languages, original_filename=original_filename
+        )
         if isinstance(file_path, str):
             self.text = self.read_file(file_path)
         else:

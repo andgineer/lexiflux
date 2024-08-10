@@ -74,51 +74,55 @@ def library(request: HttpRequest) -> HttpResponse:
 @smart_login_required  # type: ignore
 def import_book(request: HttpRequest) -> JsonResponse:
     """Import a book from a file."""
-    if request.method == "POST":
-        file = request.FILES.get("file")
-        if not file:
-            return JsonResponse({"error": "No file provided"}, status=400)
+    if request.method != "POST":
+        return JsonResponse({"error": "Invalid request method"}, status=405)
 
-        book_class: Type[BookBase]
-        file_extension = file.name.split(".")[-1].lower()
-        if file_extension == "txt":
-            book_class = BookPlainText
-        elif file_extension == "html":
-            book_class = BookHtml
-        elif file_extension == "epub":
-            book_class = BookEpub
-        else:
-            return JsonResponse({"error": "Unsupported file format"}, status=400)
+    file = request.FILES.get("file")
+    if not file:
+        return JsonResponse({"error": "No file provided"}, status=400)
 
-        try:
-            if isinstance(file, TemporaryUploadedFile):
-                book_processor = book_class(file.temporary_file_path())
-                book = book_base.import_book(book_processor, request.user.email)
-            else:
-                # For in-memory files, save to disk
-                fs = FileSystemStorage(location="/tmp")
-                filename = fs.save(file.name, file)
-                try:
-                    book_processor = book_class(fs.path(filename))
-                    book = book_base.import_book(book_processor, request.user.email)
-                finally:
-                    fs.delete(filename)
+    original_filename = file.name
+    file_extension = original_filename.split(".")[-1].lower()
 
-            return JsonResponse(
-                {
-                    "id": book.id,
-                    "title": book.title,
-                    "author": book.author.name,
-                    "language": book.language.google_code,
-                }
+    book_class: Type[BookBase]
+    if file_extension == "txt":
+        book_class = BookPlainText
+    elif file_extension == "html":
+        book_class = BookHtml
+    elif file_extension == "epub":
+        book_class = BookEpub
+    else:
+        return JsonResponse({"error": "Unsupported file format"}, status=400)
+
+    try:
+        if isinstance(file, TemporaryUploadedFile):
+            book_processor = book_class(
+                file.temporary_file_path(), original_filename=original_filename
             )
-        except Exception as e:  # pylint: disable=broad-except
-            print(e)
-            traceback_str = traceback.format_exc()
-            print(traceback_str)
-            return JsonResponse({"error": str(e)}, status=500)
+        else:
+            # For in-memory files, save to disk
+            fs = FileSystemStorage(location="/tmp")
+            filename = fs.save(original_filename, file)
+            try:
+                book_processor = book_class(fs.path(filename), original_filename=original_filename)
+                book = book_base.import_book(book_processor, request.user.email)
+            finally:
+                fs.delete(filename)
 
-    return JsonResponse({"error": "Invalid request method"}, status=405)
+        return JsonResponse(
+            {
+                "id": book.id,
+                "title": book.title,
+                "author": book.author.name,
+                "language": book.language.google_code,
+            }
+        )
+
+    except Exception as e:  # pylint: disable=broad-except
+        print(e)
+        traceback_str = traceback.format_exc()
+        print(traceback_str)
+        return JsonResponse({"error": str(e)}, status=500)
 
 
 @method_decorator(login_required, name="dispatch")

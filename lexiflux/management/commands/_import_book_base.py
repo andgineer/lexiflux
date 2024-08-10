@@ -7,6 +7,7 @@ from typing import Any, Type
 from django.core.management.base import BaseCommand, CommandError
 
 from lexiflux.ebook.book_base import import_book, BookBase
+from lexiflux.models import Language
 from lexiflux.utils import validate_log_level
 
 
@@ -41,12 +42,38 @@ class ImportBookBaseCommand(BaseCommand):  # type: ignore
             default=None,
         )
         # todo: search owners by regex and show found if more than one
+        parser.add_argument(
+            "--language",
+            "-f",
+            type=str,
+            help="""Force the language instead of auto-detection.
+        You can give a just language name start if its unique.""",
+            default=None,
+        )
 
     def handle(self, *args: Any, **options: Any) -> None:
         file_path = options["file_path"]
         log_level = validate_log_level(options["loglevel"])
         db_log_level = validate_log_level(options["db_loglevel"])
         owner_email = options["owner"]
+        forced_language = options["language"]
+        if forced_language:
+            languages = Language.objects.filter(name__istartswith=forced_language)
+            # if more than one language found then print them and exit
+            if languages.count() > 1:
+                self.stdout.write(
+                    self.style.ERROR(
+                        f"More than one language found for '--language={forced_language}':"
+                    )
+                )
+                for language in languages:
+                    self.stdout.write(
+                        self.style.ERROR(f"  {language.name} ({language.google_code})")
+                    )
+                return
+            if languages.count() == 0:
+                raise CommandError(f"Language '--language={forced_language}' not found")
+            forced_language = languages.first().name
 
         # Configure Django logging level
         logging.basicConfig(level=log_level)
@@ -54,7 +81,7 @@ class ImportBookBaseCommand(BaseCommand):  # type: ignore
         logging.getLogger("django.db.backends").setLevel(db_log_level)
 
         try:
-            book = import_book(self.book_class(file_path), owner_email)
+            book = import_book(self.book_class(file_path), owner_email, forced_language)
             self.stdout.write(
                 self.style.SUCCESS(
                     f'Successfully imported book "{book.title}" ({book.author}, '

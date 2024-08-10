@@ -1,7 +1,8 @@
 """Book base class for importing books from different formats."""
 
 import logging
-from typing import Any, Dict, Optional, Iterator, List, Union, IO
+import os
+from typing import Any, Dict, Optional, Iterator, List, Union, IO, Tuple
 from collections import Counter
 
 from django.core.management import CommandError
@@ -34,12 +35,47 @@ class BookBase:
         self,
         file_path: Union[str, IO[str]],  # pylint: disable=unused-argument
         languages: Optional[List[str]] = None,
+        original_filename: Optional[str] = None,
     ) -> None:
         """Initialize.
 
         file_path - a path to a file to import.
         """
+        self.file_path = file_path
+        self.original_filename = original_filename
         self.languages = ["en", "sr"] if languages is None else languages
+
+    @staticmethod
+    def guess_title_author(filename: str) -> Tuple[str, str]:
+        """Guess the title and author from the filename."""
+        # Remove the file extension
+        name_without_extension = ".".join(filename.split(".")[:-1])
+
+        if " - " not in name_without_extension:
+            return name_without_extension.strip(), "Unknown Author"
+        title, author = name_without_extension.split(" - ", 1)
+        return title.strip(), author.strip()
+
+    def get_title_author(self) -> Tuple[str, str]:
+        """Get title and author from meta or guess from filename."""
+        title = self.meta.get(MetadataField.TITLE, "Unknown Title")
+        author = self.meta.get(MetadataField.AUTHOR, "Unknown Author")
+
+        if title == "Unknown Title" or author == "Unknown Author":
+            filename = self.original_filename or (
+                os.path.basename(
+                    self.file_path if isinstance(self.file_path, str) else self.file_path.name
+                )
+            )
+            guessed_title, guessed_author = self.guess_title_author(filename)
+
+            if title == "Unknown Title":
+                title = guessed_title
+
+            if author == "Unknown Author":
+                author = guessed_author
+
+        return title, author
 
     @staticmethod
     def get_language_group(lang: str) -> str:
@@ -117,16 +153,20 @@ class BookBase:
         return language_name  # type: ignore
 
 
-def import_book(book_processor: BookBase, owner_email: str) -> Book:
+def import_book(
+    book_processor: BookBase, owner_email: str, forced_language: Optional[str] = None
+) -> Book:
     """Import a book from a file."""
-    author_name = book_processor.meta.get(MetadataField.AUTHOR, "Unknown Author")
+    title, author_name = book_processor.get_title_author()
     author, _ = Author.objects.get_or_create(name=author_name)
 
-    language_code = book_processor.meta.get(MetadataField.LANGUAGE, "Unknown Language")
-    language, _ = Language.objects.get_or_create(name=language_code)
+    if forced_language:
+        language_name = forced_language
+    else:
+        language_name = book_processor.get_language()
+    language, _ = Language.objects.get_or_create(name=language_name)
 
-    book_title = book_processor.meta.get(MetadataField.TITLE, "Unknown Title")
-    book_instance = Book.objects.create(title=book_title, author=author, language=language)
+    book_instance = Book.objects.create(title=title, author=author, language=language)
 
     # Iterate over pages and save them
     for i, page_content in enumerate(book_processor.pages(), start=1):

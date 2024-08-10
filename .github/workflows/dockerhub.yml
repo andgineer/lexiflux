@@ -1,4 +1,5 @@
-# This workflow build and push Docker image to docker hub
+# This workflow build and push Docker image to docker hub.
+# And create a release on GitHub.
 # https://docs.docker.com/build/ci/github-actions/cache/
 name: dockerhub
 
