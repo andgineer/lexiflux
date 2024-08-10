@@ -11,7 +11,7 @@
 | lexiflux/asgi.py                                      |        4 |        4 |      0% |      9-15 |
 | lexiflux/backends.py                                  |       15 |        2 |     87% |     27-28 |
 | lexiflux/decorators.py                                |       18 |        4 |     78% | 15, 26-28 |
-| lexiflux/ebook/book\_base.py                          |       95 |       19 |     80% |52-57, 65-76, 91, 98, 139, 164, 180-183 |
+| lexiflux/ebook/book\_base.py                          |       95 |       17 |     82% |52-57, 65-76, 91, 98, 139, 164, 182-183 |
 | lexiflux/ebook/book\_epub.py                          |       95 |        8 |     92% |107, 124, 127-129, 189-191 |
 | lexiflux/ebook/book\_html.py                          |        3 |        0 |    100% |           |
 | lexiflux/ebook/book\_plain\_text.py                   |      118 |        9 |     92% |66-67, 122-126, 148, 195 |
@@ -44,7 +44,7 @@
 | lexiflux/views/library\_views.py                      |      114 |       56 |     51% |59-60, 77-125, 145-146, 175-178, 184-195, 201-221 |
 | lexiflux/views/reader\_views.py                       |      107 |        4 |     96% |45, 64, 164, 197 |
 | lexiflux/wsgi.py                                      |        4 |        4 |      0% |      9-15 |
-|                                             **TOTAL** | **2033** |  **540** | **73%** |           |
+|                                             **TOTAL** | **2033** |  **538** | **74%** |           |
 
 
 ## Setup coverage badge
