@@ -47,25 +47,33 @@
                             >
                                 <div class="mt-4">
                                     <h3 class="mb-3">${ config.chat_model }</h3>
-                                    <div v-if="config.chat_model !== 'Ollama'" class="mb-4">
-                                        <p v-if="config.chat_model === 'ChatOpenAI'" class="text-muted fs-6">
-                                            <i class="bi bi-info-circle me-2"></i>To get an API key for OpenAI, visit
-                                            <a href="https://platform.openai.com/signup" target="_blank" class="text-decoration-none">platform.openai.com/signup</a>
-                                            and create an account.
-                                        </p>
-                                        <p v-else-if="config.chat_model === 'ChatMistralAI'" class="text-muted fs-6">
-                                            <i class="bi bi-info-circle me-2"></i>To obtain an API key for Mistral AI, go to
-                                            <a href="https://console.mistral.ai/" target="_blank" class="text-decoration-none">console.mistral.ai</a>
-                                            and sign up for an account.
-                                        </p>
-                                        <p v-else-if="config.chat_model === 'ChatAnthropic'" class="text-muted fs-6">
-                                            <i class="bi bi-info-circle me-2"></i>For an Anthropic API key, visit
-                                            <a href="https://www.anthropic.com" target="_blank" class="text-decoration-none">anthropic.com</a>
-                                            and follow their instructions to get access.
-                                        </p>
-                                    </div>
                                     <div v-for="(value, key) in config.settings" :key="key" class="mb-3">
                                         <label :for="'setting-' + config.chat_model + '-' + key" class="form-label fw-semibold">${ key }</label>
+                                        <div v-if="key === 'temperature'" class="text-muted small mb-2">
+                                            <i class="bi bi-info-circle me-1"></i>
+                                            Temperature affects response randomness. Lower (0.0-0.5) for focused outputs, higher (0.5-1.0) for more creative responses.
+                                        </div>
+                                        <div v-if="key === 'api_key'" class="text-muted small mt-1">
+                                            <i class="bi bi-info-circle me-1"></i>
+                                            <span v-if="config.chat_model === 'ChatOpenAI'">
+                                                To get an API key for OpenAI, visit
+                                                <a href="https://platform.openai.com/signup" target="_blank" class="text-decoration-none">platform.openai.com/signup</a>
+                                                and create an account.
+                                            </span>
+                                            <span v-else-if="config.chat_model === 'ChatMistralAI'">
+                                                To obtain an API key for Mistral AI, go to
+                                                <a href="https://console.mistral.ai/" target="_blank" class="text-decoration-none">console.mistral.ai</a>
+                                                and sign up for an account.
+                                            </span>
+                                            <span v-else-if="config.chat_model === 'ChatAnthropic'">
+                                                For an Anthropic API key, visit
+                                                <a href="https://www.anthropic.com" target="_blank" class="text-decoration-none">anthropic.com</a>
+                                                and follow their instructions to get access.
+                                            </span>
+                                            <span v-else>
+                                                Please refer to the provider's documentation to obtain an API key.
+                                            </span>
+                                        </div>
                                         <input
                                             :id="'setting-' + config.chat_model + '-' + key"
                                             v-model="config.settings[key]"

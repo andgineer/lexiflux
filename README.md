@@ -13,7 +13,7 @@ Read foreign texts with an AI-powered dictionary.
 
 ## Quick start
 
-    docker run --name lexiflux -d -p 6100:8000 andgineer/lexiflux:latest || docker start lexiflux
+    docker start lexiflux > null 2>&1 || docker run -d -p 6100:8000 --name lexiflux andgineer/lexiflux
 
 Open the lexiflux at http://localhost:6100
 
