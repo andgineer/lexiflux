@@ -6,7 +6,7 @@ from typing import Any, Type
 
 from django.core.management.base import BaseCommand, CommandError
 
-from lexiflux.ebook.book_base import import_book, BookBase
+from lexiflux.ebook.book_loader_base import BookLoaderBase
 from lexiflux.models import Language
 from lexiflux.utils import validate_log_level
 
@@ -15,7 +15,7 @@ class ImportBookBaseCommand(BaseCommand):  # type: ignore
     """Base command for importing books from various file formats."""
 
     help = "Imports a book from a file"
-    book_class: Type[BookBase]
+    book_class: Type[BookLoaderBase]
 
     def add_arguments(self, parser: argparse.ArgumentParser) -> None:
         parser.add_argument("file_path", type=str, help="Path to the file to import")
@@ -81,7 +81,8 @@ class ImportBookBaseCommand(BaseCommand):  # type: ignore
         logging.getLogger("django.db.backends").setLevel(db_log_level)
 
         try:
-            book = import_book(self.book_class(file_path), owner_email, forced_language)
+            book = self.book_class(file_path).create(owner_email, forced_language)
+            book.save()
             self.stdout.write(
                 self.style.SUCCESS(
                     f'Successfully imported book "{book.title}" ({book.author}, '

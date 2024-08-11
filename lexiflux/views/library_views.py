@@ -15,12 +15,11 @@ from django.views import View
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 
-from lexiflux.ebook.book_base import BookBase
+from lexiflux.ebook.book_loader_base import BookLoaderBase
 from lexiflux.models import Book, Author, Language
-from lexiflux.ebook.book_plain_text import BookPlainText
-from lexiflux.ebook.book_html import BookHtml
-from lexiflux.ebook.book_epub import BookEpub
-from lexiflux.ebook import book_base
+from lexiflux.ebook.book_loader_plain_text import BookLoaderPlainText
+from lexiflux.ebook.book_loader_html import BookHtml
+from lexiflux.ebook.book_loader_epub import BookLoaderEpub
 from lexiflux.decorators import smart_login_required
 
 
@@ -84,13 +83,13 @@ def import_book(request: HttpRequest) -> JsonResponse:
     original_filename = file.name
     file_extension = original_filename.split(".")[-1].lower()
 
-    book_class: Type[BookBase]
+    book_class: Type[BookLoaderBase]
     if file_extension == "txt":
-        book_class = BookPlainText
+        book_class = BookLoaderPlainText
     elif file_extension == "html":
         book_class = BookHtml
     elif file_extension == "epub":
-        book_class = BookEpub
+        book_class = BookLoaderEpub
     else:
         return JsonResponse({"error": "Unsupported file format"}, status=400)
 
@@ -105,7 +104,8 @@ def import_book(request: HttpRequest) -> JsonResponse:
             filename = fs.save(original_filename, file)
             try:
                 book_processor = book_class(fs.path(filename), original_filename=original_filename)
-                book = book_base.import_book(book_processor, request.user.email)
+                book = book_processor.create(request.user.email)
+                book.save()
             finally:
                 fs.delete(filename)
 

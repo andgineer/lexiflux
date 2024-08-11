@@ -4,7 +4,7 @@ from io import StringIO
 import allure
 import pytest
 
-from lexiflux.ebook.book_plain_text import BookPlainText
+from lexiflux.ebook.book_loader_plain_text import BookLoaderPlainText
 
 
 @allure.epic('Book import')
@@ -31,8 +31,8 @@ def test_get_random_words_success(book_plain_text):
 def test_get_random_words_no_separators():
     text = "a"*1000
     words_num = 3
-    random_words = BookPlainText(StringIO(text)).get_random_words(words_num=words_num)
-    assert len(random_words) == BookPlainText.WORD_ESTIMATED_LENGTH * words_num
+    random_words = BookLoaderPlainText(StringIO(text)).get_random_words(words_num=words_num)
+    assert len(random_words) == BookLoaderPlainText.WORD_ESTIMATED_LENGTH * words_num
 
 
 @allure.epic('Book import')

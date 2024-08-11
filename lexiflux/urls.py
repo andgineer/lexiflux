@@ -19,6 +19,11 @@ urlpatterns = [
     path("accounts/", include("django.contrib.auth.urls")),
     path("", lexiflux.views.reader_views.redirect_to_reader, name="redirect_to_reader"),
     path("reader", lexiflux.views.reader_views.reader, name="reader"),
+    path(
+        "book/<str:book_code>/image/<str:image_filename>",
+        lexiflux.views.reader_views.serve_book_image,
+        name="serve_book_image",
+    ),
     path("library", lexiflux.views.library_views.library, name="library"),
     path("page", lexiflux.views.reader_views.page, name="page"),
     path("location", lexiflux.views.reader_views.location, name="location"),

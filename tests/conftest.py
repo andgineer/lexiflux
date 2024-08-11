@@ -8,6 +8,7 @@ from lexiflux.language.google_languages import populate_languages
 # https://github.com/pytest-dev/pytest-django/issues/300
 # strange that DJANGO_SETTINGS_MODULE can be set in pytest.ini
 os.environ["DJANGO_LIVE_TEST_SERVER_ADDRESS"] = "0.0.0.0"
+os.environ["LEXIFLUX_SKIP_AUTH"] = "false"
 
 import itertools
 import socket
@@ -16,8 +17,8 @@ from urllib.parse import urlparse
 import pytest
 from unittest.mock import mock_open, patch, MagicMock
 
-from lexiflux.ebook.book_base import BookBase
-from lexiflux.ebook.book_plain_text import BookPlainText
+from lexiflux.ebook.book_loader_base import BookLoaderBase
+from lexiflux.ebook.book_loader_plain_text import BookLoaderPlainText
 from django.contrib.auth import get_user_model
 from lexiflux.models import Author, Language, Book, BookPage
 from pytest_django.live_server_helper import LiveServer
@@ -284,7 +285,7 @@ def book_plain_text():
             return mock_open(read_data=decoded_data).return_value
 
     with patch("builtins.open", new_callable=lambda: custom_open):
-        return BookPlainText("dummy_path")
+        return BookLoaderPlainText("dummy_path")
 
 
 @pytest.fixture(autouse=True)
@@ -292,14 +293,14 @@ def mock_detect_language():
     mock_detector = MagicMock()
     mock_detector.detect.side_effect = itertools.cycle(['en', 'en', 'fr'])
 
-    with patch('lexiflux.ebook.book_base.language_detector', return_value=mock_detector):
+    with patch('lexiflux.ebook.book_loader_base.language_detector', return_value=mock_detector):
         yield mock_detector.detect
 
 
 @pytest.fixture
 def book_processor_mock():
     """Fixture to create a mock of the BookBase class."""
-    book_processor = MagicMock(spec=BookBase)
+    book_processor = MagicMock(spec=BookLoaderBase)
     book_processor.pages.return_value = ["Page 1 content", "Page 2 content"]
     book_processor.meta = {
         'title': 'Test Book',

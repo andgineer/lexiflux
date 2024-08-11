@@ -1,10 +1,11 @@
 import allure
 import pytest
 from unittest.mock import patch, MagicMock, call, ANY
-from lexiflux.ebook.book_base import import_book
+
+from lexiflux.ebook.book_loader_base import BookLoaderBase
 from lexiflux.models import Author, Book, Language, BookPage, CustomUser
 from django.core.management import CommandError
-from lexiflux.ebook.book_plain_text import BookPlainText
+from lexiflux.ebook.book_loader_plain_text import BookLoaderPlainText
 
 
 @allure.epic('Book import')
@@ -22,7 +23,7 @@ def test_import_book_success(mock_book_page_create, mock_book_create, mock_langu
     mock_book.title = 'Test Book'
     mock_book_create.return_value = mock_book
 
-    book = import_book(book_processor_mock, '')
+    book = book_processor_mock.create('')
 
     assert book.title == 'Test Book'
 
@@ -58,24 +59,22 @@ def test_import_book_without_owner_is_public(
         mock_user_filter,
         book_processor_mock
 ):
-    mock_book = MagicMock()
-    mock_book_create.return_value = mock_book
+    mock_book = MagicMock(spec=Book)
+    mock_book_crxeate.return_value = mock_book
     mock_author_get_or_create.return_value = (MagicMock(), True)
     mock_language_get_or_create.return_value = (MagicMock(), True)
 
-    book = import_book(book_processor_mock, '')
-
-    mock_book_create.assert_called_once()
+    book = book_processor_mock.create('')
     assert book.public is True
 
 
 @allure.epic('Book import')
 @allure.feature('Plain text: failed import')
-@patch('lexiflux.ebook.book_base.CustomUser.objects.filter')
-@patch('lexiflux.ebook.book_base.Book.objects.create')
-@patch('lexiflux.ebook.book_base.BookPage.objects.create')
-@patch('lexiflux.ebook.book_base.Author.objects.get_or_create')
-@patch('lexiflux.ebook.book_base.Language.objects.get_or_create')
+@patch('lexiflux.ebook.book_loader_base.CustomUser.objects.filter')
+@patch('lexiflux.ebook.book_loader_base.Book.objects.create')
+@patch('lexiflux.ebook.book_loader_base.BookPage.objects.create')
+@patch('lexiflux.ebook.book_loader_base.Author.objects.get_or_create')
+@patch('lexiflux.ebook.book_loader_base.Language.objects.get_or_create')
 def test_import_book_nonexistent_owner_email(
     mock_language_get_or_create,
     mock_author_get_or_create,
@@ -91,7 +90,7 @@ def test_import_book_nonexistent_owner_email(
     mock_book_create.return_value = mock_book
 
     with pytest.raises(CommandError) as exc_info:
-        import_book(book_processor_mock, 'nonexistent@example.com')
+        book_processor_mock.create('nonexistent@example.com')
 
     assert 'User with email "nonexistent@example.com" not found' in str(exc_info.value)
 
@@ -100,7 +99,7 @@ def test_import_book_nonexistent_owner_email(
 @allure.feature('Plain text: success import')
 @pytest.mark.django_db
 def test_import_plain_text_e2e():
-    book = import_book(BookPlainText('tests/resources/alice_adventure_in_wonderland.txt'), '')
+    book = BookLoaderPlainText('tests/resources/alice_adventure_in_wonderland.txt').create('')
     assert book.title == "Alice's Adventures in Wonderland"
     assert book.author.name == 'Lewis Carroll'
     assert book.language.name == 'English'

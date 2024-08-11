@@ -1,6 +1,6 @@
 import allure
 import pytest
-from lexiflux.ebook.book_plain_text import BookPlainText  # Adjust the import according to your project structure
+from lexiflux.ebook.book_loader_plain_text import BookLoaderPlainText  # Adjust the import according to your project structure
 
 
 # Helper function to create a temporary file
@@ -19,7 +19,7 @@ def test_read_file_with_various_encodings(encoding, tmpdir):
     content = "Sample text for testing."
     file_path = create_temp_file(content, encoding, tmpdir)
 
-    book = BookPlainText(str(file_path))
+    book = BookLoaderPlainText(str(file_path))
     assert book.read_file(str(file_path)) == content
 
 
@@ -29,7 +29,7 @@ def test_read_file_nonexistent(tmpdir):
     non_existent_file = tmpdir.join("non_existent.txt")
 
     with pytest.raises(FileNotFoundError):
-        book = BookPlainText(str(non_existent_file))
+        book = BookLoaderPlainText(str(non_existent_file))
 
 
 @allure.epic('Book import')
@@ -41,6 +41,6 @@ def test_read_file_undetectable_encoding(tmpdir):
     challenging_content = "..."  # Replace with appropriate content
     file_path = create_temp_file(challenging_content, "utf-8", tmpdir)
 
-    book = BookPlainText(str(file_path))
+    book = BookLoaderPlainText(str(file_path))
     # You might need to adjust the assertion based on expected behavior
     assert book.read_file(str(file_path)) == challenging_content

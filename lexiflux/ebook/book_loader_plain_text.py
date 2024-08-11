@@ -3,18 +3,18 @@
 import logging
 import random
 import re
-from typing import IO, Any, Dict, Iterator, List, Optional, Tuple, Union
+from typing import Any, Dict, Iterator, Tuple
 from html import escape
 
 from chardet.universaldetector import UniversalDetector
-from lexiflux.ebook.book_base import MetadataField, BookBase
+from lexiflux.ebook.book_loader_base import MetadataField, BookLoaderBase
 from lexiflux.ebook.headings import HeadingDetector
 from lexiflux.ebook.page_splitter import PageSplitter
 
 log = logging.getLogger()
 
 
-class BookPlainText(BookBase):  # pylint: disable=too-many-instance-attributes
+class BookLoaderPlainText(BookLoaderBase):  # pylint: disable=too-many-instance-attributes
     """Import ebook from plain text."""
 
     escape_html = True
@@ -31,28 +31,6 @@ class BookPlainText(BookBase):  # pylint: disable=too-many-instance-attributes
     book_start: int
     book_end: int
 
-    def __init__(
-        self,
-        file_path: Union[str, IO[str]],  # pylint: disable=unused-argument
-        languages: Optional[List[str]] = None,
-        original_filename: Optional[str] = None,
-    ) -> None:
-        """Initialize.
-
-        If file_path is a string, it is treated as a path to a file and we try to detect encoding.
-        If file_path is a file object, we assume it was opened with correct encoding.
-        """
-        super().__init__(
-            file_path=file_path, languages=languages, original_filename=original_filename
-        )
-        if isinstance(file_path, str):
-            self.text = self.read_file(file_path)
-        else:
-            self.text = file_path.read()
-
-        self.meta, self.book_start, self.book_end = self.detect_meta()
-        self.meta[MetadataField.LANGUAGE] = self.get_language()
-
     def detect_meta(self) -> Tuple[Dict[str, Any], int, int]:
         """Try to detect book meta and text.
 
@@ -60,6 +38,10 @@ class BookPlainText(BookBase):  # pylint: disable=too-many-instance-attributes
         Trim meta text from the beginning and end of the book text.
         Return: meta, start, end
         """
+        if isinstance(self.file_path, str):
+            self.text = self.read_file(self.file_path)
+        else:
+            self.text = self.file_path.read()
         meta, start = self.parse_gutenberg_header()
         end = self.cut_gutenberg_ending()
         if start > end:

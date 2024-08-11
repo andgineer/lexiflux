@@ -2,41 +2,44 @@
 
 import logging
 from collections import defaultdict
-from typing import Any, Iterable, List, Optional, Tuple, Dict, Iterator, Union, IO
+from typing import Any, Iterable, List, Optional, Tuple, Dict, Iterator
 
 from bs4 import BeautifulSoup
-from ebooklib import ITEM_DOCUMENT, epub
+from ebooklib import ITEM_DOCUMENT, epub, ITEM_IMAGE
 
-from lexiflux.ebook.book_base import BookBase, MetadataField
-
+from lexiflux.ebook.book_loader_base import BookLoaderBase, MetadataField
+from lexiflux.models import BookImage, Book
 
 log = logging.getLogger()
 
 
-class BookEpub(BookBase):
+class BookLoaderEpub(BookLoaderBase):
     """Import ebook from EPUB."""
 
     book_start: int
     book_end: int
     heading_hrefs: Dict[str, Dict[str, str]]
 
-    def __init__(
-        self,
-        file_path: Union[str, IO[str]],  # pylint: disable=unused-argument
-        languages: Optional[List[str]] = None,
-        original_filename: Optional[str] = None,
-    ) -> None:
-        """Initialize.
+    def create(self, owner_email: str, forced_language: Optional[str] = None) -> Book:
+        """Save the book to the database."""
+        book = super().create(owner_email, forced_language)
+        for item in self.epub.get_items():
+            if item.get_type() == ITEM_IMAGE:
+                BookImage.objects.create(
+                    book=book,
+                    image_data=item.get_content(),
+                    content_type=item.media_type,
+                    filename=item.get_name(),
+                )
+        return book
 
-        file_path - a path to a file with EPUB.
+    def detect_meta(self) -> Tuple[Dict[str, Any], int, int]:
+        """Read the book and extract meta if it is present.
+
+        Return: meta, start, end
         """
-        super().__init__(
-            file_path=file_path, languages=languages, original_filename=original_filename
-        )
-        self.epub = epub.read_epub(file_path)
+        self.epub = epub.read_epub(self.file_path)
 
-        self.meta, self.book_start, self.book_end = self.detect_meta()
-        self.meta[MetadataField.LANGUAGE] = self.get_language()
         self.heading_hrefs = href_hierarchy(
             {  # reverse href/title in flatten epub headings
                 value: key
@@ -46,19 +49,13 @@ class BookEpub(BookBase):
         )
         log.debug("Extracted epub headings: %s", self.heading_hrefs)
 
-    def detect_meta(self) -> Tuple[Dict[str, Any], int, int]:
-        """Try to detect book meta and text.
-
-        Extract meta if it is present.
-        Trim meta text from the beginning and end of the book text.
-        Return: meta, start, end
-        """
-        meta = {}
-        meta[MetadataField.TITLE] = (
-            self.epub.get_metadata("DC", "title")[0][0]
-            if self.epub.get_metadata("DC", "title")
-            else "Unknown Title"
-        )
+        meta = {
+            MetadataField.TITLE: (
+                self.epub.get_metadata("DC", "title")[0][0]
+                if self.epub.get_metadata("DC", "title")
+                else "Unknown Title"
+            )
+        }
         authors = self.epub.get_metadata("DC", "creator")
         meta[MetadataField.AUTHOR] = authors[0][0] if authors else "Unknown Author"
         language_metadata = self.epub.get_metadata("DC", "language")

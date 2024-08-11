@@ -317,6 +317,18 @@ class BookPage(models.Model):  # type: ignore
         self._word_sentence_mapping_cache = {int(k): v for k, v in word_to_sentence.items()}
 
 
+class BookImage(models.Model):  # type: ignore
+    """Model to store book images as blobs."""
+
+    book = models.ForeignKey(Book, on_delete=models.CASCADE, related_name="images")
+    image_data = models.BinaryField()
+    content_type = models.CharField(max_length=100)
+    filename = models.CharField(max_length=255)
+
+    def __str__(self) -> str:
+        return f"Image {self.filename} for {self.book.title}"
+
+
 class AIModelConfig(models.Model):  # type: ignore
     """Model to store settings for AI models used in the application."""
 

@@ -25,7 +25,7 @@ class MetadataField:  # pylint: disable=too-few-public-methods
     CREDITS = "credits"
 
 
-class BookBase:
+class BookLoaderBase:
     """Base class for importing books from different formats."""
 
     toc: Toc = []
@@ -44,10 +44,59 @@ class BookBase:
         self.file_path = file_path
         self.original_filename = original_filename
         self.languages = ["en", "sr"] if languages is None else languages
+        self.meta, self.book_start, self.book_end = self.detect_meta()
+        self.meta[MetadataField.TITLE], self.meta[MetadataField.AUTHOR] = self.get_title_author()
+        self.meta[MetadataField.LANGUAGE] = self.get_language()
+
+    def detect_meta(self) -> Tuple[Dict[str, Any], int, int]:
+        """Try to detect book meta and text.
+
+        Read the book and extract meta if it is present.
+        Trim meta text from the beginning and end of the book text.
+        Return: meta, start, end
+        """
+        raise NotImplementedError
+
+    def create(self, owner_email: str, forced_language: Optional[str] = None) -> Book:
+        """Create the book instance."""
+        title = self.meta[MetadataField.TITLE]
+        author_name = self.meta[MetadataField.AUTHOR]
+        author, _ = Author.objects.get_or_create(name=author_name)
+
+        if forced_language:
+            language_name = forced_language
+        else:
+            language_name = self.meta.get(MetadataField.LANGUAGE, "Unknown Language")
+        language, _ = Language.objects.get_or_create(name=language_name)
+
+        book_instance = Book.objects.create(title=title, author=author, language=language)
+
+        # Iterate over pages and save them
+        for i, page_content in enumerate(self.pages(), start=1):
+            BookPage.objects.create(book=book_instance, number=i, content=page_content)
+
+        # must be after page iteration so the headings are collected
+        book_instance.toc = self.toc
+        log.debug("TOC: %s", book_instance.toc)
+
+        if owner_email:
+            if not (owner_user := CustomUser.objects.filter(email=owner_email).first()):
+                raise CommandError(
+                    f'Error importing book: User with email "{owner_email}" not found'
+                )
+            book_instance.owner = owner_user
+            book_instance.public = False
+        else:
+            # If no owner is provided in CLI, make the book publicly available
+            book_instance.public = True
+
+        return book_instance  # type: ignore
 
     @staticmethod
     def guess_title_author(filename: str) -> Tuple[str, str]:
         """Guess the title and author from the filename."""
+        if not filename:
+            return "", ""
         # Remove the file extension
         name_without_extension = ".".join(filename.split(".")[:-1])
 
@@ -64,15 +113,17 @@ class BookBase:
         if title == "Unknown Title" or author == "Unknown Author":
             filename = self.original_filename or (
                 os.path.basename(
-                    self.file_path if isinstance(self.file_path, str) else self.file_path.name
+                    self.file_path
+                    if isinstance(self.file_path, str)
+                    else getattr(self.file_path, "name", "")
                 )
             )
             guessed_title, guessed_author = self.guess_title_author(filename)
 
-            if title == "Unknown Title":
+            if title == "Unknown Title" and guessed_title:
                 title = guessed_title
 
-            if author == "Unknown Author":
+            if author == "Unknown Author" and guessed_author:
                 author = guessed_author
 
         return title, author
@@ -151,39 +202,3 @@ class BookBase:
         language_name = self.detect_language()
         log.debug("Language '%s' detected.", language_name)
         return language_name  # type: ignore
-
-
-def import_book(
-    book_processor: BookBase, owner_email: str, forced_language: Optional[str] = None
-) -> Book:
-    """Import a book from a file."""
-    title, author_name = book_processor.get_title_author()
-    author, _ = Author.objects.get_or_create(name=author_name)
-
-    if forced_language:
-        language_name = forced_language
-    else:
-        language_name = book_processor.meta.get(MetadataField.LANGUAGE, "Unknown Language")
-    language, _ = Language.objects.get_or_create(name=language_name)
-
-    book_instance = Book.objects.create(title=title, author=author, language=language)
-
-    # Iterate over pages and save them
-    for i, page_content in enumerate(book_processor.pages(), start=1):
-        BookPage.objects.create(book=book_instance, number=i, content=page_content)
-
-    # must be after page iteration so the headings are collected
-    book_instance.toc = book_processor.toc
-    log.debug("TOC: %s", book_instance.toc)
-
-    if owner_email:
-        if not (owner_user := CustomUser.objects.filter(email=owner_email).first()):
-            raise CommandError(f'Error importing book: User with email "{owner_email}" not found')
-        book_instance.owner = owner_user
-        book_instance.public = False
-    else:
-        # If no owner is provided in CLI, make the book publicly available
-        book_instance.public = True
-
-    book_instance.save()
-    return book_instance  # type: ignore

@@ -2,8 +2,7 @@ import allure
 import pytest
 from ebooklib import epub
 
-from lexiflux.ebook.book_epub import flatten_list, extract_headings, BookEpub, href_hierarchy, clear_html
-from lexiflux.ebook.book_base import import_book
+from lexiflux.ebook.book_loader_epub import flatten_list, extract_headings, BookLoaderEpub, href_hierarchy, clear_html
 
 
 @allure.epic('Book import')
@@ -64,7 +63,7 @@ def test_extract_headings_with_sections_and_subchapters():
 @allure.feature('EPUB: Import command')
 @pytest.mark.django_db
 def test_import_epub_e2e():
-    book = import_book(BookEpub('tests/resources/genius.epub'), '')
+    book = BookLoaderEpub('tests/resources/genius.epub').create('')
     assert book.title == "The Genius"
     assert book.author.name == 'Theodore Dreiser'
     assert book.language.name == 'English'

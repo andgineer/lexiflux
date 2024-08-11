@@ -1,8 +1,10 @@
 """Views for the reader page."""
 
+from bs4 import BeautifulSoup
 from django.core.cache import cache
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import redirect, render, get_object_or_404
+from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 
@@ -14,7 +16,22 @@ from lexiflux.models import (
     ReadingLoc,
     LanguagePreferences,
     ReadingHistory,
+    BookImage,
 )
+
+
+def set_images_sources(content: str, book_code: str) -> str:
+    """Replace image sources with the Django view URL."""
+    soup = BeautifulSoup(content, "html.parser")
+    for img in soup.find_all("img"):
+        if "src" in img.attrs:
+            original_src = img["src"]
+            new_src = reverse(
+                "serve_book_image",
+                kwargs={"book_code": book_code, "image_filename": original_src.split("/")[-1]},
+            )
+            img["src"] = new_src
+    return str(soup)
 
 
 def render_page(page_db: BookPage) -> str:
@@ -37,7 +54,7 @@ def render_page(page_db: BookPage) -> str:
     # Add any remaining text after the last word
     if last_end < len(content):
         result.append(content[last_end:])
-    return "".join(result)
+    return set_images_sources("".join(result), page_db.book.code)
 
 
 def redirect_to_reader(request: HttpRequest) -> HttpResponse:
@@ -149,6 +166,17 @@ def page(request: HttpRequest) -> HttpResponse:
             },
         }
     )
+
+
+@smart_login_required  # type: ignore
+def serve_book_image(request, book_code, image_filename):
+    """Serve the book image."""
+    book = get_object_or_404(Book, code=book_code)
+    if not can_see_book(request.user, book):
+        return HttpResponse("Forbidden", status=403)
+
+    image = get_object_or_404(BookImage, book=book, filename=image_filename)
+    return HttpResponse(image.image_data, content_type=image.content_type)
 
 
 @smart_login_required  # type: ignore

@@ -56,7 +56,7 @@ def test_page_view_respects_access_control(client, user, book):
 @pytest.mark.parametrize("content,expected_output", [
     (
         "Hello world <br/> New line",
-        '<span id="word-0" class="word">Hello</span> <span id="word-1" class="word">world</span> <br/> <span id="word-2" class="word">New</span> <span id="word-3" class="word">line</span>'
+        '<span class="word" id="word-0">Hello</span> <span class="word" id="word-1">world</span> <br/> <span class="word" id="word-2">New</span> <span class="word" id="word-3">line</span>'
     ),
     (
         "<br/>",
@@ -64,7 +64,7 @@ def test_page_view_respects_access_control(client, user, book):
     ),
     (
         "SingleWord",
-        '<span id="word-0" class="word">SingleWord</span>'
+        '<span class="word" id="word-0">SingleWord</span>'
     ),
 ])
 @pytest.mark.django_db
