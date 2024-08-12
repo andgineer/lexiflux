@@ -100,8 +100,4 @@ jobs:
     steps:
       - name: No release version found
         run: |
-          if [ "${{ env.HAS_RELEASE }}" == "true" ]; then
-            echo "Release v${{ env.RELEASE_VERSION }} published successfully."
-          else
-            echo "No release tag found. Skipping publication to Docker Hub."
-          fi
+          echo "No release tag found. Skipping publication to Docker Hub."
