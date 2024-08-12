@@ -101,4 +101,4 @@ jobs:
       - name: No release version found
         run: |
           echo "No release tag found. Skipping."
-          exit 1
+          exit 78
