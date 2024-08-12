@@ -88,11 +88,12 @@
                     Lexical Articles Sidebar
                     <i class="bi bi-binoculars"></i>
                 </h5>
-                <div class="card-body">
-                    <ul class="list-group">
-                        <li class="list-group-item d-flex justify-content-between align-items-center" v-for="article in articles" :key="article.id">
-                            <div>
-                                <h5 class="mb-1">[[ article.title ]]</h5>
+              <div class="card-body pb-4">
+                <draggable v-model="articles" @end="onDragEnd" handle=".drag-handle">
+                  <div v-for="(article, index) in articles" :key="article.id" class="list-group-item d-flex align-items-start">
+                    <span class="drag-handle me-3">☰</span>
+                    <div class="flex-grow-1">
+                      <h5 class="mb-1">[[ article.title ]]</h5>
                                 <div v-if="article.type === 'Site'">
                                     <div><strong>URL:</strong> [[ formatUrl(article.parameters.url) ]]</div>
                                     <div><strong>in separate window:</strong> [[ article.parameters.window ]]</div>
@@ -113,17 +114,23 @@
                                     <span v-if="name === 'model'">[[ getModelTitle(value) ]]</span>
                                     <span v-else>[[ value ]]</span>
                                 </div>
-                            </div>
-                            <div>
-                                <button class="btn btn-primary btn-sm" @click="openModal('edit', article)">Edit</button>
-                                <button class="btn btn-danger btn-sm" @click="deleteArticle(article.id)">Delete</button>
-                            </div>
-                        </li>
-                    </ul>
-                    <button type="button" class="btn btn-primary mb-3" @click="openModal('add')">
-                        Add New Article
-                    </button>
+                    </div>
+                    <div>
+                        <button class="btn btn-primary btn-sm" @click="openModal('edit', article)">Edit</button>
+                        <button class="btn btn-danger btn-sm" @click="deleteArticle(article.id)">Delete</button>
+                    </div>
+                  </div>
+                </draggable>
+                <div class="mt-4">
+                  <button type="button" class="btn btn-primary mb-3" @click="openModal('add')">
+                      Add New Article
+                  </button>
+                  <p class="text-muted mb-0">
+                    <i class="bi bi-info-circle me-2"></i>
+                    You can rearrange articles by dragging them using the <span class="fw-bold">☰</span> handle.
+                  </p>
                 </div>
+               </div>
             </div>
         </div>
     </div>
@@ -263,6 +270,9 @@ const languageFlags = {
 new Vue({
     el: '#language-preferences-editor',
     delimiters: ['[[', ']]'],
+    components: {
+        'draggable': vuedraggable,
+    },
     data: function() {
         let data = {
             articles: [],
@@ -693,6 +703,37 @@ Add to each translation to {user_language} language.
             return text;
           }
           return text.slice(0, 15) + "...";
+        },
+        onDragEnd(event) {
+          const { newIndex, oldIndex } = event;
+          const movedArticle = this.articles[newIndex];
+
+          // Send the new order to the server
+          fetch('{% url "update_article_order" %}', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify({
+              article_id: movedArticle.id,
+              new_index: newIndex,
+              language_id: this.currentLanguageId
+            })
+          })
+          .then(response => response.json())
+          .then(data => {
+            if (data.status === 'success') {
+              console.log('Article order updated successfully');
+            } else {
+              console.error('Failed to update article order:', data.message);
+              // Revert the change if the server update failed
+              const articlesCopy = [...this.articles];
+              const [removed] = articlesCopy.splice(newIndex, 1);
+              articlesCopy.splice(oldIndex, 0, removed);
+              this.articles = articlesCopy;
+            }
+          });
         },
     }
 });

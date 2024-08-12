@@ -393,9 +393,11 @@ class LexicalArticle(models.Model):  # type: ignore
     )
     title = models.CharField(max_length=100)
     parameters = models.JSONField(default=dict)
+    order = models.IntegerField(default=0)
 
     class Meta:
         unique_together = ("language_preferences", "title")
+        ordering = ["order"]
 
     def clean(self) -> None:
         if self.type == "Site":
@@ -516,7 +518,7 @@ class LanguagePreferences(models.Model):  # type: ignore
 
     def get_lexical_articles(self) -> list[LexicalArticle]:
         """Return all lexical articles for this language_preferences."""
-        return self.lexical_articles.all()  # type: ignore
+        return self.lexical_articles.all().order_by("order")  # type: ignore
 
 
 class ReadingLoc(models.Model):  # type: ignore

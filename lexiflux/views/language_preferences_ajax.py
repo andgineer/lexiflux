@@ -364,3 +364,37 @@ def delete_lexical_article(
     except Exception as e:  # pylint: disable=broad-except
         logger.exception(f"Error deleting article: {str(e)}")
         return JsonResponse({"status": "error", "message": "Failed to delete article"}, status=500)
+
+
+@smart_login_required
+@require_http_methods(["POST"])  # type: ignore
+def update_article_order(request: HttpRequest) -> JsonResponse:
+    """Ajax to Update the order of the lexical articles."""
+    try:
+        data = json.loads(request.body)
+        article_id = data.get("article_id")
+        new_index = data.get("new_index")
+        language_id = data.get("language_id")
+
+        language_preferences = LanguagePreferences.objects.get(
+            user=request.user, language__google_code=language_id
+        )
+
+        article = LexicalArticle.objects.get(
+            id=article_id, language_preferences=language_preferences
+        )
+
+        # Update the order
+        articles = language_preferences.get_lexical_articles()
+        articles = list(articles)
+        articles.remove(article)
+        articles.insert(new_index, article)
+
+        # Save the new order
+        for index, art in enumerate(articles):
+            art.order = index
+            art.save()
+
+        return JsonResponse({"status": "success"})
+    except Exception as e:  # pylint: disable=broad-except
+        return JsonResponse({"status": "error", "message": str(e)}, status=400)

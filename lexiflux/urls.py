@@ -59,6 +59,11 @@ urlpatterns = [
         lexiflux.views.language_preferences_ajax.save_inline_translation,
         name="save_inline_translation",
     ),
+    path(
+        "api/update-article-order/",
+        lexiflux.views.language_preferences_ajax.update_article_order,
+        name="update_article_order",
+    ),
     path("api/import-book/", lexiflux.views.library_views.import_book, name="import_book"),
     path(
         "api/books/<int:book_id>/",
