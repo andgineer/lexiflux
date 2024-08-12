@@ -102,3 +102,4 @@ jobs:
       - name: No release version found
         run: |
           echo "No release tag found. Skipping publication to Docker Hub."
+          echo "GITHUB_WORKFLOW=dockerhub (skipped)" >> $GITHUB_ENV
