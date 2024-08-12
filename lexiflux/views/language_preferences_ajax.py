@@ -9,6 +9,7 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError
+from django.db.models import Max
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import render, get_object_or_404
 from django.views.decorators.http import require_http_methods
@@ -289,11 +290,20 @@ def add_lexical_article(
         ):
             return error_response
 
+        # Get the current highest order value
+        highest_order = LexicalArticle.objects.filter(
+            language_preferences=language_preferences
+        ).aggregate(Max("order"))["order__max"]
+
+        # Set the new article's order to be one more than the highest
+        new_order = (highest_order or 0) + 1
+
         article = LexicalArticle.objects.create(
             language_preferences=language_preferences,
             type=data["type"],
             title=data["title"],
             parameters=data["parameters"],
+            order=new_order,  # Set the order to the end of the list
         )
         return JsonResponse({"status": "success", "id": article.id})
     except IntegrityError:
