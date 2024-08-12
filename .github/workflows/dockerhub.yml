@@ -16,11 +16,11 @@ permissions:
   pull-requests: write
 
 jobs:
-  build:
-    if: github.event.workflow_run.conclusion == 'success'
-
+  check_release:
     runs-on: ubuntu-latest
-
+    outputs:
+      release_version: ${{ steps.check_tag.outputs.release_version }}
+      release_tag: ${{ steps.check_tag.outputs.release_tag }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -35,36 +35,41 @@ jobs:
           TAG=$(git tag --points-at $COMMIT_SHA | grep '^v' | sort -V | tail -n 1)
           if [ -n "$TAG" ]; then
             VERSION=$(echo $TAG | cut -c 2-)
-            echo "RELEASE_VERSION=$VERSION" >> $GITHUB_ENV
-            echo "RELEASE_TAG=$TAG" >> $GITHUB_ENV
+            echo "release_version=$VERSION" >> $GITHUB_OUTPUT
+            echo "release_tag=$TAG" >> $GITHUB_OUTPUT
             echo "Tag found: $TAG, Version: $VERSION"
           else
             echo "No tag found for commit $COMMIT_SHA"
           fi
 
+  build:
+    needs: check_release
+    if: needs.check_release.outputs.release_version != ''
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
       - name: Set up QEMU
-        if: env.RELEASE_VERSION != ''
         uses: docker/setup-qemu-action@v3
 
       - name: Set up Docker Buildx
-        if: env.RELEASE_VERSION != ''
         uses: docker/setup-buildx-action@v3
 
       - name: Login to Docker Hub
-        if: env.RELEASE_VERSION != ''
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
 
       - name: Build and push to docker hub
-        if: env.RELEASE_VERSION != ''
         uses: docker/build-push-action@v5
         with:
           context: ./
           file: ./docker/Dockerfile
           push: true
-          tags: ${{ secrets.DOCKER_HUB_USERNAME }}/lexiflux:latest, ${{ secrets.DOCKER_HUB_USERNAME }}/lexiflux:${{ env.RELEASE_VERSION }}
+          tags: ${{ secrets.DOCKER_HUB_USERNAME }}/lexiflux:latest, ${{ secrets.DOCKER_HUB_USERNAME }}/lexiflux:${{ needs.check_release.outputs.release_version }}
           cache-from: type=registry,ref=user/app:latest
           cache-to: type=inline
           platforms: |-
@@ -72,20 +77,28 @@ jobs:
             linux/arm64
 
       - name: Image digest
-        if: env.RELEASE_VERSION != ''
         run: echo ${{ steps.docker_build.outputs.digest }}
 
       - name: Create Release
-        if: env.RELEASE_VERSION != ''
         id: create_release
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ env.RELEASE_TAG }}
-          release_name: Release ${{ env.RELEASE_VERSION }}
+          tag_name: ${{ needs.check_release.outputs.release_tag }}
+          release_name: Release ${{ needs.check_release.outputs.release_version }}
           body:  |
-            Release for version v${{ env.RELEASE_VERSION }}
-            Docker image: https://hub.docker.com/r/andgineer/lexiflux/tags?page=&page_size=&ordering=&name=${{ env.RELEASE_VERSION }}
+            Release for version v${{ needs.check_release.outputs.release_version }}
+            Docker image: https://hub.docker.com/r/andgineer/lexiflux/tags?page=&page_size=&ordering=&name=${{ needs.check_release.outputs.release_version }}
           draft: false
           prerelease: false
+
+  no_release:
+    needs: check_release
+    if: needs.check_release.outputs.release_version == ''
+    runs-on: ubuntu-latest
+    steps:
+      - name: No release version found
+        run: |
+          echo "No release tag found. Skipping."
+          exit 1
