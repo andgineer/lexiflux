@@ -165,11 +165,14 @@
       <div class="modal-dialog">
         <div class="modal-content">
           <div class="modal-header">
-            <h5 id="deleteConfirmationModalLabel" class="modal-title">Confirm Delete</h5>
+            <h5 class="modal-title" id="deleteConfirmationModalLabel">Confirm Delete</h5>
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
           <div class="modal-body">
-            Are you sure you want to delete the book <strong>${ bookCode }</strong>?
+            <div v-if="deleteErrorMessage" class="alert alert-danger" role="alert">
+              ${ deleteErrorMessage }
+            </div>
+            <p>Are you sure you want to delete the book <strong>${ bookCode }</strong>?</p>
           </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
@@ -200,6 +203,7 @@
             importFile: null,
             errorMessage: '',
             successMessage: '',
+            deleteErrorMessage: '',
             searchTimeout: null,
             isNewlyImported: false
         },
@@ -316,6 +320,7 @@
                 });
             },
             showDeleteConfirmation() {
+                this.deleteErrorMessage = ''; // Clear any previous error message
                 if (this.isNewlyImported) {
                     // If it's a newly imported book, delete it directly without confirmation
                     this.deleteBook();
@@ -328,24 +333,30 @@
                 }
             },
             deleteBook() {
-                fetch(`/api/books/${this.editedBook.id}/`, {
-                    method: 'DELETE',
-                    headers: {
-                        'X-CSRFToken': '{{ csrf_token }}'
-                    }
-                })
-                .then(response => {
-                    if (response.ok) {
-                        location.reload();
-                    } else {
-                        throw new Error('Failed to delete book');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    this.errorMessage = 'An error occurred while deleting the book.';
-                });
-            }
+              fetch(`/api/books/${this.editedBook.id}/`, {
+                method: 'DELETE',
+                headers: {
+                  'X-CSRFToken': '{{ csrf_token }}',
+                },
+              })
+              .then(response => {
+                if (!response.ok) {
+                  return response.json().then(data => {
+                    throw new Error(data.error || `HTTP error! status: ${response.status}`);
+                  });
+                }
+                return response.json();
+              })
+              .then(data => {
+                if (data.success) {
+                  location.reload();
+                }
+              })
+              .catch(error => {
+                console.error('Error:', error);
+                this.deleteErrorMessage = error;
+              });
+            },
         }
     });
 </script>

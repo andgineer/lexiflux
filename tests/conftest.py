@@ -17,7 +17,7 @@ from urllib.parse import urlparse
 import pytest
 from unittest.mock import mock_open, patch, MagicMock
 
-from lexiflux.ebook.book_loader_base import BookLoaderBase
+from lexiflux.ebook.book_loader_base import BookLoaderBase, MetadataField
 from lexiflux.ebook.book_loader_plain_text import BookLoaderPlainText
 from django.contrib.auth import get_user_model
 from lexiflux.models import Author, Language, Book, BookPage
@@ -298,18 +298,26 @@ def mock_detect_language():
 
 
 @pytest.fixture
-def book_processor_mock():
-    """Fixture to create a mock of the BookBase class."""
-    book_processor = MagicMock(spec=BookLoaderBase)
-    book_processor.pages.return_value = ["Page 1 content", "Page 2 content"]
-    book_processor.meta = {
-        'title': 'Test Book',
-        'author': 'Test Author',
-        'language': 'English'
-    }
-    book_processor.toc = []
-    book_processor.get_title_author.return_value = ('Test Book', 'Test Author')
-    return book_processor
+def book_processor_mock(db_init):
+    """Fixture to create a real BookLoaderBase instance with mocked detect_language."""
+    class TestBookLoader(BookLoaderBase):
+        def detect_meta(self):
+            return {
+                MetadataField.TITLE: 'Test Book',
+                MetadataField.AUTHOR: 'Test Author',
+                MetadataField.LANGUAGE: 'English'
+            }, 0, 100
+
+        def get_random_words(self, words_num=15):
+            return "Sample random words for language detection"
+
+        def pages(self):
+            yield "Page 1 content"
+            yield "Page 2 content"
+
+    with patch.object(BookLoaderBase, 'detect_language', return_value='English'):
+        book_processor = TestBookLoader('dummy_path')
+        return book_processor
 
 
 USER_PASSWORD = '12345'

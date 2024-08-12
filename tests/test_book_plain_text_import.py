@@ -60,7 +60,7 @@ def test_import_book_without_owner_is_public(
         book_processor_mock
 ):
     mock_book = MagicMock(spec=Book)
-    mock_book_crxeate.return_value = mock_book
+    mock_book_create.return_value = mock_book
     mock_author_get_or_create.return_value = (MagicMock(), True)
     mock_language_get_or_create.return_value = (MagicMock(), True)
 

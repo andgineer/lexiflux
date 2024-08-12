@@ -34,11 +34,11 @@ user:
 
 .HELP: run  ## Run local server
 run:
-	./manage runserver
+	LEXIFLUX_SKIP_AUTH=true ./manage runserver
 
 .HELP: runssl  ## Run local SSL server
 runssl:
-	./manage runserver_plus 0.0.0.0:8000 --cert-file ssl_certs/localhost.crt --key-file ssl_certs/localhost.key
+	LEXIFLUX_SKIP_AUTH=true ./manage runserver_plus 0.0.0.0:8000 --cert-file ssl_certs/localhost.crt --key-file ssl_certs/localhost.key
 
 .HELP: reqs  ## Upgrade requirements including pre-commit
 reqs:
