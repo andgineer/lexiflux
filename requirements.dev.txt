@@ -494,7 +494,9 @@ protobuf==4.25.3
     #   grpcio-status
     #   proto-plus
 psutil==6.0.0
-    # via ipykernel
+    # via
+    #   -r requirements.txt
+    #   ipykernel
 ptyprocess==0.7.0
     # via
     #   pexpect

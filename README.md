@@ -31,7 +31,8 @@ See [AI Settings](http://localhost:6100/ai-settings/) section.
 ## Updates
 To update you can use
 
-    docker exec lexiflux ./manage update
+    docker exec -it lexiflux ./manage update
+    docker restart lexiflux
 
 But keep in mind that as with any update, it may break something.
 So it is better to make a backup before updating - see below.

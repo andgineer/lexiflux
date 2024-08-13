@@ -4,15 +4,10 @@ import os
 import re
 import shutil
 import subprocess
-import signal
-import time
 from typing import Any, Tuple
-from urllib.request import urlopen
-from urllib.error import URLError
 
 from django.core.management.base import BaseCommand
 from django.core.management import call_command
-from django.core.management.base import CommandError
 from lexiflux.__about__ import __version__
 
 
@@ -36,73 +31,6 @@ class Command(BaseCommand):  # type: ignore
                 return output, error, process.returncode
         except subprocess.SubprocessError as e:
             return "", str(e), 1
-
-    def find_server_pids(self) -> list[int]:
-        """Find the PIDs of the running Django server processes."""
-        output, _, _ = self.run_command("ps aux | grep '[p]ython.*runserver' | awk '{print $2}'")
-        return [int(pid) for pid in output.split()]
-
-    def stop_server(self) -> None:
-        """Stop the running Django server processes."""
-        pids = self.find_server_pids()
-        if pids:
-            self.stdout.write(f"Stopping the server (PIDs: {', '.join(map(str, pids))})...")
-            for pid in pids:
-                try:
-                    os.kill(pid, signal.SIGTERM)
-                except ProcessLookupError:
-                    pass  # Process already terminated
-            time.sleep(5)  # Give processes time to shut down gracefully
-
-            # Check if any processes are still running
-            remaining_pids = self.find_server_pids()
-            if remaining_pids:
-                self.stdout.write(
-                    "Forcefully terminating remaining processes: "
-                    f"{', '.join(map(str, remaining_pids))}"
-                )
-                for pid in remaining_pids:
-                    try:
-                        os.kill(pid, signal.SIGKILL)
-                    except ProcessLookupError:
-                        pass
-        else:
-            self.stdout.write("No running server processes found.")
-
-    def start_server(self) -> None:
-        """Start the Django server and verify it's running."""
-        self.stdout.write("Starting the server...")
-
-        with subprocess.Popen(
-            ["python", "manage.py", "runserver", "0.0.0.0:8000"],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True,
-        ) as process:
-            start_time = time.time()
-            while time.time() - start_time < 30:
-                if process.poll() is not None:
-                    stdout, stderr = process.communicate()
-                    raise CommandError(f"Server failed to start. Error: \n{stderr}\n{stdout}")
-
-                try:
-                    with urlopen("http://localhost:8000", timeout=1) as response:
-                        if response.status == 200:
-                            self.stdout.write(self.style.SUCCESS("Server started successfully."))
-                            return
-                except URLError:
-                    # Server not ready yet, continue waiting
-                    pass
-
-                time.sleep(1)
-
-            # If we've reached here, the server didn't start in time
-            process.terminate()
-            try:
-                process.wait(timeout=5)  # Give it 5 seconds to terminate gracefully
-            except subprocess.TimeoutExpired:
-                process.kill()  # Force kill if it doesn't terminate
-            raise CommandError("Server failed to start within the timeout period.")
 
     def get_current_version(self) -> str:
         """Get the current version of LexiFlux."""
@@ -128,7 +56,7 @@ class Command(BaseCommand):  # type: ignore
             return
 
         # Parse tags, filtering out annotated tag references
-        tag_pattern = re.compile(r"refs/tags/v(\d+\.\d+\.\d+)$")
+        tag_pattern = re.compile(r"refs/tags/(v\d+\.\d+\.\d+)$")
         tags = []
         for line in output.splitlines():
             match = tag_pattern.search(line)
@@ -140,7 +68,7 @@ class Command(BaseCommand):  # type: ignore
             return
 
         latest_tag = max(tags, key=self.parse_version_str)
-        latest_tag_tuple = self.parse_version_str(latest_tag)
+        latest_tag_tuple = self.parse_version_str(latest_tag.lstrip("v"))
 
         if current_version_tuple == latest_tag_tuple:
             self.stdout.write(
@@ -158,10 +86,10 @@ class Command(BaseCommand):  # type: ignore
 
         self.stdout.write(f"Updating from version {current_version} to {latest_tag}")
 
-        # Stop the server
-        self.stop_server()
-
         temp_dir = "/tmp/lexiflux_update"
+        if os.path.exists(temp_dir):
+            self.stdout.write(f"Removing existing temporary directory: {temp_dir}")
+            shutil.rmtree(temp_dir)
 
         # Clone the specific tag
         output, error, code = self.run_command(
@@ -171,8 +99,8 @@ class Command(BaseCommand):  # type: ignore
             self.stderr.write(f"Error cloning repository: {error}")
             return
 
-        # Copy only essential files
-        essential_files = ["manage", "requirements.txt", "__about__.py"]
+        # Copy files outside of lexiflux directory
+        essential_files = ["manage", "requirements.txt"]
         for file in essential_files:
             shutil.copy2(os.path.join(temp_dir, file), "/lexiflux/")
 
@@ -195,9 +123,6 @@ class Command(BaseCommand):  # type: ignore
 
         self.stdout.write(self.style.SUCCESS(f"Successfully updated to version {latest_tag}"))
 
-        # Start the server
-        self.start_server()
-
         self.stdout.write(
-            self.style.SUCCESS("Update completed successfully and server restarted!")
+            self.style.SUCCESS("Please restart the server with `docker restart lexiflux`.")
         )

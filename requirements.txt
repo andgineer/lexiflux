@@ -216,6 +216,8 @@ protobuf==4.25.3
     #   googleapis-common-protos
     #   grpcio-status
     #   proto-plus
+psutil==6.0.0
+    # via -r requirements.in
 pyasn1==0.6.0
     # via
     #   pyasn1-modules
