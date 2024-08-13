@@ -28,6 +28,38 @@ Please note it will download about 5Gb Ollama AI model and require about 6G RAM 
 Alternatively you can use ChatGPT, Claude or other managed AI solutions. 
 See [AI Settings](http://localhost:6100/ai-settings/) section.
 
+## Updates
+To update you can use
+
+    docker exec lexiflux ./manage update
+
+But keep in mind that as with any update, it may break something.
+So it is better to make a backup before updating - see below.
+
+## Backup / Restore the Docker container
+
+### Backup
+#### For Windows (PowerShell):
+docker commit lexiflux lexiflux_backup
+docker save lexiflux_backup -o lexiflux_backup.tar
+
+#### For Linux/macOS:
+docker commit lexiflux lexiflux_backup
+docker save lexiflux_backup | gzip > lexiflux_backup.tar.gz
+
+### Restore
+#### For Windows (PowerShell):
+docker stop lexiflux
+docker rm lexiflux
+docker load -i lexiflux_backup.tar
+docker run -d -p 6100:8000 --name lexiflux lexiflux_backup
+
+#### For Linux/macOS:
+docker stop lexiflux
+docker rm lexiflux
+gunzip -c lexiflux_backup.tar.gz | docker load
+docker run -d -p 6100:8000 --name lexiflux lexiflux_backup
+
 ## Build from sources
 Clone [the repo](https://github.com/andgineer/lexiflux).
 
