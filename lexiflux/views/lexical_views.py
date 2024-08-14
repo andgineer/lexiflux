@@ -42,8 +42,7 @@ def get_context_for_term(
     end_word = term_word_ids[-1] + MAX_SENTENCE_LENGTH
     if end_word - start_word < MAX_SENTENCE_LENGTH * 2:
         end_word = start_word + MAX_SENTENCE_LENGTH * 2
-    if end_word > len(book_page.words):
-        end_word = len(book_page.words)
+    end_word = min(end_word, len(book_page.words))
     if end_word - start_word < MAX_SENTENCE_LENGTH * 2:
         start_word = max(0, end_word - MAX_SENTENCE_LENGTH * 2)
 

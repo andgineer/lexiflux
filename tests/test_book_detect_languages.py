@@ -18,11 +18,24 @@ def test_get_language_group(book_plain_text):
 @allure.epic('Book import')
 @allure.feature('Plain text: Language detection')
 @pytest.mark.django_db
+@pytest.mark.django_db
 def test_get_random_words_success(book_plain_text):
-    random_words = book_plain_text.get_random_words(words_num=3)
-    assert len(random_words.split()) == 3
-    assert random_words.startswith("Word")  # Skipped 1st as potential junk
-    assert book_plain_text.get_random_words(words_num=3) != random_words
+    MAX_ATTEMPTS = 5
+    WORDS_NUM = 3
+
+    for _ in range(MAX_ATTEMPTS):
+        random_words_1 = book_plain_text.get_random_words(words_num=WORDS_NUM)
+        random_words_2 = book_plain_text.get_random_words(words_num=WORDS_NUM)
+
+        assert len(random_words_1.split()) == WORDS_NUM
+        assert random_words_1.startswith("Word")  # Skipped 1st as potential junk
+
+        if random_words_1 != random_words_2:
+            # Test passes if we find different results
+            return
+
+    # If we get here, the test failed all attempts
+    pytest.fail(f"get_random_words returned the same result in {MAX_ATTEMPTS} attempts")
 
 
 @allure.epic('Book import')
