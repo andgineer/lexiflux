@@ -6,6 +6,7 @@ exclude: |
         .venv/|
         migrations/|
         manage.py|
+        tasks.py|
         __about__.py
     )
 repos:

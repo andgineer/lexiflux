@@ -19,3 +19,12 @@ pylint-django
 
 # debug
 notebook
+
+# build & reqs management
+invoke
+
+# docs
+mkdocstrings[python]
+mkdocs-material
+pymdown-extensions
+mkdocs-awesome-pages-plugin

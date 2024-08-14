@@ -59,9 +59,8 @@ class Command(BaseCommand):  # type: ignore
         tag_pattern = re.compile(r"refs/tags/(v\d+\.\d+\.\d+)$")
         tags = []
         for line in output.splitlines():
-            match = tag_pattern.search(line)
-            if match:
-                tags.append(match.group(1))
+            if match := tag_pattern.search(line):
+                tags.append(match[1])
 
         if not tags:
             self.stderr.write("No version tags found in the repository.")
@@ -109,7 +108,6 @@ class Command(BaseCommand):  # type: ignore
             os.path.join(temp_dir, "lexiflux"), "/lexiflux/lexiflux", dirs_exist_ok=True
         )
 
-        # Clean up
         shutil.rmtree(temp_dir)
 
         # Update dependencies
@@ -118,7 +116,6 @@ class Command(BaseCommand):  # type: ignore
             self.stderr.write(f"Error updating dependencies: {error}")
             return
 
-        # Run database migrations
         call_command("migrate")
 
         self.stdout.write(self.style.SUCCESS(f"Successfully updated to version {latest_tag}"))
