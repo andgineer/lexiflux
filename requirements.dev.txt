@@ -601,6 +601,8 @@ pygments==2.18.0
     #   ipython
     #   mkdocs-material
     #   nbconvert
+pyjwt==2.9.0
+    # via -r requirements.txt
 pylint==3.2.6
     # via
     #   -r requirements.dev.in

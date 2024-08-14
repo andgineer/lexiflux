@@ -237,6 +237,8 @@ pydantic==2.8.2
     #   openai
 pydantic-core==2.20.1
     # via pydantic
+pyjwt==2.9.0
+    # via -r requirements.in
 pyopenssl==24.2.1
     # via -r requirements.in
 pyparsing==3.1.2

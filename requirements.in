@@ -24,3 +24,4 @@ beautifulsoup4
 fasttext
 nltk
 psutil
+pyjwt
