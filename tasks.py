@@ -46,7 +46,7 @@ def docs_task_factory(language: str):
     @task
     def docs(c: Context):
         """Docs preview for the language specified."""
-        c.run("open -a 'Google Chrome' http://127.0.0.1:8000/async-s3/")
+        c.run("open -a 'Google Chrome' http://127.0.0.1:8000/lexiflux/")
         c.run(f"scripts/docs-render-config.sh {language}")
         if language != "en":
             shutil.rmtree(f"./docs/src/{language}/images", ignore_errors=True)

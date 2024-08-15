@@ -1,35 +1,13 @@
+<img align="left" width="200" src="images//android-chrome-192x192.png" />
+
 # Lexiflux
 
-## Features
-- Utilizes aiobotocore for non-blocking IO operations.
-- Supports recursive listing of "folders" with controllable depth control.
-- Groups "folders" by prefixes to reduce the number of API calls.
-- Handles S3 pagination to provide a efficient traversal of long S3 objects lists.
-- Utilize AWS retry strategies.
-- Allows processing objects as they are collected from AWS.
+Осваивайте языки быстрее с нашим AI-помощником для чтения.
 
-Read detailed explanation in [the blog post](https://sorokin.engineer/posts/en/aws_s3_async_list.html).
+Мгновенно переводите и понимайте иностранные тексты во время чтения, легко пополняя свой словарный запас и улучшая навыки понимания.
 
-## Usage
+<br clear="left"/>
 
-### Simple
-```python
---8<-- "list.py"
-```
-You can control the depth of recursion by specifying the `max_level` parameter, 
-by default depth is not limited.
+![Стругацкие](images/ponedeljak-pocinje-u-subotu.jpg)
 
-`max_folders` parameter allows you to group folders by prefix to reduce the number of API calls.
-
-### Full async potential
-Process objects asynchronously while gathering the objects list from AWS.
-
-```python
-async for page in S3BucketObjects(bucket='my-bucket').iter("my-prefix/", max_level=2, max_folders=10):
-    for obj in page:
-        print(obj['Key'])
-```
-
-## Docstrings
-[S3BucketObjects][lexiflux]
-
+Хотите начать прямо сейчас? Ознакомьтесь с руководством [Быстрый старт](quickstart.md).
