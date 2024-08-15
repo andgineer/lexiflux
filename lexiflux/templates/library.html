@@ -98,7 +98,10 @@
                     <small class="form-text text-muted d-block mb-3">
                        Supported formats: EPUB, TXT, HTML (defined by file extension)
                     </small>
-                    <button class="btn btn-primary" @click="importBook">Import</button>
+                    <button @click="importBook" class="btn btn-primary" :disabled="isImporting">
+                      <span v-if="isImporting" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                      ${ isImporting ? 'Importing...' : 'Import' }
+                    </button>
                 </div>
             </div>
         </div>
@@ -205,7 +208,8 @@
             successMessage: '',
             deleteErrorMessage: '',
             searchTimeout: null,
-            isNewlyImported: false
+            isNewlyImported: false,
+            isImporting: false,
         },
         watch: {
             authorSearch(newValue) {
@@ -226,6 +230,7 @@
                     this.errorMessage = 'Please select a file to import.';
                     return;
                 }
+                this.isImporting = true;
                 let formData = new FormData();
                 formData.append('file', this.importFile);
 
@@ -236,23 +241,26 @@
                     },
                     body: formData
                 })
-                .then(response => response.json())
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`Import error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
                 .then(data => {
                     if (data.error) {
-                        this.errorMessage = data.error;
-                    } else {
-                        if (data.error) {
-                            this.errorMessage = data.error;
-                        } else {
-                            this.isNewlyImported = true;  // Set the flag
-                            this.editBook(data.id);  // Open edit modal with the new book's ID
-                            bootstrap.Modal.getInstance(document.getElementById('importModal')).hide();
-                        }
+                        throw new Error(data.error);
                     }
+                    this.isNewlyImported = true;  // Set the flag
+                    this.editBook(data.id);  // Open edit modal with the new book's ID
+                    bootstrap.Modal.getInstance(document.getElementById('importModal')).hide();
                 })
                 .catch(error => {
                     console.error('Error:', error);
-                    this.errorMessage = 'An error occurred while importing the book.';
+                    this.errorMessage = error.message || 'An error occurred while importing the book.';
+                })
+                .finally(() => {
+                    this.isImporting = false;
                 });
             },
             editBook(bookId) {

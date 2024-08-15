@@ -1,5 +1,9 @@
 """Views for the reader page."""
 
+import os
+from typing import List
+from urllib.parse import unquote
+
 from bs4 import BeautifulSoup
 from django.core.cache import cache
 from django.http import HttpRequest, HttpResponse, JsonResponse
@@ -20,17 +24,52 @@ from lexiflux.models import (
 )
 
 
-def set_images_sources(content: str, book_code: str) -> str:
+def normalize_path(path: str) -> str:
+    """Normalize the image path by removing '..' and extra '/'."""
+    path = unquote(path)
+    components = path.split("/")
+    normalized: List[str] = []
+    for component in components:
+        if component == "." or not component:
+            continue
+        if component == "..":
+            if normalized:
+                normalized.pop()
+        else:
+            normalized.append(component)
+    return "/".join(normalized)
+
+
+def set_images_sources(content: str, book: Book) -> str:
     """Replace image sources with the Django view URL."""
     soup = BeautifulSoup(content, "html.parser")
+
     for img in soup.find_all("img"):
         if "src" in img.attrs:
             original_src = img["src"]
+
+            normalized_src = normalize_path(original_src)
+
+            # Try to find the image in the database
+            try:
+                # First, try with the full normalized path
+                image = BookImage.objects.get(book=book, filename=normalized_src)
+            except BookImage.DoesNotExist:
+                try:
+                    # If not found, try with just the filename
+                    image = BookImage.objects.get(
+                        book=book, filename__endswith=os.path.basename(normalized_src)
+                    )
+                except BookImage.DoesNotExist:
+                    print(f"Warning: Image not found in database for src: {original_src}")
+                    continue
+
             new_src = reverse(
                 "serve_book_image",
-                kwargs={"book_code": book_code, "image_filename": original_src.split("/")[-1]},
+                kwargs={"book_code": book.code, "image_filename": image.filename},
             )
             img["src"] = new_src
+
     return str(soup)
 
 
@@ -54,7 +93,7 @@ def render_page(page_db: BookPage) -> str:
     # Add any remaining text after the last word
     if last_end < len(content):
         result.append(content[last_end:])
-    return set_images_sources("".join(result), page_db.book.code)
+    return set_images_sources("".join(result), page_db.book)
 
 
 def redirect_to_reader(request: HttpRequest) -> HttpResponse:

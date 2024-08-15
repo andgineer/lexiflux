@@ -1,6 +1,9 @@
 import os
 import platform
 
+from ebooklib import epub, ITEM_DOCUMENT
+
+from lexiflux.ebook.book_loader_epub import BookLoaderEpub
 from lexiflux.language.google_languages import populate_languages
 
 # Bind Django test server to all network interfaces so Selenium Hub could connect from Docker.
@@ -286,6 +289,38 @@ def book_plain_text():
 
     with patch("builtins.open", new_callable=lambda: custom_open):
         return BookLoaderPlainText("dummy_path")
+
+
+@pytest.fixture
+def book_epub():
+    # Create a mock EPUB book
+    mock_book = MagicMock(spec=epub.EpubBook)
+
+    # Create mock EPUB items (pages)
+    mock_items = [
+        MagicMock(spec=epub.EpubHtml,
+                  get_body_content=lambda: (f"Page {i} " + " ".join([f'word{j}' for j in range(100)])).encode('utf-8'),
+                  get_type=lambda: ITEM_DOCUMENT,
+                  file_name=f"page_{i}.xhtml")
+        for i in range(20)  # 20 pages
+    ]
+
+    # Set up the mock book to return our mock items
+    mock_book.get_items.return_value = mock_items
+    mock_book.spine = [(f'item_{i}',) for i in range(len(mock_items))]
+    mock_book.get_item_with_id = lambda id: mock_items[int(id.split('_')[1])]
+
+    # Mock the toc attribute
+    mock_book.toc = [MagicMock(spec=epub.Link, title=f"Chapter {i}", href=f"page_{i}.xhtml") for i in range(5)]
+
+    # Mock other necessary attributes and methods
+    mock_book.get_metadata.return_value = [('', 'Sample Title')]
+
+    # Patch epub.read_epub to return our mock book
+    with patch('ebooklib.epub.read_epub', return_value=mock_book):
+        loader = BookLoaderEpub("dummy_path")
+        loader.detect_meta()  # This will set up the epub attribute
+        return loader
 
 
 @pytest.fixture(autouse=True)

@@ -1,7 +1,7 @@
 """Views for the library and Book pages."""
 
 import json
-import traceback
+import logging
 from typing import Type
 
 from django.core.files.storage import FileSystemStorage
@@ -98,6 +98,8 @@ def import_book(request: HttpRequest) -> JsonResponse:
             book_processor = book_class(
                 file.temporary_file_path(), original_filename=original_filename
             )
+            book = book_processor.create(request.user.email)
+            book.save()
         else:
             # For in-memory files, save to disk
             fs = FileSystemStorage(location="/tmp")
@@ -119,9 +121,7 @@ def import_book(request: HttpRequest) -> JsonResponse:
         )
 
     except Exception as e:  # pylint: disable=broad-except
-        print(e)
-        traceback_str = traceback.format_exc()
-        print(traceback_str)
+        logging.error("Error importing book: %s", e, exc_info=True)
         return JsonResponse({"error": str(e)}, status=500)
 
 

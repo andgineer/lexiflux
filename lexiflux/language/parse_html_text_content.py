@@ -38,6 +38,7 @@ VALID_TAGS = set(HTMLParser.CDATA_CONTENT_ELEMENTS) | {
     "pre",
     "code",
     "title",
+    "sup",
 }
 
 

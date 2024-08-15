@@ -1,6 +1,9 @@
 """Import an EPUB file into the database."""
 
 import logging
+import os
+import random
+import re
 from collections import defaultdict
 from typing import Any, Iterable, List, Optional, Tuple, Dict, Iterator
 
@@ -20,16 +23,30 @@ class BookLoaderEpub(BookLoaderBase):
     book_end: int
     heading_hrefs: Dict[str, Dict[str, str]]
 
+    WORD_ESTIMATED_LENGTH = 30
+    MIN_RANDOM_WORDS = 3
+    JUNK_TEXT_BEGIN_PERCENT = 5
+    JUNK_TEXT_END_PERCENT = 5
+    MAX_RANDOM_WORDS_ATTEMPTS = 10  # Maximum number of attempts to find a suitable page
+
     def create(self, owner_email: str, forced_language: Optional[str] = None) -> Book:
         """Save the book to the database."""
         book = super().create(owner_email, forced_language)
         for item in self.epub.get_items():
             if item.get_type() == ITEM_IMAGE:
+                # If Windows path, replace backslashes with slashes
+                normalized_filename = os.path.normpath(item.get_name()).replace("\\", "/")
+                if item.file_name != item.get_name():
+                    log.warning(
+                        "EPUB image file_name (%s) != get_name() (%s)",
+                        item.file_name,
+                        item.get_name(),
+                    )
                 BookImage.objects.create(
                     book=book,
                     image_data=item.get_content(),
                     content_type=item.media_type,
-                    filename=item.get_name(),
+                    filename=normalized_filename,
                 )
         return book
 
@@ -86,8 +103,7 @@ class BookLoaderEpub(BookLoaderBase):
                 # todo: split epub item to pages
                 page_num += 1
                 content_accumulator += (
-                    f"{content_accumulator} "
-                    + clear_html(item.get_body_content().decode("utf-8")).strip()
+                    " " + clear_html(item.get_body_content().decode("utf-8")).strip()
                 )
                 if item.file_name in self.heading_hrefs:
                     header_anchors = self.heading_hrefs[item.file_name]
@@ -101,7 +117,41 @@ class BookLoaderEpub(BookLoaderBase):
 
     def get_random_words(self, words_num: int = 15) -> str:
         """Get random words from the book."""
-        raise NotImplementedError  # todo: implement
+        pages = list(self.pages())  # Convert iterator to list for random access
+        if not pages:
+            return ""
+
+        words = []
+        for _ in range(self.MAX_RANDOM_WORDS_ATTEMPTS):
+            # Select a random page, avoiding the first and last pages as potential junk
+            valid_pages = (
+                pages[
+                    int(len(pages) * self.JUNK_TEXT_BEGIN_PERCENT / 100) : int(
+                        len(pages) * (100 - self.JUNK_TEXT_END_PERCENT) / 100
+                    )
+                ]
+                or pages
+            )
+
+            random_page = random.choice(valid_pages)
+
+            expected_words_length = self.WORD_ESTIMATED_LENGTH * words_num * 2
+
+            start = random.randint(0, max(0, len(random_page) - expected_words_length))
+            fragment = random_page[start : start + expected_words_length]
+
+            # Skip the first word in case it's partially cut off
+            words = re.split(r"\s", fragment)[1 : words_num + 1]
+
+            # to have something in words at the loop end do that after assigning
+            if len(random_page) < expected_words_length:
+                continue  # Try another page if this one is too short
+
+            if len(words) >= self.MIN_RANDOM_WORDS:
+                return " ".join(words)
+
+        # If we couldn't find suitable words after MAX_ATTEMPTS, return whatever we have
+        return " ".join(words) if words else ""
 
 
 def extract_headings(epub_toc: List[Any]) -> List[Dict[str, Any]]:

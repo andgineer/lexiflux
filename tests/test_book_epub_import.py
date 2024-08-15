@@ -1,3 +1,5 @@
+from unittest.mock import patch
+
 import allure
 import pytest
 from ebooklib import epub
@@ -119,3 +121,54 @@ def test_clean_html_handles_empty_input():
     input_html = ""
     expected_output = ""
     assert clear_html(input_html) == expected_output
+
+
+@pytest.mark.django_db
+def test_get_random_words_epub(book_epub):
+    MAX_ATTEMPTS = 5
+    WORDS_NUM = 15
+
+    for _ in range(MAX_ATTEMPTS):
+        random_words_1 = book_epub.get_random_words(words_num=WORDS_NUM)
+        random_words_2 = book_epub.get_random_words(words_num=WORDS_NUM)
+
+        assert len(random_words_1.split()) == WORDS_NUM
+        assert all(word.startswith('word') or word.startswith('Page') for word in random_words_1.split())
+
+        if random_words_1 != random_words_2:
+            # Test passes if we find different results
+            return
+
+    # If we get here, the test failed all attempts
+    pytest.fail(f"get_random_words returned the same result in {MAX_ATTEMPTS} attempts")
+
+
+@pytest.mark.django_db
+def test_get_random_words_short_book(book_epub):
+    # Patch the pages method to return a short book
+    short_pages = [' '.join([f'word{i}' for i in range(10)]) for _ in range(3)]
+    with patch.object(book_epub, 'pages', return_value=short_pages):
+        result = book_epub.get_random_words(words_num=15)
+        assert 3 <= len(result.split()) <= 10  # Should return between 3 and 10 words
+        assert all(word.startswith('word') for word in result.split())
+
+
+@pytest.mark.django_db
+def test_get_random_words_empty_book(book_epub):
+    # Patch the pages method to return an empty book
+    with patch.object(book_epub, 'pages', return_value=[]):
+        result = book_epub.get_random_words(words_num=15)
+        assert result == ''  # Should return an empty string for an empty book
+
+
+@pytest.mark.django_db
+def test_get_random_words_respects_junk_text_percentages(book_epub):
+    # Create a book with 100 pages, each containing its page number
+    pages = [f"Page {i}" for i in range(100)]
+    with patch.object(book_epub, 'pages', return_value=pages):
+        results = [book_epub.get_random_words(words_num=1) for _ in range(100)]
+
+        print(results)
+        # Check that we never select from the first or last 5 pages
+        assert all(int(result.split()[0]) >= 5 for result in results)
+        assert all(int(result.split()[0]) < 95 for result in results)
