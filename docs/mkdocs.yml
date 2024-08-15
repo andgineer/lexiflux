@@ -69,4 +69,6 @@ extra:
 
 nav:
   - index.md
+  - quickstart.md
   - docker.md
+  - aimodels.md
