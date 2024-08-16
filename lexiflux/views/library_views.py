@@ -40,7 +40,7 @@ def library(request: HttpRequest) -> HttpResponse:
     books_query = (
         books_query.annotate(
             updated=models.Max(
-                "readingloc__updated", filter=models.Q(readingloc__user=request.user)
+                "readingloc__last_access", filter=models.Q(readingloc__user=request.user)
             )
         )
         .order_by("-updated", "title")

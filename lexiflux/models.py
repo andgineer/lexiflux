@@ -524,16 +524,18 @@ class LanguagePreferences(models.Model):  # type: ignore
 class ReadingLoc(models.Model):  # type: ignore
     """A reading location.
 
-    Current reading location and the furthest reading location in the book.
+    Current reading location and jump history.
     """
 
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="reading_pos"
     )
     book = models.ForeignKey("Book", on_delete=models.CASCADE)
+    jump_history = models.JSONField(default=list)
+    current_jump = models.IntegerField(default=-1)
     page_number = models.PositiveIntegerField(help_text="Page number currently being read")
     word = models.PositiveIntegerField(help_text="Last word read on the current reading page")
-    updated = models.DateTimeField(default=timezone.now)
+    last_access = models.DateTimeField(default=timezone.now)
     furthest_reading_page = models.PositiveIntegerField(
         default=0,
         help_text="Stores the furthest reading page number",
@@ -543,40 +545,59 @@ class ReadingLoc(models.Model):  # type: ignore
         help_text="Stores the furthest reading top word on the furthest page",
     )
 
+    class Meta:
+        unique_together = ("user", "book")
+
     @classmethod
     def update_reading_location(
         cls, user: CustomUser, book_id: int, page_number: int, top_word_id: int
     ) -> None:
         """Update user reading progress."""
-        location, created = cls.objects.get_or_create(
-            user=user,
-            book_id=book_id,
-            defaults={
-                "page_number": page_number,
-                "word": top_word_id,
-                "updated": timezone.now(),
-            },
+        loc, _ = cls.objects.get_or_create(
+            user=user, book_id=book_id, defaults={"page_number": page_number, "word": top_word_id}
         )
+        loc.page_number = page_number
+        loc.word = top_word_id
+        loc.last_access = timezone.now()
 
-        if not created:
-            location.page_number = page_number
-            location.word = top_word_id
-            location.updated = timezone.now()
+        # Check and update the latest reading point
+        if page_number > loc.furthest_reading_page or (
+            page_number == loc.furthest_reading_page and top_word_id > loc.furthest_reading_page
+        ):
+            loc.furthest_reading_page = page_number
+            loc.furthest_reading_word = top_word_id
+        loc.save()
 
-            # Check and update the latest reading point
-            if page_number > location.furthest_reading_page or (
-                page_number == location.furthest_reading_page
-                and top_word_id > location.furthest_reading_page
-            ):
-                location.furthest_reading_page = page_number
-                location.furthest_reading_word = top_word_id
+        ReadingHistory.update_history(user, loc.book)
 
-            location.save()
+    def jump(self, page_number: int, word: int) -> None:
+        """Jump to a new reading location."""
+        self.jump_history = self.jump_history[: self.current_jump + 1]
+        self.jump_history.append({"page_number": page_number, "word": word})
+        self.current_jump = len(self.jump_history) - 1
+        self.update_reading_location(self.user, self.book.id, page_number, word)
 
-    class Meta:
-        """Meta class for ReadingProgress."""
+    def jump_back(self) -> Tuple[int, int]:
+        """Jump back to the previous reading location."""
+        if self.current_jump > 0:
+            self.current_jump -= 1
+            position = self.jump_history[self.current_jump]
+            self.update_reading_location(
+                self.user, self.book.id, position["page_number"], position["word"]
+            )
+            return position["page_number"], position["word"]
+        return self.page_number, self.word
 
-        unique_together = ("user", "book")
+    def jump_forward(self) -> Tuple[int, int]:
+        """Jump forward to the next reading location."""
+        if self.current_jump < len(self.jump_history) - 1:
+            self.current_jump += 1
+            position = self.jump_history[self.current_jump]
+            self.update_reading_location(
+                self.user, self.book.id, position["page_number"], position["word"]
+            )
+            return position["page_number"], position["word"]
+        return self.page_number, self.word
 
 
 class ReadingHistory(models.Model):  # type: ignore
@@ -588,11 +609,23 @@ class ReadingHistory(models.Model):  # type: ignore
         related_name="reading_history",
     )
     book = models.ForeignKey("Book", on_delete=models.CASCADE)
-    page_number = models.PositiveIntegerField()
-    top_word_id = models.PositiveIntegerField()
-    read_time = models.DateTimeField(default=timezone.now)
+    last_opened = models.DateTimeField(default=timezone.now)
+    last_position_percent = models.FloatField(default=0.0)
 
     class Meta:
-        """Meta class for ReadingHistory."""
+        unique_together = ("user", "book")
 
-        ordering = ["-read_time"]
+    @classmethod
+    def update_history(cls, user: CustomUser, book: "Book") -> None:
+        """Update the reading history for the user and the book."""
+        history, _ = cls.objects.get_or_create(user=user, book=book)
+        history.last_opened = timezone.now()
+
+        # Get the book and calculate the percentage
+        book = history.book
+        reading_loc = ReadingLoc.objects.get(user=user, book=book)
+        total_pages = book.pages.count()
+        current_page = reading_loc.page_number
+
+        history.last_position_percent = current_page / total_pages if total_pages > 0 else 0.0
+        history.save()

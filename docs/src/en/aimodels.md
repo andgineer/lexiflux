@@ -10,6 +10,32 @@ To configure Sidebar and inline translation see [Language Preferences](http://lo
 There are separate settings for each language, so you can configure
 different settings for different languages.
 
+## Lexical Articles Types
+
+### AI Powered (Translate, Lexical, Explain, Sentence)
+They use predefined prompts to generate articles.
+You can select AI model (ChatGPT, Claude etc) to run them.
+
+#### Custom AI
+With type "AI" you can define your own prompt for AI model.
+
+### Dictionary
+There are a number of dictionaries embedded like Google Translate, Linguee Translator, MyMemory Translator, PONS Translator.
+
+### Site
+You define what a URL to open and with which parameters.
+This is usefull for good translator that does not have API. Like glosbe.com.
+
+Most of them should be open in external window, but some of them even could be open inside the Sidebar.
+
+This is controlled by `open in new window` parameter.
+
+## AI models: OpenAI (ChatGPT), Anthropic (Claude) and others
+
+To use commercial AI providers you need `API KEY`.
+
+See [AI Settings](http://localhost:6100/ai-settings/) section how to get one for different AI providers.
+
 ## Ollama
 You can [install](docker.md#local-ollama-ai) in the docker local AI [Ollama](https://github.com/jmorganca/ollama) model.
 
@@ -17,8 +43,3 @@ It is free, but requires about 6G RAM to run. Remember this is RAM for the Docke
 
 And it is not very accurate.
 
-## OpenAI (ChatGPT), Anthropic (Claude) and others
-
-To use commercial AI providers you need `API KEY`.
-
-See [AI Settings](http://localhost:6100/ai-settings/) section how to get one for different AI providers.

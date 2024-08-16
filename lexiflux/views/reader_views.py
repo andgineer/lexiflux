@@ -9,7 +9,6 @@ from django.core.cache import cache
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import redirect, render, get_object_or_404
 from django.urls import reverse
-from django.utils import timezone
 from django.views.decorators.http import require_POST
 
 from lexiflux.decorators import smart_login_required
@@ -19,7 +18,6 @@ from lexiflux.models import (
     Book,
     ReadingLoc,
     LanguagePreferences,
-    ReadingHistory,
     BookImage,
 )
 
@@ -119,7 +117,7 @@ def reader(request: HttpRequest) -> HttpResponse:
         if book_code:
             print(f"Book {book_code} not found")
         reading_location = (
-            ReadingLoc.objects.filter(user=request.user).order_by("-updated").first()
+            ReadingLoc.objects.filter(user=request.user).order_by("-last_access").first()
         )
         if not reading_location:
             return redirect("library")  # Redirect if the user has no reading history
@@ -263,12 +261,8 @@ def add_to_history(request: HttpRequest) -> JsonResponse:
     if not can_see_book(request.user, book):
         return HttpResponse(status=403)  # Forbidden
 
-    ReadingHistory.objects.create(
-        user=user,
-        book=book,
-        page_number=page_number,
-        top_word_id=top_word_id,
-        read_time=timezone.now(),
+    ReadingLoc.update_reading_location(
+        user=user, book_id=book_id, page_number=page_number, top_word_id=top_word_id
     )
 
     return JsonResponse({"message": "Reading history added successfully"})
