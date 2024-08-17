@@ -22,7 +22,7 @@ def test_reader_view_renders_for_authenticated_user(client, user, book):
     assert response.status_code == 200
     assert book.title in response.content.decode()
     assert 'id="book-page-scroller"' in response.content.decode()
-    assert '&#8592;' in response.content.decode()  # Left arrow
+    assert 'bi-caret-left-fill' in response.content.decode()
 
 
 @allure.epic('Pages endpoints')
