@@ -7,7 +7,7 @@ from django.urls import reverse
 from django.test import Client
 from pytest_django.asserts import assertTemplateUsed
 
-from lexiflux.models import ReadingLoc, ReadingHistory
+from lexiflux.models import ReadingLoc
 
 
 @allure.epic('Pages endpoints')
@@ -80,7 +80,7 @@ def test_add_to_history_success(client, user, book):
     response = client.post(reverse('history'), data)
 
     assert response.status_code == 200
-    assert ReadingHistory.objects.filter(user=user, book=book).exists()
+    assert ReadingLoc.objects.filter(user=user, book=book).exists()
     assert response.json() == {"message": "Reading history added successfully"}
 
 

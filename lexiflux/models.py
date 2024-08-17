@@ -521,7 +521,7 @@ class LanguagePreferences(models.Model):  # type: ignore
         return self.lexical_articles.all().order_by("order")  # type: ignore
 
 
-class ReadingLoc(models.Model):  # type: ignore
+class ReadingLoc(models.Model):  # type: ignore  # pylint: disable=too-many-instance-attributes
     """A reading location.
 
     Current reading location and jump history.
@@ -544,6 +544,7 @@ class ReadingLoc(models.Model):  # type: ignore
         default=0,
         help_text="Stores the furthest reading top word on the furthest page",
     )
+    last_position_percent = models.FloatField(default=0.0)
 
     class Meta:
         unique_together = ("user", "book")
@@ -579,8 +580,6 @@ class ReadingLoc(models.Model):  # type: ignore
     def _update_reading_location(self, page_number: int, word: int) -> None:
         """Update the current reading location.
 
-        Also updates ReadingHistory.
-
         To use inside jump* methods.
         Do not call save() and no need to update the jump_history.
         """
@@ -595,16 +594,16 @@ class ReadingLoc(models.Model):  # type: ignore
             self.furthest_reading_page = page_number
             self.furthest_reading_word = word
 
-        ReadingHistory.update_history(self.user, self.book, page_number)
+        total_pages = self.book.pages.count()
+        self.last_position_percent = (
+            (page_number - 1) / (total_pages - 1) if total_pages > 1 else 0.0
+        )
 
     @classmethod
     def update_reading_location(
         cls, user: CustomUser, book_id: int, page_number: int, top_word_id: int
     ) -> None:
-        """Update the current reading location.
-
-        Updates RedingLoc and ReadingHistory.
-        """
+        """Update the current reading location."""
         loc, _ = cls.objects.get_or_create(
             user=user, book_id=book_id, defaults={"page_number": page_number, "word": top_word_id}
         )
@@ -615,31 +614,3 @@ class ReadingLoc(models.Model):  # type: ignore
             loc.jump_history[loc.current_jump] = {"page_number": page_number, "word": top_word_id}
 
         loc.save()
-
-
-class ReadingHistory(models.Model):  # type: ignore
-    """Model to store each reading session's details for a user."""
-
-    user = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
-        related_name="reading_history",
-    )
-    book = models.ForeignKey("Book", on_delete=models.CASCADE)
-    last_opened = models.DateTimeField(default=timezone.now)
-    last_position_percent = models.FloatField(default=0.0)
-
-    class Meta:
-        unique_together = ("user", "book")
-
-    @classmethod
-    def update_history(cls, user: CustomUser, book: "Book", page_number: int) -> None:
-        """Update the reading history for the user and the book."""
-        history, _ = cls.objects.get_or_create(user=user, book=book)
-        history.last_opened = timezone.now()
-        total_pages = book.pages.count()
-
-        history.last_position_percent = (
-            (page_number - 1) / (total_pages - 1) if total_pages > 1 else 0.0
-        )
-        history.save()
