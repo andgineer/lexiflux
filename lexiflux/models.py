@@ -548,44 +548,22 @@ class ReadingLoc(models.Model):  # type: ignore
     class Meta:
         unique_together = ("user", "book")
 
-    @classmethod
-    def update_reading_location(
-        cls, user: CustomUser, book_id: int, page_number: int, top_word_id: int
-    ) -> None:
-        """Update user reading progress."""
-        loc, _ = cls.objects.get_or_create(
-            user=user, book_id=book_id, defaults={"page_number": page_number, "word": top_word_id}
-        )
-        loc.page_number = page_number
-        loc.word = top_word_id
-        loc.last_access = timezone.now()
-
-        # Check and update the latest reading point
-        if page_number > loc.furthest_reading_page or (
-            page_number == loc.furthest_reading_page and top_word_id > loc.furthest_reading_page
-        ):
-            loc.furthest_reading_page = page_number
-            loc.furthest_reading_word = top_word_id
-        loc.save()
-
-        ReadingHistory.update_history(user, loc.book)
-
     def jump(self, page_number: int, word: int) -> None:
         """Jump to a new reading location."""
         self.jump_history = self.jump_history[: self.current_jump + 1]
         self.jump_history.append({"page_number": page_number, "word": word})
         self.current_jump = len(self.jump_history) - 1
-        self.update_reading_location(self.user, self.book.id, page_number, word)
+        self._update_reading_location(page_number, word)
+        self.save()
 
     def jump_back(self) -> Tuple[int, int]:
         """Jump back to the previous reading location."""
         if self.current_jump > 0:
             self.current_jump -= 1
             position = self.jump_history[self.current_jump]
-            self.update_reading_location(
-                self.user, self.book.id, position["page_number"], position["word"]
-            )
-            return position["page_number"], position["word"]
+            self._update_reading_location(position["page_number"], position["word"])
+            self.save()
+            return self.page_number, self.word
         return self.page_number, self.word
 
     def jump_forward(self) -> Tuple[int, int]:
@@ -593,11 +571,50 @@ class ReadingLoc(models.Model):  # type: ignore
         if self.current_jump < len(self.jump_history) - 1:
             self.current_jump += 1
             position = self.jump_history[self.current_jump]
-            self.update_reading_location(
-                self.user, self.book.id, position["page_number"], position["word"]
-            )
-            return position["page_number"], position["word"]
+            self._update_reading_location(position["page_number"], position["word"])
+            self.save()
+            return self.page_number, self.word
         return self.page_number, self.word
+
+    def _update_reading_location(self, page_number: int, word: int) -> None:
+        """Update the current reading location.
+
+        Also updates ReadingHistory.
+
+        To use inside jump* methods.
+        Do not call save() and no need to update the jump_history.
+        """
+        self.page_number = page_number
+        self.word = word
+        self.last_access = timezone.now()
+
+        # Check and update the furthest reading point
+        if page_number > self.furthest_reading_page or (
+            page_number == self.furthest_reading_page and word > self.furthest_reading_word
+        ):
+            self.furthest_reading_page = page_number
+            self.furthest_reading_word = word
+
+        ReadingHistory.update_history(self.user, self.book, page_number)
+
+    @classmethod
+    def update_reading_location(
+        cls, user: CustomUser, book_id: int, page_number: int, top_word_id: int
+    ) -> None:
+        """Update the current reading location.
+
+        Updates RedingLoc and ReadingHistory.
+        """
+        loc, _ = cls.objects.get_or_create(
+            user=user, book_id=book_id, defaults={"page_number": page_number, "word": top_word_id}
+        )
+        loc._update_reading_location(page_number, top_word_id)  # pylint: disable=protected-access
+
+        # Update the current jump in jump_history
+        if loc.jump_history and loc.current_jump >= 0:
+            loc.jump_history[loc.current_jump] = {"page_number": page_number, "word": top_word_id}
+
+        loc.save()
 
 
 class ReadingHistory(models.Model):  # type: ignore
@@ -616,16 +633,13 @@ class ReadingHistory(models.Model):  # type: ignore
         unique_together = ("user", "book")
 
     @classmethod
-    def update_history(cls, user: CustomUser, book: "Book") -> None:
+    def update_history(cls, user: CustomUser, book: "Book", page_number: int) -> None:
         """Update the reading history for the user and the book."""
         history, _ = cls.objects.get_or_create(user=user, book=book)
         history.last_opened = timezone.now()
-
-        # Get the book and calculate the percentage
-        book = history.book
-        reading_loc = ReadingLoc.objects.get(user=user, book=book)
         total_pages = book.pages.count()
-        current_page = reading_loc.page_number
 
-        history.last_position_percent = current_page / total_pages if total_pages > 0 else 0.0
+        history.last_position_percent = (
+            (page_number - 1) / (total_pages - 1) if total_pages > 1 else 0.0
+        )
         history.save()

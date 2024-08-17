@@ -123,6 +123,8 @@ def test_clean_html_handles_empty_input():
     assert clear_html(input_html) == expected_output
 
 
+@allure.epic('Book import')
+@allure.feature('EPUB: Clean HTML')
 @pytest.mark.django_db
 def test_get_random_words_epub(book_epub):
     MAX_ATTEMPTS = 5
@@ -143,6 +145,8 @@ def test_get_random_words_epub(book_epub):
     pytest.fail(f"get_random_words returned the same result in {MAX_ATTEMPTS} attempts")
 
 
+@allure.epic('Book import')
+@allure.feature('EPUB: Clean HTML')
 @pytest.mark.django_db
 def test_get_random_words_short_book(book_epub):
     # Patch the pages method to return a short book
@@ -153,6 +157,8 @@ def test_get_random_words_short_book(book_epub):
         assert all(word.startswith('word') for word in result.split())
 
 
+@allure.epic('Book import')
+@allure.feature('EPUB: Clean HTML')
 @pytest.mark.django_db
 def test_get_random_words_empty_book(book_epub):
     # Patch the pages method to return an empty book
@@ -161,6 +167,8 @@ def test_get_random_words_empty_book(book_epub):
         assert result == ''  # Should return an empty string for an empty book
 
 
+@allure.epic('Book import')
+@allure.feature('EPUB: Clean HTML')
 @pytest.mark.django_db
 def test_get_random_words_respects_junk_text_percentages(book_epub):
     # Create a book with 100 pages, each containing its page number
