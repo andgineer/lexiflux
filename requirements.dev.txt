@@ -220,7 +220,7 @@ googleapis-common-protos==1.63.2
     #   grpcio-status
 griffe==1.0.0
     # via mkdocstrings-python
-grpcio==1.65.4
+grpcio==1.65.5
     # via
     #   -r requirements.txt
     #   google-api-core
@@ -363,7 +363,7 @@ langchain-anthropic==0.1.23
     # via -r requirements.txt
 langchain-community==0.2.12
     # via -r requirements.txt
-langchain-core==0.2.32
+langchain-core==0.2.33
     # via
     #   -r requirements.txt
     #   langchain
@@ -373,11 +373,11 @@ langchain-core==0.2.32
     #   langchain-mistralai
     #   langchain-openai
     #   langchain-text-splitters
-langchain-google-genai==1.0.8
+langchain-google-genai==1.0.9
     # via -r requirements.txt
 langchain-mistralai==0.1.12
     # via -r requirements.txt
-langchain-openai==0.1.21
+langchain-openai==0.1.22
     # via -r requirements.txt
 langchain-text-splitters==0.2.2
     # via
@@ -393,7 +393,7 @@ lxml==5.3.0
     # via
     #   -r requirements.txt
     #   ebooklib
-markdown==3.6
+markdown==3.7
     # via
     #   mkdocs
     #   mkdocs-autorefs
@@ -490,7 +490,7 @@ numpy==1.26.4
     #   langchain-community
 ollama==0.3.1
     # via -r requirements.txt
-openai==1.40.8
+openai==1.41.0
     # via
     #   -r requirements.txt
     #   langchain-openai

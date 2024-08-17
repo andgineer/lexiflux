@@ -99,7 +99,7 @@ googleapis-common-protos==1.63.2
     # via
     #   google-api-core
     #   grpcio-status
-grpcio==1.65.4
+grpcio==1.65.5
     # via
     #   google-api-core
     #   grpcio-status
@@ -147,7 +147,7 @@ langchain-anthropic==0.1.23
     # via -r requirements.in
 langchain-community==0.2.12
     # via -r requirements.in
-langchain-core==0.2.32
+langchain-core==0.2.33
     # via
     #   -r requirements.in
     #   langchain
@@ -157,11 +157,11 @@ langchain-core==0.2.32
     #   langchain-mistralai
     #   langchain-openai
     #   langchain-text-splitters
-langchain-google-genai==1.0.8
+langchain-google-genai==1.0.9
     # via -r requirements.in
 langchain-mistralai==0.1.12
     # via -r requirements.in
-langchain-openai==0.1.21
+langchain-openai==0.1.22
     # via -r requirements.in
 langchain-text-splitters==0.2.2
     # via langchain
@@ -191,7 +191,7 @@ numpy==1.26.4
     #   langchain-community
 ollama==0.3.1
     # via -r requirements.in
-openai==1.40.8
+openai==1.41.0
     # via
     #   -r requirements.in
     #   langchain-openai

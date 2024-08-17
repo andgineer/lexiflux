@@ -3,29 +3,44 @@
 {% block content %}
     <div id="reader" class="d-flex flex-column vh-100">
 
-        <nav id="top-navbar" class="navbar navbar-expand-lg navbar-light bg-light">
-            <div class="container-fluid">
-                {% include 'hamburger.html' with current_page='reader' %}
-                <div class="text-truncate">
-                    <button class="btn btn-link dropdown-toggle" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-expanded="false">
-                        {{ book.title }}
-                    </button>
-                    <div class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownMenuButton">
-                        <div class="px-3 py-2" style="max-height: 90vh; overflow-y: auto;">
-                            {% for toc_item in book.toc %}
-                                <a class="dropdown-item" href="#" onclick="goToPage({{ toc_item.1 }}, {{ toc_item.2 }})">{{ toc_item.0 }}</a>
-                            {% endfor %}
-                        </div>
-                    </div>
-                    <button id="lexical-panel-button" class="btn btn-primary" type="button"
-                            data-bs-toggle="collapse" data-bs-target="#lexical-panel"
-                            aria-expanded="false" aria-controls="lexical-panel"
-                            title="Lexical Sidebar">
-                        <i id="lexical-panel-icon" class="bi bi-chevron-double-left"></i>
-                    </button>
-                </div>
-            </div>
-        </nav>
+      <nav id="top-navbar" class="navbar navbar-expand-lg navbar-light bg-light">
+        <div class="container-fluid">
+          <div class="me-2">
+            {% include 'hamburger.html' with current_page='reader' %}
+          </div>
+
+          <div class="collapse navbar-collapse" id="navbarContent">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+              <li class="nav-item">
+                <button id="back-button" class="btn btn-outline-secondary" type="button" title="Back">
+                  <i class="bi bi-chevron-left"></i>
+                </button>
+              </li>
+              <li class="nav-item">
+                <button id="forward-button" class="btn btn-outline-secondary ms-2" type="button" title="Forward">
+                  <i class="bi bi-chevron-right"></i>
+                </button>
+              </li>
+              <li class="nav-item dropdown">
+                <button class="btn btn-outline-secondary dropdown-toggle ms-2 d-flex align-items-center" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-expanded="false" title="Table of Contents">
+                  <span class="me-2">{{ book.title }}</span>
+                </button>
+                <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton" style="max-height: 90vh; overflow-y: auto;">
+                  {% for toc_item in book.toc %}
+                    <li><a class="dropdown-item" href="#" onclick="goToPage({{ toc_item.1 }}, {{ toc_item.2 }})">{{ toc_item.0 }}</a></li>
+                  {% endfor %}
+                </ul>
+              </li>
+            </ul>
+            <button id="lexical-panel-button" class="btn btn-primary" type="button"
+                    data-bs-toggle="collapse" data-bs-target="#lexical-panel"
+                    aria-expanded="false" aria-controls="lexical-panel"
+                    title="Lexical Sidebar">
+                <i id="lexical-panel-icon" class="bi bi-chevron-double-left"></i>
+            </button>
+          </div>
+        </div>
+      </nav>
 
         <div class="flex-grow-1 d-flex flex-column flex-md-row  overflow-hidden">
             <div id="book-page-scroller" class="container-fluid flex-grow-1 overflow-hidden">
@@ -73,14 +88,14 @@
         </div>
 
         <nav class="navbar navbar-expand-lg navbar-light bg-light d-flex justify-content-between navbar-fixed-bottom">
-            <button class="btn btn-primary" id="prev-button">
-                &#8592; <!-- Left arrow -->
+            <button class="btn btn-primary" id="prev-button" data-bs-toggle="tooltip" data-bs-placement="top" title="Up">
+                <i class="bi bi-caret-left-fill"></i>
             </button>
             <div class="text-truncate" id="page-number">
                 {{ page.number }}
             </div>
-            <button class="btn btn-primary pull-right" id="next-button">
-                &#8594; <!-- Right arrow -->
+            <button class="btn btn-primary" id="next-button" data-bs-toggle="tooltip" data-bs-placement="top" title="Down">
+                <i class="bi bi-caret-right-fill"></i>
             </button>
         </nav>
     </div>
