@@ -62,6 +62,11 @@ def shell(c: Context):
     """Django shell"""
     c.run("./manage shell")
 
+@task
+def jupyter(c: Context):
+    """Run Jupyter Notebook"""
+    c.run("./manage shell_plus --notebook")
+
 
 @task
 def migrate(c: Context):
