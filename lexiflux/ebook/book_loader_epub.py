@@ -87,7 +87,7 @@ class BookLoaderEpub(BookLoaderBase):
         Also clear headings and recollect them during pages generation.
         """
         self.toc = []
-        page_num = 0
+        page_num = 1
         content_accumulator = ""
         for spine_id in self.epub.spine:
             item: epub.EpubItem = self.epub.get_item_with_id(spine_id[0])
@@ -101,7 +101,6 @@ class BookLoaderEpub(BookLoaderBase):
                     item.file_name,
                 )
                 # todo: split epub item to pages
-                page_num += 1
                 content_accumulator += (
                     " " + clear_html(item.get_body_content().decode("utf-8")).strip()
                 )
@@ -110,6 +109,7 @@ class BookLoaderEpub(BookLoaderBase):
                     if "#" in header_anchors:
                         self.toc.append((header_anchors["#"], page_num, 0))
                 if len(content_accumulator) > 1000:
+                    page_num += 1
                     yield content_accumulator
                     content_accumulator = ""
                 # todo: detect headings inside pages text and store them in self._detected_toc
