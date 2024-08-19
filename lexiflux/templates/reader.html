@@ -1,18 +1,16 @@
 {% extends "base.html" %}
 {% load static %}
 {% block content %}
-    <div id="reader" class="d-flex flex-column vh-100">
+    <div id="reader" class="d-flex flex-column vh-100 overflow-hidden">
 
-      <nav id="top-navbar" class="navbar navbar-expand-lg navbar-light bg-light">
+      <nav id="top-navbar" class="navbar navbar-expand-sm navbar-light bg-light">
         <div class="container-fluid">
           <div class="me-2">
             {% include 'hamburger.html' with current_page='reader' %}
           </div>
-
           <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent" aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
              <span class="navbar-toggler-icon"></span>
           </button>
-
           <div class="collapse navbar-collapse" id="navbarContent">
             <ul class="navbar-nav me-auto mb-2 mb-lg-0">
               <li class="nav-item">
@@ -29,7 +27,7 @@
                 <button class="btn btn-outline-secondary dropdown-toggle ms-2 d-flex align-items-center" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-expanded="false" title="Table of Contents">
                   <span class="me-2">{{ book.title }}</span>
                 </button>
-                <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton" style="max-height: 90vh; overflow-y: auto;">
+                <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton" style="max-height: 70vh; overflow-y: auto;">
                   {% for toc_item in book.toc %}
                     <li><a class="dropdown-item" href="#" onclick="goToPage({{ toc_item.1 }}, {{ toc_item.2 }})">{{ toc_item.0 }}</a></li>
                   {% endfor %}
@@ -46,14 +44,14 @@
         </div>
       </nav>
 
-        <div class="flex-grow-1 d-flex flex-column flex-md-row  overflow-hidden">
-            <div id="book-page-scroller" class="container-fluid flex-grow-1 overflow-hidden">
+        <div class="flex-grow-1 d-flex flex-column flex-md-row overflow-hidden">
+            <div id="book-page-scroller" class="flex-grow-1 overflow-hidden h-100">
                 <div id="words-container">
                     {{ pageHtml|safe }}
                 </div>
             </div>
 
-            <div id="lexical-panel" class="collapse d-md-block col-6 order-md-last h-100">
+            <div id="lexical-panel" class="collapse d-md-block col-md-6 col-lg-4 order-1 order-md-2 h-md-100">
                 <div class="card h-100 d-flex flex-column">
                     <div class="card-header">
                         <ul class="nav nav-tabs card-header-tabs" id="lexicalPanelTabs" role="tablist">
