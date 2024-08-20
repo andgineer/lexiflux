@@ -243,50 +243,91 @@ def location(request: HttpRequest) -> HttpResponse:
 @require_POST  # type: ignore
 def jump(request: HttpRequest) -> HttpResponse:
     """Jump to a specific location in the book."""
-    book_code = request.POST.get("book-code")
-    page_number = int(request.POST.get("book-page-number"))
-    top_word = int(request.POST.get("top-word"))
+    try:
+        book_code = request.POST.get("book-code")
+        page_number = int(request.POST.get("book-page-number"))
+        top_word = int(request.POST.get("top-word"))
 
-    book = Book.objects.get(code=book_code)
-    reading_loc, _ = ReadingLoc.objects.get_or_create(user=request.user, book=book)
-    reading_loc.jump(page_number, top_word)
+        if not book_code:
+            return JsonResponse({"error": "Missing book code"}, status=400)
 
-    return JsonResponse({"success": True})
+        book = Book.objects.get(code=book_code)
+        reading_loc, _ = ReadingLoc.objects.get_or_create(
+            user=request.user,
+            book=book,
+            defaults={
+                "page_number": 1,
+                "word": 0,
+                "jump_history": [{"page_number": 1, "word": 0}],
+                "current_jump": 0,
+            },
+        )
+        reading_loc.jump(page_number, top_word)
+
+        return JsonResponse({"success": True})
+    except ValueError:
+        return JsonResponse({"error": "Invalid page number or top word"}, status=400)
+    except Book.DoesNotExist:
+        return JsonResponse({"error": "Book not found"}, status=404)
 
 
 @smart_login_required
 @require_POST  # type: ignore
 def jump_back(request: HttpRequest) -> HttpResponse:
     """Jump back to the previous location in the book."""
-    book_code = request.POST.get("book-code")
-    book = Book.objects.get(code=book_code)
-    reading_loc = ReadingLoc.objects.get(user=request.user, book=book)
+    try:
+        book_code = request.POST.get("book-code")
+        if not book_code:
+            return JsonResponse({"error": "Missing book code"}, status=400)
 
-    page_number, word = reading_loc.jump_back()
-    return JsonResponse({"success": True, "page_number": page_number, "word": word})
+        book = Book.objects.get(code=book_code)
+        reading_loc = ReadingLoc.objects.get(user=request.user, book=book)
+
+        page_number, word = reading_loc.jump_back()
+        return JsonResponse({"success": True, "page_number": page_number, "word": word})
+    except Book.DoesNotExist:
+        return JsonResponse({"error": "Book not found"}, status=404)
+    except ReadingLoc.DoesNotExist:
+        return JsonResponse({"error": "Reading location not found"}, status=404)
 
 
 @smart_login_required
 @require_POST  # type: ignore
 def jump_forward(request: HttpRequest) -> HttpResponse:
     """Jump forward to the next location in the book."""
-    book_code = request.POST.get("book-code")
-    book = Book.objects.get(code=book_code)
-    reading_loc = ReadingLoc.objects.get(user=request.user, book=book)
+    try:
+        book_code = request.POST.get("book-code")
+        if not book_code:
+            return JsonResponse({"error": "Missing book code"}, status=400)
 
-    page_number, word = reading_loc.jump_forward()
-    return JsonResponse({"success": True, "page_number": page_number, "word": word})
+        book = Book.objects.get(code=book_code)
+        reading_loc = ReadingLoc.objects.get(user=request.user, book=book)
+
+        page_number, word = reading_loc.jump_forward()
+        return JsonResponse({"success": True, "page_number": page_number, "word": word})
+    except Book.DoesNotExist:
+        return JsonResponse({"error": "Book not found"}, status=404)
+    except ReadingLoc.DoesNotExist:
+        return JsonResponse({"error": "Reading location not found"}, status=404)
 
 
 @smart_login_required
 @require_POST  # type: ignore
 def get_jump_status(request: HttpRequest) -> HttpResponse:
-    """Get the status of the jump buttons."""
-    book_code = request.POST.get("book-code")
-    book = Book.objects.get(code=book_code)
-    reading_loc = ReadingLoc.objects.get(user=request.user, book=book)
+    """Get the status of the jump history."""
+    try:
+        book_code = request.POST.get("book-code")
+        if not book_code:
+            return JsonResponse({"error": "Missing book code"}, status=400)
 
-    is_first_jump = reading_loc.current_jump == 0
-    is_last_jump = reading_loc.current_jump == len(reading_loc.jump_history) - 1
+        book = Book.objects.get(code=book_code)
+        reading_loc = ReadingLoc.objects.get(user=request.user, book=book)
 
-    return JsonResponse({"is_first_jump": is_first_jump, "is_last_jump": is_last_jump})
+        is_first_jump = reading_loc.current_jump == 0
+        is_last_jump = reading_loc.current_jump == len(reading_loc.jump_history) - 1
+
+        return JsonResponse({"is_first_jump": is_first_jump, "is_last_jump": is_last_jump})
+    except Book.DoesNotExist:
+        return JsonResponse({"error": "Book not found"}, status=404)
+    except ReadingLoc.DoesNotExist:
+        return JsonResponse({"error": "Reading location not found"}, status=404)

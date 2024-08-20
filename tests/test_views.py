@@ -19,7 +19,7 @@ def test_location_view_updates_reading_location_successfully(client, user, book)
     page_number = 1
     top_word = 10
 
-    response = client.get(reverse('location'), {
+    response = client.post(reverse('location'), {
         'book-code': book.code,
         'book-page-number': page_number,
         'top-word': top_word
@@ -41,7 +41,7 @@ def test_location_view_handles_invalid_parameters(client, user):
     client.force_login(user)
 
     # Intentionally omitting 'book-page-number' to trigger a 400 error
-    response = client.get(reverse('location'), {
+    response = client.post(reverse('location'), {
         'book-code': 'invalid',
         'top-word': 'not-an-int'
     })
@@ -58,7 +58,7 @@ def test_location_view_enforces_access_control(client, user, book):
     another_user = AnotherUser.objects.create_user(username='another_user', password='67890', email="email")
     client.force_login(another_user)
 
-    response = client.get(reverse('location'), {
+    response = client.post(reverse('location'), {
         'book-code': book.code,
         'book-page-number': 1,
         'top-word': 10
@@ -70,30 +70,139 @@ def test_location_view_enforces_access_control(client, user, book):
 @allure.epic('Pages endpoints')
 @allure.feature('Reader')
 @pytest.mark.django_db
-def test_add_to_history_success(client, user, book):
+def test_jump_view_successful(client, user, book):
     client.force_login(user)
-    data = {
-        'book_id': book.id,
-        'page_number': 1,
-        'top_word_id': 100
-    }
-    response = client.post(reverse('history'), data)
+
+    # Create an initial ReadingLoc instance
+    ReadingLoc.objects.create(
+        user=user,
+        book=book,
+        page_number=1,
+        word=0,
+        jump_history=[{"page_number": 1, "word": 0}],
+        current_jump=0
+    )
+
+    response = client.post(reverse('jump'), {
+        'book-code': book.code,
+        'book-page-number': 2,
+        'top-word': 5
+    })
 
     assert response.status_code == 200
-    assert ReadingLoc.objects.filter(user=user, book=book).exists()
-    assert response.json() == {"message": "Reading history added successfully"}
+    data = response.json()
+    assert data['success'] is True
+
+    # Verify that the database was updated
+    reading_loc = ReadingLoc.objects.get(user=user, book=book)
+    assert reading_loc.page_number == 2
+    assert reading_loc.word == 5
+    assert reading_loc.current_jump == 1
+    assert reading_loc.jump_history == [{"page_number": 1, "word": 0}, {"page_number": 2, "word": 5}]
 
 
 @allure.epic('Pages endpoints')
 @allure.feature('Reader')
 @pytest.mark.django_db
-def test_add_to_history_invalid_input(client, user):
+def test_jump_view_invalid_parameters(client, user):
     client.force_login(user)
-    response = client.post(reverse('history'),
-                           {'book_id': 'abc', 'page_number': 'xyz', 'top_word_id': 'invalid'})
+    response = client.post(reverse('jump'), {
+        'book-code': 'invalid',
+        'book-page-number': 'not-a-number',
+        'top-word': 'not-a-number'
+    })
 
     assert response.status_code == 400
-    assert response.json() == {"error": "Invalid input"}
+
+
+@allure.epic('Pages endpoints')
+@allure.feature('Reader')
+@pytest.mark.django_db
+def test_jump_forward_view_successful(client, user, book):
+    client.force_login(user)
+
+    # Create a single ReadingLoc instance
+    reading_loc = ReadingLoc.objects.create(user=user, book=book, page_number=2, word=10)
+
+    # Simulate a jump history
+    reading_loc.jump_history = [
+        {"page_number": 1, "word": 0},
+        {"page_number": 2, "word": 10},
+        {"page_number": 3, "word": 5},
+        {"page_number": 4, "word": 0}
+    ]
+    reading_loc.current_jump = 1  # Set current position to the second item
+    reading_loc.save()
+
+    response = client.post(reverse('jump_forward'), {
+        'book-code': book.code,
+    })
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data['success'] is True
+    assert data['page_number'] == 3
+    assert data['word'] == 5
+
+    # Verify that the database was updated
+    reading_loc.refresh_from_db()
+    assert reading_loc.page_number == 3
+    assert reading_loc.word == 5
+    assert reading_loc.current_jump == 2
+
+
+@allure.epic('Pages endpoints')
+@allure.feature('Reader')
+@pytest.mark.django_db
+def test_jump_back_view_successful(client, user, book):
+    client.force_login(user)
+
+    # Create a single ReadingLoc instance
+    reading_loc = ReadingLoc.objects.create(user=user, book=book, page_number=3, word=5)
+
+    # Simulate a jump history
+    reading_loc.jump_history = [
+        {"page_number": 1, "word": 0},
+        {"page_number": 2, "word": 10},
+        {"page_number": 3, "word": 5}
+    ]
+    reading_loc.current_jump = 2  # Set current position to the last item
+    reading_loc.save()
+
+    response = client.post(reverse('jump_back'), {
+        'book-code': book.code,
+    })
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data['success'] is True
+    assert data['page_number'] == 2
+    assert data['word'] == 10
+
+    # Verify that the database was updated
+    reading_loc.refresh_from_db()
+    assert reading_loc.page_number == 2
+    assert reading_loc.word == 10
+    assert reading_loc.current_jump == 1
+
+
+@allure.epic('Pages endpoints')
+@allure.feature('Reader')
+@pytest.mark.django_db
+def test_get_jump_status_view(client, user, book):
+    client.force_login(user)
+    # Create some reading locations
+    ReadingLoc.objects.create(user=user, book=book, page_number=1, word=0)
+    ReadingLoc.objects.create(user=user, book=book, page_number=2, word=5)
+
+    response = client.post(reverse('get_jump_status'), {
+        'book-code': book.code,
+    })
+
+    assert response.status_code == 200
+    data = response.json()
+    assert 'is_first_jump' in data
+    assert 'is_last_jump' in data
 
 
 @allure.epic('Pages endpoints')
