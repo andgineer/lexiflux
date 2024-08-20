@@ -212,10 +212,24 @@ export class Viewport {
         return low;
     }  // getFirstVisibleWord
 
-    public reportReadingLocation(): void {
-        // Determine the first visible word and report to the server the reading location
-        let url = `/location?top-word=${this.getFirstVisibleWord()}&book-code=${this.bookCode}&book-page-number=${this.pageNumber}`;
-        fetch(url)
+    public reportReadingLocation(isJump: boolean = false): void {
+        const firstVisibleWord = this.getFirstVisibleWord();
+        const url = '/location';
+        const data = new URLSearchParams({
+            'top-word': firstVisibleWord.toString(),
+            'book-code': this.bookCode,
+            'book-page-number': this.pageNumber.toString(),
+            'is_jump': isJump.toString()
+        });
+
+        fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-CSRFToken': this.getCsrfToken(),
+            },
+            body: data.toString()
+        })
             .then(response => {
                 if (!response.ok) {
                     throw new Error('Network response was not ok');
@@ -224,6 +238,7 @@ export class Viewport {
             })
             .then(data => {
                 // Process response if necessary
+                this.updateJumpButtons();
             })
             .catch(error => console.error('Error:', error));
     }  // reportReadingLocation

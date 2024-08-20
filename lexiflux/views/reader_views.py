@@ -216,15 +216,14 @@ def serve_book_image(request, book_code, image_filename):
     return HttpResponse(image.image_data, content_type=image.content_type)
 
 
-@smart_login_required  # type: ignore
+@smart_login_required
+@require_POST  # type: ignore
 def location(request: HttpRequest) -> HttpResponse:
     """Read location changed."""
     try:
-        book_code = request.GET.get("book-code") or request.POST.get("book-code")
-        page_number = int(
-            request.GET.get("book-page-number") or request.POST.get("book-page-number")
-        )
-        top_word = int(request.GET.get("top-word", 0) or request.POST.get("top-word", 0))
+        book_code = request.POST.get("book-code")
+        page_number = int(request.POST.get("book-page-number"))
+        top_word = int(request.POST.get("top-word", 0))
         if not book_code:
             raise ValueError("book-code is missing")
     except (TypeError, ValueError, KeyError):
