@@ -191,9 +191,20 @@ def test_jump_back_view_successful(client, user, book):
 @pytest.mark.django_db
 def test_get_jump_status_view(client, user, book):
     client.force_login(user)
-    # Create some reading locations
-    ReadingLoc.objects.create(user=user, book=book, page_number=1, word=0)
-    ReadingLoc.objects.create(user=user, book=book, page_number=2, word=5)
+
+    # Create a single ReadingLoc instance
+    reading_loc = ReadingLoc.objects.create(
+        user=user,
+        book=book,
+        page_number=2,
+        word=5,
+        jump_history=[
+            {"page_number": 1, "word": 0},
+            {"page_number": 2, "word": 5},
+            {"page_number": 3, "word": 10}
+        ],
+        current_jump=1  # Set current position to the middle of the history
+    )
 
     response = client.post(reverse('get_jump_status'), {
         'book-code': book.code,
@@ -203,6 +214,24 @@ def test_get_jump_status_view(client, user, book):
     data = response.json()
     assert 'is_first_jump' in data
     assert 'is_last_jump' in data
+    assert data['is_first_jump'] == False
+    assert data['is_last_jump'] == False
+
+    # Test first jump
+    reading_loc.current_jump = 0
+    reading_loc.save()
+    response = client.post(reverse('get_jump_status'), {'book-code': book.code})
+    data = response.json()
+    assert data['is_first_jump'] == True
+    assert data['is_last_jump'] == False
+
+    # Test last jump
+    reading_loc.current_jump = 2
+    reading_loc.save()
+    response = client.post(reverse('get_jump_status'), {'book-code': book.code})
+    data = response.json()
+    assert data['is_first_jump'] == False
+    assert data['is_last_jump'] == True
 
 
 @allure.epic('Pages endpoints')
