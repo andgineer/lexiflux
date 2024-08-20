@@ -118,6 +118,7 @@ export class Viewport {
                         }
                         this.reportReadingLocation();
                     }
+                    this.updateJumpButtons();
                     resolve();
                 })
                 .catch(error => {
@@ -259,7 +260,101 @@ export class Viewport {
             this.reportReadingLocation();
         }
     }  // scrollDown
-}
+
+    async jump(pageNum: number, topWord: number): Promise<void> {
+        const response = await fetch('/jump', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-CSRFToken': this.getCsrfToken(),
+            },
+            body: `book-code=${this.bookCode}&book-page-number=${pageNum}&top-word=${topWord}`,
+        });
+        if (response.ok) {
+            const data = await response.json();
+            if (data.success) {
+                await this.loadPage(pageNum, topWord);
+                this.updateJumpButtons();
+            } else {
+                console.error('Jump failed:', data.error);
+            }
+        } else {
+            console.error('Network error during jump');
+        }
+    }
+
+    async jumpBack(): Promise<void> {
+        const response = await fetch('/jump_back', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-CSRFToken': this.getCsrfToken(),
+            },
+            body: `book-code=${this.bookCode}&book-page-number=${this.pageNumber}`,
+        });
+        if (response.ok) {
+            const data = await response.json();
+            if (data.success) {
+                await this.loadPage(data.page_number, data.word);
+                this.updateJumpButtons();
+            } else {
+                console.error('Jump back failed:', data.error);
+            }
+        } else {
+            console.error('Network error during jump back');
+        }
+    }
+
+    async jumpForward(): Promise<void> {
+        const response = await fetch('/jump_forward', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-CSRFToken': this.getCsrfToken(),
+            },
+            body: `book-code=${this.bookCode}&book-page-number=${this.pageNumber}`,
+        });
+        if (response.ok) {
+            const data = await response.json();
+            if (data.success) {
+                await this.loadPage(data.page_number, data.word);
+                this.updateJumpButtons();
+            } else {
+                console.error('Jump forward failed:', data.error);
+            }
+        } else {
+            console.error('Network error during jump forward');
+        }
+    }
+
+    private updateJumpButtons(): void {
+        const backButton = document.getElementById('back-button') as HTMLButtonElement;
+        const forwardButton = document.getElementById('forward-button') as HTMLButtonElement;
+
+        if (backButton && forwardButton) {
+            fetch('/get_jump_status', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRFToken': this.getCsrfToken(),
+                },
+                body: `book-code=${this.bookCode}&book-page-number=${this.pageNumber}`,
+            })
+                .then(response => response.json())
+                .then(data => {
+                    backButton.disabled = data.is_first_jump;
+                    forwardButton.disabled = data.is_last_jump;
+                })
+                .catch(error => console.error('Error updating jump buttons:', error));
+        }
+    }
+
+    private getCsrfToken(): string {
+        const csrfCookie = document.cookie.split(';').find(cookie => cookie.trim().startsWith('csrftoken='));
+        return csrfCookie ? csrfCookie.split('=')[1] : '';
+    }
+
+}  // Viewport
 
 // Global instance of the Viewport class
 export const viewport = new Viewport();

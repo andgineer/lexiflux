@@ -14,12 +14,12 @@
           <div class="collapse navbar-collapse" id="navbarContent">
             <ul class="navbar-nav me-auto mb-2 mb-lg-0">
               <li class="nav-item">
-                <button id="back-button" class="btn btn-outline-secondary" type="button" title="Back">
+                <button id="back-button" class="btn btn-primary" type="button" title="Back">
                   <i class="bi bi-chevron-left"></i>
                 </button>
               </li>
               <li class="nav-item">
-                <button id="forward-button" class="btn btn-outline-secondary ms-2" type="button" title="Forward">
+                <button id="forward-button" class="btn btn-primary ms-2" type="button" title="Forward">
                   <i class="bi bi-chevron-right"></i>
                 </button>
               </li>
@@ -29,7 +29,7 @@
                 </button>
                 <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton" style="max-height: 70vh; overflow-y: auto;">
                   {% for toc_item in book.toc %}
-                    <li><a class="dropdown-item" href="#" onclick="goToPage({{ toc_item.1 }}, {{ toc_item.2 }})">{{ toc_item.0 }}</a></li>
+                    <li><a class="dropdown-item" href="#" onclick="jump({{ toc_item.1 }}, {{ toc_item.2 }})">{{ toc_item.0 }}</a></li>
                   {% endfor %}
                 </ul>
               </li>

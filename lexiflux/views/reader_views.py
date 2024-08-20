@@ -242,27 +242,52 @@ def location(request: HttpRequest) -> HttpResponse:
 
 @smart_login_required
 @require_POST  # type: ignore
-def add_to_history(request: HttpRequest) -> JsonResponse:
-    """Add the location to History."""
-    user = request.user
+def jump(request: HttpRequest) -> HttpResponse:
+    """Jump to a specific location in the book."""
+    book_code = request.POST.get("book-code")
+    page_number = int(request.POST.get("book-page-number"))
+    top_word = int(request.POST.get("top-word"))
 
-    book_id = request.POST.get("book_id")
-    page_number = request.POST.get("page_number")
-    top_word_id = request.POST.get("top_word_id")
+    book = Book.objects.get(code=book_code)
+    reading_loc, _ = ReadingLoc.objects.get_or_create(user=request.user, book=book)
+    reading_loc.jump(page_number, top_word)
 
-    try:
-        book_id = int(book_id)
-        page_number = int(page_number)
-        top_word_id = int(top_word_id)
-    except (TypeError, ValueError):
-        return JsonResponse({"error": "Invalid input"}, status=400)
+    return JsonResponse({"success": True})
 
-    book = get_object_or_404(Book, id=book_id)
-    if not can_see_book(request.user, book):
-        return HttpResponse(status=403)  # Forbidden
 
-    ReadingLoc.update_reading_location(
-        user=user, book_id=book_id, page_number=page_number, top_word_id=top_word_id
-    )
+@smart_login_required
+@require_POST  # type: ignore
+def jump_back(request: HttpRequest) -> HttpResponse:
+    """Jump back to the previous location in the book."""
+    book_code = request.POST.get("book-code")
+    book = Book.objects.get(code=book_code)
+    reading_loc = ReadingLoc.objects.get(user=request.user, book=book)
 
-    return JsonResponse({"message": "Reading history added successfully"})
+    page_number, word = reading_loc.jump_back()
+    return JsonResponse({"success": True, "page_number": page_number, "word": word})
+
+
+@smart_login_required
+@require_POST  # type: ignore
+def jump_forward(request: HttpRequest) -> HttpResponse:
+    """Jump forward to the next location in the book."""
+    book_code = request.POST.get("book-code")
+    book = Book.objects.get(code=book_code)
+    reading_loc = ReadingLoc.objects.get(user=request.user, book=book)
+
+    page_number, word = reading_loc.jump_forward()
+    return JsonResponse({"success": True, "page_number": page_number, "word": word})
+
+
+@smart_login_required
+@require_POST  # type: ignore
+def get_jump_status(request: HttpRequest) -> HttpResponse:
+    """Get the status of the jump buttons."""
+    book_code = request.POST.get("book-code")
+    book = Book.objects.get(code=book_code)
+    reading_loc = ReadingLoc.objects.get(user=request.user, book=book)
+
+    is_first_jump = reading_loc.current_jump == 0
+    is_last_jump = reading_loc.current_jump == len(reading_loc.jump_history) - 1
+
+    return JsonResponse({"is_first_jump": is_first_jump, "is_last_jump": is_last_jump})

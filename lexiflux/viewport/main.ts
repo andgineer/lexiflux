@@ -6,22 +6,32 @@ const CLICK_TIMEOUT_MS = 200;
 
 // to make it available in HTML page
 (window as any).goToPage = goToPage;
+(window as any).jump = jump;
 
 let clickTimeout: NodeJS.Timeout | null = null;
 
 async function goToPage(pageNum: number, topWord: number): Promise<void> {
         await viewport.loadPage(pageNum, topWord);
-//         reInitDom();
 }
 
 async function handlePrevButtonClick(): Promise<void> {
     await viewport.scrollUp();
-//     reInitDom();
 }
 
 async function handleNextButtonClick(): Promise<void> {
     await viewport.scrollDown();
-//     reInitDom();
+}
+
+async function jump(pageNum: number, topWord: number): Promise<void> {
+    await viewport.jump(pageNum, topWord);
+}
+
+async function handleBackButtonClick(): Promise<void> {
+    await viewport.jumpBack();
+}
+
+async function handleForwardButtonClick(): Promise<void> {
+    await viewport.jumpForward();
 }
 
 function handleWordClick(event: MouseEvent): void {
@@ -128,6 +138,18 @@ function reInitDom(): void {
     if (nextButton) {
         nextButton.removeEventListener('click', handleNextButtonClick);
         nextButton.addEventListener('click', handleNextButtonClick);
+    }
+
+    let backButton = document.getElementById('back-button');
+    if (backButton) {
+        backButton.removeEventListener('click', handleBackButtonClick);
+        backButton.addEventListener('click', handleBackButtonClick);
+    }
+
+    let forwardButton = document.getElementById('forward-button');
+    if (forwardButton) {
+        forwardButton.removeEventListener('click', handleForwardButtonClick);
+        forwardButton.addEventListener('click', handleForwardButtonClick);
     }
 
     const wordsContainer = viewport.getWordsContainer();
