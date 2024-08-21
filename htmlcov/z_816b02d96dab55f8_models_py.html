@@ -54,8 +54,8 @@
             </div>
         </aside>
         <h2>
-            <span class="text">309 statements &nbsp;</span>
-            <button type="button" class="run button_toggle_run" value="run" data-shortcut="r" title="Toggle lines run">255<span class="text"> run</span></button>
+            <span class="text">313 statements &nbsp;</span>
+            <button type="button" class="run button_toggle_run" value="run" data-shortcut="r" title="Toggle lines run">259<span class="text"> run</span></button>
             <button type="button" class="mis show_mis button_toggle_mis" value="mis" data-shortcut="m" title="Toggle lines missing">54<span class="text"> missing</span></button>
             <button type="button" class="exc show_exc button_toggle_exc" value="exc" data-shortcut="x" title="Toggle lines excluded">0<span class="text"> excluded</span></button>
         </h2>
@@ -65,7 +65,7 @@
             <a id="nextFileLink" class="nav" href="z_816b02d96dab55f8_settings_py.html">&#xbb; next</a>
             &nbsp; &nbsp; &nbsp;
             <a class="nav" href="https://coverage.readthedocs.io/en/7.6.1">coverage.py v7.6.1</a>,
-            created at 2024-08-20 07:44 +0000
+            created at 2024-08-21 09:05 +0000
         </p>
         <aside class="hidden">
             <button type="button" class="button_next_chunk" data-shortcut="j"></button>
@@ -696,6 +696,14 @@
     <p class="run"><span class="n"><a id="t614" href="#t614">614</a></span><span class="t">            <span class="nam">loc</span><span class="op">.</span><span class="nam">jump_history</span><span class="op">[</span><span class="nam">loc</span><span class="op">.</span><span class="nam">current_jump</span><span class="op">]</span> <span class="op">=</span> <span class="op">{</span><span class="str">"page_number"</span><span class="op">:</span> <span class="nam">page_number</span><span class="op">,</span> <span class="str">"word"</span><span class="op">:</span> <span class="nam">top_word_id</span><span class="op">}</span>&nbsp;</span><span class="r"></span></p>
     <p class="pln"><span class="n"><a id="t615" href="#t615">615</a></span><span class="t">&nbsp;</span><span class="r"></span></p>
     <p class="run"><span class="n"><a id="t616" href="#t616">616</a></span><span class="t">        <span class="nam">loc</span><span class="op">.</span><span class="nam">save</span><span class="op">(</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
+    <p class="pln"><span class="n"><a id="t617" href="#t617">617</a></span><span class="t">&nbsp;</span><span class="r"></span></p>
+    <p class="run"><span class="n"><a id="t618" href="#t618">618</a></span><span class="t">    <span class="op">@</span><span class="nam">classmethod</span>&nbsp;</span><span class="r"></span></p>
+    <p class="run"><span class="n"><a id="t619" href="#t619">619</a></span><span class="t">    <span class="key">def</span> <span class="nam">get_or_create_reading_loc</span><span class="op">(</span><span class="nam">cls</span><span class="op">,</span> <span class="nam">user</span><span class="op">:</span> <span class="nam">CustomUser</span><span class="op">,</span> <span class="nam">book</span><span class="op">:</span> <span class="nam">Book</span><span class="op">)</span> <span class="op">-></span> <span class="str">"ReadingLoc"</span><span class="op">:</span>&nbsp;</span><span class="r"></span></p>
+    <p class="pln"><span class="n"><a id="t620" href="#t620">620</a></span><span class="t">        <span class="str">"""Get or create a reading location."""</span>&nbsp;</span><span class="r"></span></p>
+    <p class="run"><span class="n"><a id="t621" href="#t621">621</a></span><span class="t">        <span class="nam">loc</span><span class="op">,</span> <span class="nam">_</span> <span class="op">=</span> <span class="nam">cls</span><span class="op">.</span><span class="nam">objects</span><span class="op">.</span><span class="nam">get_or_create</span><span class="op">(</span>&nbsp;</span><span class="r"></span></p>
+    <p class="pln"><span class="n"><a id="t622" href="#t622">622</a></span><span class="t">            <span class="nam">user</span><span class="op">=</span><span class="nam">user</span><span class="op">,</span> <span class="nam">book</span><span class="op">=</span><span class="nam">book</span><span class="op">,</span> <span class="nam">defaults</span><span class="op">=</span><span class="op">{</span><span class="str">"page_number"</span><span class="op">:</span> <span class="num">1</span><span class="op">,</span> <span class="str">"word"</span><span class="op">:</span> <span class="num">0</span><span class="op">}</span>&nbsp;</span><span class="r"></span></p>
+    <p class="pln"><span class="n"><a id="t623" href="#t623">623</a></span><span class="t">        <span class="op">)</span>&nbsp;</span><span class="r"></span></p>
+    <p class="run"><span class="n"><a id="t624" href="#t624">624</a></span><span class="t">        <span class="key">return</span> <span class="nam">loc</span>  <span class="com"># type: ignore</span>&nbsp;</span><span class="r"></span></p>
 </main>
 <footer>
     <div class="content">
@@ -705,7 +713,7 @@
             <a class="nav" href="z_816b02d96dab55f8_settings_py.html">&#xbb; next</a>
             &nbsp; &nbsp; &nbsp;
             <a class="nav" href="https://coverage.readthedocs.io/en/7.6.1">coverage.py v7.6.1</a>,
-            created at 2024-08-20 07:44 +0000
+            created at 2024-08-21 09:05 +0000
         </p>
     </div>
 </footer>
