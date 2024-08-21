@@ -14,12 +14,12 @@
           <div class="collapse navbar-collapse" id="navbarContent">
             <ul class="navbar-nav me-auto mb-2 mb-lg-0">
               <li class="nav-item">
-                <button id="back-button" class="btn btn-primary" type="button" title="Back">
+                <button id="back-button" class="btn btn-primary" type="button" title="Back" {% if is_first_jump %}disabled{% endif %}>
                   <i class="bi bi-chevron-left"></i>
                 </button>
               </li>
               <li class="nav-item">
-                <button id="forward-button" class="btn btn-primary ms-2" type="button" title="Forward">
+                <button id="forward-button" class="btn btn-primary ms-2" type="button" title="Forward" {% if is_last_jump %}disabled{% endif %}>
                   <i class="bi bi-chevron-right"></i>
                 </button>
               </li>

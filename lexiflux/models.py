@@ -614,3 +614,11 @@ class ReadingLoc(models.Model):  # type: ignore  # pylint: disable=too-many-inst
             loc.jump_history[loc.current_jump] = {"page_number": page_number, "word": top_word_id}
 
         loc.save()
+
+    @classmethod
+    def get_or_create_reading_loc(cls, user: CustomUser, book: Book) -> "ReadingLoc":
+        """Get or create a reading location."""
+        loc, _ = cls.objects.get_or_create(
+            user=user, book=book, defaults={"page_number": 1, "word": 0}
+        )
+        return loc  # type: ignore

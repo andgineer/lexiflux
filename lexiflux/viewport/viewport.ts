@@ -66,16 +66,12 @@ export class Viewport {
     }  // domChanged
 
     public scrollToWord(wordId: number): void {
-        const word = this.word(wordId);
-        if (word) {
-            const top = this.getWordTop(wordId);
-            this.bookPageScroller.scrollTop = top;
-        }
+        this.bookPageScroller.scrollTop = this.getWordTop(wordId);
     }
 
     public getWordTop(wordId: number = 0): number {
-        // find targetLastWord top coordinate
-        const word = document.getElementById('word-' + wordId);
+        // find wordId top coordinate
+        const word = this.word(wordId);
         return word ? word.getBoundingClientRect().top - this.wordsContainerTopMargin : 0;
     }  // getWordTop
 
@@ -104,6 +100,7 @@ export class Viewport {
                     this.bookCode = data.data.bookCode;
                     this.pageNumber = parseInt(data.data.pageNumber);
                     clearLexicalPanel();
+                    this.bookPageScroller.scrollTop = 0;  // to calculate words positions
                     this.domChanged();
 
                     log(`Total words: ${this.totalWords}, topWord: ${topWord}`);
@@ -112,13 +109,10 @@ export class Viewport {
                         this.topWord = topWord;
                         if (topWord > 0) {
                             this.scrollToWord(topWord);
-                            log('scrollTop:', this.bookPageScroller.scrollTop);
                         } else {
                             this.bookPageScroller.scrollTop = 0;
                         }
-                        this.reportReadingLocation();
                     }
-                    this.updateJumpButtons();
                     resolve();
                 })
                 .catch(error => {
@@ -236,10 +230,6 @@ export class Viewport {
                 }
                 return response.text();
             })
-            .then(data => {
-                // Process response if necessary
-                this.updateJumpButtons();
-            })
             .catch(error => console.error('Error:', error));
     }  // reportReadingLocation
     
@@ -289,6 +279,7 @@ export class Viewport {
             const data = await response.json();
             if (data.success) {
                 await this.loadPage(pageNum, topWord);
+                this.reportReadingLocation();
                 this.updateJumpButtons();
             } else {
                 console.error('Jump failed:', data.error);
@@ -311,6 +302,7 @@ export class Viewport {
             const data = await response.json();
             if (data.success) {
                 await this.loadPage(data.page_number, data.word);
+                this.reportReadingLocation();
                 this.updateJumpButtons();
             } else {
                 console.error('Jump back failed:', data.error);
@@ -333,6 +325,7 @@ export class Viewport {
             const data = await response.json();
             if (data.success) {
                 await this.loadPage(data.page_number, data.word);
+                this.reportReadingLocation();
                 this.updateJumpButtons();
             } else {
                 console.error('Jump forward failed:', data.error);
@@ -347,14 +340,7 @@ export class Viewport {
         const forwardButton = document.getElementById('forward-button') as HTMLButtonElement;
 
         if (backButton && forwardButton) {
-            fetch('/get_jump_status', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                    'X-CSRFToken': this.getCsrfToken(),
-                },
-                body: `book-code=${this.bookCode}&book-page-number=${this.pageNumber}`,
-            })
+            fetch(`/get_jump_status?book-code=${this.bookCode}`)
                 .then(response => response.json())
                 .then(data => {
                     backButton.disabled = data.is_first_jump;

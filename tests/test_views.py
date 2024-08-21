@@ -206,7 +206,7 @@ def test_get_jump_status_view(client, user, book):
         current_jump=1  # Set current position to the middle of the history
     )
 
-    response = client.post(reverse('get_jump_status'), {
+    response = client.get(reverse('get_jump_status'), {
         'book-code': book.code,
     })
 
@@ -220,7 +220,7 @@ def test_get_jump_status_view(client, user, book):
     # Test first jump
     reading_loc.current_jump = 0
     reading_loc.save()
-    response = client.post(reverse('get_jump_status'), {'book-code': book.code})
+    response = client.get(reverse('get_jump_status'), {'book-code': book.code})
     data = response.json()
     assert data['is_first_jump'] == True
     assert data['is_last_jump'] == False
@@ -228,7 +228,7 @@ def test_get_jump_status_view(client, user, book):
     # Test last jump
     reading_loc.current_jump = 2
     reading_loc.save()
-    response = client.post(reverse('get_jump_status'), {'book-code': book.code})
+    response = client.get(reverse('get_jump_status'), {'book-code': book.code})
     data = response.json()
     assert data['is_first_jump'] == False
     assert data['is_last_jump'] == True
