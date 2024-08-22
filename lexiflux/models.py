@@ -148,6 +148,9 @@ class Book(models.Model):  # type: ignore
     author = models.ForeignKey(Author, on_delete=models.CASCADE)
     language = models.ForeignKey(Language, on_delete=models.SET_NULL, null=True)
     toc = models.JSONField(default=list, blank=True)
+    anchor_map = models.JSONField(
+        default=dict, blank=True, help_text="Maps anchors to page numbers and EPUB items"
+    )
 
     @property
     def current_reading_by_count(self) -> int:
@@ -185,6 +188,10 @@ class Book(models.Model):  # type: ignore
         elif not self.code:
             # This is a new object, so generate a unique code if it doesn't have one yet
             self.code = self.generate_unique_book_code()
+
+        # Ensure anchor_map is a dictionary
+        if not isinstance(self.anchor_map, dict):
+            self.anchor_map = {}
 
         super().save(*args, **kwargs)
 

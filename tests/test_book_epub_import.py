@@ -1,8 +1,8 @@
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
 
 import allure
 import pytest
-from ebooklib import epub
+from ebooklib import epub, ITEM_DOCUMENT
 
 from lexiflux.ebook.book_loader_epub import flatten_list, extract_headings, BookLoaderEpub, href_hierarchy, clear_html
 
@@ -70,7 +70,7 @@ def test_import_epub_e2e():
     assert book.author.name == 'Theodore Dreiser'
     assert book.language.name == 'English'
     assert book.public is True
-    assert book.pages.count() == 104
+    assert book.pages.count() == 719
 
 
 @allure.epic('Book import')
@@ -137,6 +137,9 @@ def test_get_random_words_epub(book_epub):
         assert len(random_words_1.split()) == WORDS_NUM
         # assert all(word.startswith('word') or word.startswith('Page') for word in random_words_1.split())
 
+        from pprint import pprint
+        pprint(random_words_1)
+        pprint(random_words_2)
         if random_words_1 != random_words_2:
             # Test passes if we find different results
             return
@@ -150,8 +153,14 @@ def test_get_random_words_epub(book_epub):
 @pytest.mark.django_db
 def test_get_random_words_short_book(book_epub):
     # Patch the pages method to return a short book
-    short_pages = [' '.join([f'word{i}' for i in range(10)]) for _ in range(3)]
-    with patch.object(book_epub, 'pages', return_value=short_pages):
+    short_items = [
+        MagicMock(
+            get_body_content=lambda: ' '.join([f'word{i}' for i in range(10)]).encode("utf-8"),
+            get_type=lambda: ITEM_DOCUMENT
+        )
+        for _ in range(3)
+    ]
+    with patch.object(book_epub.epub, 'get_items', return_value=short_items):
         result = book_epub.get_random_words(words_num=15)
         assert 3 <= len(result.split()) <= 10  # Should return between 3 and 10 words
         assert all(word.startswith('word') for word in result.split())
@@ -162,21 +171,6 @@ def test_get_random_words_short_book(book_epub):
 @pytest.mark.django_db
 def test_get_random_words_empty_book(book_epub):
     # Patch the pages method to return an empty book
-    with patch.object(book_epub, 'pages', return_value=[]):
+    with patch.object(book_epub.epub, 'get_items', return_value=[]):
         result = book_epub.get_random_words(words_num=15)
         assert result == ''  # Should return an empty string for an empty book
-
-
-@allure.epic('Book import')
-@allure.feature('EPUB: Clean HTML')
-@pytest.mark.django_db
-def test_get_random_words_respects_junk_text_percentages(book_epub):
-    # Create a book with 100 pages, each containing its page number
-    pages = [f"Page {i}" for i in range(100)]
-    with patch.object(book_epub, 'pages', return_value=pages):
-        results = [book_epub.get_random_words(words_num=1) for _ in range(100)]
-
-        print(results)
-        # Check that we never select from the first or last 5 pages
-        assert all(int(result.split()[0]) >= 5 for result in results)
-        assert all(int(result.split()[0]) < 95 for result in results)

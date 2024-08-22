@@ -7,13 +7,16 @@ import re
 from collections import defaultdict
 from typing import Any, Iterable, List, Optional, Tuple, Dict, Iterator
 
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, Tag
 from ebooklib import ITEM_DOCUMENT, epub, ITEM_IMAGE
 
 from lexiflux.ebook.book_loader_base import BookLoaderBase, MetadataField
 from lexiflux.models import BookImage, Book
 
 log = logging.getLogger()
+
+MAX_ITEM_SIZE = 6000
+TARGET_PAGE_SIZE = 3000
 
 
 class BookLoaderEpub(BookLoaderBase):
@@ -28,6 +31,10 @@ class BookLoaderEpub(BookLoaderBase):
     JUNK_TEXT_BEGIN_PERCENT = 5
     JUNK_TEXT_END_PERCENT = 5
     MAX_RANDOM_WORDS_ATTEMPTS = 10  # Maximum number of attempts to find a suitable page
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+        self.anchor_map: Dict[str, Dict[str, Any]] = {}
 
     def create(self, owner_email: str, forced_language: Optional[str] = None) -> Book:
         """Save the book to the database."""
@@ -82,14 +89,10 @@ class BookLoaderEpub(BookLoaderBase):
         return meta, 0, -1  # todo: detect start/finish of the book
 
     def pages(self) -> Iterator[str]:
-        """Split a text into pages of approximately equal length.
-
-        Also clear headings and recollect them during pages generation.
-        """
+        """Split a text into pages of approximately equal length."""
         self.toc = []
         page_num = 1
-        content_accumulator = ""
-        for spine_id in self.epub.spine:
+        for spine_id in self.epub.spine:  # pylint: disable=too-many-nested-blocks
             item: epub.EpubItem = self.epub.get_item_with_id(spine_id[0])
             if item.get_type() == ITEM_DOCUMENT:
                 log.debug(
@@ -100,52 +103,171 @@ class BookLoaderEpub(BookLoaderBase):
                     item.get_id(),
                     item.file_name,
                 )
-                # todo: split epub item to pages
-                content_accumulator += (
-                    " " + clear_html(item.get_body_content().decode("utf-8")).strip()
-                )
-                if item.file_name in self.heading_hrefs:
-                    header_anchors = self.heading_hrefs[item.file_name]
-                    if "#" in header_anchors:
-                        self.toc.append((header_anchors["#"], page_num, 0))
-                if len(content_accumulator) > 1000:
-                    page_num += 1
-                    yield content_accumulator
-                    content_accumulator = ""
-                # todo: detect headings inside pages text and store them in self._detected_toc
-        #  set self._detected_toc as TOC if epab.toc too small
+                soup = BeautifulSoup(item.get_body_content().decode("utf-8"), "html.parser")
+                content = str(soup)
+                if len(content) > MAX_ITEM_SIZE:
+                    for sub_page in self._split_content(soup):
+                        if sub_page.strip():  # Only process non-empty pages
+                            sub_soup = BeautifulSoup(sub_page, "html.parser")
+                            self._process_anchors(item, page_num, sub_soup)
+                            cleaned_content = clear_html(str(sub_soup)).strip()
+                            if cleaned_content:
+                                yield cleaned_content
+                                page_num += 1
+                            else:
+                                log.warning(
+                                    f"Empty page generated for {item.file_name}, page {page_num}"
+                                )
+                        else:
+                            log.warning(f"Empty sub-page skipped for {item.file_name}")
+                else:
+                    self._process_anchors(item, page_num, soup)
+                    cleaned_content = clear_html(content).strip()
+                    if cleaned_content:
+                        yield cleaned_content
+                        page_num += 1
+                    else:
+                        log.warning(f"Empty page skipped for {item.file_name}")
+
+        # Process TOC after all pages have been processed
+        self._process_toc()
+
+    def _split_content(self, soup: BeautifulSoup) -> Iterator[str]:
+        """Split large content into smaller pages."""
+        current_page: List[Any] = []
+        current_size = 0
+
+        contents = soup.body.contents if soup.body else soup.contents
+
+        for element in contents:
+            if isinstance(element, Tag):
+                element_str = str(element)
+                element_size = len(element_str)
+
+                if current_size + element_size > TARGET_PAGE_SIZE and current_page:
+                    page_content = "".join(map(str, current_page))
+                    if page_content.strip():
+                        yield page_content
+                    current_page = []
+                    current_size = 0
+
+                if element_size > TARGET_PAGE_SIZE:
+                    # If a single element is too large, we need to split it
+                    yield from self._split_large_element(element)
+                else:
+                    current_page.append(element)
+                    current_size += element_size
+            else:
+                # For NavigableString objects
+                current_page.append(element)
+                current_size += len(str(element))
+
+        if current_page:
+            page_content = "".join(map(str, current_page))
+            if page_content.strip():
+                yield page_content
+
+    def _split_large_element(self, element: Tag) -> Iterator[str]:
+        """Split a large element into smaller chunks."""
+        content = str(element)
+        chunks = []
+        current_chunk: List[str] = []
+        current_size = 0
+
+        # Use regex to split content at paragraph ends or multiple empty lines
+        for paragraph in re.split(r"(\n\s*\n|\s*<\/p>\s*)", content):
+            if current_size + len(paragraph) > TARGET_PAGE_SIZE and current_chunk:
+                chunk_content = "".join(current_chunk)
+                if chunk_content.strip():
+                    chunks.append(chunk_content)
+                else:
+                    log.warning("Empty chunk skipped in _split_large_element")
+                current_chunk = []
+                current_size = 0
+
+            current_chunk.append(paragraph)
+            current_size += len(paragraph)
+
+        if current_chunk:
+            chunk_content = "".join(current_chunk)
+            if chunk_content.strip():
+                chunks.append(chunk_content)
+            else:
+                log.warning("Empty final chunk skipped in _split_large_element")
+
+        for chunk in chunks:
+            cleaned_chunk = clear_html(chunk).strip()
+            if cleaned_chunk:
+                yield cleaned_chunk
+            else:
+                log.warning("Empty cleaned chunk skipped in _split_large_element")
+
+    def _process_toc(self) -> None:
+        """Process table of contents using the anchor_map."""
+        for file_name, anchors in self.heading_hrefs.items():
+            for anchor, title in anchors.items():
+                full_anchor = f"{file_name}{anchor}"
+                if full_anchor in self.anchor_map:
+                    page_num = self.anchor_map[full_anchor]["page"]
+                    self.toc.append((title, page_num, 0))
+                elif file_name in self.anchor_map and anchor == "#":
+                    # Handle the case where the anchor is for the start of the file
+                    page_num = self.anchor_map[file_name]["page"]
+                    self.toc.append((title, page_num, 0))
+
+    def _process_anchors(
+        self, item: epub.EpubItem, current_page: int, soup: BeautifulSoup
+    ) -> None:
+        """Process anchors for a page."""
+        for anchor in soup.find_all(True, attrs={"id": True}):
+            anchor_id = anchor["id"]
+            self.anchor_map[f"{item.file_name}#{anchor_id}"] = {
+                "page": current_page,
+                "item_id": item.get_id(),
+                "item_name": item.get_name(),
+            }
+
+        # Add an entry for the start of the document if it hasn't been added yet
+        if item.file_name not in self.anchor_map:
+            self.anchor_map[item.file_name] = {
+                "page": current_page,
+                "item_id": item.get_id(),
+                "item_name": item.get_name(),
+            }
 
     def get_random_words(self, words_num: int = 15) -> str:
         """Get random words from the book."""
-        pages = list(self.pages())  # Convert iterator to list for random access
-        if not pages:
+        document_items = [
+            item for item in self.epub.get_items() if item.get_type() == ITEM_DOCUMENT
+        ]
+
+        if not document_items:
             return ""
 
         words = []
         for _ in range(self.MAX_RANDOM_WORDS_ATTEMPTS):
-            # Select a random page, avoiding the first and last pages as potential junk
-            valid_pages = (
-                pages[
-                    int(len(pages) * self.JUNK_TEXT_BEGIN_PERCENT / 100) : int(
-                        len(pages) * (100 - self.JUNK_TEXT_END_PERCENT) / 100
-                    )
-                ]
-                or pages
-            )
+            random_item = random.choice(document_items)
+            content = random_item.get_body_content().decode("utf-8")
 
-            random_page = random.choice(valid_pages)
+            # Clean the content
+            cleaned_content = clear_html(content)
 
-            expected_words_length = self.WORD_ESTIMATED_LENGTH * words_num * 2
+            expected_length = self.WORD_ESTIMATED_LENGTH * words_num * 2
 
-            start = random.randint(0, max(0, len(random_page) - expected_words_length))
-            fragment = random_page[start : start + expected_words_length]
+            if len(cleaned_content) < expected_length:
+                # For short documents, use the full content
+                fragment = cleaned_content
+            else:
+                # For longer documents, select a random starting point
+                start = random.randint(0, len(cleaned_content) - expected_length)
+                fragment = cleaned_content[start : start + expected_length]
 
-            # Skip the first word in case it's partially cut off
-            words = re.split(r"\s", fragment)[1 : words_num + 1]
+            # Split into words, skipping the first word in case it's partial
+            words = re.split(r"\s+", fragment)[1 : words_num + 1]
 
-            # to have something in words at the loop end do that after assigning
-            if len(random_page) < expected_words_length:
-                continue  # Try another page if this one is too short
+            # Skip documents that are too short
+            if len(cleaned_content) < self.WORD_ESTIMATED_LENGTH * words_num * 2:
+                continue
 
             if len(words) >= self.MIN_RANDOM_WORDS:
                 return " ".join(words)
