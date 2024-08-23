@@ -292,7 +292,7 @@ def book_plain_text():
 
 
 @pytest.fixture
-def book_epub():
+def book_epub(db_init):
     # Create a mock EPUB book
     mock_book = MagicMock(spec=epub.EpubBook)
 

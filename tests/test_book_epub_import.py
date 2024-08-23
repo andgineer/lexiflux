@@ -2,9 +2,11 @@ from unittest.mock import patch, MagicMock
 
 import allure
 import pytest
-from ebooklib import epub, ITEM_DOCUMENT
+from bs4 import BeautifulSoup
+from ebooklib import epub, ITEM_DOCUMENT, ITEM_IMAGE
 
-from lexiflux.ebook.book_loader_epub import flatten_list, extract_headings, BookLoaderEpub, href_hierarchy, clear_html
+from lexiflux.ebook.book_loader_epub import flatten_list, extract_headings, BookLoaderEpub, href_hierarchy, clear_html, \
+    TARGET_PAGE_SIZE
 
 
 @allure.epic('Book import')
@@ -125,7 +127,6 @@ def test_clean_html_handles_empty_input():
 
 @allure.epic('Book import')
 @allure.feature('EPUB: Clean HTML')
-@pytest.mark.django_db
 def test_get_random_words_epub(book_epub):
     MAX_ATTEMPTS = 5
     WORDS_NUM = 15
@@ -150,7 +151,6 @@ def test_get_random_words_epub(book_epub):
 
 @allure.epic('Book import')
 @allure.feature('EPUB: Clean HTML')
-@pytest.mark.django_db
 def test_get_random_words_short_book(book_epub):
     # Patch the pages method to return a short book
     short_items = [
@@ -168,9 +168,146 @@ def test_get_random_words_short_book(book_epub):
 
 @allure.epic('Book import')
 @allure.feature('EPUB: Clean HTML')
-@pytest.mark.django_db
 def test_get_random_words_empty_book(book_epub):
     # Patch the pages method to return an empty book
     with patch.object(book_epub.epub, 'get_items', return_value=[]):
         result = book_epub.get_random_words(words_num=15)
         assert result == ''  # Should return an empty string for an empty book
+
+
+def test_pages_basic_functionality(book_epub):
+    pages = list(book_epub.pages())
+    assert len(pages) > 0
+    assert all(isinstance(page, str) for page in pages)
+
+
+def test_pages_content_splitting(book_epub):
+    # Test with normal HTML content
+    html_content = "<div><p>" + ("HTML content " * 500) + "</p><p>" + ("More HTML " * 500) + "</p></div>"
+    book_epub.epub.get_items()[0].get_body_content = lambda: html_content.encode('utf-8')
+
+    html_pages = list(book_epub.pages())
+
+    assert len(html_pages) > 1, "HTML content should be split into multiple pages"
+    assert all(len(page) <= TARGET_PAGE_SIZE * 2 for page in
+               html_pages), "No HTML page should be more than twice the TARGET_PAGE_SIZE"
+
+    # Test with content that looks like plain text but is actually in a <p> tag
+    plain_text_like_content = "<p>" + ("Simple HTML content " * 1000) + "</p>"
+    book_epub.epub.get_items()[0].get_body_content = lambda: plain_text_like_content.encode('utf-8')
+
+    text_like_pages = list(book_epub.pages())
+
+    assert len(text_like_pages) > 1, "Simple HTML content should be split into multiple pages"
+    assert all(len(page) <= TARGET_PAGE_SIZE * 2 for page in
+               text_like_pages), "No simple HTML page should be more than twice the TARGET_PAGE_SIZE"
+
+    # Test with content without any HTML tags
+    no_tags_content = "Plain text content without any HTML tags. " * 1000
+    book_epub.epub.get_items()[0].get_body_content = lambda: no_tags_content.encode('utf-8')
+
+    no_tags_pages = list(book_epub.pages())
+
+    print(f"HTML pages: {len(html_pages)}, sizes: {[len(page) for page in html_pages]}")
+    print(f"Simple HTML pages: {len(text_like_pages)}, sizes: {[len(page) for page in text_like_pages]}")
+    print(f"No tags pages: {len(no_tags_pages)}, sizes: {[len(page) for page in no_tags_pages]}")
+
+    assert len(no_tags_pages) > 1, "Content without tags should be split into multiple pages"
+    assert all(len(page) <= TARGET_PAGE_SIZE * 2 for page in
+               no_tags_pages), "No page of content without tags should be more than twice the TARGET_PAGE_SIZE"
+
+
+def test_split_large_element(book_epub):
+    # Test with a large HTML element
+    large_html_element = BeautifulSoup(
+        "<div><p>" + "HTML content " * 500 + "</p><p>" + "More HTML " * 500 + "</p></div>", "html.parser").div
+    html_pages = list(book_epub._split_large_element(large_html_element))
+
+    assert len(html_pages) > 1, "Large HTML element should be split into multiple pages"
+    assert all(len(page) <= TARGET_PAGE_SIZE * 2 for page in
+               html_pages), "No HTML page should be more than twice the TARGET_PAGE_SIZE"
+
+    # Test with a large <p> element (simulating a large paragraph of text)
+    large_p_element = BeautifulSoup("<p>" + "Large content " * 1000 + "</p>", "html.parser").p
+    p_pages = list(book_epub._split_large_element(large_p_element))
+
+    assert len(p_pages) > 1, "Large paragraph should be split into multiple pages"
+    assert all(len(page) <= TARGET_PAGE_SIZE * 2 for page in
+               p_pages), "No paragraph page should be more than twice the TARGET_PAGE_SIZE"
+
+    # Test with content without any HTML tags
+    no_tags_content = "Plain text content without any HTML tags. " * 1000
+    no_tags_pages = list(book_epub._split_large_element(no_tags_content))
+
+    print(f"HTML element pages: {len(html_pages)}, sizes: {[len(page) for page in html_pages]}")
+    print(f"Large paragraph pages: {len(p_pages)}, sizes: {[len(page) for page in p_pages]}")
+    print(f"No tags pages: {len(no_tags_pages)}, sizes: {[len(page) for page in no_tags_pages]}")
+
+    assert len(no_tags_pages) > 1, "Content without tags should be split into multiple pages"
+    assert all(len(page) <= TARGET_PAGE_SIZE * 2 for page in
+               no_tags_pages), "No page of content without tags should be more than twice the TARGET_PAGE_SIZE"
+
+
+def test_pages_with_anchors(book_epub):
+    # Modify one item to have an anchor
+    content = "<h1 id='chapter1'>Chapter 1</h1><p>Content</p>"
+    book_epub.epub.get_items()[0].get_body_content = lambda: content.encode('utf-8')
+    book_epub.epub.get_items()[0].file_name = "test.xhtml"
+    book_epub.heading_hrefs = {"test.xhtml": {"#chapter1": "Chapter 1"}}
+
+    list(book_epub.pages())  # Process pages
+    assert "test.xhtml#chapter1" in book_epub.anchor_map
+    assert "test.xhtml" in book_epub.anchor_map
+
+
+def test_pages_empty_content(book_epub):
+    # Modify all items to have empty content
+    for item in book_epub.epub.get_items():
+        item.get_body_content = lambda: b""
+
+    pages = list(book_epub.pages())
+    assert len(pages) == 0
+
+
+def test_pages_non_document_item(book_epub):
+    # Modify one item to be a non-document item
+    book_epub.epub.get_items()[0].get_type = lambda: ITEM_IMAGE
+
+    pages = list(book_epub.pages())
+    assert len(pages) < 20  # We should have fewer pages than the original 20
+
+
+def test_pages_with_toc_processing(book_epub):
+    # Set up a simple TOC structure
+    book_epub.heading_hrefs = {"page_0.xhtml": {"#": "Chapter 1"}}
+
+    list(book_epub.pages())  # Process pages
+    assert book_epub.toc == [("Chapter 1", 1, 0)]
+
+
+@patch('lexiflux.ebook.book_loader_epub.clear_html')
+def test_pages_with_html_cleaning(mock_clear_html, book_epub):
+    mock_clear_html.return_value = "Cleaned content"
+
+    pages = list(book_epub.pages())
+    assert all(page == "Cleaned content" for page in pages)
+    assert mock_clear_html.call_count == 20  # Called for each of the 20 pages
+
+
+def test_process_toc(book_epub):
+    book_epub.heading_hrefs = {
+        "page_0.xhtml": {"#": "Chapter 1", "#section1": "Section 1"},
+        "page_1.xhtml": {"#": "Chapter 2"}
+    }
+    book_epub.anchor_map = {
+        "page_0.xhtml": {"page": 1, "item_id": "item_0", "item_name": "page_0.xhtml"},
+        "page_0.xhtml#section1": {"page": 2, "item_id": "item_0", "item_name": "page_0.xhtml"},
+        "page_1.xhtml": {"page": 3, "item_id": "item_1", "item_name": "page_1.xhtml"}
+    }
+
+    book_epub._process_toc()
+    assert book_epub.toc == [
+        ("Chapter 1", 1, 0),
+        ("Section 1", 2, 0),
+        ("Chapter 2", 3, 0)
+    ]

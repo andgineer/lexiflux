@@ -7,7 +7,7 @@ import re
 from collections import defaultdict
 from typing import Any, Iterable, List, Optional, Tuple, Dict, Iterator
 
-from bs4 import BeautifulSoup, Tag
+from bs4 import BeautifulSoup, Tag, NavigableString
 from ebooklib import ITEM_DOCUMENT, epub, ITEM_IMAGE
 
 from lexiflux.ebook.book_loader_base import BookLoaderBase, MetadataField
@@ -140,7 +140,7 @@ class BookLoaderEpub(BookLoaderBase):
         contents = soup.body.contents if soup.body else soup.contents
 
         for element in contents:
-            if isinstance(element, Tag):
+            if isinstance(element, (Tag, NavigableString)):
                 element_str = str(element)
                 element_size = len(element_str)
 
@@ -174,8 +174,10 @@ class BookLoaderEpub(BookLoaderBase):
         current_chunk: List[str] = []
         current_size = 0
 
-        # Use regex to split content at paragraph ends or multiple empty lines
-        for paragraph in re.split(r"(\n\s*\n|\s*<\/p>\s*)", content):
+        # split at paragraph ends, multiple empty lines, or after a certain number of characters
+        for paragraph in re.split(
+            r"(\n\s*\n|\s*<\/p>\s*|.{" + str(TARGET_PAGE_SIZE) + "})", content
+        ):
             if current_size + len(paragraph) > TARGET_PAGE_SIZE and current_chunk:
                 chunk_content = "".join(current_chunk)
                 if chunk_content.strip():
