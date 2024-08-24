@@ -28,6 +28,7 @@ urlpatterns = [
     path("jump_back", lexiflux.views.reader_views.jump_back, name="jump_back"),
     path("jump_forward", lexiflux.views.reader_views.jump_forward, name="jump_forward"),
     path("get_jump_status", lexiflux.views.reader_views.get_jump_status, name="get_jump_status"),
+    path("link_click", lexiflux.views.reader_views.link_click, name="link_click"),
     path("page", lexiflux.views.reader_views.page, name="page"),
     path("location", lexiflux.views.reader_views.location, name="location"),
     path("library", lexiflux.views.library_views.library, name="library"),

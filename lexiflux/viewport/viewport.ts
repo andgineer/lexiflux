@@ -24,6 +24,7 @@ export class Viewport {
         this.wordsContainerTopMargin = getElement(Viewport.topNavbarId).getBoundingClientRect().height;
         this.bookCode = document.body.getAttribute('data-book-code') || '';
         this.pageNumber = parseInt(document.body.getAttribute('data-book-page-number') || '0');
+        (window as any).handleLinkClick = this.handleLinkClick.bind(this);
         log(`Viewport constructor: bookCode: ${this.bookCode}, pageNumber: ${this.pageNumber}`);
     }  // constructor
 
@@ -113,6 +114,7 @@ export class Viewport {
                             this.bookPageScroller.scrollTop = 0;
                         }
                     }
+                    this.addLinkClickListeners();
                     resolve();
                 })
                 .catch(error => {
@@ -206,14 +208,13 @@ export class Viewport {
         return low;
     }  // getFirstVisibleWord
 
-    public reportReadingLocation(isJump: boolean = false): void {
+    public reportReadingLocation(): void {
         const firstVisibleWord = this.getFirstVisibleWord();
         const url = '/location';
         const data = new URLSearchParams({
             'top-word': firstVisibleWord.toString(),
             'book-code': this.bookCode,
             'book-page-number': this.pageNumber.toString(),
-            'is_jump': isJump.toString()
         });
 
         fetch(url, {
@@ -242,13 +243,12 @@ export class Viewport {
             await this.loadPage(this.pageNumber - 1, undefined);
             // Scroll to the bottom of the page
             this.bookPageScroller.scrollTop = this.getWordsContainerHeight() - this.bookPageScroller.clientHeight;
-            this.reportReadingLocation();
         } else {
             // no need to check for negative scroll top, it will be handled by the browser
             log('***** scrollTop:', this.bookPageScroller.scrollTop, 'clientHeight-lineHeight:', this.bookPageScroller.clientHeight - this.lineHeight);
             this.bookPageScroller.scrollTop -= this.bookPageScroller.clientHeight - this.lineHeight;
-            this.reportReadingLocation();
         }
+        this.reportReadingLocation();
     }  // scrollUp
 
     public async scrollDown(): Promise<void> {
@@ -262,8 +262,8 @@ export class Viewport {
         } else {
             // Scroll down by viewport height minus line height
             this.bookPageScroller.scrollTop += this.bookPageScroller.clientHeight - this.lineHeight;
-            this.reportReadingLocation();
         }
+        this.reportReadingLocation();
     }  // scrollDown
 
     async jump(pageNum: number, topWord: number): Promise<void> {
@@ -279,7 +279,6 @@ export class Viewport {
             const data = await response.json();
             if (data.success) {
                 await this.loadPage(pageNum, topWord);
-                this.reportReadingLocation();
                 this.updateJumpButtons();
             } else {
                 console.error('Jump failed:', data.error);
@@ -302,7 +301,6 @@ export class Viewport {
             const data = await response.json();
             if (data.success) {
                 await this.loadPage(data.page_number, data.word);
-                this.reportReadingLocation();
                 this.updateJumpButtons();
             } else {
                 console.error('Jump back failed:', data.error);
@@ -325,7 +323,6 @@ export class Viewport {
             const data = await response.json();
             if (data.success) {
                 await this.loadPage(data.page_number, data.word);
-                this.reportReadingLocation();
                 this.updateJumpButtons();
             } else {
                 console.error('Jump forward failed:', data.error);
@@ -347,6 +344,56 @@ export class Viewport {
                     forwardButton.disabled = data.is_last_jump;
                 })
                 .catch(error => console.error('Error updating jump buttons:', error));
+        }
+    }
+
+    private addLinkClickListeners(): void {
+        const links = this.wordsContainer.querySelectorAll('a[onclick^="handleLinkClick"]');
+        links.forEach((link: Element) => {
+            if (link instanceof HTMLElement) {
+                link.removeEventListener('click', this.linkClickHandler);
+                link.addEventListener('click', this.linkClickHandler);
+            }
+        });
+    };
+
+    private linkClickHandler = (event: Event) => {
+        event.preventDefault();
+        event.stopPropagation(); // Prevent event bubbling
+        const link = event.currentTarget as HTMLElement;
+        const onclickAttr = link.getAttribute('onclick');
+        if (onclickAttr) {
+            const href = onclickAttr.match(/handleLinkClick\('(.+)'\)/)?.[1];
+            if (href) {
+                this.handleLinkClick(href);
+            }
+        }
+    };
+
+    private async handleLinkClick(href: string): Promise<void> {
+        try {
+            const response = await fetch('/link_click', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRFToken': this.getCsrfToken(),
+                },
+                body: `book-code=${this.bookCode}&link=${encodeURIComponent(href)}`,
+            });
+
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+
+            const data = await response.json();
+            if (data.success) {
+                await this.loadPage(data.page_number, data.word);
+                this.updateJumpButtons();
+            } else {
+                console.error('Error processing link click:', data.error);
+            }
+        } catch (error) {
+            console.error('Error handling link click:', error);
         }
     }
 

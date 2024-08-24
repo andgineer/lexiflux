@@ -39,6 +39,7 @@ class BookLoaderEpub(BookLoaderBase):
     def create(self, owner_email: str, forced_language: Optional[str] = None) -> Book:
         """Save the book to the database."""
         book = super().create(owner_email, forced_language)
+        book.anchor_map = self.anchor_map
         for item in self.epub.get_items():
             if item.get_type() == ITEM_IMAGE:
                 # If Windows path, replace backslashes with slashes
@@ -109,9 +110,9 @@ class BookLoaderEpub(BookLoaderBase):
                     for sub_page in self._split_content(soup):
                         if sub_page.strip():  # Only process non-empty pages
                             sub_soup = BeautifulSoup(sub_page, "html.parser")
-                            self._process_anchors(item, page_num, sub_soup)
                             cleaned_content = clear_html(str(sub_soup)).strip()
                             if cleaned_content:
+                                self._process_anchors(item, page_num, cleaned_content)
                                 yield cleaned_content
                                 page_num += 1
                             else:
@@ -121,9 +122,9 @@ class BookLoaderEpub(BookLoaderBase):
                         else:
                             log.warning(f"Empty sub-page skipped for {item.file_name}")
                 else:
-                    self._process_anchors(item, page_num, soup)
                     cleaned_content = clear_html(content).strip()
                     if cleaned_content:
+                        self._process_anchors(item, page_num, cleaned_content)
                         yield cleaned_content
                         page_num += 1
                     else:
@@ -217,11 +218,10 @@ class BookLoaderEpub(BookLoaderBase):
                     page_num = self.anchor_map[file_name]["page"]
                     self.toc.append((title, page_num, 0))
 
-    def _process_anchors(
-        self, item: epub.EpubItem, current_page: int, soup: BeautifulSoup
-    ) -> None:
+    def _process_anchors(self, item: epub.EpubItem, current_page: int, content: str) -> None:
         """Process anchors for a page."""
-        for anchor in soup.find_all(True, attrs={"id": True}):
+        soup = BeautifulSoup(content, "html.parser")
+        for anchor in soup.find_all(lambda tag: tag.has_attr("id")):
             anchor_id = anchor["id"]
             self.anchor_map[f"{item.file_name}#{anchor_id}"] = {
                 "page": current_page,
@@ -334,9 +334,18 @@ def href_hierarchy(input_dict: Dict[str, str]) -> Dict[str, Dict[str, str]]:
 def clear_html(  # pylint: disable=dangerous-default-value  # we do not modify it
     input_html: str,
     tags_to_remove_with_content: Iterable[str] = ("head", "style", "script", "svg", "noscript"),
-    tags_to_remove_keeping_content: Iterable[str] = ("body", "html", "span", "div"),
-    tags_to_clear_attributes: Iterable[str] = ("p", "br", "h1", "h2", "h3", "h4", "h5", "h6"),
-    tag_to_partially_clear_attributes: Dict[str, List[str]] = {"img": ["src", "alt", "style"]},
+    tags_to_remove_keeping_content: Iterable[str] = ("body", "html"),
+    tags_to_clear_attributes: Iterable[str] = ("p", "br"),
+    tag_to_partially_clear_attributes: Dict[str, List[str]] = {
+        "img": ["src", "alt", "style"],
+        "span": ["id"],
+        "div": ["id"],
+        "h1": ["id"],
+        "h2": ["id"],
+        "h3": ["id"],
+        "h4": ["id"],
+        "h5": ["id"],
+    },
 ) -> str:
     """Clean HTML from tags and attributes."""
     try:
@@ -354,6 +363,7 @@ def clear_html(  # pylint: disable=dangerous-default-value  # we do not modify i
                 match.attrs = {
                     attr: match.attrs.get(attr, "")
                     for attr in tag_to_partially_clear_attributes[tag]
+                    if attr in match.attrs
                 }
 
         return str(soup)

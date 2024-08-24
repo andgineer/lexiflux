@@ -76,7 +76,7 @@ class ImportBookBaseCommand(BaseCommand):  # type: ignore
             forced_language = languages.first().name
 
         # Configure Django logging level
-        logging.basicConfig(level=log_level)
+        logging.getLogger().setLevel(log_level)
         logging.getLogger("django").setLevel(log_level)
         logging.getLogger("django.db.backends").setLevel(db_log_level)
 

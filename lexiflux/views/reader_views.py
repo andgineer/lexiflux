@@ -38,8 +38,8 @@ def normalize_path(path: str) -> str:
     return "/".join(normalized)
 
 
-def set_images_sources(content: str, book: Book) -> str:
-    """Replace image sources with the Django view URL."""
+def set_sources(content: str, book: Book) -> str:
+    """Replace image sources / link targets with the Django view URL."""
     soup = BeautifulSoup(content, "html.parser")
 
     for img in soup.find_all("img"):
@@ -68,6 +68,15 @@ def set_images_sources(content: str, book: Book) -> str:
             )
             img["src"] = new_src
 
+    # Retarget internal links
+    for link in soup.find_all("a", href=True):
+        href = normalize_path(link["href"])
+        if href.startswith("#") or "://" not in href:
+            # This is an internal link
+            link["href"] = "javascript:void(0);"
+            # href = normalize_path(href)  ? remove #?
+            link["onclick"] = f"handleLinkClick('{href}')"
+
     return str(soup)
 
 
@@ -91,7 +100,7 @@ def render_page(page_db: BookPage) -> str:
     # Add any remaining text after the last word
     if last_end < len(content):
         result.append(content[last_end:])
-    return set_images_sources("".join(result), page_db.book)
+    return set_sources("".join(result), page_db.book)
 
 
 def redirect_to_reader(request: HttpRequest) -> HttpResponse:
@@ -316,3 +325,31 @@ def get_jump_status(request: HttpRequest) -> HttpResponse:
     is_last_jump = reading_loc.current_jump == len(reading_loc.jump_history) - 1
 
     return JsonResponse({"is_first_jump": is_first_jump, "is_last_jump": is_last_jump})
+
+
+@smart_login_required  # type: ignore
+@require_POST
+def link_click(request):
+    """Handle a link click in the book."""
+    book_code = request.POST.get("book-code")
+    link = request.POST.get("link")
+
+    book = get_object_or_404(Book, code=book_code)
+
+    # Get the page number from the anchor_map
+    page_info = book.anchor_map.get(link)
+    print(f"Link clicked: {link}, page_info: {page_info}")
+
+    if not page_info:
+        return JsonResponse({"success": False, "error": f"Link {link} not found in anchor map"})
+
+    new_page_number = page_info["page"]
+    new_word = page_info.get("word", 0)  # Default to 0 if 'word' is not provided
+
+    # Get or create the reading location for this user and book
+    reading_loc = ReadingLoc.get_or_create_reading_loc(request.user, book)
+
+    # Use the jump method to update the reading location and jump history
+    reading_loc.jump(new_page_number, new_word)
+
+    return JsonResponse({"success": True, "page_number": new_page_number, "word": new_word})
