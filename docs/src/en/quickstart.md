@@ -11,3 +11,5 @@ Remember the DB with your books and reading progress is stored in the Docker con
 If you remove the container, you will lose all your data.
 
 To backup your data, see the [Backup](docker.md#backup) section.
+
+To update to the latest version, see the [Update](docker.md#updates) section.

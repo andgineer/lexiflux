@@ -51,7 +51,6 @@ def docs_task_factory(language: str):
         if language != "en":
             shutil.rmtree(f"./docs/src/{language}/images", ignore_errors=True)
             shutil.copytree("./docs/src/en/images", f"./docs/src/{language}/images")
-            shutil.copy("./docs/src/en/reference.md", f"./docs/src/{language}/reference.md")
         c.run("mkdocs serve -f docs/_mkdocs.yml")
 
     return docs
