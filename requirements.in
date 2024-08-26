@@ -25,3 +25,4 @@ fasttext
 nltk
 psutil
 pyjwt
+unidecode
