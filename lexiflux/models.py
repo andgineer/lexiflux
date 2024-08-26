@@ -12,6 +12,7 @@ from django.contrib.auth.models import AbstractUser
 from django.utils.translation import gettext_lazy as _
 from django.db.models import Q
 from transliterate import get_available_language_codes, translit
+from unidecode import unidecode
 
 from lexiflux.language.sentence_extractor import break_into_sentences
 from lexiflux.language.word_extractor import parse_words
@@ -71,12 +72,12 @@ class CustomUser(AbstractUser):  # type: ignore
 
 def split_into_words(text: str) -> list[str]:
     """Regular expression pattern to match words (ignores punctuation and spaces)."""
-    stop_words = {"the"}
-    pattern = re.compile(r"\b\w+\b")
+    stop_words = {"the", "et", "i", "a", "an", "and", "or", "of", "in", "on", "at", "to"}
+    pattern = re.compile(r"\b[^\s]+\b")
     return [
         word.lower()
         for word in pattern.findall(text)
-        if word.lower() not in stop_words and len(word) > 2
+        if word.lower() not in stop_words and len(word) > 1
     ]
 
 
@@ -159,14 +160,28 @@ class Book(models.Model):  # type: ignore
 
     def generate_unique_book_code(self) -> str:
         """Generate a unique book code."""
-        code = (  # two words from title and last word of the author name (presumable last name)
-            "-".join(split_into_words(self.title)[:2])
-            + "-"
-            + split_into_words(self.author.name)[-1]
-        )
+
+        def transliterate(book_code: str, lang_code: Optional[str]) -> str:
+            try:
+                if lang_code in get_available_language_codes():
+                    book_code = translit(book_code, lang_code, reversed=True)
+                book_code = unidecode(book_code)
+                # replace all non-word characters with a dash
+                book_code = re.sub(r"[^a-zA-Z0-9-]+", "", book_code).lower()
+                if book_code.replace("-", "").strip() == "":
+                    return "book"
+                return book_code
+            except Exception:  # pylint: disable=broad-except
+                return unidecode(book_code)
+
+        title_words = split_into_words(self.title)
+        author_words = split_into_words(self.author.name)
+        code = "-".join(title_words[:2]) if title_words else "book"
+        if author_words:
+            code = f"{code}-{author_words[-1]}"
+
         # Transliterate the code to latin chars if the language is supported
-        if self.language.google_code in get_available_language_codes():
-            code = translit(code, self.language.google_code, reversed=True)
+        code = transliterate(code, self.language.google_code)
 
         # reserving 3 chars for the delimiter and two-digits counter in case the name is not unique
         code = code[: BOOK_CODE_LENGTH - 3]
