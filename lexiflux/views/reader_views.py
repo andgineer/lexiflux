@@ -1,5 +1,6 @@
 """Views for the reader page."""
 
+import logging
 import os
 from typing import List
 from urllib.parse import unquote
@@ -20,6 +21,9 @@ from lexiflux.models import (
     LanguagePreferences,
     BookImage,
 )
+
+
+log = logging.getLogger()
 
 
 def normalize_path(path: str) -> str:
@@ -59,7 +63,7 @@ def set_sources(content: str, book: Book) -> str:
                         book=book, filename__endswith=os.path.basename(normalized_src)
                     )
                 except BookImage.DoesNotExist:
-                    print(f"Warning: Image not found in database for src: {original_src}")
+                    log.warning(f"Warning: Image not found in database for src: {original_src}")
                     continue
 
             new_src = reverse(
@@ -118,13 +122,14 @@ def reader(request: HttpRequest) -> HttpResponse:
     """Open the book in reader.
 
     If the book code not given open the latest book.
+    Send jump status to set jump buttons active/inactive.
     """
     book_code = request.GET.get("book-code")
     page_number = request.GET.get("book-page-number")
     book = Book.objects.filter(code=book_code).first() if book_code else None
     if not book:
         if book_code:
-            print(f"Book {book_code} not found")
+            log.warning(f"Book {book_code} not found")
         reading_location = (
             ReadingLoc.objects.filter(user=request.user).order_by("-last_access").first()
         )
@@ -145,7 +150,7 @@ def reader(request: HttpRequest) -> HttpResponse:
     else:
         page_number = int(page_number)  # Ensure page_number is an integer
 
-    print(f"Opening book {book_code} at page {page_number} for user {request.user.username}")
+    log.info(f"Opening book {book_code} at page {page_number} for user {request.user.username}")
     book_page = BookPage.objects.get(book=book, number=page_number)
 
     language_preferences = LanguagePreferences.get_or_create_language_preferences(
@@ -161,8 +166,12 @@ def reader(request: HttpRequest) -> HttpResponse:
     lexical_articles = language_preferences.get_lexical_articles()
 
     reading_location = ReadingLoc.get_or_create_reading_loc(user=request.user, book=book)
-    is_first_jump = reading_location.current_jump == 0
+    is_first_jump = reading_location.current_jump <= 0
     is_last_jump = reading_location.current_jump == len(reading_location.jump_history) - 1
+    log.info(
+        f"Jump status: book {book_code}, is_first_jump {is_first_jump}, "
+        f"is_last_jump {is_last_jump}"
+    )
 
     return render(
         request,
@@ -180,10 +189,7 @@ def reader(request: HttpRequest) -> HttpResponse:
 
 @smart_login_required  # type: ignore
 def page(request: HttpRequest) -> HttpResponse:
-    """Book page.
-
-    In addition to book and page num should include top word id to save the location.
-    """
+    """Book page."""
     book_code = request.GET.get("book-code")
     page_number = request.GET.get("book-page-number")
     try:
@@ -202,7 +208,7 @@ def page(request: HttpRequest) -> HttpResponse:
     cache_key = f"page_html_{book_code}_{page_number}"
     page_html = cache.get(cache_key)
     if page_html is None:
-        print(f"Rendering page {page_number} of book {book_code}")
+        log.info(f"Rendering page {page_number} of book {book_code}")
         page_html = render_page(book_page)
         cache.set(cache_key, page_html, timeout=3600)  # Cache for 1 hour
 
@@ -241,6 +247,7 @@ def location(request: HttpRequest) -> HttpResponse:
     except (TypeError, ValueError, KeyError):
         return HttpResponse("Invalid or missing parameters", status=400)
 
+    log.info(f"Location changed: book {book_code}, page {page_number}, top word {top_word}")
     book = Book.objects.get(code=book_code)
     if not can_see_book(request.user, book):
         return HttpResponse(status=403)  # Forbidden
@@ -321,8 +328,12 @@ def get_jump_status(request: HttpRequest) -> HttpResponse:
 
     reading_loc = ReadingLoc.get_or_create_reading_loc(user=request.user, book=book)
 
-    is_first_jump = reading_loc.current_jump == 0
+    is_first_jump = reading_loc.current_jump <= 0
     is_last_jump = reading_loc.current_jump == len(reading_loc.jump_history) - 1
+    log.info(
+        f"Jump status: book {book_code}, is_first_jump {is_first_jump}, "
+        f"is_last_jump {is_last_jump}"
+    )
 
     return JsonResponse({"is_first_jump": is_first_jump, "is_last_jump": is_last_jump})
 
@@ -338,7 +349,7 @@ def link_click(request):
 
     # Get the page number from the anchor_map
     page_info = book.anchor_map.get(link)
-    print(f"Link clicked: {link}, page_info: {page_info}")
+    log.info(f"Link clicked: {link}, page_info: {page_info}")
 
     if not page_info:
         return JsonResponse({"success": False, "error": f"Link {link} not found in anchor map"})
@@ -351,5 +362,8 @@ def link_click(request):
 
     # Use the jump method to update the reading location and jump history
     reading_loc.jump(new_page_number, new_word)
+    log.info(
+        f"Reading location updated: page {reading_loc.jump_history}/{reading_loc.current_jump}"
+    )
 
     return JsonResponse({"success": True, "page_number": new_page_number, "word": new_word})

@@ -77,7 +77,9 @@ def split_into_words(text: str) -> list[str]:
     return [
         word.lower()
         for word in pattern.findall(text)
-        if word.lower() not in stop_words and len(word) > 1
+        if word.lower() not in stop_words
+        and len(word) > 1
+        and not re.match(r"^[a-zA-Z]\.$|^[a-zA-Z]\.[a-zA-Z]\.?$", word)  # ignore initials
     ]
 
 
@@ -167,18 +169,20 @@ class Book(models.Model):  # type: ignore
                     book_code = translit(book_code, lang_code, reversed=True)
                 book_code = unidecode(book_code)
                 # replace all non-word characters with a dash
-                book_code = re.sub(r"[^a-zA-Z0-9-]+", "", book_code).lower()
+                # except space(word separator), dot we use to detect initials, also allow hyphen
+                book_code = re.sub(r"[^a-zA-Z0-9-. ]+", "", book_code).lower()
                 if book_code.replace("-", "").strip() == "":
-                    return "book"
+                    return ""
                 return book_code
             except Exception:  # pylint: disable=broad-except
                 return unidecode(book_code)
 
-        title_words = split_into_words(self.title)
-        author_words = split_into_words(self.author.name)
+        title_words = split_into_words(transliterate(self.title, self.language.google_code))
+        author_words = split_into_words(transliterate(self.author.name, self.language.google_code))
         code = "-".join(title_words[:2]) if title_words else "book"
         if author_words:
             code = f"{code}-{author_words[-1]}"
+        code = code.replace(" ", "").replace(".", "")
 
         # Transliterate the code to latin chars if the language is supported
         code = transliterate(code, self.language.google_code)
@@ -556,15 +560,18 @@ class ReadingLoc(models.Model):  # type: ignore  # pylint: disable=too-many-inst
     jump_history = models.JSONField(default=list)
     current_jump = models.IntegerField(default=-1)
     page_number = models.PositiveIntegerField(help_text="Page number currently being read")
-    word = models.PositiveIntegerField(help_text="Last word read on the current reading page")
+    word = models.IntegerField(
+        help_text="Last word read on the current reading page. -1 for no words on the page."
+    )
     last_access = models.DateTimeField(default=timezone.now)
     furthest_reading_page = models.PositiveIntegerField(
         default=0,
         help_text="Stores the furthest reading page number",
     )
-    furthest_reading_word = models.PositiveIntegerField(
+    furthest_reading_word = models.IntegerField(
         default=0,
-        help_text="Stores the furthest reading top word on the furthest page",
+        help_text="Stores the furthest reading top word on the furthest page. "
+        "-1 for no words on the page.",
     )
     last_position_percent = models.FloatField(default=0.0)
 
@@ -633,8 +640,13 @@ class ReadingLoc(models.Model):  # type: ignore  # pylint: disable=too-many-inst
         loc._update_reading_location(page_number, top_word_id)  # pylint: disable=protected-access
 
         # Update the current jump in jump_history
-        if loc.jump_history and loc.current_jump >= 0:
-            loc.jump_history[loc.current_jump] = {"page_number": page_number, "word": top_word_id}
+        if not loc.jump_history:
+            loc.jump_history = [
+                {},
+            ]
+        if loc.current_jump < 0:
+            loc.current_jump = len(loc.jump_history) - 1
+        loc.jump_history[loc.current_jump] = {"page_number": page_number, "word": top_word_id}
 
         loc.save()
 

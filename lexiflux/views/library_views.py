@@ -12,7 +12,6 @@ from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
 from django.views import View
-from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 
 from lexiflux.ebook.book_loader_base import BookLoaderBase
@@ -125,7 +124,7 @@ def import_book(request: HttpRequest) -> JsonResponse:
         return JsonResponse({"error": str(e)}, status=500)
 
 
-@method_decorator(login_required, name="dispatch")
+@method_decorator(smart_login_required, name="dispatch")
 class BookDetailView(View):  # type: ignore
     """View for book details."""
 

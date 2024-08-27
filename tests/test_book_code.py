@@ -28,7 +28,7 @@ def test_generate_unique_book_code_chinese():
     )
     book.save()
 
-    assert book.code == "daodejing-laozi"
+    assert book.code == "dao-de-zi"
 
 
 @pytest.mark.django_db
@@ -42,7 +42,7 @@ def test_generate_unique_book_code_mixed_script():
     )
     book.save()
 
-    assert book.code == "1q84-ichikiyuuhachiyon-cunshang"
+    assert book.code == "1q84-ichikiyuuhachiyon-shang"
 
 
 @pytest.mark.django_db
@@ -153,3 +153,17 @@ def test_generate_unique_book_code_empty():
     book.save()
 
     assert book.code == "book"
+
+
+@pytest.mark.django_db
+def test_generate_unique_book_code_ignore_initials():
+    author = Author.objects.create(name="Толстой Л.Н.")
+    language = Language.objects.get(name="Russian")
+    book = Book(
+        title="Война и мир",
+        author=author,
+        language=language
+    )
+    book.save()
+
+    assert book.code == "vojna-mir-tolstoj"

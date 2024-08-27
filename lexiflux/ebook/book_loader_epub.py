@@ -331,23 +331,36 @@ def href_hierarchy(input_dict: Dict[str, str]) -> Dict[str, Dict[str, str]]:
     return result
 
 
-def clear_html(  # pylint: disable=dangerous-default-value  # we do not modify it
+def clear_html(  # pylint: disable=too-many-arguments
     input_html: str,
     tags_to_remove_with_content: Iterable[str] = ("head", "style", "script", "svg", "noscript"),
     tags_to_remove_keeping_content: Iterable[str] = ("body", "html"),
     tags_to_clear_attributes: Iterable[str] = ("p", "br"),
-    tag_to_partially_clear_attributes: Dict[str, List[str]] = {
-        "img": ["src", "alt", "style"],
-        "span": ["id"],
-        "div": ["id"],
-        "h1": ["id"],
-        "h2": ["id"],
-        "h3": ["id"],
-        "h4": ["id"],
-        "h5": ["id"],
-    },
+    tag_to_partially_clear_attributes: Dict[str, List[str]] | None = None,
+    heading_classes: Dict[str, str] | None = None,
 ) -> str:
-    """Clean HTML from tags and attributes."""
+    """Clean HTML from tags and attributes and add classes to heading tags."""
+    if tag_to_partially_clear_attributes is None:
+        tag_to_partially_clear_attributes = {
+            "img": ["src", "alt", "style"],
+            "span": ["id"],
+            "div": ["id"],
+            "h1": ["id"],
+            "h2": ["id"],
+            "h3": ["id"],
+            "h4": ["id"],
+            "h5": ["id"],
+        }
+
+    if heading_classes is None:
+        heading_classes = {
+            "h1": "display-4 fw-semibold text-primary mb-4",
+            "h2": "display-5 fw-semibold text-secondary mb-3",
+            "h3": "h3 fw-normal text-dark mb-3",
+            "h4": "h4 fw-normal text-dark mb-2",
+            "h5": "h5 fw-normal text-dark mb-2",
+        }
+
     try:
         soup = BeautifulSoup(input_html, "html.parser")
         for tag in tags_to_remove_with_content:
@@ -358,13 +371,16 @@ def clear_html(  # pylint: disable=dangerous-default-value  # we do not modify i
                 match.unwrap()
         for tag in soup.find_all(tags_to_clear_attributes):
             tag.attrs = {}  # type: ignore
-        for tag in tag_to_partially_clear_attributes:
+        for tag, attrs in tag_to_partially_clear_attributes.items():
             for match in soup.find_all(tag):
                 match.attrs = {
-                    attr: match.attrs.get(attr, "")
-                    for attr in tag_to_partially_clear_attributes[tag]
-                    if attr in match.attrs
+                    attr: match.attrs.get(attr, "") for attr in attrs if attr in match.attrs
                 }
+
+        # Add classes to heading tags
+        for tag, classes in heading_classes.items():
+            for match in soup.find_all(tag):
+                match["class"] = match.get("class", []) + classes.split()
 
         return str(soup)
     except Exception as e:  # pylint: disable=broad-except

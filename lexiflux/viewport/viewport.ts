@@ -76,8 +76,9 @@ export class Viewport {
         return word ? word.getBoundingClientRect().top - this.wordsContainerTopMargin : 0;
     }  // getWordTop
 
-    public loadPage(pageNumber: number, topWord: number | undefined = 0): Promise<void> {
-        // if topWord is undefined you should call reportReadingPosition() by yourself
+    public loadPage(pageNumber: number, topWord: number | undefined): Promise<void> {
+        // if topWord is undefined do not change bookPageScroller.scrollTop
+        // if topWord is <= 0 scroll to the top of the page
         return new Promise((resolve, reject) => {
             fetch('/page?book-code=' + this.bookCode + '&book-page-number=' + pageNumber + '&top-word=' + topWord)
                 .then(response => {
