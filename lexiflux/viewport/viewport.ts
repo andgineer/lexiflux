@@ -349,27 +349,19 @@ export class Viewport {
     }
 
     private addLinkClickListeners(): void {
-        const links = this.wordsContainer.querySelectorAll('a[onclick^="handleLinkClick"]');
+        const links = this.wordsContainer.querySelectorAll('a[data-href]');
         links.forEach((link: Element) => {
             if (link instanceof HTMLElement) {
-                link.removeEventListener('click', this.linkClickHandler);
-                link.addEventListener('click', this.linkClickHandler);
+                link.addEventListener('click', (event: Event) => {
+                    event.preventDefault();
+                    const href = link.dataset.href;
+                    if (href) {
+                        this.handleLinkClick(href);
+                    }
+                });
             }
         });
-    };
-
-    private linkClickHandler = (event: Event) => {
-        event.preventDefault();
-        event.stopPropagation(); // Prevent event bubbling
-        const link = event.currentTarget as HTMLElement;
-        const onclickAttr = link.getAttribute('onclick');
-        if (onclickAttr) {
-            const href = onclickAttr.match(/handleLinkClick\('(.+)'\)/)?.[1];
-            if (href) {
-                this.handleLinkClick(href);
-            }
-        }
-    };
+    }
 
     private async handleLinkClick(href: string): Promise<void> {
         try {

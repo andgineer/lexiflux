@@ -78,8 +78,7 @@ def set_sources(content: str, book: Book) -> str:
         if href.startswith("#") or "://" not in href:
             # This is an internal link
             link["href"] = "javascript:void(0);"
-            # href = normalize_path(href)  ? remove #?
-            link["onclick"] = f"handleLinkClick('{href}')"
+            link["data-href"] = href  # Store the original href in a data attribute
 
     return str(soup)
 
