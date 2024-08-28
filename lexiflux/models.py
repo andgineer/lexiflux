@@ -587,7 +587,7 @@ class ReadingLoc(models.Model):  # type: ignore  # pylint: disable=too-many-inst
     word = models.IntegerField(
         help_text="Last word read on the current reading page. -1 for no words on the page."
     )
-    last_access = models.DateTimeField(default=timezone.now)
+    last_access = models.DateTimeField(null=True, blank=True, default=None)
     furthest_reading_page = models.PositiveIntegerField(
         default=0,
         help_text="Stores the furthest reading page number",

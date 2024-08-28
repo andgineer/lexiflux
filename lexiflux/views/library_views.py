@@ -155,6 +155,8 @@ class BookDetailView(View):  # type: ignore
             book = Book.objects.get(id=book_id)
             data = json.loads(request.body)
 
+            book.owner = request.user
+
             book.title = data.get("title", book.title)
 
             author_name = data.get("author", book.author.name)
@@ -187,7 +189,7 @@ class BookDetailView(View):  # type: ignore
         """Delete a book."""
         try:
             book = Book.objects.get(id=book_id)
-            if book.owner != request.user and not request.user.is_superuser:
+            if book.owner and (book.owner != request.user and not request.user.is_superuser):
                 return JsonResponse(
                     {"error": "You don't have permission to delete this book"}, status=403
                 )

@@ -63,6 +63,13 @@ class BookLoaderBase:
         author_name = self.meta[MetadataField.AUTHOR]
         author, _ = Author.objects.get_or_create(name=author_name)
 
+        if owner_email:
+            owner = CustomUser.objects.filter(email=owner_email).first()
+            if not owner:
+                raise CommandError(
+                    f'Error importing book: Cannot set owner "{owner_email}" - no such user'
+                )
+
         if forced_language:
             language_name = forced_language
         else:
@@ -70,6 +77,9 @@ class BookLoaderBase:
         language, _ = Language.objects.get_or_create(name=language_name)
 
         book_instance = Book.objects.create(title=title, author=author, language=language)
+        if owner_email:
+            book_instance.owner = owner
+            book_instance.public = False
 
         # Iterate over pages and save them
         for i, page_content in enumerate(self.pages(), start=1):
