@@ -1,5 +1,6 @@
 """Models for the lexiflux app."""
 
+import logging
 import re
 from datetime import timedelta
 from html import unescape
@@ -29,6 +30,9 @@ SUPPORTED_CHAT_MODELS = {
 
 TocEntry: TypeAlias = Tuple[str, int, int]  # <title>, <page num>, <word on the page num>
 Toc: TypeAlias = List[TocEntry]
+
+
+log = logging.getLogger()
 
 
 class LexicalArticleType(models.TextChoices):  # type: ignore  # pylint: disable=too-many-ancestors
@@ -202,7 +206,7 @@ class Book(models.Model):  # type: ignore
 
     def format_last_read(self, user: CustomUser) -> str:  # pylint: disable=too-many-return-statements
         """Format the last time the book was read by the user."""
-        last_read = ReadingLoc.get_or_create_reading_loc(user, self).last_access
+        last_read = self.reading_loc(user).last_access
         if not last_read:
             return "Never"
 
@@ -222,6 +226,10 @@ class Book(models.Model):  # type: ignore
         if diff < timedelta(days=365):
             return f"{diff.days // 30} months ago"
         return f"{diff.days // 365} years ago"
+
+    def reading_loc(self, user: CustomUser) -> "ReadingLoc":
+        """Get the reading location for the given user."""
+        return ReadingLoc.get_or_create_reading_loc(user, self)
 
     def save(self, *args: Any, **kwargs: Any) -> None:
         if self.pk:  # Checks if the object already exists in the database
@@ -649,15 +657,18 @@ class ReadingLoc(models.Model):  # type: ignore  # pylint: disable=too-many-inst
             self.furthest_reading_word = word
 
         total_pages = self.book.pages.count()
-        self.last_position_percent = (
-            (page_number - 1) / (total_pages - 1) if total_pages > 1 else 0.0
-        )
+        if total_pages > 1:
+            progress = (page_number - 1) / (total_pages - 1)
+            self.last_position_percent = round(progress * 100, 1)
+        else:
+            self.last_position_percent = 0.0
 
     @classmethod
     def update_reading_location(
         cls, user: CustomUser, book_id: int, page_number: int, top_word_id: int
     ) -> None:
         """Update the current reading location."""
+        loc: ReadingLoc
         loc, _ = cls.objects.get_or_create(
             user=user, book_id=book_id, defaults={"page_number": page_number, "word": top_word_id}
         )
@@ -671,7 +682,11 @@ class ReadingLoc(models.Model):  # type: ignore  # pylint: disable=too-many-inst
         if loc.current_jump < 0:
             loc.current_jump = len(loc.jump_history) - 1
         loc.jump_history[loc.current_jump] = {"page_number": page_number, "word": top_word_id}
-
+        log.info(
+            f"Reading location updated for {loc.book.code}: "
+            f"{loc.page_number}({loc.furthest_reading_page}):{loc.word}"
+            f"/{loc.last_position_percent}\n{loc.jump_history}/{loc.current_jump}"
+        )
         loc.save()
 
     @classmethod

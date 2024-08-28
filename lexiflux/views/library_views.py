@@ -63,6 +63,7 @@ def library(request: HttpRequest) -> HttpResponse:
     # Format last_read for each book
     for book in books_page:
         book.formatted_last_read = book.format_last_read(request.user)
+        book.last_position_percent = book.reading_loc(request.user).last_position_percent
 
     # Get languages for the dropdown
     languages = list(Language.objects.values("google_code", "name"))

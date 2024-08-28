@@ -361,8 +361,5 @@ def link_click(request):
 
     # Use the jump method to update the reading location and jump history
     reading_loc.jump(new_page_number, new_word)
-    log.info(
-        f"Reading location updated: page {reading_loc.jump_history}/{reading_loc.current_jump}"
-    )
 
     return JsonResponse({"success": True, "page_number": new_page_number, "word": new_word})
