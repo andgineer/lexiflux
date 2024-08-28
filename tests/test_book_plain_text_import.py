@@ -92,7 +92,7 @@ def test_import_book_nonexistent_owner_email(
     with pytest.raises(CommandError) as exc_info:
         book_processor_mock.create('nonexistent@example.com')
 
-    assert 'User with email "nonexistent@example.com" not found' in str(exc_info.value)
+    assert 'no such user' in str(exc_info.value)
 
 
 @allure.epic('Book import')

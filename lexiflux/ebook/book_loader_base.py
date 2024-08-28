@@ -66,8 +66,11 @@ class BookLoaderBase:
         if owner_email:
             owner = CustomUser.objects.filter(email=owner_email).first()
             if not owner:
+                # show users with email starting with partial --owner string
+                users = CustomUser.objects.filter(email__istartswith=owner_email[:3])
                 raise CommandError(
                     f'Error importing book: Cannot set owner "{owner_email}" - no such user'
+                    + (f" (found: {', '.join(user.email for user in users)})" if users else "")
                 )
 
         if forced_language:
@@ -80,6 +83,8 @@ class BookLoaderBase:
         if owner_email:
             book_instance.owner = owner
             book_instance.public = False
+        else:
+            book_instance.public = True
 
         # Iterate over pages and save them
         for i, page_content in enumerate(self.pages(), start=1):
@@ -88,17 +93,6 @@ class BookLoaderBase:
         # must be after page iteration so the headings are collected
         book_instance.toc = self.toc
         log.debug("TOC: %s", book_instance.toc)
-
-        if owner_email:
-            if not (owner_user := CustomUser.objects.filter(email=owner_email).first()):
-                raise CommandError(
-                    f'Error importing book: User with email "{owner_email}" not found'
-                )
-            book_instance.owner = owner_user
-            book_instance.public = False
-        else:
-            # If no owner is provided in CLI, make the book publicly available
-            book_instance.public = True
 
         return book_instance  # type: ignore
 
