@@ -43,6 +43,7 @@ def library(request: HttpRequest) -> HttpResponse:
             )
         )
         .order_by("-updated", "title")
+        .select_related("author")
         .distinct()
     )
 
@@ -51,19 +52,23 @@ def library(request: HttpRequest) -> HttpResponse:
     paginator = Paginator(books_query, 10)  # Show 10 books per page
 
     try:
-        books = paginator.page(page_number)
+        books_page = paginator.page(page_number)
     except PageNotAnInteger:
-        books = paginator.page(1)  # Default to the first page
+        books_page = paginator.page(1)  # Default to the first page
     except EmptyPage:
-        books = paginator.page(
+        books_page = paginator.page(
             paginator.num_pages
         )  # Go to the last page if the page is out of range
+
+    # Format last_read for each book
+    for book in books_page:
+        book.formatted_last_read = book.format_last_read(request.user)
 
     # Get languages for the dropdown
     languages = list(Language.objects.values("google_code", "name"))
 
     context = {
-        "books": books,
+        "books": books_page,
         "languages": json.dumps(languages),
     }
     return render(request, "library.html", context)

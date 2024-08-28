@@ -1,6 +1,7 @@
 """Models for the lexiflux app."""
 
 import re
+from datetime import timedelta
 from html import unescape
 from typing import TypeAlias, Tuple, List, Any, Dict, Optional
 
@@ -72,7 +73,7 @@ class CustomUser(AbstractUser):  # type: ignore
 
 def split_into_words(text: str) -> list[str]:
     """Regular expression pattern to match words (ignores punctuation and spaces)."""
-    stop_words = {"the", "et", "i", "a", "an", "and", "or", "of", "in", "on", "at", "to"}
+    stop_words = {"the", "et", "i", "a", "an", "and", "or", "of", "in", "on", "at", "to", "po"}
     pattern = re.compile(r"\b[^\s]+\b")
     return [
         word.lower()
@@ -198,6 +199,29 @@ class Book(models.Model):  # type: ignore
             counter += 1
 
         return unique_code
+
+    def format_last_read(self, user: CustomUser) -> str:  # pylint: disable=too-many-return-statements
+        """Format the last time the book was read by the user."""
+        last_read = ReadingLoc.get_or_create_reading_loc(user, self).last_access
+        if not last_read:
+            return "Never"
+
+        now = timezone.now()
+        diff = now - last_read
+
+        if diff < timedelta(minutes=1):
+            return "last minute"
+        if diff < timedelta(hours=1):
+            return f"{diff.seconds // 60} minutes ago"
+        if diff < timedelta(days=1):
+            return f"{diff.seconds // 3600} hours ago"
+        if diff < timedelta(weeks=1):
+            return f"{diff.days} days ago"
+        if diff < timedelta(weeks=4):
+            return f"{diff.days // 7} weeks ago"
+        if diff < timedelta(days=365):
+            return f"{diff.days // 30} months ago"
+        return f"{diff.days // 365} years ago"
 
     def save(self, *args: Any, **kwargs: Any) -> None:
         if self.pk:  # Checks if the object already exists in the database

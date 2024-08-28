@@ -28,6 +28,7 @@
                                 <tr>
                                     <th>Title</th>
                                     <th>Author</th>
+                                    <th>Last Read</th>
                                     <th>Action</th>
                                 </tr>
                             </thead>
@@ -40,6 +41,7 @@
                                         </a>
                                     </td>
                                     <td>{{ book.author.name }}</td>
+                                    <td>{{ book.formatted_last_read }}</td>
                                     <td>
                                         <button class="btn btn-outline-secondary btn-sm" @click="editBook('{{ book.id }}')">
                                             Edit

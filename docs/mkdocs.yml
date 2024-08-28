@@ -51,6 +51,8 @@ markdown_extensions:
       alternate_style: true
   - pymdownx.snippets:
       base_path: 'docs/includes'
+  - admonition
+
 theme:
   name: material
   features:
