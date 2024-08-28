@@ -175,12 +175,16 @@ def test_get_random_words_empty_book(book_epub):
         assert result == ''  # Should return an empty string for an empty book
 
 
+@allure.epic('Book import')
+@allure.feature('EPUB: parse pages')
 def test_pages_basic_functionality(book_epub):
     pages = list(book_epub.pages())
     assert len(pages) > 0
     assert all(isinstance(page, str) for page in pages)
 
 
+@allure.epic('Book import')
+@allure.feature('EPUB: parse pages')
 def test_pages_content_splitting(book_epub):
     # Test with normal HTML content
     html_content = "<div><p>" + ("HTML content " * 500) + "</p><p>" + ("More HTML " * 500) + "</p></div>"
@@ -217,6 +221,8 @@ def test_pages_content_splitting(book_epub):
                no_tags_pages), "No page of content without tags should be more than twice the TARGET_PAGE_SIZE"
 
 
+@allure.epic('Book import')
+@allure.feature('EPUB: parse pages')
 def test_split_large_element(book_epub):
     # Test with a large HTML element
     large_html_element = BeautifulSoup(
@@ -248,6 +254,8 @@ def test_split_large_element(book_epub):
                no_tags_pages), "No page of content without tags should be more than twice the TARGET_PAGE_SIZE"
 
 
+@allure.epic('Book import')
+@allure.feature('EPUB: parse pages')
 def test_pages_with_anchors(book_epub):
     # Modify the last item (page_19.xhtml) to have an anchor
     content = "<h1 id='chapter1'>Chapter 1</h1><p>Content</p>"
@@ -282,6 +290,8 @@ def test_pages_with_anchors(book_epub):
     print("Final anchor_map:", book_epub.anchor_map)
 
 
+@allure.epic('Book import')
+@allure.feature('EPUB: parse pages')
 def test_pages_empty_content(book_epub):
     # Modify all items to have empty content
     for item in book_epub.epub.get_items():
@@ -291,6 +301,8 @@ def test_pages_empty_content(book_epub):
     assert len(pages) == 0
 
 
+@allure.epic('Book import')
+@allure.feature('EPUB: parse pages')
 def test_pages_non_document_item(book_epub):
     # Modify one item to be a non-document item
     book_epub.epub.get_items()[0].get_type = lambda: ITEM_IMAGE
@@ -299,6 +311,8 @@ def test_pages_non_document_item(book_epub):
     assert len(pages) < 20  # We should have fewer pages than the original 20
 
 
+@allure.epic('Book import')
+@allure.feature('EPUB: parse pages')
 def test_pages_with_toc_processing(book_epub):
     # Set up a simple TOC structure
     book_epub.heading_hrefs = {"page_0.xhtml": {"#": "Chapter 1"}}
@@ -307,6 +321,8 @@ def test_pages_with_toc_processing(book_epub):
     assert book_epub.toc == [("Chapter 1", 1, 0)]
 
 
+@allure.epic('Book import')
+@allure.feature('EPUB: parse pages')
 @patch('lexiflux.ebook.book_loader_epub.clear_html')
 def test_pages_with_html_cleaning(mock_clear_html, book_epub):
     mock_clear_html.return_value = "Cleaned content"
@@ -316,6 +332,8 @@ def test_pages_with_html_cleaning(mock_clear_html, book_epub):
     assert mock_clear_html.call_count == 20  # Called for each of the 20 pages
 
 
+@allure.epic('Book import')
+@allure.feature('EPUB: parse pages')
 def test_process_toc(book_epub):
     book_epub.heading_hrefs = {
         "page_0.xhtml": {"#": "Chapter 1", "#section1": "Section 1"},

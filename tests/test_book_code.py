@@ -1,8 +1,11 @@
+import allure
 import pytest
 from django.core.exceptions import ValidationError
 from lexiflux.models import Book, Author, Language
 
 
+@allure.epic('Book import')
+@allure.feature('Book Code Generation')
 @pytest.mark.django_db
 def test_generate_unique_book_code_cyrillic():
     author = Author.objects.create(name="Лев Толстой")
@@ -17,6 +20,8 @@ def test_generate_unique_book_code_cyrillic():
     assert book.code == "vojna-mir-tolstoj"
 
 
+@allure.epic('Book import')
+@allure.feature('Book Code Generation')
 @pytest.mark.django_db
 def test_generate_unique_book_code_chinese():
     author = Author.objects.create(name="老子")
@@ -31,6 +36,8 @@ def test_generate_unique_book_code_chinese():
     assert book.code == "dao-de-zi"
 
 
+@allure.epic('Book import')
+@allure.feature('Book Code Generation')
 @pytest.mark.django_db
 def test_generate_unique_book_code_mixed_script():
     author = Author.objects.create(name="Haruki 村上")
@@ -45,6 +52,8 @@ def test_generate_unique_book_code_mixed_script():
     assert book.code == "1q84-ichikiyuuhachiyon-shang"
 
 
+@allure.epic('Book import')
+@allure.feature('Book Code Generation')
 @pytest.mark.django_db
 def test_generate_unique_book_code_with_diacritics():
     author = Author.objects.create(name="François Rabelais")
@@ -59,6 +68,8 @@ def test_generate_unique_book_code_with_diacritics():
     assert book.code == "gargantua-pantagruel-rabelais"
 
 
+@allure.epic('Book import')
+@allure.feature('Book Code Generation')
 @pytest.mark.django_db
 def test_generate_unique_book_code_arabic():
     author = Author.objects.create(name="نجيب محفوظ")
@@ -73,6 +84,8 @@ def test_generate_unique_book_code_arabic():
     assert book.code == "wld-hrtn-mhfwz"
 
 
+@allure.epic('Book import')
+@allure.feature('Book Code Generation')
 @pytest.mark.django_db
 def test_generate_unique_book_code_greek():
     author = Author.objects.create(name="Νίκος Καζαντζάκης")
@@ -87,6 +100,8 @@ def test_generate_unique_book_code_greek():
     assert book.code == "vios-kai-kazantzakis"
 
 
+@allure.epic('Book import')
+@allure.feature('Book Code Generation')
 @pytest.mark.django_db
 def test_generate_unique_book_code_long_title():
     author = Author.objects.create(name="Victor Hugo")
@@ -102,6 +117,8 @@ def test_generate_unique_book_code_long_title():
     assert book.code == "les-miserables-hugo"
 
 
+@allure.epic('Book import')
+@allure.feature('Book Code Generation')
 @pytest.mark.django_db
 def test_generate_unique_book_code_collision():
     author1 = Author.objects.create(name="John Doe")
@@ -127,6 +144,8 @@ def test_generate_unique_book_code_collision():
     assert book2.code == "test-book-doe-1"
 
 
+@allure.epic('Book import')
+@allure.feature('Book Code Generation')
 @pytest.mark.django_db
 def test_generate_unique_book_code_special_characters():
     author = Author.objects.create(name="A!u@t#h$o%r^")
@@ -141,6 +160,8 @@ def test_generate_unique_book_code_special_characters():
     assert book.code == "special-characters-author"
 
 
+@allure.epic('Book import')
+@allure.feature('Book Code Generation')
 @pytest.mark.django_db
 def test_generate_unique_book_code_empty():
     author = Author.objects.create(name="@#$%^")
@@ -155,6 +176,8 @@ def test_generate_unique_book_code_empty():
     assert book.code == "book"
 
 
+@allure.epic('Book import')
+@allure.feature('Book Code Generation')
 @pytest.mark.django_db
 def test_generate_unique_book_code_ignore_initials():
     author = Author.objects.create(name="Толстой Л.Н.")

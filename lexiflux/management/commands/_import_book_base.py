@@ -41,7 +41,6 @@ class ImportBookBaseCommand(BaseCommand):  # type: ignore
  See "list-users" command for a list of users""",
             default=None,
         )
-        # todo: search owners by regex and show found if more than one
         parser.add_argument(
             "--language",
             "-f",

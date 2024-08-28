@@ -28,6 +28,7 @@
                                 <tr>
                                     <th>Title</th>
                                     <th>Author</th>
+                                    <th>Pages</th>
                                     <th>Last Read</th>
                                     <th>Progress</th>
                                     <th>Action</th>
@@ -42,6 +43,7 @@
                                         </a>
                                     </td>
                                     <td>{{ book.author.name }}</td>
+                                    <td>{{ book.pages.count }}</td>
                                     <td>{{ book.formatted_last_read }}</td>
                                     <td>
                                       <div class="d-flex align-items-center">
