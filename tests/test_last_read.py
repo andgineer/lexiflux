@@ -13,7 +13,7 @@ User = get_user_model()
 class TestFormatLastRead:
 
     @pytest.fixture
-    def setup_book(self):
+    def setup_book(self, db_init):
         author = Author.objects.create(name="Test Author")
         language = Language.objects.get(name="English")
         user = User.objects.create_user(username="testuser", email="test@example.com", password="testpass")
