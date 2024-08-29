@@ -7,7 +7,7 @@ from lexiflux.models import Book, Author, Language, ReadingLoc
 
 User = get_user_model()
 
-@allure.epic('Page endpoints')
+@allure.epic('Pages endpoints')
 @allure.feature('Library')
 @pytest.mark.django_db
 class TestFormatLastRead:
