@@ -2,7 +2,6 @@ exclude: |
     (?x)(
         tests/|
         docs/|
-        core/migrations/|
         .venv/|
         migrations/|
         manage.py|

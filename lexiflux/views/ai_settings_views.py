@@ -23,7 +23,7 @@ CHAT_MODEL_CAPTIONS = {
 def ai_settings(request: HttpRequest) -> HttpResponse:
     """Render the AI settings page."""
     selected_tab = request.GET.get("tab", "")
-    return render(request, "ai_settings.html", {"selected_tab": selected_tab})
+    return render(request, "ai-settings.html", {"selected_tab": selected_tab})
 
 
 @smart_login_required
