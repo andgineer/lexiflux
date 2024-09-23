@@ -65,7 +65,7 @@
             <a id="nextFileLink" class="nav" href="z_7b58db99f577a887_translation_py.html">&#xbb; next</a>
             &nbsp; &nbsp; &nbsp;
             <a class="nav" href="https://coverage.readthedocs.io/en/7.6.1">coverage.py v7.6.1</a>,
-            created at 2024-09-22 06:37 +0000
+            created at 2024-09-23 16:22 +0000
         </p>
         <aside class="hidden">
             <button type="button" class="button_next_chunk" data-shortcut="j"></button>
@@ -105,7 +105,7 @@
     <p class="run"><span class="n"><a id="t23" href="#t23">23</a></span><span class="t"><span class="nam">WORD_END_MARK</span> <span class="op">=</span> <span class="str">"[/HIGHLIGHT]"</span>&nbsp;</span><span class="r"></span></p>
     <p class="pln"><span class="n"><a id="t24" href="#t24">24</a></span><span class="t">&nbsp;</span><span class="r"></span></p>
     <p class="pln"><span class="n"><a id="t25" href="#t25">25</a></span><span class="t">&nbsp;</span><span class="r"></span></p>
-    <p class="run"><span class="n"><a id="t26" href="#t26">26</a></span><span class="t"><span class="key">def</span> <span class="nam">break_into_sentences</span><span class="op">(</span>  <span class="com"># pylint: disable=too-many-locals</span>&nbsp;</span><span class="r"></span></p>
+    <p class="run"><span class="n"><a id="t26" href="#t26">26</a></span><span class="t"><span class="key">def</span> <span class="nam">break_into_sentences_llm</span><span class="op">(</span>  <span class="com"># pylint: disable=too-many-locals</span>&nbsp;</span><span class="r"></span></p>
     <p class="pln"><span class="n"><a id="t27" href="#t27">27</a></span><span class="t">    <span class="nam">plain_text</span><span class="op">:</span> <span class="nam">str</span><span class="op">,</span>&nbsp;</span><span class="r"></span></p>
     <p class="pln"><span class="n"><a id="t28" href="#t28">28</a></span><span class="t">    <span class="nam">word_slices</span><span class="op">:</span> <span class="nam">List</span><span class="op">[</span><span class="nam">Tuple</span><span class="op">[</span><span class="nam">int</span><span class="op">,</span> <span class="nam">int</span><span class="op">]</span><span class="op">]</span><span class="op">,</span>&nbsp;</span><span class="r"></span></p>
     <p class="pln"><span class="n"><a id="t29" href="#t29">29</a></span><span class="t">    <span class="nam">term_word_ids</span><span class="op">:</span> <span class="nam">List</span><span class="op">[</span><span class="nam">int</span><span class="op">]</span><span class="op">,</span>  <span class="com"># pylint: disable=redefined-outer-name</span>&nbsp;</span><span class="r"></span></p>
@@ -238,15 +238,17 @@
     <p class="pln"><span class="n"><a id="t156" href="#t156">156</a></span><span class="t">    <span class="op">]</span>&nbsp;</span><span class="r"></span></p>
     <p class="mis show_mis"><span class="n"><a id="t157" href="#t157">157</a></span><span class="t">    <span class="nam">term_word_ids</span> <span class="op">=</span> <span class="op">[</span><span class="num">3</span><span class="op">]</span>  <span class="com"># "jumps"</span>&nbsp;</span><span class="r"></span></p>
     <p class="pln"><span class="n"><a id="t158" href="#t158">158</a></span><span class="t">&nbsp;</span><span class="r"></span></p>
-    <p class="mis show_mis"><span class="n"><a id="t159" href="#t159">159</a></span><span class="t">    <span class="nam">sentences</span><span class="op">,</span> <span class="nam">word_to_sentence</span> <span class="op">=</span> <span class="nam">break_into_sentences</span><span class="op">(</span><span class="nam">SAMPLE_TEXT</span><span class="op">,</span> <span class="nam">sample_word_ids</span><span class="op">,</span> <span class="nam">term_word_ids</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
-    <p class="pln"><span class="n"><a id="t160" href="#t160">160</a></span><span class="t">&nbsp;</span><span class="r"></span></p>
-    <p class="mis show_mis"><span class="n"><a id="t161" href="#t161">161</a></span><span class="t">    <span class="nam">print</span><span class="op">(</span><span class="str">"Sentences:"</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
-    <p class="mis show_mis"><span class="n"><a id="t162" href="#t162">162</a></span><span class="t">    <span class="key">for</span> <span class="nam">i</span><span class="op">,</span> <span class="nam">sentence</span> <span class="key">in</span> <span class="nam">enumerate</span><span class="op">(</span><span class="nam">sentences</span><span class="op">)</span><span class="op">:</span>&nbsp;</span><span class="r"></span></p>
-    <p class="mis show_mis"><span class="n"><a id="t163" href="#t163">163</a></span><span class="t">        <span class="nam">print</span><span class="op">(</span><span class="fst">f"</span><span class="op">{</span><span class="nam">i</span><span class="op">}</span><span class="fst">: </span><span class="op">{</span><span class="nam">sentence</span><span class="op">}</span><span class="fst">"</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
-    <p class="pln"><span class="n"><a id="t164" href="#t164">164</a></span><span class="t">&nbsp;</span><span class="r"></span></p>
-    <p class="mis show_mis"><span class="n"><a id="t165" href="#t165">165</a></span><span class="t">    <span class="nam">print</span><span class="op">(</span><span class="str">"\nWord to Sentence mapping:"</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
-    <p class="mis show_mis"><span class="n"><a id="t166" href="#t166">166</a></span><span class="t">    <span class="key">for</span> <span class="nam">word_id</span><span class="op">,</span> <span class="nam">sentence_id</span> <span class="key">in</span> <span class="nam">word_to_sentence</span><span class="op">.</span><span class="nam">items</span><span class="op">(</span><span class="op">)</span><span class="op">:</span>&nbsp;</span><span class="r"></span></p>
-    <p class="mis show_mis"><span class="n"><a id="t167" href="#t167">167</a></span><span class="t">        <span class="nam">print</span><span class="op">(</span><span class="fst">f"</span><span class="fst">Word ID </span><span class="op">{</span><span class="nam">word_id</span><span class="op">}</span><span class="fst">: Sentence </span><span class="op">{</span><span class="nam">sentence_id</span><span class="op">}</span><span class="fst">"</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
+    <p class="mis show_mis"><span class="n"><a id="t159" href="#t159">159</a></span><span class="t">    <span class="nam">sentences</span><span class="op">,</span> <span class="nam">word_to_sentence</span> <span class="op">=</span> <span class="nam">break_into_sentences_llm</span><span class="op">(</span>&nbsp;</span><span class="r"></span></p>
+    <p class="pln"><span class="n"><a id="t160" href="#t160">160</a></span><span class="t">        <span class="nam">SAMPLE_TEXT</span><span class="op">,</span> <span class="nam">sample_word_ids</span><span class="op">,</span> <span class="nam">term_word_ids</span>&nbsp;</span><span class="r"></span></p>
+    <p class="pln"><span class="n"><a id="t161" href="#t161">161</a></span><span class="t">    <span class="op">)</span>&nbsp;</span><span class="r"></span></p>
+    <p class="pln"><span class="n"><a id="t162" href="#t162">162</a></span><span class="t">&nbsp;</span><span class="r"></span></p>
+    <p class="mis show_mis"><span class="n"><a id="t163" href="#t163">163</a></span><span class="t">    <span class="nam">print</span><span class="op">(</span><span class="str">"Sentences:"</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
+    <p class="mis show_mis"><span class="n"><a id="t164" href="#t164">164</a></span><span class="t">    <span class="key">for</span> <span class="nam">i</span><span class="op">,</span> <span class="nam">sentence</span> <span class="key">in</span> <span class="nam">enumerate</span><span class="op">(</span><span class="nam">sentences</span><span class="op">)</span><span class="op">:</span>&nbsp;</span><span class="r"></span></p>
+    <p class="mis show_mis"><span class="n"><a id="t165" href="#t165">165</a></span><span class="t">        <span class="nam">print</span><span class="op">(</span><span class="fst">f"</span><span class="op">{</span><span class="nam">i</span><span class="op">}</span><span class="fst">: </span><span class="op">{</span><span class="nam">sentence</span><span class="op">}</span><span class="fst">"</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
+    <p class="pln"><span class="n"><a id="t166" href="#t166">166</a></span><span class="t">&nbsp;</span><span class="r"></span></p>
+    <p class="mis show_mis"><span class="n"><a id="t167" href="#t167">167</a></span><span class="t">    <span class="nam">print</span><span class="op">(</span><span class="str">"\nWord to Sentence mapping:"</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
+    <p class="mis show_mis"><span class="n"><a id="t168" href="#t168">168</a></span><span class="t">    <span class="key">for</span> <span class="nam">word_id</span><span class="op">,</span> <span class="nam">sentence_id</span> <span class="key">in</span> <span class="nam">word_to_sentence</span><span class="op">.</span><span class="nam">items</span><span class="op">(</span><span class="op">)</span><span class="op">:</span>&nbsp;</span><span class="r"></span></p>
+    <p class="mis show_mis"><span class="n"><a id="t169" href="#t169">169</a></span><span class="t">        <span class="nam">print</span><span class="op">(</span><span class="fst">f"</span><span class="fst">Word ID </span><span class="op">{</span><span class="nam">word_id</span><span class="op">}</span><span class="fst">: Sentence </span><span class="op">{</span><span class="nam">sentence_id</span><span class="op">}</span><span class="fst">"</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
 </main>
 <footer>
     <div class="content">
@@ -256,7 +258,7 @@
             <a class="nav" href="z_7b58db99f577a887_translation_py.html">&#xbb; next</a>
             &nbsp; &nbsp; &nbsp;
             <a class="nav" href="https://coverage.readthedocs.io/en/7.6.1">coverage.py v7.6.1</a>,
-            created at 2024-09-22 06:37 +0000
+            created at 2024-09-23 16:22 +0000
         </p>
     </div>
 </footer>
