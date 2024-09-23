@@ -60,7 +60,7 @@ new Vue({
             aiPromptPlaceholder: `Enter AI chat prompt here. For example:
 
 You will be given a text in {text_language} language.
-ONE word or phrase is marked with [WORD_START][WORD_END]
+ONE word or phrase is marked with [HIGHLIGHT][/HIGHLIGHT]
 Give me synonyms and antonyms of the marked word.
 Add to each translation to {user_language} language.
 `

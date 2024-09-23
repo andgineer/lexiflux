@@ -23,7 +23,7 @@ WORD_START_MARK = "[HIGHLIGHT]"
 WORD_END_MARK = "[/HIGHLIGHT]"
 
 
-def break_into_sentences(  # pylint: disable=too-many-locals
+def break_into_sentences_llm(  # pylint: disable=too-many-locals
     plain_text: str,
     word_slices: List[Tuple[int, int]],
     term_word_ids: List[int],  # pylint: disable=redefined-outer-name
@@ -156,7 +156,9 @@ if __name__ == "__main__":
     ]
     term_word_ids = [3]  # "jumps"
 
-    sentences, word_to_sentence = break_into_sentences(SAMPLE_TEXT, sample_word_ids, term_word_ids)
+    sentences, word_to_sentence = break_into_sentences_llm(
+        SAMPLE_TEXT, sample_word_ids, term_word_ids
+    )
 
     print("Sentences:")
     for i, sentence in enumerate(sentences):

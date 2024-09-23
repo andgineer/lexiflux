@@ -1,7 +1,7 @@
 """Views for the translation and lexical sidebar."""
 
 import urllib.parse
-from typing import List, Tuple, Dict, Any
+from typing import List, Dict, Any
 
 from django.http import HttpRequest, HttpResponse, JsonResponse
 
@@ -14,9 +14,16 @@ from lexiflux.lexiflux_settings import settings
 from lexiflux.decorators import smart_login_required
 from lexiflux.api import ViewGetParamsModel, get_params
 from lexiflux.language.parse_html_text_content import extract_content_from_html
-from lexiflux.language.llm import Llm, AIModelError
+from lexiflux.language.llm import (
+    Llm,
+    AIModelError,
+    SENTENCE_START_MARK,
+    SENTENCE_END_MARK,
+    WORD_START_MARK,
+    WORD_END_MARK,
+)
 from lexiflux.language.translation import get_translator
-from lexiflux.models import BookPage, LanguagePreferences, Book, CustomUser
+from lexiflux.models import BookPage, LanguagePreferences, Book, CustomUser, TranslationHistory
 
 MAX_SENTENCE_LENGTH = 100
 
@@ -32,23 +39,6 @@ class TranslateGetParams(ViewGetParamsModel):
         description="Lexical article index. '0' for inline, "
         "otherwise number of the panel in Sidebar",
     )
-
-
-def get_context_for_term(
-    book_page: BookPage, term_word_ids: List[int]
-) -> Tuple[str, List[Tuple[int, int]], List[int], int]:
-    """Get the context for the term."""
-    start_word = max(0, term_word_ids[0] - MAX_SENTENCE_LENGTH)
-    end_word = term_word_ids[-1] + MAX_SENTENCE_LENGTH
-    if end_word - start_word < MAX_SENTENCE_LENGTH * 2:
-        end_word = start_word + MAX_SENTENCE_LENGTH * 2
-    end_word = min(end_word, len(book_page.words))
-    if end_word - start_word < MAX_SENTENCE_LENGTH * 2:
-        start_word = max(0, end_word - MAX_SENTENCE_LENGTH * 2)
-
-    context_str, context_word_slices = book_page.extract_words(start_word, end_word)
-    context_term_word_ids = [word_id - start_word for word_id in term_word_ids]
-    return context_str, context_word_slices, context_term_word_ids, start_word
 
 
 def get_llm_errors_folder() -> str:
@@ -86,23 +76,17 @@ def get_lexical_article(  # pylint: disable=too-many-arguments, too-many-locals
         )
         return {"article": translator.translate(selected_text)}
 
-    context_str, context_word_slices, context_term_word_ids, context_start_word = (
-        get_context_for_term(book_page, term_word_ids)
-    )
     try:
         llm = Llm()
         data = llm.generate_article(
             article_name=article_name,
             params={**article_params, "user": user},
             data={
-                "text": context_str,
-                "word_slices": context_word_slices,
-                "term_word_ids": context_term_word_ids,
-                "text_language": book_page.book.language.google_code,
-                "user_language": language_preferences.user_language.google_code,
                 "book_code": book_page.book.code,
                 "book_page_number": book_page.number,
-                "context_start_word": context_start_word,
+                "user_language": language_preferences.user_language.google_code,
+                "term_word_ids": term_word_ids,
+                "text_language": book_page.book.language.google_code,
             },
         )
         return {"article": str(data)}
@@ -130,7 +114,7 @@ def get_lexical_article(  # pylint: disable=too-many-arguments, too-many-locals
 
 @smart_login_required
 @get_params(TranslateGetParams)
-def translate(request: HttpRequest, params: TranslateGetParams) -> HttpResponse:
+def translate(request: HttpRequest, params: TranslateGetParams) -> HttpResponse:  # pylint: disable=too-many-locals
     """Translate the selected text.
 
     The selected text is defined by the word IDs.
@@ -144,12 +128,6 @@ def translate(request: HttpRequest, params: TranslateGetParams) -> HttpResponse:
     )
 
     term_word_ids = [int(id) for id in params.word_ids.split(".")]
-    # term_words = " ".join(
-    #     [
-    #         book_page.content[book_page.words[id][0] : book_page.words[id][1]]
-    #         for id in term_word_ids
-    #     ]
-    # )
     term_text = extract_content_from_html(
         book_page.content[
             book_page.words[term_word_ids[0]][0] : book_page.words[term_word_ids[-1]][1]
@@ -174,6 +152,22 @@ def translate(request: HttpRequest, params: TranslateGetParams) -> HttpResponse:
         )
         result["article"] = result["article"].split("<hr>")[0]
 
+        # Create or update TranslationHistory instance
+        context = get_context(book, book_page, term_word_ids)
+        translation_history, created = TranslationHistory.objects.get_or_create(
+            term=term_text,
+            source_language=book.language,
+            user=request.user,
+            defaults={
+                "target_language": language_preferences.user_language,
+                "context": context,
+                "book": book,
+            },
+        )
+        if not created:
+            translation_history.lookup_count += 1
+            translation_history.save()
+
     else:
         all_articles = language_preferences.lexical_articles.all()
         article_index = int(params.lexical_article) - 1
@@ -196,3 +190,23 @@ def translate(request: HttpRequest, params: TranslateGetParams) -> HttpResponse:
 
     print(f"Result: {result}")
     return JsonResponse(result)
+
+
+def get_context(book: Book, book_page: BookPage, term_word_ids: List[int]) -> str:
+    """Get the context for the term.
+
+    The context is marked with the term and sentence marks.
+    """
+    llm = Llm()
+    data = {
+        "book_code": book.code,
+        "book_page_number": book_page.number,
+        "term_word_ids": term_word_ids,
+    }
+    marked_context = llm.mark_term_and_sentence(llm.hashable_dict(data), context_words=10)
+    return (  # type: ignore
+        marked_context.replace(SENTENCE_START_MARK, TranslationHistory.SENTENCE_MARK)
+        .replace(SENTENCE_END_MARK, TranslationHistory.SENTENCE_MARK)
+        .replace(WORD_START_MARK, TranslationHistory.WORD_MARK)
+        .replace(WORD_END_MARK, TranslationHistory.WORD_MARK)
+    )

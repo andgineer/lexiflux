@@ -1,10 +1,10 @@
 Below given a text in {detected_language} language.
-Translate to {user_language} language only the word(s) enclosed in [WORD_START][WORD_END] tags - like
-[WORD_START]the word[WORD_END].
+Translate to {user_language} language only the word(s) enclosed in [HIGHLIGHT][/HIGHLIGHT] tags - like
+[HIGHLIGHT]the word[/HIGHLIGHT].
 
 Give translation of the term in the exact text fragment marked
-with [SENTENCE_START][SENTENCE_END], like this:
-[SENTENCE_START]This is the marked text fragment containing [WORD_START]the word[WORD_END].[SENTENCE_END]
+with [FRAGMENT][/FRAGMENT], like this:
+[FRAGMENT]This is the marked text fragment containing [HIGHLIGHT]the word[/HIGHLIGHT].[/FRAGMENT]
 
 If the term is not {text_language} word(s), prefix the result with the term language name in
 parentheses, like (Latin).

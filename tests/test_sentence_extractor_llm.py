@@ -2,7 +2,7 @@ import allure
 import pytest
 from typing import List, Tuple, Dict
 
-from lexiflux.language.sentence_extractor_llm import break_into_sentences
+from lexiflux.language.sentence_extractor_llm import break_into_sentences_llm
 
 # This tests use real LLM, need KEY and spend money. Skip them by default.
 SKIP_LLM = True
@@ -64,7 +64,7 @@ def test_break_into_sentences_llm(
         expected_sentences: List[str],
         expected_word_to_sentence: Dict[int, int]
 ):
-    sentences, word_to_sentence = break_into_sentences(text, word_ids, highlighted_word_id)
+    sentences, word_to_sentence = break_into_sentences_llm(text, word_ids, highlighted_word_id)
 
     assert sentences == expected_sentences, f"Expected {expected_sentences}, but got {sentences}"
     assert word_to_sentence == expected_word_to_sentence, f"Expected {expected_word_to_sentence}, but got {word_to_sentence} for text: '{text}'"
@@ -85,5 +85,5 @@ def test_break_into_sentences_edge_cases(
         highlighted_word_id: int
 ):
     with pytest.raises(ValueError) as exc_info:
-        break_into_sentences(text, word_ids, highlighted_word_id)
+        break_into_sentences_llm(text, word_ids, highlighted_word_id)
         assert "Highlighted word ID" in str(exc_info)

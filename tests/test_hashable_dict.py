@@ -14,7 +14,7 @@ def llm():
 @allure.title('Test simple dictionary')
 def test_hashable_dict_simple(llm):
     input_dict = {"a": 1, "b": "string", "c": 3.14}
-    result = llm._hashable_dict(input_dict)
+    result = llm.hashable_dict(input_dict)
     expected = (("a", 1), ("b", "string"), ("c", 3.14))
     assert result == expected
 
@@ -25,7 +25,7 @@ def test_hashable_dict_simple(llm):
 @allure.title('Test dictionary with list')
 def test_hashable_dict_with_list(llm):
     input_dict = {"a": [1, 2, 3], "b": "string"}
-    result = llm._hashable_dict(input_dict)
+    result = llm.hashable_dict(input_dict)
     expected = (("a", (1, 2, 3)), ("b", "string"))
     assert result == expected
 
@@ -36,7 +36,7 @@ def test_hashable_dict_with_list(llm):
 @allure.title('Test dictionary with nested dict')
 def test_hashable_dict_with_nested_dict(llm):
     input_dict = {"a": {"nested": "value"}, "b": "string"}
-    result = llm._hashable_dict(input_dict)
+    result = llm.hashable_dict(input_dict)
     expected = (("a", (("nested", "value"),)), ("b", "string"))
     assert result == expected
 
@@ -47,7 +47,7 @@ def test_hashable_dict_with_nested_dict(llm):
 @allure.title('Test dictionary with nested list of dicts')
 def test_hashable_dict_with_nested_list_of_dicts(llm):
     input_dict = {"a": [{"x": 1}, {"y": 2}], "b": "string"}
-    result = llm._hashable_dict(input_dict)
+    result = llm.hashable_dict(input_dict)
     expected = (("a", ((("x", 1),), (("y", 2),))), ("b", "string"))
     assert result == expected
 
@@ -61,7 +61,7 @@ def test_hashable_dict_with_complex_nesting(llm):
         "a": [1, {"nested": [2, 3, {"deep": "value"}]}, 4],
         "b": {"x": [5, 6], "y": {"z": 7}}
     }
-    result = llm._hashable_dict(input_dict)
+    result = llm.hashable_dict(input_dict)
     expected = (
         ("a", (1, (("nested", (2, 3, (("deep", "value"),))),), 4)),
         ("b", (("x", (5, 6)), ("y", (("z", 7),))))
@@ -75,7 +75,7 @@ def test_hashable_dict_with_complex_nesting(llm):
 @allure.title('Test empty dictionary')
 def test_hashable_dict_empty(llm):
     input_dict = {}
-    result = llm._hashable_dict(input_dict)
+    result = llm.hashable_dict(input_dict)
     expected = ()
     assert result == expected
 
@@ -86,7 +86,7 @@ def test_hashable_dict_empty(llm):
 @allure.title('Test dictionary with None value')
 def test_hashable_dict_with_none(llm):
     input_dict = {"a": None, "b": "string"}
-    result = llm._hashable_dict(input_dict)
+    result = llm.hashable_dict(input_dict)
     expected = (("a", None), ("b", "string"))
     assert result == expected
 
@@ -97,7 +97,7 @@ def test_hashable_dict_with_none(llm):
 @allure.title('Test dictionary with tuple')
 def test_hashable_dict_with_tuple(llm):
     input_dict = {"a": (1, 2, 3), "b": "string"}
-    result = llm._hashable_dict(input_dict)
+    result = llm.hashable_dict(input_dict)
     expected = (("a", (1, 2, 3)), ("b", "string"))
     assert result == expected
 
@@ -108,7 +108,7 @@ def test_hashable_dict_with_tuple(llm):
 @allure.title('Test dictionary sorting')
 def test_hashable_dict_sorting(llm):
     input_dict = {"c": 3, "a": 1, "b": 2}
-    result = llm._hashable_dict(input_dict)
+    result = llm.hashable_dict(input_dict)
     expected = (("a", 1), ("b", 2), ("c", 3))
     assert result == expected
 
@@ -118,7 +118,7 @@ def test_hashable_dict_sorting(llm):
 @allure.title('Test dictionary with empty list')
 def test_hashable_dict_with_empty_list(llm):
     input_dict = {"a": [], "b": "string"}
-    result = llm._hashable_dict(input_dict)
+    result = llm.hashable_dict(input_dict)
     expected = (("a", ()), ("b", "string"))
     assert result == expected
 
@@ -129,7 +129,7 @@ def test_hashable_dict_with_empty_list(llm):
 @allure.title('Test dictionary with empty nested dict')
 def test_hashable_dict_with_empty_nested_dict(llm):
     input_dict = {"a": {}, "b": "string"}
-    result = llm._hashable_dict(input_dict)
+    result = llm.hashable_dict(input_dict)
     expected = (("a", ()), ("b", "string"))
     assert result == expected
 
@@ -157,8 +157,8 @@ def test_hashable_dict_with_different_users(llm):
     input_dict1 = {"user": user1, "b": "string"}
     input_dict2 = {"user": user2, "b": "string"}
 
-    result1 = llm._hashable_dict(input_dict1)
-    result2 = llm._hashable_dict(input_dict2)
+    result1 = llm.hashable_dict(input_dict1)
+    result2 = llm.hashable_dict(input_dict2)
 
     # Check that the results are hashable
     assert isinstance(result1, tuple) and isinstance(result2, tuple)

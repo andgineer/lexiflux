@@ -268,7 +268,7 @@ class BookPage(models.Model):  # type: ignore
     number = models.PositiveIntegerField()
     content = models.TextField()
     book = models.ForeignKey("Book", related_name="pages", on_delete=models.CASCADE)
-    word_slices = models.JSONField(
+    word_slices = models.JSONField(  # access with property `words`
         null=True, blank=True, help_text="List of tuples with start and end index for each word."
     )
     word_to_sentence_map = models.JSONField(null=True, blank=True)
@@ -696,3 +696,38 @@ class ReadingLoc(models.Model):  # type: ignore  # pylint: disable=too-many-inst
             user=user, book=book, defaults={"page_number": 1, "word": 0}
         )
         return loc  # type: ignore
+
+
+class TranslationHistory(models.Model):  # type: ignore
+    """Model to store translation history."""
+
+    SENTENCE_MARK = "‹§›"
+    WORD_MARK = "‹¶›"
+
+    term = models.CharField(max_length=255, help_text="Term looked up for translation")
+    source_language = models.ForeignKey(
+        "Language", on_delete=models.CASCADE, related_name="translation_history"
+    )
+    target_language = models.ForeignKey(
+        "Language", on_delete=models.CASCADE, related_name="target_translation_history"
+    )
+    context = models.TextField(help_text="Context of the term")
+    book = models.ForeignKey("Book", on_delete=models.CASCADE, related_name="translation_history")
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="translation_history"
+    )
+    lookup_count = models.PositiveIntegerField(default=1, help_text="Number of lookups")
+    first_lookup = models.DateTimeField(auto_now_add=True, help_text="First lookup timestamp")
+    last_lookup = models.DateTimeField(auto_now=True, help_text="Most recent lookup timestamp")
+
+    class Meta:
+        unique_together = ["term", "source_language", "user"]
+        indexes = [
+            models.Index(fields=["term", "source_language", "user"]),
+            models.Index(fields=["last_lookup"]),
+            models.Index(fields=["lookup_count"]),
+        ]
+
+    def __str__(self) -> str:
+        """Return the string representation of a TranslationHistory."""
+        return f"{self.term} ({self.source_language} -> {self.target_language})"
