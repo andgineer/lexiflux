@@ -56,6 +56,7 @@ def test_e2e_reader_page_click_to_translate(mock_llm, mock_get_translator, brows
 
     mock_llm_instance = MagicMock()
     mock_llm_instance.generate_article.side_effect = mock_generate_article
+    mock_llm_instance.mark_term_and_sentence.return_value = "Mocked marked text"
     mock_llm.return_value = mock_llm_instance
 
     with allure.step("Login and navigate to reader"):
