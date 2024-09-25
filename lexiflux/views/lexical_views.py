@@ -153,7 +153,7 @@ def translate(request: HttpRequest, params: TranslateGetParams) -> HttpResponse:
         result["article"] = result["article"].split("<hr>")[0]
 
         # Create or update TranslationHistory instance
-        context = get_context(book, book_page, term_word_ids)
+        context = get_context_for_translation_history(book, book_page, term_word_ids)
         translation_history, created = TranslationHistory.objects.get_or_create(
             term=term_text,
             source_language=book.language,
@@ -192,10 +192,14 @@ def translate(request: HttpRequest, params: TranslateGetParams) -> HttpResponse:
     return JsonResponse(result)
 
 
-def get_context(book: Book, book_page: BookPage, term_word_ids: List[int]) -> str:
-    """Get the context for the term.
+def get_context_for_translation_history(
+    book: Book, book_page: BookPage, term_word_ids: List[int]
+) -> str:
+    """Get the context for the term to save in Translation History.
 
-    The context is marked with the term and sentence marks.
+    Surround the sentence with the term with {CONTEXT_MARK}.
+
+    Replace the term inside it with single {CONTEXT_MARK}.
     """
     llm = Llm()
     data = {
@@ -204,9 +208,14 @@ def get_context(book: Book, book_page: BookPage, term_word_ids: List[int]) -> st
         "term_word_ids": term_word_ids,
     }
     marked_context = llm.mark_term_and_sentence(llm.hashable_dict(data), context_words=10)
-    return (  # type: ignore
-        marked_context.replace(SENTENCE_START_MARK, TranslationHistory.SENTENCE_MARK)
-        .replace(SENTENCE_END_MARK, TranslationHistory.SENTENCE_MARK)
-        .replace(WORD_START_MARK, TranslationHistory.WORD_MARK)
-        .replace(WORD_END_MARK, TranslationHistory.WORD_MARK)
-    )
+
+    # Replace sentence marks with CONTEXT_MARK
+    context = marked_context.replace(SENTENCE_START_MARK, TranslationHistory.CONTEXT_MARK)
+    context = context.replace(SENTENCE_END_MARK, TranslationHistory.CONTEXT_MARK)
+
+    # Replace the marked words (including surrounding marks) with a single CONTEXT_MARK
+    start_index = context.find(WORD_START_MARK)
+    end_index = context.find(WORD_END_MARK, start_index) + len(WORD_END_MARK)
+    context = context[:start_index] + TranslationHistory.CONTEXT_MARK + context[end_index:]
+
+    return context  # type: ignore

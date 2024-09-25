@@ -701,8 +701,7 @@ class ReadingLoc(models.Model):  # type: ignore  # pylint: disable=too-many-inst
 class TranslationHistory(models.Model):  # type: ignore
     """Model to store translation history."""
 
-    SENTENCE_MARK = "‹§›"
-    WORD_MARK = "‹¶›"
+    CONTEXT_MARK = "‹§›"
 
     term = models.CharField(max_length=255, help_text="Term looked up for translation")
     source_language = models.ForeignKey(
@@ -711,7 +710,12 @@ class TranslationHistory(models.Model):  # type: ignore
     target_language = models.ForeignKey(
         "Language", on_delete=models.CASCADE, related_name="target_translation_history"
     )
-    context = models.TextField(help_text="Context of the term")
+    context = models.TextField(
+        help_text=(
+            f"Context of the term. Sentence with the term surrounded with {CONTEXT_MARK}. "
+            f"Place of the term inside marked with single {CONTEXT_MARK}."
+        )
+    )
     book = models.ForeignKey("Book", on_delete=models.CASCADE, related_name="translation_history")
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="translation_history"
