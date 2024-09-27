@@ -1,7 +1,7 @@
 import pytest
 import allure
-from unittest.mock import patch, MagicMock, PropertyMock
-from lexiflux.models import BookPage, Book
+from unittest.mock import patch, MagicMock, PropertyMock, Mock
+from lexiflux.models import BookPage, Book, TranslationHistory
 from lexiflux.language.llm import Llm
 from lexiflux.language.sentence_extractor_llm import (
     SENTENCE_START_MARK,
@@ -9,6 +9,7 @@ from lexiflux.language.sentence_extractor_llm import (
     WORD_START_MARK,
     WORD_END_MARK,
 )
+from lexiflux.views.lexical_views import get_context_for_translation_history
 
 
 @pytest.fixture
@@ -73,6 +74,8 @@ def test_mark_term_and_sentence_success(mock_book_page, llm_instance):
     assert result == expected_result
 
 
+@allure.epic('Language Processing')
+@allure.feature('Term and Sentence Marking')
 @pytest.mark.parametrize("term_word_ids, expected_term", [
     ([0, 1], "Word1 word2"),
     ([4, 5], "Word5 word6"),
@@ -91,6 +94,8 @@ def test_mark_term_and_sentence_different_terms(mock_book_page, llm_instance, te
     assert f"{WORD_START_MARK}{expected_term}{WORD_END_MARK}" in result
 
 
+@allure.epic('Language Processing')
+@allure.feature('Term and Sentence Marking')
 @pytest.mark.parametrize("context_words, expected_words_before, expected_words_after", [
     (1, 2, 0),  # include word4(+3 in the same sentence) and word7 (in the same sentence as term
     (2, 2, 3),  # include word3 and word8 (+9 in the same sentence)
@@ -112,3 +117,66 @@ def test_mark_term_and_sentence_different_context(mock_book_page, llm_instance, 
 
     assert len(words_before) == expected_words_before
     assert len(words_after) == expected_words_after
+
+
+@pytest.fixture
+def mock_llm():
+    with patch('lexiflux.views.lexical_views.Llm') as mock:
+        yield mock
+
+
+@allure.epic('Language Processing')
+@allure.feature('Term and Sentence Marking')
+def test_get_context_for_translation_history(mock_llm):
+    # Setup
+    book = Mock(spec=Book)
+    book.code = "TEST_BOOK"
+    book_page = Mock(spec=BookPage)
+    book_page.number = 42
+    term_word_ids = [1, 2, 3]
+
+    # Configure mock
+    mock_llm_instance = mock_llm.return_value
+    mock_llm_instance.hashable_dict.return_value = {
+        "book_code": "TEST_BOOK",
+        "book_page_number": 42,
+        "term_word_ids": [1, 2, 3],
+    }
+    mock_llm_instance.mark_term_and_sentence.return_value = (
+        f"Some context {SENTENCE_START_MARK}This is a {WORD_START_MARK}test{WORD_END_MARK} sentence.{SENTENCE_END_MARK} More context."
+    )
+
+    # Call the function
+    result = get_context_for_translation_history(book, book_page, term_word_ids)
+
+    # Assertions
+    expected_result = f"Some context {TranslationHistory.CONTEXT_MARK}This is a {TranslationHistory.CONTEXT_MARK} sentence.{TranslationHistory.CONTEXT_MARK} More context."
+    assert result == expected_result
+
+    # Verify mock calls
+    mock_llm_instance.hashable_dict.assert_called_once_with({
+        "book_code": "TEST_BOOK",
+        "book_page_number": 42,
+        "term_word_ids": [1, 2, 3],
+    })
+    mock_llm_instance.mark_term_and_sentence.assert_called_once_with(
+        mock_llm_instance.hashable_dict.return_value,
+        context_words=10
+    )
+
+
+@allure.epic('Language Processing')
+@allure.feature('Term and Sentence Marking')
+def test_get_context_for_translation_history_error_handling(mock_llm):
+    # Setup
+    book = Mock(spec=Book)
+    book_page = Mock(spec=BookPage)
+    term_word_ids = [1, 2, 3]
+
+    # Configure mock to raise an exception
+    mock_llm_instance = mock_llm.return_value
+    mock_llm_instance.mark_term_and_sentence.side_effect = Exception("LLM error")
+
+    # Call the function and check for exception
+    with pytest.raises(Exception, match="LLM error"):
+        get_context_for_translation_history(book, book_page, term_word_ids)
