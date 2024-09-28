@@ -20,7 +20,7 @@
 | lexiflux/forms.py                                     |       33 |       18 |     45% |14-18, 35-51 |
 | lexiflux/language/detect\_language\_detectlanguage.py |       25 |        4 |     84% |29-31, 33-37 |
 | lexiflux/language/detect\_language\_fasttext.py       |       29 |        1 |     97% |        34 |
-| lexiflux/language/google\_languages.py                |       17 |        0 |    100% |           |
+| lexiflux/language/google\_languages.py                |       40 |        1 |     98% |        78 |
 | lexiflux/language/llm.py                              |      185 |       86 |     54% |44-47, 61-64, 69-74, 79-81, 86-88, 101-106, 113, 137, 192-197, 209-228, 264-277, 369-378, 385-436 |
 | lexiflux/language/nltk\_tokenizer.py                  |       29 |        5 |     83% |25, 37-39, 55 |
 | lexiflux/language/parse\_html\_text\_content.py       |      102 |        1 |     99% |       158 |
@@ -31,7 +31,7 @@
 | lexiflux/language\_preferences\_default.py            |       16 |        2 |     88% |     37-38 |
 | lexiflux/lexiflux\_settings.py                        |       51 |       14 |     73% |23-30, 35-39, 60-66, 88-89, 104 |
 | lexiflux/middleware.py                                |       13 |        2 |     85% |     21-25 |
-| lexiflux/models.py                                    |      380 |       46 |     88% |103, 135, 166, 182-183, 245, 251, 262, 284, 318-321, 336, 387, 409-417, 420-432, 435-436, 439, 463, 465-466, 468-469, 472, 516, 630, 640, 664, 737 |
+| lexiflux/models.py                                    |      394 |       48 |     88% |103, 135, 166, 182-183, 245, 251, 262, 284, 318-321, 336, 387, 409-417, 420-432, 435-436, 439, 463, 465-466, 468-469, 472, 516, 630, 640, 664, 739, 750, 774 |
 | lexiflux/settings.py                                  |       31 |        0 |    100% |           |
 | lexiflux/signals.py                                   |       14 |       14 |      0% |      3-24 |
 | lexiflux/tests.py                                     |        0 |        0 |    100% |           |
@@ -44,7 +44,7 @@
 | lexiflux/views/library\_views.py                      |      117 |       57 |     51% |58-59, 81-130, 150-151, 182-185, 191-202, 208-228 |
 | lexiflux/views/reader\_views.py                       |      210 |       56 |     73% |31-42, 50-73, 77-81, 111, 131, 228-233, 245, 270, 274, 289, 293, 306, 310, 322, 326, 344-365 |
 | lexiflux/wsgi.py                                      |        4 |        4 |      0% |      9-15 |
-|                                             **TOTAL** | **2392** |  **571** | **76%** |           |
+|                                             **TOTAL** | **2429** |  **574** | **76%** |           |
 
 
 ## Setup coverage badge
