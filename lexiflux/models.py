@@ -751,24 +751,35 @@ class LanguageGroup(models.Model):  # type: ignore
 
 
 class WordsExport(models.Model):  # type: ignore
-    """Model to store exports of words into learning apps like Anki.
-
-    So for next time user can export only new words.
-    """
+    """Model to store exports of words into learning apps like Anki."""
 
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="words_exports"
     )
-    language = models.ForeignKey(Language, on_delete=models.CASCADE)
-    last_export_datetime = models.DateTimeField(auto_now=True)
+    language = models.ForeignKey("Language", on_delete=models.CASCADE)
+
+    export_datetime = models.DateTimeField(auto_now_add=True)
+
+    word_count = models.PositiveIntegerField()
+    details = models.JSONField(
+        default=dict, help_text="Details of the export, e.g., number of words, format"
+    )
 
     class Meta:
-        unique_together = ["user", "language"]
         indexes = [
             models.Index(fields=["user", "language"]),
-            models.Index(fields=["user", "language", "last_export_datetime"]),
+            models.Index(fields=["user", "language", "-export_datetime"]),
         ]
 
     def __str__(self) -> str:
         """Return the string representation of a WordsExport."""
-        return f"{self.user.username} - {self.language.name} export"
+        return f"{self.user.username} - {self.language.name} export on {self.export_datetime}"
+
+    @classmethod
+    def get_last_export(
+        cls, user: settings.AUTH_USER_MODEL, language: "Language"
+    ) -> Optional["WordsExport"]:
+        """Get the most recent export for a user and language."""
+        return (  # type: ignore
+            cls.objects.filter(user=user, language=language).order_by("-export_datetime").first()
+        )
