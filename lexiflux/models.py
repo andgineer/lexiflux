@@ -730,8 +730,45 @@ class TranslationHistory(models.Model):  # type: ignore
             models.Index(fields=["term", "source_language", "user"]),
             models.Index(fields=["last_lookup"]),
             models.Index(fields=["lookup_count"]),
+            models.Index(fields=["user", "source_language"]),
+            models.Index(fields=["user", "source_language", "last_lookup"]),
         ]
 
     def __str__(self) -> str:
         """Return the string representation of a TranslationHistory."""
         return f"{self.term} ({self.source_language} -> {self.target_language})"
+
+
+class LanguageGroup(models.Model):  # type: ignore
+    """Model to store groups of languages that could be learned as one."""
+
+    name = models.CharField(max_length=100, unique=True)
+    languages = models.ManyToManyField(Language, related_name="language_groups")
+
+    def __str__(self) -> str:
+        """Return the string representation of a LanguageGroup."""
+        return self.name  # type: ignore
+
+
+class WordsExport(models.Model):  # type: ignore
+    """Model to store exports of words into learning apps like Anki.
+
+    So for next time user can export only new words.
+    """
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="words_exports"
+    )
+    language = models.ForeignKey(Language, on_delete=models.CASCADE)
+    last_export_datetime = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ["user", "language"]
+        indexes = [
+            models.Index(fields=["user", "language"]),
+            models.Index(fields=["user", "language", "last_export_datetime"]),
+        ]
+
+    def __str__(self) -> str:
+        """Return the string representation of a WordsExport."""
+        return f"{self.user.username} - {self.language.name} export"
