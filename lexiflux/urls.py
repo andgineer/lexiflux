@@ -9,6 +9,7 @@ import lexiflux.views.lexical_views
 import lexiflux.views.library_views
 import lexiflux.views.reader_views
 import lexiflux.views.ai_settings_views
+import lexiflux.views.words_export
 from lexiflux.views.auth_views import SignUpView, CustomLoginView
 
 urlpatterns = [
@@ -83,4 +84,16 @@ urlpatterns = [
         lexiflux.views.ai_settings_views.ai_settings_api,
         name="ai_settings_api",
     ),
+    path("words-export/", lexiflux.views.words_export.words_export, name="words-export"),
+    path(
+        "api/words-export-options/",
+        lexiflux.views.words_export.words_export_options,
+        name="words_export_options",
+    ),
+    path(
+        "api/last-export-datetime/",
+        lexiflux.views.words_export.last_export_datetime,
+        name="last_export_datetime",
+    ),
+    path("api/export-words/", lexiflux.views.words_export.export_words, name="export_words"),
 ]

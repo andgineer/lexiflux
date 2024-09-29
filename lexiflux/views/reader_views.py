@@ -337,9 +337,9 @@ def get_jump_status(request: HttpRequest) -> HttpResponse:
     return JsonResponse({"is_first_jump": is_first_jump, "is_last_jump": is_last_jump})
 
 
-@smart_login_required  # type: ignore
-@require_POST
-def link_click(request):
+@smart_login_required
+@require_POST  # type: ignore
+def link_click(request: HttpRequest) -> HttpResponse:
     """Handle a link click in the book."""
     book_code = request.POST.get("book-code")
     link = request.POST.get("link")
