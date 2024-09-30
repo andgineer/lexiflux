@@ -19,41 +19,39 @@
                     <div class="card-body">
                         <div v-if="successMessage" class="alert alert-success alert-dismissible fade show" role="alert">
                             ${ successMessage }
-                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                                <span aria-hidden="true">&times;</span>
-                            </button>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                         </div>
 
                         <div v-if="errorMessage" class="alert alert-danger alert-dismissible fade show" role="alert">
                             ${ errorMessage }
-                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                                <span aria-hidden="true">&times;</span>
-                            </button>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                         </div>
 
-                        <form @submit.prevent="exportWords">
-                            <div class="mb-3">
-                                <label for="languageSelect" class="form-label">Language or Language Group</label>
-                                <select id="languageSelect" v-model="selectedLanguage" class="form-control">
-                                    <option value="">Select a language or group</option>
+                        <div class="mb-3">
+                            <label for="languageSelect" class="form-label">Language or Language Group</label>
+                            <select id="languageSelect" v-model="selectedLanguage" class="form-select">
+                                <option value="">Select a language or group</option>
+                                <optgroup label="Languages">
                                     <option v-for="lang in availableLanguages" :value="lang">
                                         ${ lang.name }
                                     </option>
+                                </optgroup>
+                                <optgroup label="Language Groups">
                                     <option v-for="group in availableLanguageGroups" :value="group">
                                         ${ group.name }
                                     </option>
-                                </select>
-                            </div>
+                                </optgroup>
+                            </select>
+                        </div>
 
-                            <div class="mb-3">
-                                <label for="minDateTime" class="form-label">Minimum Date-Time</label>
-                                <input id="minDateTime" v-model="minDateTime" type="datetime-local" class="form-control">
-                            </div>
+                        <div class="mb-3">
+                            <label for="minDateTime" class="form-label">Minimum Date-Time</label>
+                            <input type="datetime-local" id="minDateTime" v-model="minDateTime" class="form-control">
+                        </div>
 
-                            <div class="mt-4">
-                                <button type="submit" class="btn btn-primary mb-3" @click="exportWords">Export Words</button>
-                            </div>
-                        </form>
+                        <div class="mt-4">
+                            <button @click="exportWords" class="btn btn-primary">Export Words</button>
+                        </div>
                     </div>
                 </div>
             </div>

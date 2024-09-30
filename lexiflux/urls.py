@@ -32,7 +32,7 @@ urlpatterns = [
     path("link_click", lexiflux.views.reader_views.link_click, name="link_click"),
     path("page", lexiflux.views.reader_views.page, name="page"),
     path("location", lexiflux.views.reader_views.location, name="location"),
-    path("library", lexiflux.views.library_views.library, name="library"),
+    path("library", lexiflux.views.library_views.library_page, name="library"),
     path("translate", lexiflux.views.lexical_views.translate, name="translate"),
     path(
         "language-preferences/",
@@ -84,7 +84,7 @@ urlpatterns = [
         lexiflux.views.ai_settings_views.ai_settings_api,
         name="ai_settings_api",
     ),
-    path("words-export/", lexiflux.views.words_export.words_export, name="words-export"),
+    path("words-export/", lexiflux.views.words_export.words_export_page, name="words-export"),
     path(
         "api/words-export-options/",
         lexiflux.views.words_export.words_export_options,

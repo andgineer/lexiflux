@@ -23,7 +23,7 @@ from lexiflux.decorators import smart_login_required
 
 
 @smart_login_required  # type: ignore
-def library(request: HttpRequest) -> HttpResponse:
+def library_page(request: HttpRequest) -> HttpResponse:
     """Library page."""
     if request.user.is_superuser:
         # If the user is a superuser, show all books
