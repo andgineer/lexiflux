@@ -43,9 +43,9 @@
 | lexiflux/views/lexical\_views.py                      |       77 |       23 |     70% |46, 60, 79-112, 168-189 |
 | lexiflux/views/library\_views.py                      |      117 |       57 |     51% |58-59, 81-130, 150-151, 182-185, 191-202, 208-228 |
 | lexiflux/views/reader\_views.py                       |      210 |       56 |     73% |31-42, 50-73, 77-81, 111, 131, 228-233, 245, 270, 274, 289, 293, 306, 310, 322, 326, 344-365 |
-| lexiflux/views/words\_export.py                       |       69 |       46 |     33% |23, 30-46, 53-87, 94-126, 132 |
+| lexiflux/views/words\_export.py                       |       92 |       68 |     26% |29-94, 101-117, 124-154, 161-197, 203 |
 | lexiflux/wsgi.py                                      |        4 |        4 |      0% |      9-15 |
-|                                             **TOTAL** | **2503** |  **621** | **75%** |           |
+|                                             **TOTAL** | **2526** |  **643** | **75%** |           |
 
 
 ## Setup coverage badge
