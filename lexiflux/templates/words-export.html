@@ -46,11 +46,30 @@
 
                         <div class="mb-3">
                             <label for="minDateTime" class="form-label">Minimum Date-Time</label>
-                            <input type="datetime-local" id="minDateTime" v-model="minDateTime" class="form-control">
+                            <input type="datetime-local" id="minDateTime" class="form-control" v-model="minDateTime">
+                        </div>
+
+                        <div class="mb-3 border p-3">
+                            <label class="form-label">Export Method</label>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="exportMethod" id="ankiConnect" value="ankiConnect" v-model="exportMethod">
+                                <label class="form-check-label" for="ankiConnect">
+                                    Anki Connect
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="exportMethod" id="ankiFile" value="ankiFile" v-model="exportMethod">
+                                <label class="form-check-label" for="ankiFile">
+                                    Anki File
+                                </label>
+                            </div>
                         </div>
 
                         <div class="mt-4">
-                            <button @click="exportWords" class="btn btn-primary">Export Words</button>
+                            <button class="btn btn-primary" @click="exportWords" :disabled="isExporting">
+                                <span v-if="isExporting" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                                Export Words
+                            </button>
                         </div>
                     </div>
                 </div>

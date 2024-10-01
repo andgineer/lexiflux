@@ -1,10 +1,13 @@
 """Views for exporting words to Anki or other cards learning apps."""
 
+import csv
+import io
 import json
 import logging
-from typing import Any
+from typing import Any, List
 
-from django.http import JsonResponse, HttpRequest, HttpResponse
+from django.core.files.base import ContentFile
+from django.http import JsonResponse, HttpRequest, HttpResponse, FileResponse
 from django.utils.timezone import is_naive, make_aware
 from django.views.decorators.http import require_http_methods
 from django.shortcuts import render
@@ -119,7 +122,7 @@ def words_export_options(request: HttpRequest) -> HttpResponse:
 
 @smart_login_required
 @require_http_methods(["GET"])  # type: ignore
-def last_export_datetime(request: HttpRequest) -> HttpResponse:
+def last_export_datetime(request: HttpRequest) -> HttpResponse:  # pylint: disable=too-many-return-statements
     """Get the last export datetime for a given language or language group."""
     try:
         language_id = request.GET.get("language")
@@ -139,10 +142,17 @@ def last_export_datetime(request: HttpRequest) -> HttpResponse:
                 WordsExport.objects.filter(user=user, language=language)
                 .order_by("-export_datetime")
                 .first()
-                .export_datetime
             )
+            last_export = last_export.export_datetime if last_export else None
+
         logger.info(f"For language {language_id} last export datetime: {last_export}")
-        return JsonResponse({"last_export_datetime": last_export.isoformat()})
+
+        if last_export:
+            return JsonResponse({"last_export_datetime": last_export.isoformat()})
+        # Return a default date if no export exists
+        default_date = timezone.datetime(timezone.now().year, 1, 1).isoformat()
+        return JsonResponse({"last_export_datetime": default_date})
+
     except LanguageGroup.DoesNotExist:
         return JsonResponse({"error": "Language group not found"}, status=404)
     except Language.DoesNotExist:
@@ -160,7 +170,7 @@ def export_words(request: HttpRequest) -> HttpResponse:
     """Export words for the given language or language group."""
     data = json.loads(request.body)
     language_id = data.get("language")
-    export_format = "CSV"
+    export_method = data.get("export_method")
     min_datetime = timezone.datetime.fromisoformat(data.get("min_datetime"))
     if is_naive(min_datetime):
         min_datetime = make_aware(min_datetime)
@@ -181,23 +191,55 @@ def export_words(request: HttpRequest) -> HttpResponse:
                 user=user, source_language=language, last_lookup__gte=min_datetime
             )
 
-        words_exported = export_words_to_format(language, export_format, terms)
+        if export_method == "ankiConnect":
+            words_exported = export_words_to_anki_connect(language, terms)
+            response_data = {"status": "success", "exported_words": words_exported}
+            response = JsonResponse(response_data)
+        elif export_method == "ankiFile":
+            file, words_exported, filename = export_words_to_anki_file(language, terms)
+            response = FileResponse(file, as_attachment=True, filename=filename)
+        else:
+            raise ValueError("Invalid export method")
 
         WordsExport.objects.create(
             user=user,
             language=language,
             word_count=words_exported,
-            details={"format": export_format},
+            details={"format": export_method},
         )
 
-        logger.info(f"Words exported for {language.name}: {words_exported} words")
-        return JsonResponse({"status": "success", "exported_words": words_exported})
+        logger.info(
+            f"Words exported for {language.name}: {words_exported} words using {export_method}"
+        )
+        return response
     except Exception as e:  # pylint: disable=broad-except
         logger.error(f"Error exporting words: {str(e)}", exc_info=True)
         return JsonResponse({"status": "error", "error": str(e)})
 
 
-def export_words_to_format(language: Language, export_format: str, terms: Any) -> int:  # pylint: disable=unused-argument
-    """Process translations and return export data."""
-    # todo: implement
+def export_words_to_anki_connect(language: Language, terms: Any) -> int:  # pylint: disable=unused-argument
+    """Export words to Anki using AnkiConnect."""
+    # TODO: Implement AnkiConnect integration
+    # This function should use the AnkiConnect API to add cards to Anki
+    # Return the number of words exported
     return len(terms)
+
+
+def export_words_to_anki_file(
+    language: Language, terms: List[TranslationHistory]
+) -> tuple[ContentFile, int, str]:
+    """Export words to an Anki-compatible file."""
+    buffer = io.StringIO()
+    writer = csv.writer(buffer, quoting=csv.QUOTE_MINIMAL)
+
+    writer.writerow(["Front", "Back", "Context"])
+
+    for term in terms:
+        writer.writerow([term.term, term.translation, term.context])
+
+    filename = f"anki_export_{language.google_code}_{timezone.now().strftime('%Y%m%d%H%M%S')}.csv"
+
+    file_content = buffer.getvalue().encode("utf-8")
+    file = ContentFile(file_content, name=filename)
+
+    return file, len(terms), filename

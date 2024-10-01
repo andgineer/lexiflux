@@ -7,7 +7,9 @@ new Vue({
         selectedLanguage: null,
         minDateTime: '',
         successMessage: '',
-        errorMessage: ''
+        errorMessage: '',
+        exportMethod: 'ankiConnect',
+        isExporting: false
     },
     computed: {
         selectedLanguageId() {
@@ -62,8 +64,9 @@ new Vue({
                 return;
             }
 
-            this.errorMessage = ''; // Clear any previous error message
-            this.successMessage = ''; // Clear any previous success message
+            this.errorMessage = '';
+            this.successMessage = '';
+            this.isExporting = true;
 
             // Convert the minDateTime back to ISO format for sending to the server
             const minDateTimeISO = new Date(this.minDateTime).toISOString();
@@ -76,21 +79,74 @@ new Vue({
                 },
                 body: JSON.stringify({
                     language: this.selectedLanguageId.toString(),
-                    min_datetime: minDateTimeISO
+                    min_datetime: minDateTimeISO,
+                    export_method: this.exportMethod
                 })
             })
-            .then(response => response.json())
-            .then(data => {
-                if (data.status === 'success') {
-                    this.successMessage = `Words exported successfully! ${data.exported_words} words exported.`;
+            .then(response => {
+                this.isExporting = false;
+                if (this.exportMethod === 'ankiFile') {
+                    if (response.ok) {
+                        // For file downloads, we need to create a blob and trigger the download
+                        return response.blob().then(blob => {
+                             const filename = response.headers.get('Content-Disposition').split('filename=')[1].replace(/"/g, '');
+                             this.saveFile(blob, filename);                        });
+                    } else {
+                        return response.json().then(data => {
+                            throw new Error(data.error || 'An error occurred during export.');
+                        });
+                    }
                 } else {
-                    this.errorMessage = data.error || 'An error occurred during export.';
+                    return response.json();
+                }
+            })
+            .then(data => {
+                if (this.exportMethod !== 'ankiFile') {
+                    if (data.status === 'success') {
+                        this.successMessage = `Words exported successfully! ${data.exported_words} words exported.`;
+                    } else {
+                        this.errorMessage = data.error || 'An error occurred during export.';
+                    }
                 }
             })
             .catch(error => {
+                this.isExporting = false;
                 this.errorMessage = 'Error exporting words: ' + error.message;
             });
-        }
+        },
+        async saveFile(blob, suggestedName) {
+            if ('showSaveFilePicker' in window) {
+                try {
+                    const handle = await window.showSaveFilePicker({
+                        suggestedName: suggestedName,
+                        types: [{
+                            description: 'CSV File',
+                            accept: {'text/csv': ['.csv']},
+                        }],
+                    });
+                    const writable = await handle.createWritable();
+                    await writable.write(blob);
+                    await writable.close();
+                    this.successMessage = `File "${suggestedName}" has been saved successfully.`;
+                } catch (err) {
+                    if (err.name !== 'AbortError') {
+                        console.error('Failed to save the file:', err);
+                        this.errorMessage = 'Failed to save the file. ' + err.message;
+                    }
+                }
+            } else {
+                // Fallback for browsers that don't support the File System Access API
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.style.display = 'none';
+                a.href = url;
+                a.download = suggestedName;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                this.successMessage = `File "${suggestedName}" has been downloaded successfully.`;
+            }
+        },
     },
     watch: {
         selectedLanguage: {

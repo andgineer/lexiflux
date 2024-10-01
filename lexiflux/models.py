@@ -704,6 +704,7 @@ class TranslationHistory(models.Model):  # type: ignore
     CONTEXT_MARK = "‹§›"
 
     term = models.CharField(max_length=255, help_text="Term looked up for translation")
+    translation = models.TextField(help_text="Translation of the term")
     source_language = models.ForeignKey(
         "Language", on_delete=models.CASCADE, related_name="translation_history"
     )

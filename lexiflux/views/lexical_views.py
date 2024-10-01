@@ -55,7 +55,10 @@ def get_lexical_article(  # pylint: disable=too-many-arguments, too-many-locals
     language_preferences: LanguagePreferences,
     user: CustomUser,
 ) -> Dict[str, Any]:
-    """Get the lexical article."""
+    """Get the lexical article.
+
+    Return {"article": str, "error": bool} dictionary.
+    """
     if article_name == "Site":
         return {
             "url": article_params.get("url", "").format(
@@ -156,6 +159,7 @@ def translate(request: HttpRequest, params: TranslateGetParams) -> HttpResponse:
         context = get_context_for_translation_history(book, book_page, term_word_ids)
         translation_history, created = TranslationHistory.objects.get_or_create(
             term=term_text,
+            translation=result["article"],
             source_language=book.language,
             user=request.user,
             defaults={
