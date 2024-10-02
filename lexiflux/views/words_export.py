@@ -1,11 +1,12 @@
 """Views for exporting words to Anki or other cards learning apps."""
 
-import csv
 import io
 import json
 import logging
+import random
 from typing import Any, List
 
+import genanki
 from django.core.files.base import ContentFile
 from django.http import JsonResponse, HttpRequest, HttpResponse, FileResponse
 from django.utils.timezone import is_naive, make_aware
@@ -225,21 +226,84 @@ def export_words_to_anki_connect(language: Language, terms: Any) -> int:  # pyli
     return len(terms)
 
 
-def export_words_to_anki_file(
+def export_words_to_anki_file(  # pylint: disable=too-many-locals
     language: Language, terms: List[TranslationHistory]
 ) -> tuple[ContentFile, int, str]:
     """Export words to an Anki-compatible file."""
-    buffer = io.StringIO()
-    writer = csv.writer(buffer, quoting=csv.QUOTE_MINIMAL)
+    model_id = random.randrange(1 << 30, 1 << 31)
 
-    writer.writerow(["Front", "Back", "Context"])
+    # Define the note model
+    model = genanki.Model(
+        model_id,
+        "Lexiflux Translation Model",
+        fields=[
+            {"name": "Front"},
+            {"name": "Back"},
+        ],
+        templates=[
+            {
+                "name": "Card 1",
+                "qfmt": "{{Front}}",
+                "afmt": '{{FrontSide}}<hr id="answer">{{Back}}',
+            },
+        ],
+    )
+
+    # Create a unique deck ID
+    deck_id = random.randrange(1 << 30, 1 << 31)
+
+    # Create the deck
+    deck = genanki.Deck(deck_id, f"Lexiflux - {language.name}")
 
     for term in terms:
-        writer.writerow([term.term, term.translation, term.context])
+        # Extract the sentence and word position from the context
+        context_parts = term.context.split(TranslationHistory.CONTEXT_MARK)
+        # before_sentence = context_parts[0]
+        sentence_start = context_parts[1]
+        sentence_end = context_parts[2]
+        # after_sentence = context_parts[3] if len(context_parts) > 3 else ""
 
-    filename = f"anki_export_{language.google_code}_{timezone.now().strftime('%Y%m%d%H%M%S')}.csv"
+        # Reconstruct the full sentence with the term
+        full_sentence = f"{sentence_start}{term.term}{sentence_end}"
 
-    file_content = buffer.getvalue().encode("utf-8")
-    file = ContentFile(file_content, name=filename)
+        # Create sentence with blank
+        sentence_with_blank = f"{sentence_start}_____{sentence_end}"
 
-    return file, len(terms), filename
+        # Card 1: Term on front, translation and context on back
+        note1 = genanki.Note(
+            model=model, fields=[term.term, f"{term.translation}<br><br>{term.context}"]
+        )
+        deck.add_note(note1)
+
+        # Card 2: Sentence with blank on front, full sentence and translation on back
+        note2 = genanki.Note(
+            model=model,
+            fields=[
+                sentence_with_blank,
+                f"{full_sentence}<br><br>{term.translation}<br><br>{term.context}",
+            ],
+        )
+        deck.add_note(note2)
+
+        # Card 3: Translation on front, term and context on back
+        note3 = genanki.Note(
+            model=model,
+            fields=[term.translation, f"{term.term}<br><br>{full_sentence}<br><br>{term.context}"],
+        )
+        deck.add_note(note3)
+
+    # Create the package
+    package = genanki.Package(deck)
+
+    # Generate a unique filename
+    filename = f"anki_export_{language.google_code}_{timezone.now().strftime('%Y%m%d%H%M%S')}.apkg"
+
+    # Save the package to a bytes object
+    file_buffer = io.BytesIO()
+    package.write_to_file(file_buffer)
+    file_buffer.seek(0)
+
+    # Convert to ContentFile
+    content_file = ContentFile(file_buffer.getvalue(), name=filename)
+
+    return content_file, len(terms) * 3, filename
