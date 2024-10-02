@@ -331,7 +331,7 @@ def href_hierarchy(input_dict: Dict[str, str]) -> Dict[str, Dict[str, str]]:
     return result
 
 
-def clear_html(  # pylint: disable=too-many-arguments
+def clear_html(  # pylint: disable=too-many-positional-arguments,too-many-arguments
     input_html: str,
     tags_to_remove_with_content: Iterable[str] = ("head", "style", "script", "svg", "noscript"),
     tags_to_remove_keeping_content: Iterable[str] = ("body", "html"),

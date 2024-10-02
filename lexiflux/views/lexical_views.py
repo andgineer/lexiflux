@@ -46,7 +46,7 @@ def get_llm_errors_folder() -> str:
     return "llm-error" if settings.lexiflux.ui_settings_only else "llm-error-env"
 
 
-def get_lexical_article(  # pylint: disable=too-many-arguments, too-many-locals
+def get_lexical_article(  # pylint: disable=too-many-positional-arguments,too-many-arguments,too-many-locals
     article_name: str,
     article_params: Dict[str, Any],
     selected_text: str,
