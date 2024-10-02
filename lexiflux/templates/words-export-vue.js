@@ -9,12 +9,16 @@ new Vue({
         successMessage: '',
         errorMessage: '',
         exportMethod: 'ankiConnect',
-        isExporting: false
+        isExporting: false,
+        noTranslations: JSON.parse('{{ no_translations|escapejs }}')
     },
     computed: {
         selectedLanguageId() {
             if (!this.selectedLanguage) return null;
             return this.selectedLanguage.id || this.selectedLanguage.google_code;
+        },
+        hasAvailableLanguages() {
+            return this.availableLanguages.length > 0 || this.availableLanguageGroups.length > 0;
         }
     },
     methods: {
@@ -36,7 +40,9 @@ new Vue({
                 return;
             }
 
-            this.errorMessage = ''; // Clear any previous error message
+            if (!this.noTranslations) {
+                this.errorMessage = '';
+            }
             this.successMessage = ''; // Clear any previous success message
 
             fetch(`{% url "last_export_datetime" %}?language=${this.selectedLanguageId}`)
@@ -64,7 +70,9 @@ new Vue({
                 return;
             }
 
-            this.errorMessage = '';
+            if (!this.noTranslations) {
+                this.errorMessage = '';
+            }
             this.successMessage = '';
             this.isExporting = true;
 
@@ -147,6 +155,11 @@ new Vue({
                 this.successMessage = `File "${suggestedName}" has been downloaded successfully.`;
             }
         },
+        checkTranslationHistory() {
+            if (this.noTranslations) {
+                this.errorMessage = 'Your translation history is empty. Please translate some words before exporting.';
+            }
+        }
     },
     watch: {
         selectedLanguage: {
@@ -155,7 +168,9 @@ new Vue({
                     this.updateMinDateTime();
                 } else {
                     this.minDateTime = '';
-                    this.errorMessage = '';
+                    if (!this.noTranslations) {
+                        this.errorMessage = '';
+                    }
                     this.successMessage = '';
                 }
             },
@@ -164,5 +179,6 @@ new Vue({
     },
     mounted() {
         this.setDefaultSelection();
+        this.checkTranslationHistory();
     }
 });

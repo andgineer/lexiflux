@@ -47,6 +47,20 @@ def words_export_page(request: HttpRequest) -> HttpResponse:
         .values("id", "name")
     )
 
+    # Check if translation history is empty
+    has_translations = TranslationHistory.objects.filter(user=user).exists()
+
+    if not has_translations:
+        context = {
+            "languages": json.dumps([]),
+            "language_groups": json.dumps([]),
+            "default_selection": None,
+            "last_export_datetime": None,
+            "no_translations": json.dumps(True),
+        }
+        logger.info("No translations found for the user")
+        return render(request, "words-export.html", context)
+
     language_prefs = LanguagePreferences.get_or_create_language_preferences(
         user, user.default_language_preferences.language
     )
@@ -93,6 +107,7 @@ def words_export_page(request: HttpRequest) -> HttpResponse:
         "language_groups": json.dumps(list(language_groups)),
         "default_selection": language_selection,
         "last_export_datetime": last_export_date,
+        "no_translations": json.dumps(False),
     }
 
     return render(request, "words-export.html", context)
@@ -267,11 +282,15 @@ def export_words_to_anki_file(  # pylint: disable=too-many-locals
         full_sentence = f"{sentence_start}{term.term}{sentence_end}"
 
         # Create sentence with blank
-        sentence_with_blank = f"{sentence_start}_____{sentence_end}"
+        sentence_with_blank = f"{sentence_start}__({term.translation})___{sentence_end}"
+
+        # context = " ".join([
+        # before_sentence, sentence_start, term.term, sentence_end, after_sentence
+        # ])
 
         # Card 1: Term on front, translation and context on back
         note1 = genanki.Note(
-            model=model, fields=[term.term, f"{term.translation}<br><br>{term.context}"]
+            model=model, fields=[term.term, f"{term.translation}<br><br>{full_sentence}"]
         )
         deck.add_note(note1)
 
@@ -280,7 +299,7 @@ def export_words_to_anki_file(  # pylint: disable=too-many-locals
             model=model,
             fields=[
                 sentence_with_blank,
-                f"{full_sentence}<br><br>{term.translation}<br><br>{term.context}",
+                f"{term.term} ({term.translation})<br><br>{full_sentence}",
             ],
         )
         deck.add_note(note2)
@@ -288,7 +307,7 @@ def export_words_to_anki_file(  # pylint: disable=too-many-locals
         # Card 3: Translation on front, term and context on back
         note3 = genanki.Note(
             model=model,
-            fields=[term.translation, f"{term.term}<br><br>{full_sentence}<br><br>{term.context}"],
+            fields=[term.translation, f"{term.term}<br><br>{full_sentence}"],
         )
         deck.add_note(note3)
 
