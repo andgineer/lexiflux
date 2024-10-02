@@ -414,7 +414,7 @@ class Llm:  # pylint: disable=too-few-public-methods
                 elif model_class == "ChatAnthropic":
                     self._model_cache[model_key] = ChatAnthropic(
                         model=model_name,  # type: ignore
-                        api_key=model_settings.get(AIModelSettings.API_KEY),
+                        api_key=model_settings.get(AIModelSettings.API_KEY),  # type: ignore
                         **common_params,  # type: ignore
                     )
                 # elif model_class == "ChatGoogleGenerativeAI":
