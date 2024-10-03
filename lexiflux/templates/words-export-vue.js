@@ -93,28 +93,29 @@ new Vue({
             })
             .then(response => {
                 this.isExporting = false;
-                if (this.exportMethod === 'ankiFile') {
-                    if (response.ok) {
-                        // For file downloads, we need to create a blob and trigger the download
-                        return response.blob().then(blob => {
-                             const filename = response.headers.get('Content-Disposition').split('filename=')[1].replace(/"/g, '');
-                             this.saveFile(blob, filename);                        });
-                    } else {
-                        return response.json().then(data => {
+                const contentType = response.headers.get('Content-Type');
+                if (contentType && contentType.includes('application/json')) {
+                    return response.json().then(data => {
+                        if (data.status === 'success') {
+                            this.successMessage = `Words exported successfully! ${data.exported_words} words exported.`;
+                        } else {
                             throw new Error(data.error || 'An error occurred during export.');
-                        });
-                    }
+                        }
+                    });
+                } else if (contentType && (contentType.includes('application/octet-stream') || contentType.includes('text/csv'))) {
+                    return response.blob().then(blob => {
+                        const filename = response.headers.get('Content-Disposition').split('filename=')[1].replace(/"/g, '');
+                        this.saveFile(blob, filename);
+                        // Extract the word count from the filename (assuming it's included)
+                        const wordCount = filename.match(/(\d+)_words/);
+                        if (wordCount) {
+                            this.successMessage = `File "${filename}" has been saved successfully. ${wordCount[1]} words exported.`;
+                        } else {
+                            this.successMessage = `File "${filename}" has been saved successfully.`;
+                        }
+                    });
                 } else {
-                    return response.json();
-                }
-            })
-            .then(data => {
-                if (this.exportMethod !== 'ankiFile') {
-                    if (data.status === 'success') {
-                        this.successMessage = `Words exported successfully! ${data.exported_words} words exported.`;
-                    } else {
-                        this.errorMessage = data.error || 'An error occurred during export.';
-                    }
+                    throw new Error('Unexpected response from server');
                 }
             })
             .catch(error => {
@@ -122,26 +123,26 @@ new Vue({
                 this.errorMessage = 'Error exporting words: ' + error.message;
             });
         },
-        async saveFile(blob, suggestedName) {
+        saveFile(blob, suggestedName) {
             if ('showSaveFilePicker' in window) {
-                try {
-                    const handle = await window.showSaveFilePicker({
-                        suggestedName: suggestedName,
-                        types: [{
-                            description: 'CSV File',
-                            accept: {'text/csv': ['.csv']},
-                        }],
-                    });
-                    const writable = await handle.createWritable();
-                    await writable.write(blob);
-                    await writable.close();
-                    this.successMessage = `File "${suggestedName}" has been saved successfully.`;
-                } catch (err) {
+                window.showSaveFilePicker({
+                    suggestedName: suggestedName,
+                    types: [{
+                        description: 'Export File',
+                        accept: {'application/octet-stream': ['.apkg'], 'text/csv': ['.csv']}
+                    }],
+                })
+                .then(handle => handle.createWritable())
+                .then(writable => {
+                    writable.write(blob);
+                    return writable.close();
+                })
+                .catch(err => {
                     if (err.name !== 'AbortError') {
                         console.error('Failed to save the file:', err);
                         this.errorMessage = 'Failed to save the file. ' + err.message;
                     }
-                }
+                });
             } else {
                 // Fallback for browsers that don't support the File System Access API
                 const url = window.URL.createObjectURL(blob);
@@ -152,7 +153,6 @@ new Vue({
                 document.body.appendChild(a);
                 a.click();
                 window.URL.revokeObjectURL(url);
-                this.successMessage = `File "${suggestedName}" has been downloaded successfully.`;
             }
         },
         checkTranslationHistory() {

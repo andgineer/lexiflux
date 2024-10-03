@@ -1,5 +1,6 @@
 """Views for exporting words to Anki or other cards learning apps."""
 
+import csv
 import io
 import json
 import logging
@@ -207,12 +208,17 @@ def export_words(request: HttpRequest) -> HttpResponse:
                 user=user, source_language=language, last_lookup__gte=min_datetime
             )
 
+        words_exported = len(terms)
+
         if export_method == "ankiConnect":
-            words_exported = export_words_to_anki_connect(language, terms)
+            export_words_to_anki_connect(language, terms)
             response_data = {"status": "success", "exported_words": words_exported}
             response = JsonResponse(response_data)
         elif export_method == "ankiFile":
-            file, words_exported, filename = export_words_to_anki_file(language, terms)
+            file, filename = export_words_to_anki_file(language, terms)
+            response = FileResponse(file, as_attachment=True, filename=filename)
+        elif export_method == "csvFile":
+            file, filename = export_words_to_csv_file(language, terms)
             response = FileResponse(file, as_attachment=True, filename=filename)
         else:
             raise ValueError("Invalid export method")
@@ -241,13 +247,12 @@ def export_words_to_anki_connect(language: Language, terms: Any) -> int:  # pyli
     return len(terms)
 
 
-def export_words_to_anki_file(  # pylint: disable=too-many-locals
+def export_words_to_anki_file(
     language: Language, terms: List[TranslationHistory]
-) -> tuple[ContentFile, int, str]:
+) -> tuple[ContentFile, str]:
     """Export words to an Anki-compatible file."""
     model_id = random.randrange(1 << 30, 1 << 31)
 
-    # Define the note model
     model = genanki.Model(
         model_id,
         "Lexiflux Translation Model",
@@ -264,65 +269,90 @@ def export_words_to_anki_file(  # pylint: disable=too-many-locals
         ],
     )
 
-    # Create a unique deck ID
     deck_id = random.randrange(1 << 30, 1 << 31)
-
-    # Create the deck
     deck = genanki.Deck(deck_id, f"Lexiflux - {language.name}")
 
     for term in terms:
-        # Extract the sentence and word position from the context
-        context_parts = term.context.split(TranslationHistory.CONTEXT_MARK)
-        # before_sentence = context_parts[0]
-        sentence_start = context_parts[1]
-        sentence_end = context_parts[2]
-        # after_sentence = context_parts[3] if len(context_parts) > 3 else ""
+        notes = create_anki_notes(term, model)
+        for note in notes:
+            deck.add_note(note)
 
-        # Reconstruct the full sentence with the term
-        full_sentence = f"{sentence_start}{term.term}{sentence_end}"
+    package = genanki.Package(deck)
+    filename = (
+        f"anki_export_{language.google_code}_"
+        f"{len(terms)}_words_{timezone.now().strftime('%Y%m%d%H%M%S')}.apkg"
+    )
 
-        # Create sentence with blank
-        sentence_with_blank = f"{sentence_start}__({term.translation})___{sentence_end}"
+    file_buffer = io.BytesIO()
+    package.write_to_file(file_buffer)
+    file_buffer.seek(0)
 
-        # context = " ".join([
-        # before_sentence, sentence_start, term.term, sentence_end, after_sentence
-        # ])
+    content_file = ContentFile(file_buffer.getvalue(), name=filename)
 
-        # Card 1: Term on front, translation and context on back
-        note1 = genanki.Note(
-            model=model, fields=[term.term, f"{term.translation}<br><br>{full_sentence}"]
-        )
-        deck.add_note(note1)
+    return content_file, filename
 
-        # Card 2: Sentence with blank on front, full sentence and translation on back
-        note2 = genanki.Note(
+
+def create_anki_notes(term: TranslationHistory, model: genanki.Model) -> List[genanki.Note]:
+    """Create Anki notes for a given term."""
+    context_parts = term.context.split(TranslationHistory.CONTEXT_MARK)
+    sentence_start = context_parts[1]
+    sentence_end = context_parts[2]
+
+    full_sentence = f"{sentence_start}{term.term}{sentence_end}"
+    sentence_with_blank = f"{sentence_start}__({term.translation})___{sentence_end}"
+
+    return [
+        genanki.Note(
+            model=model,
+            fields=[term.term, f"{term.translation}<br><br>{full_sentence}"],
+        ),
+        genanki.Note(
             model=model,
             fields=[
                 sentence_with_blank,
                 f"{term.term} ({term.translation})<br><br>{full_sentence}",
             ],
-        )
-        deck.add_note(note2)
-
-        # Card 3: Translation on front, term and context on back
-        note3 = genanki.Note(
+        ),
+        genanki.Note(
             model=model,
             fields=[term.translation, f"{term.term}<br><br>{full_sentence}"],
+        ),
+    ]
+
+
+def export_words_to_csv_file(
+    language: Language, terms: List[TranslationHistory]
+) -> tuple[ContentFile, str]:
+    """Export words to a CSV file."""
+    filename = (
+        f"csv_export_{language.google_code}_"
+        f"{len(terms)}_words_{timezone.now().strftime('%Y%m%d%H%M%S')}.csv"
+    )
+
+    output = io.StringIO()
+    writer = csv.writer(output)
+
+    # Write header
+    writer.writerow(["Term", "Translation", "Language", "Translation Language", "Sentence"])
+
+    for term in terms:
+        context_parts = term.context.split(TranslationHistory.CONTEXT_MARK)
+        sentence_start = context_parts[1]
+        sentence_end = context_parts[2]
+
+        full_sentence = f"{sentence_start}_____{sentence_end}"
+
+        writer.writerow(
+            [
+                term.term,
+                term.translation,
+                term.source_language.name,
+                term.target_language.name,
+                full_sentence,
+            ]
         )
-        deck.add_note(note3)
 
-    # Create the package
-    package = genanki.Package(deck)
+    output.seek(0)
+    content_file = ContentFile(output.getvalue().encode("utf-8"), name=filename)
 
-    # Generate a unique filename
-    filename = f"anki_export_{language.google_code}_{timezone.now().strftime('%Y%m%d%H%M%S')}.apkg"
-
-    # Save the package to a bytes object
-    file_buffer = io.BytesIO()
-    package.write_to_file(file_buffer)
-    file_buffer.seek(0)
-
-    # Convert to ContentFile
-    content_file = ContentFile(file_buffer.getvalue(), name=filename)
-
-    return content_file, len(terms) * 3, filename
+    return content_file, filename
