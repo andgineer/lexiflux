@@ -96,4 +96,5 @@ urlpatterns = [
         name="last_export_datetime",
     ),
     path("api/export-words/", lexiflux.views.words_export.export_words, name="export_words"),
+    path("api/word-count/", lexiflux.views.words_export.word_count, name="word_count"),
 ]

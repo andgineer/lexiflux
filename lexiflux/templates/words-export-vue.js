@@ -10,7 +10,8 @@ new Vue({
         errorMessage: '',
         exportMethod: 'ankiConnect',
         isExporting: false,
-        noTranslations: JSON.parse('{{ no_translations|escapejs }}')
+        noTranslations: JSON.parse('{{ no_translations|escapejs }}'),
+        wordCount: {{ initial_word_count }},
     },
     computed: {
         selectedLanguageId() {
@@ -19,6 +20,18 @@ new Vue({
         },
         hasAvailableLanguages() {
             return this.availableLanguages.length > 0 || this.availableLanguageGroups.length > 0;
+        },
+        canExport() {
+            return this.wordCount > 0;
+        },
+        buttonText() {
+            if (this.isExporting) {
+                return 'Exporting...';
+            }
+            if (this.wordCount === 0) {
+                return 'No words to export';
+            }
+            return `Export ${this.wordCount} word${this.wordCount !== 1 ? 's' : ''}`;
         }
     },
     methods: {
@@ -37,6 +50,7 @@ new Vue({
         updateMinDateTime() {
             if (!this.selectedLanguageId) {
                 this.minDateTime = '';
+                this.wordCount = 0;
                 return;
             }
 
@@ -58,15 +72,32 @@ new Vue({
                     // Convert the ISO string to the format expected by the datetime-local input
                     const date = new Date(data.last_export_datetime);
                     this.minDateTime = date.toISOString().slice(0, 16);
+                    this.updateWordCount();
                 })
                 .catch(error => {
                     this.errorMessage = 'Error fetching last export date: ' + error.message;
                     this.minDateTime = '';
+                    this.wordCount = 0;
+                });
+        },
+        updateWordCount() {
+            if (!this.selectedLanguageId || !this.minDateTime) {
+                this.wordCount = 0;
+                return;
+            }
+
+            fetch(`{% url "word_count" %}?language=${this.selectedLanguageId}&min_datetime=${this.minDateTime}`)
+                .then(response => response.json())
+                .then(data => {
+                    this.wordCount = data.word_count;
+                })
+                .catch(error => {
+                    console.error('Error fetching word count:', error);
+                    this.wordCount = 0;
                 });
         },
         exportWords() {
-            if (!this.selectedLanguageId) {
-                this.errorMessage = 'Please select a language or language group.';
+            if (!this.canExport || this.isExporting) {
                 return;
             }
 
@@ -97,7 +128,7 @@ new Vue({
                 if (contentType && contentType.includes('application/json')) {
                     return response.json().then(data => {
                         if (data.status === 'success') {
-                            this.successMessage = `Words exported successfully! ${data.exported_words} words exported.`;
+                            this.successMessage = `Words exported successfully!`;
                         } else {
                             throw new Error(data.error || 'An error occurred during export.');
                         }
@@ -106,13 +137,7 @@ new Vue({
                     return response.blob().then(blob => {
                         const filename = response.headers.get('Content-Disposition').split('filename=')[1].replace(/"/g, '');
                         this.saveFile(blob, filename);
-                        // Extract the word count from the filename (assuming it's included)
-                        const wordCount = filename.match(/(\d+)_words/);
-                        if (wordCount) {
-                            this.successMessage = `File "${filename}" has been saved successfully. ${wordCount[1]} words exported.`;
-                        } else {
-                            this.successMessage = `File "${filename}" has been saved successfully.`;
-                        }
+                        this.successMessage = `File "${filename}" has been created successfully.`;
                     });
                 } else {
                     throw new Error('Unexpected response from server');
@@ -168,6 +193,7 @@ new Vue({
                     this.updateMinDateTime();
                 } else {
                     this.minDateTime = '';
+                    this.wordCount = 0;
                     if (!this.noTranslations) {
                         this.errorMessage = '';
                     }
@@ -175,6 +201,9 @@ new Vue({
                 }
             },
             immediate: true
+        },
+        minDateTime() {
+            this.updateWordCount();
         }
     },
     mounted() {

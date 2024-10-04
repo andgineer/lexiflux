@@ -58,6 +58,7 @@ def words_export_page(request: HttpRequest) -> HttpResponse:
             "default_selection": None,
             "last_export_datetime": None,
             "no_translations": json.dumps(True),
+            "initial_word_count": 0,
         }
         logger.info("No translations found for the user")
         return render(request, "words-export.html", context)
@@ -103,12 +104,19 @@ def words_export_page(request: HttpRequest) -> HttpResponse:
             language_selection = group["id"]
             break
 
+    initial_word_count = TranslationHistory.objects.filter(
+        user=user,
+        source_language=language if language_selection else None,
+        last_lookup__gte=timezone.datetime.fromisoformat(last_export_date),
+    ).count()
+
     context = {
         "languages": json.dumps(list(languages)),
         "language_groups": json.dumps(list(language_groups)),
         "default_selection": language_selection,
         "last_export_datetime": last_export_date,
         "no_translations": json.dumps(False),
+        "initial_word_count": initial_word_count,
     }
 
     return render(request, "words-export.html", context)
@@ -279,8 +287,7 @@ def export_words_to_anki_file(
 
     package = genanki.Package(deck)
     filename = (
-        f"anki_export_{language.google_code}_"
-        f"{len(terms)}_words_{timezone.now().strftime('%Y%m%d%H%M%S')}.apkg"
+        f"lexiflux_{language.google_code}_" f"{timezone.now().strftime('%Y%m%d%H%M%S')}.apkg"
     )
 
     file_buffer = io.BytesIO()
@@ -324,10 +331,7 @@ def export_words_to_csv_file(
     language: Language, terms: List[TranslationHistory]
 ) -> tuple[ContentFile, str]:
     """Export words to a CSV file."""
-    filename = (
-        f"csv_export_{language.google_code}_"
-        f"{len(terms)}_words_{timezone.now().strftime('%Y%m%d%H%M%S')}.csv"
-    )
+    filename = f"lexiflux_{language.google_code}_" f"{timezone.now().strftime('%Y%m%d%H%M%S')}.csv"
 
     output = io.StringIO()
     writer = csv.writer(output)
@@ -356,3 +360,43 @@ def export_words_to_csv_file(
     content_file = ContentFile(output.getvalue().encode("utf-8"), name=filename)
 
     return content_file, filename
+
+
+@smart_login_required
+@require_http_methods(["GET"])  # type: ignore
+def word_count(request: HttpRequest) -> HttpResponse:
+    """Get the number of words for a given language or language group."""
+    try:
+        language_id = request.GET.get("language")
+        min_datetime = request.GET.get("min_datetime")
+        user = request.user
+
+        if not language_id or not min_datetime:
+            return JsonResponse(
+                {"error": "Language and min_datetime parameters are required"}, status=400
+            )
+
+        min_datetime = timezone.datetime.fromisoformat(min_datetime)
+        if is_naive(min_datetime):
+            min_datetime = make_aware(min_datetime)
+
+        if language_id.isdigit():  # It's a language group
+            group = LanguageGroup.objects.get(id=int(language_id))
+            exported_words_count = TranslationHistory.objects.filter(
+                user=user, source_language__in=group.languages.all(), last_lookup__gte=min_datetime
+            ).count()
+        else:  # It's a language
+            language = Language.objects.get(google_code=language_id)
+            exported_words_count = TranslationHistory.objects.filter(
+                user=user, source_language=language, last_lookup__gte=min_datetime
+            ).count()
+
+        return JsonResponse({"word_count": exported_words_count})
+
+    except (LanguageGroup.DoesNotExist, Language.DoesNotExist):
+        return JsonResponse({"error": "Language or language group not found"}, status=404)
+    except ValueError:
+        return JsonResponse({"error": "Invalid language ID or datetime format"}, status=400)
+    except Exception as e:  # pylint: disable=broad-except
+        logger.error(f"Error in word_count: {str(e)}", exc_info=True)
+        return JsonResponse({"error": f"An error occurred: {str(e)}"}, status=500)

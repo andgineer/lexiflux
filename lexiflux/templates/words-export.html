@@ -70,9 +70,9 @@
                         </div>
 
                         <div class="mt-4">
-                            <button class="btn btn-primary" @click="exportWords" :disabled="isExporting">
-                                <span v-if="isExporting" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                                Export Words
+                            <button @click="exportWords" :disabled="!canExport || isExporting" class="btn btn-primary export-button" :class="{ 'no-words': wordCount === 0 }">
+                                <span class="spinner-border spinner-border-sm mr-2" v-if="isExporting" role="status" aria-hidden="true"></span>
+                                ${ buttonText }
                             </button>
                         </div>
                     </div>
