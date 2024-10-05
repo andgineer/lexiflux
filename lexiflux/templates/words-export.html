@@ -17,85 +17,82 @@
             <div class="col-md-8">
                 <div class="card shadow">
                     <div class="card-body">
-                        <div v-if="successMessage" class="alert alert-success alert-dismissible fade show" role="alert">
-                            ${ successMessage }
-                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                        </div>
-
                         <div v-if="errorMessage" class="alert alert-danger alert-dismissible fade show" role="alert">
                             ${ errorMessage }
                             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                         </div>
 
-                        <div class="mb-3">
-                            <label for="languageSelect" class="form-label">Language or Language Group</label>
-                            <select id="languageSelect" v-model="selectedLanguage" class="form-select">
-                                <option value="">Select a language or group</option>
-                                <optgroup label="Languages">
-                                    <option v-for="lang in availableLanguages" :value="lang">
-                                        ${ lang.name }
-                                    </option>
-                                </optgroup>
-                                <optgroup label="Language Groups">
-                                    <option v-for="group in availableLanguageGroups" :value="group">
-                                        ${ group.name }
-                                    </option>
-                                </optgroup>
-                            </select>
-                        </div>
+                        <template v-if="hasTranslations">
+                            <div class="mb-3">
+                                <label for="languageSelect" class="form-label">Language or Language Group</label>
+                                <select id="languageSelect" v-model="selectedLanguage" class="form-select">
+                                    <option value="">Select a language or group</option>
+                                    <optgroup label="Languages">
+                                        <option v-for="lang in availableLanguages" :value="lang">
+                                            ${ lang.name }
+                                        </option>
+                                    </optgroup>
+                                    <optgroup label="Language Groups">
+                                        <option v-for="group in availableLanguageGroups" :value="group">
+                                            ${ group.name }
+                                        </option>
+                                    </optgroup>
+                                </select>
+                            </div>
 
-                        <div class="mb-3">
-                            <label for="minDateTime" class="form-label">Minimum Date-Time</label>
-                            <input type="datetime-local" id="minDateTime" class="form-control" v-model="minDateTime">
-                        </div>
+                            <div class="mb-3">
+                                <label for="minDateTime" class="form-label">Minimum Date-Time</label>
+                                <input type="datetime-local" id="minDateTime" class="form-control" v-model="minDateTime">
+                            </div>
 
-                        <div class="mb-3">
-                            <label for="deckName" class="form-label">Deck Name</label>
-                            <div class="dropdown">
-                                <input
-                                    type="text"
-                                    class="form-control"
-                                    id="deckName"
-                                    v-model="deckName"
-                                    @focus="showDeckNameDropdown = true"
-                                    @blur="onDeckNameBlur"
-                                    autocomplete="off"
-                                    data-bs-toggle="dropdown"
-                                    aria-expanded="false"
-                                >
-                                <ul class="dropdown-menu w-100" :class="{ 'show': showDeckNameDropdown }">
-                                    <li v-for="name in previousDeckNames" :key="name">
-                                        <a
-                                            class="dropdown-item"
-                                            href="#"
-                                            @mousedown.prevent="selectDeckName(name)"
-                                        >
-                                            ${ name }
-                                        </a>
-                                    </li>
-                                </ul>
+                            <div class="mb-3">
+                                <label for="deckName" class="form-label">Deck Name</label>
+                                <div class="dropdown">
+                                    <input
+                                        type="text"
+                                        class="form-control"
+                                        id="deckName"
+                                        v-model="deckName"
+                                        @focus="showDeckNameDropdown = true"
+                                        @blur="onDeckNameBlur"
+                                        autocomplete="off"
+                                        data-bs-toggle="dropdown"
+                                        aria-expanded="false"
+                                    >
+                                    <ul class="dropdown-menu w-100" :class="{ 'show': showDeckNameDropdown }">
+                                        <li v-for="name in previousDeckNames" :key="name">
+                                            <a
+                                                class="dropdown-item"
+                                                href="#"
+                                                @mousedown.prevent="selectDeckName(name)"
+                                            >
+                                                ${ name }
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </div>
                             </div>
-                        </div>
 
-                        <div class="mb-3 border p-3">
-                            <label class="form-label">Export Method</label>
-                            <div class="form-check">
-                                <input class="form-check-input" type="radio" name="exportMethod" id="ankiConnect" value="ankiConnect" v-model="exportMethod">
-                                <label class="form-check-label" for="ankiConnect">
-                                    Anki Connect
-                                </label>
+                            <div class="mb-3 border p-3">
+                                <label class="form-label">Export Method</label>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="exportMethod" id="ankiConnect" value="ankiConnect" v-model="exportMethod">
+                                    <label class="form-check-label" for="ankiConnect">
+                                        Anki Connect
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="exportMethod" id="ankiFile" value="ankiFile" v-model="exportMethod">
+                                    <label class="form-check-label" for="ankiFile">
+                                        Anki File
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="exportMethod"  id="csvFile" value="csvFile" v-model="exportMethod">
+                                    <label class="form-check-label" for="csvFile">CSV File</label>
+                                </div>
                             </div>
-                            <div class="form-check">
-                                <input class="form-check-input" type="radio" name="exportMethod" id="ankiFile" value="ankiFile" v-model="exportMethod">
-                                <label class="form-check-label" for="ankiFile">
-                                    Anki File
-                                </label>
-                            </div>
-                            <div class="form-check">
-                                <input class="form-check-input" type="radio" v-model="exportMethod" id="csvFile" value="csvFile">
-                                <label class="form-check-label" for="csvFile">CSV File</label>
-                            </div>
-                        </div>
+                        </template>
 
                         <div class="mt-4">
                             <button @click="exportWords" :disabled="!canExport || isExporting" class="btn btn-primary export-button" :class="{ 'no-words': wordCount === 0 }">

@@ -6,13 +6,11 @@ new Vue({
         availableLanguageGroups: JSON.parse('{{ language_groups|escapejs }}'),
         selectedLanguage: null,
         minDateTime: '',
-        successMessage: '',
         errorMessage: '',
-        exportMethod: 'ankiConnect',
+        exportMethod: '{{ last_export_format|escapejs }}',
         isExporting: false,
-        noTranslations: JSON.parse('{{ no_translations|escapejs }}'),
         wordCount: {{ initial_word_count }},
-        deckName: '',
+        deckName: '{{ default_deck_name|escapejs }}',
         previousDeckNames: JSON.parse('{{ previous_deck_names|escapejs }}'),
         showDeckNameDropdown: false,
     },
@@ -21,7 +19,7 @@ new Vue({
             if (!this.selectedLanguage) return null;
             return this.selectedLanguage.id || this.selectedLanguage.google_code;
         },
-        hasAvailableLanguages() {
+        hasTranslations() {
             return this.availableLanguages.length > 0 || this.availableLanguageGroups.length > 0;
         },
         canExport() {
@@ -57,10 +55,9 @@ new Vue({
                 return;
             }
 
-            if (!this.noTranslations) {
+            if (this.hasTranslations) {
                 this.errorMessage = '';
             }
-            this.successMessage = ''; // Clear any previous success message
 
             fetch(`{% url "last_export_datetime" %}?language=${this.selectedLanguageId}`)
                 .then(response => {
@@ -104,10 +101,9 @@ new Vue({
                 return;
             }
 
-            if (!this.noTranslations) {
+            if (this.hasTranslations) {
                 this.errorMessage = '';
             }
-            this.successMessage = '';
             this.isExporting = true;
 
             // Convert the minDateTime back to ISO format for sending to the server
@@ -131,9 +127,7 @@ new Vue({
                 const contentType = response.headers.get('Content-Type');
                 if (contentType && contentType.includes('application/json')) {
                     return response.json().then(data => {
-                        if (data.status === 'success') {
-                            this.successMessage = `Words exported successfully!`;
-                        } else {
+                        if (data.status !== 'success') {
                             throw new Error(data.error || 'An error occurred during export.');
                         }
                     });
@@ -141,7 +135,6 @@ new Vue({
                     return response.blob().then(blob => {
                         const filename = response.headers.get('Content-Disposition').split('filename=')[1].replace(/"/g, '');
                         this.saveFile(blob, filename);
-                        this.successMessage = `File "${filename}" has been created successfully.`;
                     });
                 } else {
                     throw new Error('Unexpected response from server');
@@ -184,11 +177,6 @@ new Vue({
                 window.URL.revokeObjectURL(url);
             }
         },
-        checkTranslationHistory() {
-            if (this.noTranslations) {
-                this.errorMessage = 'Your translation history is empty. Please translate some words before exporting.';
-            }
-        },
         selectDeckName(name) {
             this.deckName = name;
             this.showDeckNameDropdown = false;
@@ -208,10 +196,9 @@ new Vue({
                 } else {
                     this.minDateTime = '';
                     this.wordCount = 0;
-                    if (!this.noTranslations) {
+                    if (this.hasTranslations) {
                         this.errorMessage = '';
                     }
-                    this.successMessage = '';
                 }
             },
             immediate: true
@@ -219,20 +206,17 @@ new Vue({
         minDateTime() {
             this.updateWordCount();
         },
-        deckName: {
-            handler(newVal) {
-                this.filterDeckNames();
-            },
-            immediate: true
+    },
+    created() {
+        if (!this.hasTranslations) {
+            this.errorMessage = 'Your translation history is empty. Please translate some words before exporting.';
         }
     },
     mounted() {
         this.setDefaultSelection();
-        this.checkTranslationHistory();
-        this.deckName = '{{ default_deck_name|escapejs }}';
-        var dropdownElementList = [].slice.call(document.querySelectorAll('.dropdown-toggle'))
+        var dropdownElementList = [].slice.call(document.querySelectorAll('.dropdown-toggle'));
         var dropdownList = dropdownElementList.map(function (dropdownToggleEl) {
             return new bootstrap.Dropdown(dropdownToggleEl)
-        })
+        });
     }
 });

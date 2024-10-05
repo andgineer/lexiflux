@@ -762,10 +762,9 @@ class WordsExport(models.Model):  # type: ignore
     export_datetime = models.DateTimeField(auto_now_add=True)
 
     word_count = models.PositiveIntegerField()
-    details = models.JSONField(
-        default=dict, help_text="Details of the export, e.g., number of words, format"
-    )
+    details = models.JSONField(default=dict, help_text="Details of the export")
     deck_name = models.CharField(max_length=255, default="")
+    export_format = models.CharField(max_length=20, default="ankiConnect")
 
     class Meta:
         indexes = [
@@ -794,7 +793,6 @@ class WordsExport(models.Model):  # type: ignore
             .exclude(deck_name="")
             .values_list("deck_name", flat=True)
             .distinct()
-            .order_by("-export_datetime")
         )
 
     @classmethod
@@ -816,3 +814,13 @@ class WordsExport(models.Model):  # type: ignore
             return any_export.deck_name  # type: ignore
 
         return f"Lexiflux - {language.name}"  # type: ignore
+
+    @classmethod
+    def get_last_export_format(
+        cls, user: settings.AUTH_USER_MODEL, language: Optional["Language"]
+    ) -> str:
+        """Get the export format for the last export for a user and language."""
+        last_export = cls.get_last_export(user, language) if language else None
+        if last_export:
+            return last_export.export_format  # type: ignore
+        return "ankiConnect"

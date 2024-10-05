@@ -40,8 +40,10 @@ def words_export_page(request: HttpRequest) -> HttpResponse:  # pylint: disable=
             "language_groups": json.dumps([]),
             "default_selection": None,
             "last_export_datetime": None,
-            "no_translations": json.dumps(True),
             "initial_word_count": 0,
+            "default_deck_name": "",
+            "previous_deck_names": json.dumps([]),
+            "last_export_format": "",
         }
         logger.info("No translations found for the user")
         return render(request, "words-export.html", context)
@@ -118,16 +120,17 @@ def words_export_page(request: HttpRequest) -> HttpResponse:  # pylint: disable=
 
     default_deck_name = WordsExport.get_default_deck_name(user, language)
     previous_deck_names = WordsExport.get_previous_deck_names(user)
+    last_export_format = WordsExport.get_last_export_format(user, language)
 
     context = {
         "languages": json.dumps(list(languages)),
         "language_groups": json.dumps(list(language_groups)),
         "default_selection": language_selection,
         "last_export_datetime": last_export_date,
-        "no_translations": json.dumps(False),
         "initial_word_count": initial_word_count,
         "default_deck_name": default_deck_name,
         "previous_deck_names": json.dumps(previous_deck_names),
+        "last_export_format": last_export_format,
     }
 
     return render(request, "words-export.html", context)
@@ -262,6 +265,7 @@ def export_words(request: HttpRequest) -> HttpResponse:  # pylint: disable=too-m
                 word_count=words_exported,
                 details={"format": export_method},
                 deck_name=deck_name,
+                export_format=export_method,
             )
 
         logger.info(
