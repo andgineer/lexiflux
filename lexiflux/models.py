@@ -765,6 +765,7 @@ class WordsExport(models.Model):  # type: ignore
     details = models.JSONField(
         default=dict, help_text="Details of the export, e.g., number of words, format"
     )
+    deck_name = models.CharField(max_length=255, default="")
 
     class Meta:
         indexes = [
@@ -784,3 +785,34 @@ class WordsExport(models.Model):  # type: ignore
         return (  # type: ignore
             cls.objects.filter(user=user, language=language).order_by("-export_datetime").first()
         )
+
+    @classmethod
+    def get_previous_deck_names(cls, user: settings.AUTH_USER_MODEL) -> List[str]:
+        """Get the previous deck names for a user."""
+        return list(
+            cls.objects.filter(user=user)
+            .exclude(deck_name="")
+            .values_list("deck_name", flat=True)
+            .distinct()
+            .order_by("-export_datetime")
+        )
+
+    @classmethod
+    def get_default_deck_name(
+        cls, user: settings.AUTH_USER_MODEL, language: Optional["Language"]
+    ) -> str:
+        """Get the default deck name for a user and language."""
+        last_export = cls.get_last_export(user, language) if language else None
+        if last_export and last_export.deck_name:
+            return last_export.deck_name  # type: ignore
+
+        any_export = (
+            cls.objects.filter(user=user)
+            .exclude(deck_name="")
+            .order_by("-export_datetime")
+            .first()
+        )
+        if any_export:
+            return any_export.deck_name  # type: ignore
+
+        return f"Lexiflux - {language.name}"  # type: ignore

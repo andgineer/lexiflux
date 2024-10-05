@@ -49,6 +49,34 @@
                             <input type="datetime-local" id="minDateTime" class="form-control" v-model="minDateTime">
                         </div>
 
+                        <div class="mb-3">
+                            <label for="deckName" class="form-label">Deck Name</label>
+                            <div class="dropdown">
+                                <input
+                                    type="text"
+                                    class="form-control"
+                                    id="deckName"
+                                    v-model="deckName"
+                                    @focus="showDeckNameDropdown = true"
+                                    @blur="onDeckNameBlur"
+                                    autocomplete="off"
+                                    data-bs-toggle="dropdown"
+                                    aria-expanded="false"
+                                >
+                                <ul class="dropdown-menu w-100" :class="{ 'show': showDeckNameDropdown }">
+                                    <li v-for="name in previousDeckNames" :key="name">
+                                        <a
+                                            class="dropdown-item"
+                                            href="#"
+                                            @mousedown.prevent="selectDeckName(name)"
+                                        >
+                                            ${ name }
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+
                         <div class="mb-3 border p-3">
                             <label class="form-label">Export Method</label>
                             <div class="form-check">

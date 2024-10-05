@@ -12,6 +12,9 @@ new Vue({
         isExporting: false,
         noTranslations: JSON.parse('{{ no_translations|escapejs }}'),
         wordCount: {{ initial_word_count }},
+        deckName: '',
+        previousDeckNames: JSON.parse('{{ previous_deck_names|escapejs }}'),
+        showDeckNameDropdown: false,
     },
     computed: {
         selectedLanguageId() {
@@ -119,7 +122,8 @@ new Vue({
                 body: JSON.stringify({
                     language: this.selectedLanguageId.toString(),
                     min_datetime: minDateTimeISO,
-                    export_method: this.exportMethod
+                    export_method: this.exportMethod,
+                    deck_name: this.deckName,
                 })
             })
             .then(response => {
@@ -184,7 +188,17 @@ new Vue({
             if (this.noTranslations) {
                 this.errorMessage = 'Your translation history is empty. Please translate some words before exporting.';
             }
-        }
+        },
+        selectDeckName(name) {
+            this.deckName = name;
+            this.showDeckNameDropdown = false;
+        },
+        onDeckNameBlur() {
+            // Delay hiding the dropdown to allow for item selection
+            setTimeout(() => {
+                this.showDeckNameDropdown = false;
+            }, 200);
+        },
     },
     watch: {
         selectedLanguage: {
@@ -204,10 +218,21 @@ new Vue({
         },
         minDateTime() {
             this.updateWordCount();
+        },
+        deckName: {
+            handler(newVal) {
+                this.filterDeckNames();
+            },
+            immediate: true
         }
     },
     mounted() {
         this.setDefaultSelection();
         this.checkTranslationHistory();
+        this.deckName = '{{ default_deck_name|escapejs }}';
+        var dropdownElementList = [].slice.call(document.querySelectorAll('.dropdown-toggle'))
+        var dropdownList = dropdownElementList.map(function (dropdownToggleEl) {
+            return new bootstrap.Dropdown(dropdownToggleEl)
+        })
     }
 });

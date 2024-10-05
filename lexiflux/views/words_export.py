@@ -29,9 +29,22 @@ logger = logging.getLogger(__name__)
 
 
 @smart_login_required  # type: ignore
-def words_export_page(request: HttpRequest) -> HttpResponse:
+def words_export_page(request: HttpRequest) -> HttpResponse:  # pylint: disable=too-many-locals
     """Render the words export page with all necessary data."""
     user = request.user
+
+    # Check if translation history is empty
+    if not TranslationHistory.objects.filter(user=user).exists():
+        context = {
+            "languages": json.dumps([]),
+            "language_groups": json.dumps([]),
+            "default_selection": None,
+            "last_export_datetime": None,
+            "no_translations": json.dumps(True),
+            "initial_word_count": 0,
+        }
+        logger.info("No translations found for the user")
+        return render(request, "words-export.html", context)
 
     # Get languages with translations
     languages = (
@@ -48,39 +61,32 @@ def words_export_page(request: HttpRequest) -> HttpResponse:
         .values("id", "name")
     )
 
-    # Check if translation history is empty
-    has_translations = TranslationHistory.objects.filter(user=user).exists()
+    # add to languages all languages from the groups
+    for group in language_groups:
+        group_languages = LanguageGroup.objects.get(id=group["id"]).languages.values(
+            "google_code", "name"
+        )
+        for lang in group_languages:
+            if lang not in languages:
+                languages = list(languages) + [lang]
 
-    if not has_translations:
-        context = {
-            "languages": json.dumps([]),
-            "language_groups": json.dumps([]),
-            "default_selection": None,
-            "last_export_datetime": None,
-            "no_translations": json.dumps(True),
-            "initial_word_count": 0,
-        }
-        logger.info("No translations found for the user")
-        return render(request, "words-export.html", context)
-
+    # select last used language
+    # but if it is not in translation history, use the first language from the history
     language_prefs = LanguagePreferences.get_or_create_language_preferences(
         user, user.default_language_preferences.language
     )
-
     language_selection = next(
         (
             lang["google_code"]
             for lang in languages
             if lang["google_code"] == language_prefs.language.google_code
         ),
-        None,
+        languages[0]["google_code"],
     )
-    # If last used language is not in translation history, use the first language
-    if language_selection is None and languages:
-        language_selection = languages[0]["google_code"]
 
     # Get the last export datetime for the default selection
     last_export = None
+    language = None
     if language_selection:
         language = Language.objects.get(google_code=language_selection)
         last_export = (
@@ -110,6 +116,9 @@ def words_export_page(request: HttpRequest) -> HttpResponse:
         last_lookup__gte=timezone.datetime.fromisoformat(last_export_date),
     ).count()
 
+    default_deck_name = WordsExport.get_default_deck_name(user, language)
+    previous_deck_names = WordsExport.get_previous_deck_names(user)
+
     context = {
         "languages": json.dumps(list(languages)),
         "language_groups": json.dumps(list(language_groups)),
@@ -117,6 +126,8 @@ def words_export_page(request: HttpRequest) -> HttpResponse:
         "last_export_datetime": last_export_date,
         "no_translations": json.dumps(False),
         "initial_word_count": initial_word_count,
+        "default_deck_name": default_deck_name,
+        "previous_deck_names": json.dumps(previous_deck_names),
     }
 
     return render(request, "words-export.html", context)
@@ -191,27 +202,40 @@ def last_export_datetime(request: HttpRequest) -> HttpResponse:  # pylint: disab
 
 @smart_login_required
 @require_http_methods(["POST"])  # type: ignore
-def export_words(request: HttpRequest) -> HttpResponse:
+def export_words(request: HttpRequest) -> HttpResponse:  # pylint: disable=too-many-locals
     """Export words for the given language or language group."""
     data = json.loads(request.body)
     language_id = data.get("language")
     export_method = data.get("export_method")
     min_datetime = timezone.datetime.fromisoformat(data.get("min_datetime"))
+    deck_name = data.get("deck_name", "")
     if is_naive(min_datetime):
         min_datetime = make_aware(min_datetime)
     user = request.user
 
     try:
-        if isinstance(language_id, str) and language_id.isdigit():  # It's a language group
+        if isinstance(language_id, str) and language_id.isdigit():
             group = LanguageGroup.objects.get(id=int(language_id))
+            languages = list(group.languages.all())
             terms = TranslationHistory.objects.filter(
                 user=user, source_language__in=group.languages.all(), last_lookup__gte=min_datetime
             )
-            language = (
-                group.languages.first()
-            )  # Use the first language of the group for the export record
-        else:  # It's a language
+            # select last used language if it's in the translation history,
+            # else the first language from the group
+            language_prefs = LanguagePreferences.get_or_create_language_preferences(
+                user, user.default_language_preferences.language
+            )
+            language = next(
+                (
+                    lang
+                    for lang in languages
+                    if lang.google_code == language_prefs.language.google_code
+                ),
+                languages[0],
+            )
+        else:
             language = Language.objects.get(google_code=language_id)
+            languages = [language]
             terms = TranslationHistory.objects.filter(
                 user=user, source_language=language, last_lookup__gte=min_datetime
             )
@@ -219,11 +243,11 @@ def export_words(request: HttpRequest) -> HttpResponse:
         words_exported = len(terms)
 
         if export_method == "ankiConnect":
-            export_words_to_anki_connect(language, terms)
+            export_words_to_anki_connect(language, terms, deck_name)
             response_data = {"status": "success", "exported_words": words_exported}
             response = JsonResponse(response_data)
         elif export_method == "ankiFile":
-            file, filename = export_words_to_anki_file(language, terms)
+            file, filename = export_words_to_anki_file(language, terms, deck_name)
             response = FileResponse(file, as_attachment=True, filename=filename)
         elif export_method == "csvFile":
             file, filename = export_words_to_csv_file(language, terms)
@@ -231,12 +255,14 @@ def export_words(request: HttpRequest) -> HttpResponse:
         else:
             raise ValueError("Invalid export method")
 
-        WordsExport.objects.create(
-            user=user,
-            language=language,
-            word_count=words_exported,
-            details={"format": export_method},
-        )
+        for lang in languages:
+            WordsExport.objects.create(
+                user=user,
+                language=lang,
+                word_count=words_exported,
+                details={"format": export_method},
+                deck_name=deck_name,
+            )
 
         logger.info(
             f"Words exported for {language.name}: {words_exported} words using {export_method}"
@@ -247,7 +273,7 @@ def export_words(request: HttpRequest) -> HttpResponse:
         return JsonResponse({"status": "error", "error": str(e)})
 
 
-def export_words_to_anki_connect(language: Language, terms: Any) -> int:  # pylint: disable=unused-argument
+def export_words_to_anki_connect(language: Language, terms: Any, deck_name: str) -> int:  # pylint: disable=unused-argument
     """Export words to Anki using AnkiConnect."""
     # TODO: Implement AnkiConnect integration
     # This function should use the AnkiConnect API to add cards to Anki
@@ -256,7 +282,7 @@ def export_words_to_anki_connect(language: Language, terms: Any) -> int:  # pyli
 
 
 def export_words_to_anki_file(
-    language: Language, terms: List[TranslationHistory]
+    language: Language, terms: List[TranslationHistory], deck_name: str
 ) -> tuple[ContentFile, str]:
     """Export words to an Anki-compatible file."""
     model_id = random.randrange(1 << 30, 1 << 31)
@@ -278,7 +304,7 @@ def export_words_to_anki_file(
     )
 
     deck_id = random.randrange(1 << 30, 1 << 31)
-    deck = genanki.Deck(deck_id, f"Lexiflux - {language.name}")
+    deck = genanki.Deck(deck_id, deck_name)
 
     for term in terms:
         notes = create_anki_notes(term, model)
