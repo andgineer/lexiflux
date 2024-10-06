@@ -9,13 +9,13 @@ import requests
 import urllib3.connection
 
 from lexiflux.models import Language, TranslationHistory
+from lexiflux.anki.anki_common import create_anki_notes_data, get_anki_model_config, NOTES_PER_TERM
 
 ANKI_CONNECT_TIMEOUT = 10
 
 logger = logging.getLogger(__name__)
 
 ANKI_CONNECT_URL = "http://localhost:8765"
-NOTES_PER_TERM = 3
 
 
 def export_words_to_anki_connect(  # pylint: disable=unused-argument
@@ -32,10 +32,10 @@ def export_words_to_anki_connect(  # pylint: disable=unused-argument
 
         notes = []
         for term in terms:
-            notes.extend(create_anki_notes(term, model_name, deck_name))
+            notes.extend(create_anki_notes_data(term, model_name, deck_name))
 
         skipped_count = add_notes(anki_connect_url, notes)
-        return (
+        return (  # type: ignore
             len(terms) - skipped_count // NOTES_PER_TERM
             if skipped_count is not None
             else len(terms)
@@ -61,59 +61,9 @@ def create_model(url: str, model_name: str) -> None:
     payload = {
         "action": "createModel",
         "version": 6,
-        "params": {
-            "modelName": model_name,
-            "inOrderFields": ["Front", "Back"],
-            "css": (
-                ".card { font-family: arial; font-size: 20px; "
-                "text-align: center; color: black; background-color: white; }"
-            ),
-            "cardTemplates": [
-                {
-                    "Name": "Card 1",
-                    "Front": "{{Front}}",
-                    "Back": "{{FrontSide}}<hr id='answer'>{{Back}}",
-                }
-            ],
-        },
+        "params": get_anki_model_config(model_name),
     }
     requests.post(url, json=payload, timeout=ANKI_CONNECT_TIMEOUT)
-
-
-def create_anki_notes(
-    term: TranslationHistory, model_name: str, deck_name: str
-) -> List[Dict[str, Any]]:
-    """Create Anki notes for a given term."""
-    context_parts = term.context.split(TranslationHistory.CONTEXT_MARK)
-    sentence_start = context_parts[1]
-    sentence_end = context_parts[2]
-
-    full_sentence = f"{sentence_start}{term.term}{sentence_end}"
-    sentence_with_blank = f"{sentence_start}__({term.translation})___{sentence_end}"
-
-    return [
-        {
-            "deckName": deck_name,
-            "modelName": model_name,
-            "fields": {"Front": term.term, "Back": f"{term.translation}<br><br>{full_sentence}"},
-            "tags": ["lexiflux"],
-        },
-        {
-            "deckName": deck_name,
-            "modelName": model_name,
-            "fields": {
-                "Front": sentence_with_blank,
-                "Back": f"{term.term} ({term.translation})<br><br>{full_sentence}",
-            },
-            "tags": ["lexiflux"],
-        },
-        {
-            "deckName": deck_name,
-            "modelName": model_name,
-            "fields": {"Front": term.translation, "Back": f"{term.term}<br><br>{full_sentence}"},
-            "tags": ["lexiflux"],
-        },
-    ]
 
 
 def add_notes(url: str, notes: List[Dict[str, Any]]) -> Optional[int]:

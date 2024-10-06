@@ -9,36 +9,42 @@ from django.core.files.base import ContentFile
 from django.utils import timezone
 
 from lexiflux.models import TranslationHistory, Language
+from lexiflux.anki.anki_common import create_anki_notes_data, get_anki_model_config
 
 
-def export_words_to_anki_file(
+def export_words_to_anki_file(  # pylint: disable=too-many-locals
     language: Language, terms: List[TranslationHistory], deck_name: str
 ) -> tuple[ContentFile, str]:
     """Export words to an Anki-compatible file."""
     model_id = random.randrange(1 << 30, 1 << 31)
+    model_config = get_anki_model_config("Lexiflux Translation Model")
 
     model = genanki.Model(
         model_id,
-        "Lexiflux Translation Model",
-        fields=[
-            {"name": "Front"},
-            {"name": "Back"},
-        ],
+        model_config["modelName"],
+        fields=[{"name": field} for field in model_config["inOrderFields"]],
         templates=[
             {
-                "name": "Card 1",
-                "qfmt": "{{Front}}",
-                "afmt": '{{FrontSide}}<hr id="answer">{{Back}}',
-            },
+                "name": template["Name"],
+                "qfmt": template["Front"],
+                "afmt": template["Back"],
+            }
+            for template in model_config["cardTemplates"]
         ],
+        css=model_config["css"],
     )
 
     deck_id = random.randrange(1 << 30, 1 << 31)
     deck = genanki.Deck(deck_id, deck_name)
 
     for term in terms:
-        notes = create_anki_notes(term, model)
-        for note in notes:
+        notes_data = create_anki_notes_data(term, model.name, deck_name)
+        for note_data in notes_data:
+            note = genanki.Note(
+                model=model,
+                fields=[note_data["fields"]["Front"], note_data["fields"]["Back"]],
+                tags=note_data["tags"],
+            )
             deck.add_note(note)
 
     package = genanki.Package(deck)
@@ -53,31 +59,3 @@ def export_words_to_anki_file(
     content_file = ContentFile(file_buffer.getvalue(), name=filename)
 
     return content_file, filename
-
-
-def create_anki_notes(term: TranslationHistory, model: genanki.Model) -> List[genanki.Note]:
-    """Create Anki notes for a given term."""
-    context_parts = term.context.split(TranslationHistory.CONTEXT_MARK)
-    sentence_start = context_parts[1]
-    sentence_end = context_parts[2]
-
-    full_sentence = f"{sentence_start}{term.term}{sentence_end}"
-    sentence_with_blank = f"{sentence_start}__({term.translation})___{sentence_end}"
-
-    return [
-        genanki.Note(
-            model=model,
-            fields=[term.term, f"{term.translation}<br><br>{full_sentence}"],
-        ),
-        genanki.Note(
-            model=model,
-            fields=[
-                sentence_with_blank,
-                f"{term.term} ({term.translation})<br><br>{full_sentence}",
-            ],
-        ),
-        genanki.Note(
-            model=model,
-            fields=[term.translation, f"{term.term}<br><br>{full_sentence}"],
-        ),
-    ]
