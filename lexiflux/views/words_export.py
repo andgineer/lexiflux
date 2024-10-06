@@ -1,11 +1,12 @@
-"""Views for exporting words to Anki or other cards learning apps."""
+"""Views for exporting words to Anki or other cards learning apps."""  # pylint: disable=duplicate-code
+# todo: refactor to extract common code for file and AnkiConnect export
 
 import csv
 import io
 import json
 import logging
 import random
-from typing import Any, List
+from typing import List
 
 import genanki
 from django.core.files.base import ContentFile
@@ -24,6 +25,7 @@ from lexiflux.models import (
     WordsExport,
     LanguagePreferences,
 )
+from lexiflux.anki.anki_connect import export_words_to_anki_connect
 
 logger = logging.getLogger(__name__)
 
@@ -246,7 +248,8 @@ def export_words(request: HttpRequest) -> HttpResponse:  # pylint: disable=too-m
         words_exported = len(terms)
 
         if export_method == "ankiConnect":
-            export_words_to_anki_connect(language, terms, deck_name)
+            words_exported = export_words_to_anki_connect(language, terms, deck_name)
+            logger.info(f"Words exported for {language.name}: {words_exported} words")
             response_data = {"status": "success", "exported_words": words_exported}
             response = JsonResponse(response_data)
         elif export_method == "ankiFile":
@@ -275,14 +278,6 @@ def export_words(request: HttpRequest) -> HttpResponse:  # pylint: disable=too-m
     except Exception as e:  # pylint: disable=broad-except
         logger.error(f"Error exporting words: {str(e)}", exc_info=True)
         return JsonResponse({"status": "error", "error": str(e)})
-
-
-def export_words_to_anki_connect(language: Language, terms: Any, deck_name: str) -> int:  # pylint: disable=unused-argument
-    """Export words to Anki using AnkiConnect."""
-    # TODO: Implement AnkiConnect integration
-    # This function should use the AnkiConnect API to add cards to Anki
-    # Return the number of words exported
-    return len(terms)
 
 
 def export_words_to_anki_file(

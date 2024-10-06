@@ -6,6 +6,7 @@ new Vue({
         availableLanguageGroups: JSON.parse('{{ language_groups|escapejs }}'),
         selectedLanguage: null,
         minDateTime: '',
+        successMessage: '',
         errorMessage: '',
         exportMethod: '{{ last_export_format|escapejs }}',
         isExporting: false,
@@ -101,6 +102,7 @@ new Vue({
                 return;
             }
 
+            this.successMessage = '';
             if (this.hasTranslations) {
                 this.errorMessage = '';
             }
@@ -127,7 +129,15 @@ new Vue({
                 const contentType = response.headers.get('Content-Type');
                 if (contentType && contentType.includes('application/json')) {
                     return response.json().then(data => {
-                        if (data.status !== 'success') {
+                        if (data.status === 'success') {
+                            this.successMessage = `Successfully exported words to Anki.`;
+                            if (data.exported_words !== this.wordCount) {
+                                const skippedCount = this.wordCount - data.exported_words;
+                                const wordForm = skippedCount === 1 ? 'word' : 'words';
+                                this.successMessage += ` ${skippedCount} ${wordForm} ${skippedCount === 1 ? 'was' : 'were'} skipped due to duplication.`;
+                            }
+                            this.refreshExportData();
+                        } else {
                             throw new Error(data.error || 'An error occurred during export.');
                         }
                     });
@@ -135,6 +145,7 @@ new Vue({
                     return response.blob().then(blob => {
                         const filename = response.headers.get('Content-Disposition').split('filename=')[1].replace(/"/g, '');
                         this.saveFile(blob, filename);
+                        this.refreshExportData();
                     });
                 } else {
                     throw new Error('Unexpected response from server');
@@ -144,6 +155,12 @@ new Vue({
                 this.isExporting = false;
                 this.errorMessage = 'Error exporting words: ' + error.message;
             });
+        },
+        refreshExportData() {
+            // Add a small delay to ensure server-side processes have completed
+            setTimeout(() => {
+                this.updateMinDateTime();
+            }, 100);
         },
         saveFile(blob, suggestedName) {
             if ('showSaveFilePicker' in window) {
