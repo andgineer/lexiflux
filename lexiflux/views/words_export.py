@@ -5,10 +5,8 @@ import csv
 import io
 import json
 import logging
-import random
 from typing import List
 
-import genanki
 from django.core.files.base import ContentFile
 from django.http import JsonResponse, HttpRequest, HttpResponse, FileResponse
 from django.utils.timezone import is_naive, make_aware
@@ -17,6 +15,7 @@ from django.shortcuts import render
 from django.utils import timezone
 from django.db.models import Max
 
+from lexiflux.anki.anki_file import export_words_to_anki_file
 from lexiflux.decorators import smart_login_required
 from lexiflux.models import (
     Language,
@@ -140,29 +139,6 @@ def words_export_page(request: HttpRequest) -> HttpResponse:  # pylint: disable=
 
 @smart_login_required
 @require_http_methods(["GET"])  # type: ignore
-def words_export_options(request: HttpRequest) -> HttpResponse:
-    """Get available languages and language groups for export."""
-    user = request.user
-
-    # Get languages with translations
-    languages = (
-        Language.objects.filter(translation_history__user=user)
-        .distinct()
-        .values("google_code", "name")
-    )
-
-    # Get language groups with translations
-    language_groups = (
-        LanguageGroup.objects.filter(languages__translation_history__user=user)
-        .distinct()
-        .values("id", "name")
-    )
-
-    return JsonResponse({"languages": list(languages), "language_groups": list(language_groups)})
-
-
-@smart_login_required
-@require_http_methods(["GET"])  # type: ignore
 def last_export_datetime(request: HttpRequest) -> HttpResponse:  # pylint: disable=too-many-return-statements
     """Get the last export datetime for a given language or language group."""
     try:
@@ -278,78 +254,6 @@ def export_words(request: HttpRequest) -> HttpResponse:  # pylint: disable=too-m
     except Exception as e:  # pylint: disable=broad-except
         logger.error(f"Error exporting words: {str(e)}", exc_info=True)
         return JsonResponse({"status": "error", "error": str(e)})
-
-
-def export_words_to_anki_file(
-    language: Language, terms: List[TranslationHistory], deck_name: str
-) -> tuple[ContentFile, str]:
-    """Export words to an Anki-compatible file."""
-    model_id = random.randrange(1 << 30, 1 << 31)
-
-    model = genanki.Model(
-        model_id,
-        "Lexiflux Translation Model",
-        fields=[
-            {"name": "Front"},
-            {"name": "Back"},
-        ],
-        templates=[
-            {
-                "name": "Card 1",
-                "qfmt": "{{Front}}",
-                "afmt": '{{FrontSide}}<hr id="answer">{{Back}}',
-            },
-        ],
-    )
-
-    deck_id = random.randrange(1 << 30, 1 << 31)
-    deck = genanki.Deck(deck_id, deck_name)
-
-    for term in terms:
-        notes = create_anki_notes(term, model)
-        for note in notes:
-            deck.add_note(note)
-
-    package = genanki.Package(deck)
-    filename = (
-        f"lexiflux_{language.google_code}_" f"{timezone.now().strftime('%Y%m%d%H%M%S')}.apkg"
-    )
-
-    file_buffer = io.BytesIO()
-    package.write_to_file(file_buffer)
-    file_buffer.seek(0)
-
-    content_file = ContentFile(file_buffer.getvalue(), name=filename)
-
-    return content_file, filename
-
-
-def create_anki_notes(term: TranslationHistory, model: genanki.Model) -> List[genanki.Note]:
-    """Create Anki notes for a given term."""
-    context_parts = term.context.split(TranslationHistory.CONTEXT_MARK)
-    sentence_start = context_parts[1]
-    sentence_end = context_parts[2]
-
-    full_sentence = f"{sentence_start}{term.term}{sentence_end}"
-    sentence_with_blank = f"{sentence_start}__({term.translation})___{sentence_end}"
-
-    return [
-        genanki.Note(
-            model=model,
-            fields=[term.term, f"{term.translation}<br><br>{full_sentence}"],
-        ),
-        genanki.Note(
-            model=model,
-            fields=[
-                sentence_with_blank,
-                f"{term.term} ({term.translation})<br><br>{full_sentence}",
-            ],
-        ),
-        genanki.Note(
-            model=model,
-            fields=[term.translation, f"{term.term}<br><br>{full_sentence}"],
-        ),
-    ]
 
 
 def export_words_to_csv_file(

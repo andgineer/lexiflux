@@ -86,11 +86,6 @@ urlpatterns = [
     ),
     path("words-export/", lexiflux.views.words_export.words_export_page, name="words-export"),
     path(
-        "api/words-export-options/",
-        lexiflux.views.words_export.words_export_options,
-        name="words_export_options",
-    ),
-    path(
         "api/last-export-datetime/",
         lexiflux.views.words_export.last_export_datetime,
         name="last_export_datetime",
