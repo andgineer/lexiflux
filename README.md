@@ -6,8 +6,9 @@
 |------------------------------------------------------ | -------: | -------: | ------: | --------: |
 | lexiflux/\_\_about\_\_.py                             |        1 |        0 |    100% |           |
 | lexiflux/admin.py                                     |        6 |        0 |    100% |           |
-| lexiflux/anki/anki\_connect.py                        |       71 |       54 |     24% |25-46, 55-56, 61-80, 87-94, 126-157, 162-165 |
-| lexiflux/anki/anki\_file.py                           |       30 |       21 |     30% |18-55, 60-67 |
+| lexiflux/anki/anki\_common.py                         |       12 |        0 |    100% |           |
+| lexiflux/anki/anki\_connect.py                        |       64 |       20 |     69% |44-46, 84-96, 98, 102-107 |
+| lexiflux/anki/anki\_file.py                           |       26 |        0 |    100% |           |
 | lexiflux/api.py                                       |       24 |        3 |     88% |     37-39 |
 | lexiflux/apps.py                                      |       13 |        0 |    100% |           |
 | lexiflux/asgi.py                                      |        4 |        4 |      0% |      9-15 |
@@ -47,7 +48,7 @@
 | lexiflux/views/reader\_views.py                       |      210 |       56 |     73% |31-42, 50-73, 77-81, 111, 131, 228-233, 245, 270, 274, 289, 293, 306, 310, 322, 326, 344-365 |
 | lexiflux/views/words\_export.py                       |      160 |      131 |     18% |35-137, 144-181, 188-256, 263-291, 298-331 |
 | lexiflux/wsgi.py                                      |        4 |        4 |      0% |      9-15 |
-|                                             **TOTAL** | **2716** |  **793** | **71%** |           |
+|                                             **TOTAL** | **2717** |  **738** | **73%** |           |
 
 
 ## Setup coverage badge
