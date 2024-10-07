@@ -1,3 +1,4 @@
+import allure
 import pytest
 from unittest.mock import patch, MagicMock
 from lexiflux.models import TranslationHistory, Language
@@ -7,6 +8,9 @@ from lexiflux.anki.anki_connect import export_words_to_anki_connect
 from lexiflux.anki.anki_connect import parse_error_message
 
 
+@allure.epic('Pages endpoints')
+@allure.story('Words export')
+@allure.feature("Anki")
 def test_export_words_to_anki_connect(book, approved_user):
     source_language = Language.objects.get(name="English")
     target_language = Language.objects.get(name="French")
@@ -42,6 +46,9 @@ def test_export_words_to_anki_connect(book, approved_user):
         assert mock_post.call_count == 3  # createDeck, createModel, addNotes
 
 
+@allure.epic('Pages endpoints')
+@allure.story('Words export')
+@allure.feature("Anki")
 def test_create_anki_notes():
     term = TranslationHistory(
         term='hello',
@@ -57,6 +64,9 @@ def test_create_anki_notes():
     assert 'hello world' in notes[0]['fields']['Back']
 
 
+@allure.epic('Pages endpoints')
+@allure.story('Words export')
+@allure.feature("Anki")
 @pytest.mark.parametrize("error_message, expected_result", [
     ("['duplicate']", ['duplicate']),
     ("Invalid input", ["Invalid input"])
@@ -66,6 +76,9 @@ def test_parse_error_message(error_message, expected_result):
     assert result == expected_result
 
 
+@allure.epic('Pages endpoints')
+@allure.story('Words export')
+@allure.feature("Anki")
 def test_export_words_to_anki_file(book, approved_user):
     source_language, _ = Language.objects.get_or_create(name="English")
     target_language, _ = Language.objects.get_or_create(name="French")
