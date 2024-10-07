@@ -23,7 +23,7 @@ from unittest.mock import mock_open, patch, MagicMock
 from lexiflux.ebook.book_loader_base import BookLoaderBase, MetadataField
 from lexiflux.ebook.book_loader_plain_text import BookLoaderPlainText
 from django.contrib.auth import get_user_model
-from lexiflux.models import Author, Language, Book, BookPage
+from lexiflux.models import Author, Language, Book, BookPage, LanguageGroup, TranslationHistory, LanguagePreferences
 from pytest_django.live_server_helper import LiveServer
 import subprocess
 import time
@@ -404,3 +404,43 @@ def book(db_init, user, author):
 
     return book
 
+
+@pytest.fixture
+def translation_history(book, approved_user, language):
+    return TranslationHistory.objects.create(
+        user=approved_user,
+        book=book,
+        term='apple',
+        translation='pomme',
+        context=f'{TranslationHistory.CONTEXT_MARK}before__{TranslationHistory.CONTEXT_MARK}__after{TranslationHistory.CONTEXT_MARK}',
+        source_language=language,
+        target_language=language,
+    )
+
+
+@pytest.fixture
+def language(db_init):
+    return Language.objects.get(name="English")
+
+
+@pytest.fixture
+def language_group(db_init):
+    group = LanguageGroup.objects.create(name="Test Group")
+    group.languages.add(Language.objects.get(name="English"))
+    group.languages.add(Language.objects.get(name="French"))
+    return group
+
+
+@pytest.fixture
+def user_with_translations(approved_user, book, language, translation_history):
+    user_language, _ = Language.objects.get_or_create(name="User Language", google_code="ul")
+    language_preferences = LanguagePreferences.objects.create(
+        user=approved_user,
+        language=language,
+        user_language=user_language,
+        inline_translation_type='Translate',
+        inline_translation_parameters={'model': 'default_model'}
+    )
+    approved_user.default_language_preferences = language_preferences
+    approved_user.save()
+    return approved_user

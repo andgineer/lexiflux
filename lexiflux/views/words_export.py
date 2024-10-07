@@ -1,13 +1,9 @@
 """Views for exporting words to Anki or other cards learning apps."""  # pylint: disable=duplicate-code
 # todo: refactor to extract common code for file and AnkiConnect export
 
-import csv
-import io
 import json
 import logging
-from typing import List
 
-from django.core.files.base import ContentFile
 from django.http import JsonResponse, HttpRequest, HttpResponse, FileResponse
 from django.utils.timezone import is_naive, make_aware
 from django.views.decorators.http import require_http_methods
@@ -16,6 +12,7 @@ from django.utils import timezone
 from django.db.models import Max
 
 from lexiflux.anki.anki_file import export_words_to_anki_file
+from lexiflux.anki.csv_file import export_words_to_csv_file
 from lexiflux.decorators import smart_login_required
 from lexiflux.models import (
     Language,
@@ -233,7 +230,12 @@ def export_words(request: HttpRequest) -> HttpResponse:  # pylint: disable=too-m
             response = FileResponse(file, as_attachment=True, filename=filename)
         elif export_method == "csvFile":
             file, filename = export_words_to_csv_file(language, terms)
-            response = FileResponse(file, as_attachment=True, filename=filename)
+            response = FileResponse(
+                file,
+                as_attachment=True,
+                filename=filename,
+                content_type="text/csv",
+            )
         else:
             raise ValueError("Invalid export method")
 
@@ -254,41 +256,6 @@ def export_words(request: HttpRequest) -> HttpResponse:  # pylint: disable=too-m
     except Exception as e:  # pylint: disable=broad-except
         logger.error(f"Error exporting words: {str(e)}", exc_info=True)
         return JsonResponse({"status": "error", "error": str(e)})
-
-
-def export_words_to_csv_file(
-    language: Language, terms: List[TranslationHistory]
-) -> tuple[ContentFile, str]:
-    """Export words to a CSV file."""
-    filename = f"lexiflux_{language.google_code}_" f"{timezone.now().strftime('%Y%m%d%H%M%S')}.csv"
-
-    output = io.StringIO()
-    writer = csv.writer(output)
-
-    # Write header
-    writer.writerow(["Term", "Translation", "Language", "Translation Language", "Sentence"])
-
-    for term in terms:
-        context_parts = term.context.split(TranslationHistory.CONTEXT_MARK)
-        sentence_start = context_parts[1]
-        sentence_end = context_parts[2]
-
-        full_sentence = f"{sentence_start}_____{sentence_end}"
-
-        writer.writerow(
-            [
-                term.term,
-                term.translation,
-                term.source_language.name,
-                term.target_language.name,
-                full_sentence,
-            ]
-        )
-
-    output.seek(0)
-    content_file = ContentFile(output.getvalue().encode("utf-8"), name=filename)
-
-    return content_file, filename
 
 
 @smart_login_required

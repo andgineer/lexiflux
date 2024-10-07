@@ -8,6 +8,7 @@ coveralls
 faker
 selenium
 allure-pytest
+pytz
 
 # build & reqs management
 
