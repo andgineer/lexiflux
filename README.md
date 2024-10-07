@@ -9,6 +9,7 @@
 | lexiflux/anki/anki\_common.py                         |       12 |        0 |    100% |           |
 | lexiflux/anki/anki\_connect.py                        |       64 |       20 |     69% |44-46, 84-96, 98, 102-107 |
 | lexiflux/anki/anki\_file.py                           |       26 |        0 |    100% |           |
+| lexiflux/anki/csv\_file.py                            |       20 |        0 |    100% |           |
 | lexiflux/api.py                                       |       24 |        3 |     88% |     37-39 |
 | lexiflux/apps.py                                      |       13 |        0 |    100% |           |
 | lexiflux/asgi.py                                      |        4 |        4 |      0% |      9-15 |
@@ -34,7 +35,7 @@
 | lexiflux/language\_preferences\_default.py            |       16 |        2 |     88% |     37-38 |
 | lexiflux/lexiflux\_settings.py                        |       51 |       14 |     73% |23-30, 35-39, 60-66, 88-89, 104 |
 | lexiflux/middleware.py                                |       13 |        2 |     85% |     21-25 |
-| lexiflux/models.py                                    |      419 |       61 |     85% |103, 135, 166, 182-183, 245, 251, 262, 284, 318-321, 336, 387, 409-417, 420-432, 435-436, 439, 463, 465-466, 468-469, 472, 516, 630, 640, 664, 740, 751, 777, 784, 791, 803-816, 823-826 |
+| lexiflux/models.py                                    |      419 |       51 |     88% |103, 135, 166, 182-183, 245, 251, 262, 284, 318-321, 336, 387, 409-417, 420-432, 435-436, 439, 463, 465-466, 468-469, 472, 516, 630, 640, 664, 740, 751, 777, 805, 814, 825 |
 | lexiflux/settings.py                                  |       31 |        0 |    100% |           |
 | lexiflux/signals.py                                   |       14 |       14 |      0% |      3-24 |
 | lexiflux/tests.py                                     |        0 |        0 |    100% |           |
@@ -46,9 +47,9 @@
 | lexiflux/views/lexical\_views.py                      |       77 |       23 |     70% |46, 63, 82-115, 172-193 |
 | lexiflux/views/library\_views.py                      |      117 |       57 |     51% |58-59, 81-130, 150-151, 182-185, 191-202, 208-228 |
 | lexiflux/views/reader\_views.py                       |      210 |       56 |     73% |31-42, 50-73, 77-81, 111, 131, 228-233, 245, 270, 274, 289, 293, 306, 310, 322, 326, 344-365 |
-| lexiflux/views/words\_export.py                       |      160 |      131 |     18% |35-137, 144-181, 188-256, 263-291, 298-331 |
+| lexiflux/views/words\_export.py                       |      143 |       32 |     78% |66-71, 99, 106-111, 146, 167-178, 191, 240, 271, 277, 292-298 |
 | lexiflux/wsgi.py                                      |        4 |        4 |      0% |      9-15 |
-|                                             **TOTAL** | **2717** |  **738** | **73%** |           |
+|                                             **TOTAL** | **2720** |  **629** | **77%** |           |
 
 
 ## Setup coverage badge
