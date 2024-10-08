@@ -32,7 +32,7 @@
 | lexiflux/language/sentence\_extractor\_llm.py         |       52 |       39 |     25% |17, 48-92, 97-128, 133-169 |
 | lexiflux/language/translation.py                      |       22 |        1 |     95% |        32 |
 | lexiflux/language/word\_extractor.py                  |       85 |        8 |     91% |42-49, 53, 66 |
-| lexiflux/language\_preferences\_default.py            |       16 |        2 |     88% |     37-38 |
+| lexiflux/language\_preferences\_default.py            |       16 |        2 |     88% |     46-47 |
 | lexiflux/lexiflux\_settings.py                        |       51 |       14 |     73% |23-30, 35-39, 60-66, 88-89, 104 |
 | lexiflux/middleware.py                                |       13 |        2 |     85% |     21-25 |
 | lexiflux/models.py                                    |      419 |       51 |     88% |103, 135, 166, 182-183, 245, 251, 262, 284, 318-321, 336, 387, 409-417, 420-432, 435-436, 439, 463, 465-466, 468-469, 472, 516, 630, 640, 664, 740, 751, 777, 805, 814, 825 |
