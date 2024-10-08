@@ -39,7 +39,7 @@ See [AI Settings](http://localhost:6100/ai-settings/) section how to get one for
 ## Ollama
 You can [install](docker.md#local-ollama-ai) in the docker local AI [Ollama](https://github.com/jmorganca/ollama) model.
 
-It is free, but requires about 6G RAM to run. Remember this is RAM for the Docker container, not for the host machine.
+It is free, but requires about 4G RAM to run. Remember this is RAM for the Docker container, not for the host machine.
 
 And it is not very accurate.
 

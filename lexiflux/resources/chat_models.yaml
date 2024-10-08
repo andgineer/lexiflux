@@ -1,27 +1,27 @@
+gpt-3.5-turbo-0125:
+  title: GPT-3.5 Turbo
+  model: ChatOpenAI
+  suffix: 🔗 3.5°
+
 gpt-4o-mini:
   title: GPT-4o mini
   model: ChatOpenAI
-  suffix: 🔗 4°
+  suffix: 🔗 4o-mini°
 
-gpt-4-turbo:
+gpt-4o:
   title: GPT-4 Turbo
   model: ChatOpenAI
-  suffix: 🔗 4⁺
-
-gpt-4-turbo-preview:
-  title: GPT-4 Turbo Preview
-  model: ChatOpenAI
-  suffix: 🔗 4⁺+
+  suffix: 🔗 4o⁺
 
 claude-3-5-sonnet-20240620:
   title: Claude 3.5 Sonnet
   model: ChatAnthropic
   suffix: 💡3.5
 
-llama3:
-  title: LLAMA 3
+llama3.2:
+  title: LLAMA 3.2
   model: Ollama
-  suffix: 🦙3
+  suffix: 🦙3.2
 
 # zephyr:
 #   title: Zephyr 7B

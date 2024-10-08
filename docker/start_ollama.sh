@@ -11,9 +11,9 @@ echo "Ollama is ready."
 
 if [ "${OLLAMA_LOAD_MODEL}" = "false" ]; then
     echo "OLLAMA_LOAD_MODEL is set to false. Skipping model load."
-elif ! ollama list | grep -q "${OLLAMA_LOAD_MODEL}"; then
-    echo "Pulling llama3 model..."
-    ollama pull llama3
+elif ! ollama list | grep -q "^${OLLAMA_LOAD_MODEL}[: ]"; then
+    echo "Pulling ${OLLAMA_LOAD_MODEL} model..."
+    ollama pull ${OLLAMA_LOAD_MODEL}
     echo "llama3 model pulled successfully."
 else
     echo "llama3 model is already present."

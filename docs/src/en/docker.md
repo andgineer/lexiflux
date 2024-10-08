@@ -26,9 +26,9 @@ creates a new container with the name `lexiflux` and exposes port `6100` on your
 If you want to use free local AI, and have enough RAM, you can preload [Ollama](aimodels.md#ollama) 
 model in the docker.
 
-Add `OLLAMA_LOAD_MODEL=llama3` to the `docker run` command.
+Add `OLLAMA_LOAD_MODEL=llama3.2` or whatever model you want to the `docker run` command.
 
-Please note it will download about 5Gb Ollama AI model and require about 6G RAM for the Docker container to run.
+Please note it will download about 2Gb Ollama AI model and require about 4G RAM for the Docker container to run.
 
 ## Updates
 To update you can use

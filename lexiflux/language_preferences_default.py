@@ -5,13 +5,22 @@ from django.apps import apps
 
 
 DEFAULT_LEXICAL_ARTICLES = [
-    {"type": "Explain", "title": "Explain 🔗 4⁺+", "parameters": {"model": "gpt-4-turbo-preview"}},
-    {"type": "Explain", "title": "Explain 🦙3", "parameters": {"model": "llama3"}},
-    {"type": "Lexical", "title": "Lexical 🔗 4°", "parameters": {"model": "gpt-4o-mini"}},
+    {"type": "Explain", "title": "Explain 🔗 4o-mini°", "parameters": {"model": "gpt-4o-mini"}},
+    {
+        "type": "Explain",
+        "title": "Explain 💡3.5",
+        "parameters": {"model": "claude-3-5-sonnet-20240620"},
+    },
+    {"type": "Explain", "title": "Explain 🦙3.2", "parameters": {"model": "llama3.2"}},
+    {
+        "type": "Lexical",
+        "title": "Lexical 💡3.5",
+        "parameters": {"model": "claude-3-5-sonnet-20240620"},
+    },
     {
         "type": "Sentence",
-        "title": "Sentence 🔗 4⁺+",
-        "parameters": {"model": "gpt-4-turbo-preview"},
+        "title": "Sentence 🔗 4o-mini°",
+        "parameters": {"model": "gpt-4o-mini"},
     },
     {
         "type": "Site",
