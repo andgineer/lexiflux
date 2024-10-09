@@ -126,6 +126,11 @@ function getNextNode(node: Node): Node | null {
   return null;
 }
 
+function handleSideBarSettingsButtonClick(event: MouseEvent): void {
+    event.preventDefault();
+    window.location.href = '/language-preferences/';
+}
+
 function reInitDom(): void {
     log('reInitDom called');
     let prevButton = document.getElementById('prev-button');
@@ -150,6 +155,12 @@ function reInitDom(): void {
     if (forwardButton) {
         forwardButton.removeEventListener('click', handleForwardButtonClick);
         forwardButton.addEventListener('click', handleForwardButtonClick);
+    }
+
+    let gearButton = document.getElementById('sidebar-settings');
+    if (gearButton) {
+        gearButton.removeEventListener('click', handleSideBarSettingsButtonClick);
+        gearButton.addEventListener('click', handleSideBarSettingsButtonClick);
     }
 
     const wordsContainer = viewport.getWordsContainer();
