@@ -101,8 +101,14 @@ class WordsExportPage(BasePage):
 
             button_text = export_button.text.strip().lower()
             if "no words to export" in button_text:
+                print("Detected button text: No words to export")
                 return True
 
+            print(
+                f"is_enabled: {export_button.is_enabled()}, "
+                f"disabled: {export_button.get_attribute('disabled')}, "
+                f"class: {export_button.get_attribute('class')}"
+            )
             return (
                 not export_button.is_enabled()
                 or export_button.get_attribute('disabled') is not None
