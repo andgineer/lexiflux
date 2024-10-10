@@ -722,8 +722,10 @@ class TranslationHistory(models.Model):  # type: ignore
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="translation_history"
     )
     lookup_count = models.PositiveIntegerField(default=1, help_text="Number of lookups")
-    first_lookup = models.DateTimeField(auto_now_add=True, help_text="First lookup timestamp")
-    last_lookup = models.DateTimeField(auto_now=True, help_text="Most recent lookup timestamp")
+    first_lookup = models.DateTimeField(default=timezone.now, help_text="First lookup timestamp")
+    last_lookup = models.DateTimeField(
+        default=timezone.now, help_text="Most recent lookup timestamp"
+    )
 
     class Meta:
         unique_together = ["term", "source_language", "user"]

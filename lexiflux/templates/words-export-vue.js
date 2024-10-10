@@ -73,7 +73,6 @@ new Vue({
                     // Convert the ISO string to the format expected by the datetime-local input
                     const date = new Date(data.last_export_datetime);
                     this.minDateTime = date.toISOString().slice(0, 16);
-                    this.updateWordCount();
                 })
                 .catch(error => {
                     this.errorMessage = 'Error fetching last export date: ' + error.message;
@@ -126,6 +125,7 @@ new Vue({
             })
             .then(response => {
                 this.isExporting = false;
+                this.refreshExportData();
                 const contentType = response.headers.get('Content-Type');
                 if (contentType && contentType.includes('application/json')) {
                     return response.json().then(data => {
@@ -136,7 +136,6 @@ new Vue({
                                 const wordForm = skippedCount === 1 ? 'word' : 'words';
                                 this.successMessage += ` ${skippedCount} ${wordForm} ${skippedCount === 1 ? 'was' : 'were'} skipped due to duplication.`;
                             }
-                            this.refreshExportData();
                         } else {
                             throw new Error(data.error || 'An error occurred during export.');
                         }
@@ -145,7 +144,6 @@ new Vue({
                     return response.blob().then(blob => {
                         const filename = response.headers.get('Content-Disposition').split('filename=')[1].replace(/"/g, '');
                         this.saveFile(blob, filename);
-                        this.refreshExportData();
                     });
                 } else {
                     throw new Error('Unexpected response from server');
@@ -153,14 +151,12 @@ new Vue({
             })
             .catch(error => {
                 this.isExporting = false;
+                this.refreshExportData();
                 this.errorMessage = 'Error exporting words: ' + error.message;
             });
         },
         refreshExportData() {
-            // Add a small delay to ensure server-side processes have completed
-            setTimeout(() => {
-                this.updateMinDateTime();
-            }, 100);
+            this.updateMinDateTime();
         },
         saveFile(blob, suggestedName) {
             if ('showSaveFilePicker' in window) {

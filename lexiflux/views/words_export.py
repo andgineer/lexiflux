@@ -279,12 +279,14 @@ def word_count(request: HttpRequest) -> HttpResponse:
         if language_id.isdigit():  # It's a language group
             group = LanguageGroup.objects.get(id=int(language_id))
             exported_words_count = TranslationHistory.objects.filter(
-                user=user, source_language__in=group.languages.all(), last_lookup__gte=min_datetime
+                user=user,
+                source_language__in=group.languages.all(),
+                first_lookup__gte=min_datetime,
             ).count()
         else:  # It's a language
             language = Language.objects.get(google_code=language_id)
             exported_words_count = TranslationHistory.objects.filter(
-                user=user, source_language=language, last_lookup__gte=min_datetime
+                user=user, source_language=language, first_lookup__gte=min_datetime
             ).count()
 
         return JsonResponse({"word_count": exported_words_count})

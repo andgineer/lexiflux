@@ -27,3 +27,11 @@ class BasePage:
             EC.element_to_be_clickable(locator)
         )
 
+    def wait_for_vue_updates(self):
+        """ Ensure Vue has processed all updates."""
+        self.browser.execute_script("""
+            return new Promise((resolve) => {
+                Vue.nextTick(resolve);
+            });
+        """)
+

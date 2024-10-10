@@ -1,5 +1,6 @@
 import os
 import platform
+from datetime import timedelta
 
 from ebooklib import epub, ITEM_DOCUMENT
 
@@ -23,6 +24,7 @@ from unittest.mock import mock_open, patch, MagicMock
 from lexiflux.ebook.book_loader_base import BookLoaderBase, MetadataField
 from lexiflux.ebook.book_loader_plain_text import BookLoaderPlainText
 from django.contrib.auth import get_user_model
+import django.utils.timezone
 from lexiflux.models import Author, Language, Book, BookPage, LanguageGroup, TranslationHistory, LanguagePreferences
 from pytest_django.live_server_helper import LiveServer
 import subprocess
@@ -415,6 +417,7 @@ def translation_history(book, approved_user, language):
         context=f'{TranslationHistory.CONTEXT_MARK}before__{TranslationHistory.CONTEXT_MARK}__after{TranslationHistory.CONTEXT_MARK}',
         source_language=language,
         target_language=language,
+        first_lookup=django.utils.timezone.now() - timedelta(minutes=1),
     )
 
 

@@ -1,10 +1,10 @@
-import os
 import time
+from datetime import datetime
 
+from selenium.common import StaleElementReferenceException, NoSuchElementException, TimeoutException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import Select
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
+
 from tests.page_models.base_page import BasePage
 
 class WordsExportPage(BasePage):
@@ -18,6 +18,13 @@ class WordsExportPage(BasePage):
     def get_error_message(self):
         return self.wait_for_element((By.CLASS_NAME, 'alert-danger')).text
 
+    def is_error_message_present(self):
+        try:
+            self.wait_for_element((By.CLASS_NAME, 'alert-danger'), timeout=1)
+            return True
+        except:
+            return False
+
     def wait_for_success_message(self, expected_message, timeout=10):
         try:
             element = self.wait_for_element((By.CLASS_NAME, 'alert-success'))
@@ -30,7 +37,7 @@ class WordsExportPage(BasePage):
 
     def is_form_controls_visible(self):
         try:
-            form_control = self.wait_for_element((By.ID, 'language-select'), timeout=3)
+            form_control = self.wait_for_element((By.ID, 'languageSelect'), timeout=3)
             return form_control.is_displayed()
         except:
             return False
@@ -70,37 +77,37 @@ class WordsExportPage(BasePage):
         export_button = self.wait_for_clickable((By.ID, 'export-button'))
         export_button.click()
 
-    def is_export_button_enabled(self):
-        export_button = self.wait_for_element((By.ID, 'export-button'))
-        return export_button.is_enabled()
-
-    def wait_for_download(self, timeout=10):
-        if self.browser.browser_name == 'Edge':
-            return True  # Skip download wait for Edge
-        time.sleep(2)  # Wait for the download to start
-        downloads_path = self.get_downloads_path()
+    def wait_for_export_button_disabled(self, timeout=60):
         start_time = time.time()
+        poll_interval = 0.5  # Check every half second
+
         while time.time() - start_time < timeout:
-            if any(fname.endswith('.csv') for fname in os.listdir(downloads_path)):
-                return True
-            time.sleep(0.5)
+            try:
+                if self.is_export_button_disabled():
+                    print("Export button became disabled")
+                    return True
+
+            except (TimeoutException, NoSuchElementException, StaleElementReferenceException) as e:
+                print(f"{datetime.now().isoformat()} - Exception while checking button: {str(e)}")
+
+            time.sleep(poll_interval)
+
+        print(f"{datetime.now().isoformat()} - Timeout reached. Button did not become disabled.")
         return False
 
-    def get_downloads_path(self):
-        if self.browser.browser_name == 'Chrome':
-            return os.path.join(os.path.expanduser('~'), 'Downloads')
-        elif self.browser.browser_name == 'Firefox':
-            return os.path.join(os.path.expanduser('~'), 'Downloads')
-        elif self.browser.browser_name == 'Edge':
-            return None  # No download path for Edge
-        else:
-            raise NotImplementedError(f"Download path not implemented for {self.browser.browser_name}")
+    def is_export_button_disabled(self):
+        try:
+            export_button = self.wait_for_element((By.ID, 'export-button'), timeout=5)
 
-    def get_latest_csv_file(self):
-        if self.browser.browser_name == 'Edge':
-            return "csv_file_simulated"  # Simulate a file for Edge
-        downloads_path = self.get_downloads_path()
-        csv_files = [f for f in os.listdir(downloads_path) if f.endswith('.csv')]
-        if not csv_files:
-            return None
-        return max([os.path.join(downloads_path, f) for f in csv_files], key=os.path.getmtime)
+            button_text = export_button.text.strip().lower()
+            if "no words to export" in button_text:
+                return True
+
+            return (
+                not export_button.is_enabled()
+                or export_button.get_attribute('disabled') is not None
+                or 'disabled' in export_button.get_attribute('class')
+            )
+        except (TimeoutException, NoSuchElementException, StaleElementReferenceException):
+            return False
+
