@@ -188,10 +188,10 @@ def selenium(c: Context):
     c.run("rm -rf allure-results")
     c.run("python -m pytest --alluredir=allure-results tests -m selenium -s -vv", warn=True)
     c.run(
-        "docker compose run --rm -it allure allure generate /allure-results -o /allure-report --clean"
+        "docker compose run --rm allure allure generate /allure-results -o /allure-report --clean"
     )
     c.run("docker compose restart allure")
-    c.run("open -a 'Google Chrome' http://localhost:8800")
+    c.run("open -a 'Google Chrome' http://localhost:8800/index.html#behaviors")
 
 
 @task

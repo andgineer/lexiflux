@@ -99,7 +99,7 @@
                         </template>
 
                         <div class="mt-4">
-                            <button @click="exportWords" :disabled="!canExport || isExporting" class="btn btn-primary export-button" :class="{ 'no-words': wordCount === 0 }">
+                            <button id="export-button" @click="exportWords" :disabled="!canExport || isExporting" class="btn btn-primary export-button" :class="{ 'no-words': wordCount === 0 }">
                                 <span class="spinner-border spinner-border-sm mr-2" v-if="isExporting" role="status" aria-hidden="true"></span>
                                 ${ buttonText }
                             </button>

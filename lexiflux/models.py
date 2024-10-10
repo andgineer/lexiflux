@@ -759,7 +759,7 @@ class WordsExport(models.Model):  # type: ignore
     )
     language = models.ForeignKey("Language", on_delete=models.CASCADE)
 
-    export_datetime = models.DateTimeField(auto_now_add=True)
+    export_datetime = models.DateTimeField(default=timezone.now)
 
     word_count = models.PositiveIntegerField()
     details = models.JSONField(default=dict, help_text="Details of the export")
