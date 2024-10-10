@@ -1,0 +1,5 @@
+INFO:root:Test finished
+INFO:root:Test started
+INFO:root:Location changed: book some-book-code, page 1, top word 10
+INFO:root:Reading location updated for some-book-code: 1(1):10/0.0
+[{'page_number': 1, 'word': 10}]/0

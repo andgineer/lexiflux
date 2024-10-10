@@ -1,0 +1,5 @@
+INFO:root:Test finished
+INFO:root:Test started
+INFO:root:Jump status: book some-book-code, is_first_jump False, is_last_jump False
+INFO:root:Jump status: book some-book-code, is_first_jump True, is_last_jump False
+INFO:root:Jump status: book some-book-code, is_first_jump False, is_last_jump True

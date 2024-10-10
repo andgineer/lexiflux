@@ -1,0 +1,4 @@
+INFO:root:Test finished
+INFO:root:Test started
+INFO:root:Location changed: book some-book-code, page 1, top word 10
+WARNING:django.request:Forbidden: /location
