@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-    <title>Coverage for lexiflux/models.py: 88%</title>
+    <title>Coverage for lexiflux/models.py: 89%</title>
     <link rel="icon" sizes="32x32" href="favicon_32_cb_58284776.png">
     <link rel="stylesheet" href="style_cb_8e611ae1.css" type="text/css">
     <script src="coverage_html_cb_6fb7b396.js" defer></script>
@@ -12,7 +12,7 @@
     <div class="content">
         <h1>
             <span class="text">Coverage for </span><b>lexiflux/models.py</b>:
-            <span class="pc_cov">88%</span>
+            <span class="pc_cov">89%</span>
         </h1>
         <aside id="help_panel_wrapper">
             <input id="help_panel_state" type="checkbox">
@@ -55,8 +55,8 @@
         </aside>
         <h2>
             <span class="text">419 statements &nbsp;</span>
-            <button type="button" class="run button_toggle_run" value="run" data-shortcut="r" title="Toggle lines run">368<span class="text"> run</span></button>
-            <button type="button" class="mis show_mis button_toggle_mis" value="mis" data-shortcut="m" title="Toggle lines missing">51<span class="text"> missing</span></button>
+            <button type="button" class="run button_toggle_run" value="run" data-shortcut="r" title="Toggle lines run">372<span class="text"> run</span></button>
+            <button type="button" class="mis show_mis button_toggle_mis" value="mis" data-shortcut="m" title="Toggle lines missing">47<span class="text"> missing</span></button>
             <button type="button" class="exc show_exc button_toggle_exc" value="exc" data-shortcut="x" title="Toggle lines excluded">0<span class="text"> excluded</span></button>
         </h2>
         <p class="text">
@@ -65,7 +65,7 @@
             <a id="nextFileLink" class="nav" href="z_816b02d96dab55f8_settings_py.html">&#xbb; next</a>
             &nbsp; &nbsp; &nbsp;
             <a class="nav" href="https://coverage.readthedocs.io/en/7.6.1">coverage.py v7.6.1</a>,
-            created at 2024-10-09 04:36 +0000
+            created at 2024-10-10 08:59 +0000
         </p>
         <aside class="hidden">
             <button type="button" class="button_next_chunk" data-shortcut="j"></button>
@@ -182,7 +182,7 @@
     <p class="pln"><span class="n"><a id="t100" href="#t100">100</a></span><span class="t">&nbsp;</span><span class="r"></span></p>
     <p class="run"><span class="n"><a id="t101" href="#t101">101</a></span><span class="t">    <span class="key">def</span> <span class="nam">__str__</span><span class="op">(</span><span class="nam">self</span><span class="op">)</span> <span class="op">-></span> <span class="nam">str</span><span class="op">:</span>&nbsp;</span><span class="r"></span></p>
     <p class="pln"><span class="n"><a id="t102" href="#t102">102</a></span><span class="t">        <span class="str">"""Return the string representation of a Language."""</span>&nbsp;</span><span class="r"></span></p>
-    <p class="mis show_mis"><span class="n"><a id="t103" href="#t103">103</a></span><span class="t">        <span class="key">return</span> <span class="nam">self</span><span class="op">.</span><span class="nam">name</span>  <span class="com"># type: ignore</span>&nbsp;</span><span class="r"></span></p>
+    <p class="run"><span class="n"><a id="t103" href="#t103">103</a></span><span class="t">        <span class="key">return</span> <span class="nam">self</span><span class="op">.</span><span class="nam">name</span>  <span class="com"># type: ignore</span>&nbsp;</span><span class="r"></span></p>
     <p class="pln"><span class="n"><a id="t104" href="#t104">104</a></span><span class="t">&nbsp;</span><span class="r"></span></p>
     <p class="run"><span class="n"><a id="t105" href="#t105">105</a></span><span class="t">    <span class="op">@</span><span class="nam">classmethod</span>&nbsp;</span><span class="r"></span></p>
     <p class="run"><span class="n"><a id="t106" href="#t106">106</a></span><span class="t">    <span class="key">def</span> <span class="nam">find</span><span class="op">(</span>&nbsp;</span><span class="r"></span></p>
@@ -819,7 +819,7 @@
     <p class="pln"><span class="n"><a id="t737" href="#t737">737</a></span><span class="t">&nbsp;</span><span class="r"></span></p>
     <p class="run"><span class="n"><a id="t738" href="#t738">738</a></span><span class="t">    <span class="key">def</span> <span class="nam">__str__</span><span class="op">(</span><span class="nam">self</span><span class="op">)</span> <span class="op">-></span> <span class="nam">str</span><span class="op">:</span>&nbsp;</span><span class="r"></span></p>
     <p class="pln"><span class="n"><a id="t739" href="#t739">739</a></span><span class="t">        <span class="str">"""Return the string representation of a TranslationHistory."""</span>&nbsp;</span><span class="r"></span></p>
-    <p class="mis show_mis"><span class="n"><a id="t740" href="#t740">740</a></span><span class="t">        <span class="key">return</span> <span class="fst">f"</span><span class="op">{</span><span class="nam">self</span><span class="op">.</span><span class="nam">term</span><span class="op">}</span><span class="fst"> (</span><span class="op">{</span><span class="nam">self</span><span class="op">.</span><span class="nam">source_language</span><span class="op">}</span><span class="fst"> -> </span><span class="op">{</span><span class="nam">self</span><span class="op">.</span><span class="nam">target_language</span><span class="op">}</span><span class="fst">)</span><span class="fst">"</span>&nbsp;</span><span class="r"></span></p>
+    <p class="run"><span class="n"><a id="t740" href="#t740">740</a></span><span class="t">        <span class="key">return</span> <span class="fst">f"</span><span class="op">{</span><span class="nam">self</span><span class="op">.</span><span class="nam">term</span><span class="op">}</span><span class="fst"> (</span><span class="op">{</span><span class="nam">self</span><span class="op">.</span><span class="nam">source_language</span><span class="op">}</span><span class="fst"> -> </span><span class="op">{</span><span class="nam">self</span><span class="op">.</span><span class="nam">target_language</span><span class="op">}</span><span class="fst">)</span><span class="fst">"</span>&nbsp;</span><span class="r"></span></p>
     <p class="pln"><span class="n"><a id="t741" href="#t741">741</a></span><span class="t">&nbsp;</span><span class="r"></span></p>
     <p class="pln"><span class="n"><a id="t742" href="#t742">742</a></span><span class="t">&nbsp;</span><span class="r"></span></p>
     <p class="run"><span class="n"><a id="t743" href="#t743">743</a></span><span class="t"><span class="key">class</span> <span class="nam">LanguageGroup</span><span class="op">(</span><span class="nam">models</span><span class="op">.</span><span class="nam">Model</span><span class="op">)</span><span class="op">:</span>  <span class="com"># type: ignore</span>&nbsp;</span><span class="r"></span></p>
@@ -841,7 +841,7 @@
     <p class="pln"><span class="n"><a id="t759" href="#t759">759</a></span><span class="t">    <span class="op">)</span>&nbsp;</span><span class="r"></span></p>
     <p class="run"><span class="n"><a id="t760" href="#t760">760</a></span><span class="t">    <span class="nam">language</span> <span class="op">=</span> <span class="nam">models</span><span class="op">.</span><span class="nam">ForeignKey</span><span class="op">(</span><span class="str">"Language"</span><span class="op">,</span> <span class="nam">on_delete</span><span class="op">=</span><span class="nam">models</span><span class="op">.</span><span class="nam">CASCADE</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
     <p class="pln"><span class="n"><a id="t761" href="#t761">761</a></span><span class="t">&nbsp;</span><span class="r"></span></p>
-    <p class="run"><span class="n"><a id="t762" href="#t762">762</a></span><span class="t">    <span class="nam">export_datetime</span> <span class="op">=</span> <span class="nam">models</span><span class="op">.</span><span class="nam">DateTimeField</span><span class="op">(</span><span class="nam">auto_now_add</span><span class="op">=</span><span class="key">True</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
+    <p class="run"><span class="n"><a id="t762" href="#t762">762</a></span><span class="t">    <span class="nam">export_datetime</span> <span class="op">=</span> <span class="nam">models</span><span class="op">.</span><span class="nam">DateTimeField</span><span class="op">(</span><span class="nam">default</span><span class="op">=</span><span class="nam">timezone</span><span class="op">.</span><span class="nam">now</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
     <p class="pln"><span class="n"><a id="t763" href="#t763">763</a></span><span class="t">&nbsp;</span><span class="r"></span></p>
     <p class="run"><span class="n"><a id="t764" href="#t764">764</a></span><span class="t">    <span class="nam">word_count</span> <span class="op">=</span> <span class="nam">models</span><span class="op">.</span><span class="nam">PositiveIntegerField</span><span class="op">(</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
     <p class="run"><span class="n"><a id="t765" href="#t765">765</a></span><span class="t">    <span class="nam">details</span> <span class="op">=</span> <span class="nam">models</span><span class="op">.</span><span class="nam">JSONField</span><span class="op">(</span><span class="nam">default</span><span class="op">=</span><span class="nam">dict</span><span class="op">,</span> <span class="nam">help_text</span><span class="op">=</span><span class="str">"Details of the export"</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
@@ -884,7 +884,7 @@
     <p class="pln"><span class="n"><a id="t802" href="#t802">802</a></span><span class="t">        <span class="str">"""Get the default deck name for a user and language."""</span>&nbsp;</span><span class="r"></span></p>
     <p class="run"><span class="n"><a id="t803" href="#t803">803</a></span><span class="t">        <span class="nam">last_export</span> <span class="op">=</span> <span class="nam">cls</span><span class="op">.</span><span class="nam">get_last_export</span><span class="op">(</span><span class="nam">user</span><span class="op">,</span> <span class="nam">language</span><span class="op">)</span> <span class="key">if</span> <span class="nam">language</span> <span class="key">else</span> <span class="key">None</span>&nbsp;</span><span class="r"></span></p>
     <p class="run"><span class="n"><a id="t804" href="#t804">804</a></span><span class="t">        <span class="key">if</span> <span class="nam">last_export</span> <span class="key">and</span> <span class="nam">last_export</span><span class="op">.</span><span class="nam">deck_name</span><span class="op">:</span>&nbsp;</span><span class="r"></span></p>
-    <p class="mis show_mis"><span class="n"><a id="t805" href="#t805">805</a></span><span class="t">            <span class="key">return</span> <span class="nam">last_export</span><span class="op">.</span><span class="nam">deck_name</span>  <span class="com"># type: ignore</span>&nbsp;</span><span class="r"></span></p>
+    <p class="run"><span class="n"><a id="t805" href="#t805">805</a></span><span class="t">            <span class="key">return</span> <span class="nam">last_export</span><span class="op">.</span><span class="nam">deck_name</span>  <span class="com"># type: ignore</span>&nbsp;</span><span class="r"></span></p>
     <p class="pln"><span class="n"><a id="t806" href="#t806">806</a></span><span class="t">&nbsp;</span><span class="r"></span></p>
     <p class="run"><span class="n"><a id="t807" href="#t807">807</a></span><span class="t">        <span class="nam">any_export</span> <span class="op">=</span> <span class="op">(</span>&nbsp;</span><span class="r"></span></p>
     <p class="pln"><span class="n"><a id="t808" href="#t808">808</a></span><span class="t">            <span class="nam">cls</span><span class="op">.</span><span class="nam">objects</span><span class="op">.</span><span class="nam">filter</span><span class="op">(</span><span class="nam">user</span><span class="op">=</span><span class="nam">user</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
@@ -904,7 +904,7 @@
     <p class="pln"><span class="n"><a id="t822" href="#t822">822</a></span><span class="t">        <span class="str">"""Get the export format for the last export for a user and language."""</span>&nbsp;</span><span class="r"></span></p>
     <p class="run"><span class="n"><a id="t823" href="#t823">823</a></span><span class="t">        <span class="nam">last_export</span> <span class="op">=</span> <span class="nam">cls</span><span class="op">.</span><span class="nam">get_last_export</span><span class="op">(</span><span class="nam">user</span><span class="op">,</span> <span class="nam">language</span><span class="op">)</span> <span class="key">if</span> <span class="nam">language</span> <span class="key">else</span> <span class="key">None</span>&nbsp;</span><span class="r"></span></p>
     <p class="run"><span class="n"><a id="t824" href="#t824">824</a></span><span class="t">        <span class="key">if</span> <span class="nam">last_export</span><span class="op">:</span>&nbsp;</span><span class="r"></span></p>
-    <p class="mis show_mis"><span class="n"><a id="t825" href="#t825">825</a></span><span class="t">            <span class="key">return</span> <span class="nam">last_export</span><span class="op">.</span><span class="nam">export_format</span>  <span class="com"># type: ignore</span>&nbsp;</span><span class="r"></span></p>
+    <p class="run"><span class="n"><a id="t825" href="#t825">825</a></span><span class="t">            <span class="key">return</span> <span class="nam">last_export</span><span class="op">.</span><span class="nam">export_format</span>  <span class="com"># type: ignore</span>&nbsp;</span><span class="r"></span></p>
     <p class="run"><span class="n"><a id="t826" href="#t826">826</a></span><span class="t">        <span class="key">return</span> <span class="str">"ankiConnect"</span>&nbsp;</span><span class="r"></span></p>
 </main>
 <footer>
@@ -915,7 +915,7 @@
             <a class="nav" href="z_816b02d96dab55f8_settings_py.html">&#xbb; next</a>
             &nbsp; &nbsp; &nbsp;
             <a class="nav" href="https://coverage.readthedocs.io/en/7.6.1">coverage.py v7.6.1</a>,
-            created at 2024-10-09 04:36 +0000
+            created at 2024-10-10 08:59 +0000
         </p>
     </div>
 </footer>
