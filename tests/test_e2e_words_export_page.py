@@ -1,3 +1,5 @@
+from unittest.mock import patch, MagicMock
+
 import pytest
 import allure
 from datetime import datetime, timedelta
@@ -7,7 +9,7 @@ from django.utils import timezone
 
 from tests.page_models.words_export_page import WordsExportPage
 from tests.conftest import USER_PASSWORD
-from lexiflux.models import WordsExport
+from lexiflux.models import WordsExport, TranslationHistory
 
 
 @allure.epic('End-to-end (selenium)')
@@ -44,6 +46,7 @@ def test_words_export_page_with_history_no_exports(browser, user_with_translatio
         assert page.is_form_controls_visible()
 
     with allure.step("Check default values"):
+        page.wait_for_vue_updates()
         assert not page.is_export_button_disabled()
         assert page.get_selected_language() == language.name
         assert page.get_selected_export_method() == 'ankiConnect'
@@ -118,10 +121,36 @@ def test_words_export_csv_file(browser, user_with_translations, language, transl
     with allure.step("Wait for export button to become disabled"):
         assert page.wait_for_export_button_disabled(timeout=10), "Export button did not become disabled within the expected time"
 
+@allure.epic('End-to-end (selenium)')
+@allure.feature('Words Export Page')
+@allure.story('Export words with Anki Connect')
+@pytest.mark.docker
+@pytest.mark.selenium
+@pytest.mark.django_db
+@patch("lexiflux.views.words_export.export_words_to_anki_connect")
+def test_words_export_anki_connect_file(mock_export, browser, user_with_translations, language, translation_history):
+    mock_export.return_value = 1
 
-# todo: text AnkiConnect mocking it and checking for success message
-# with allure.step("Verify success message"):
-#     expected_message = "Successfully exported words to Anki."
-#     success_message = page.wait_for_success_message(expected_message)
-#     assert success_message is not None, f"Expected success message '{expected_message}' not found"
-#     assert expected_message in success_message, f"Expected '{expected_message}', but got '{success_message}'"
+    browser.login(user_with_translations, USER_PASSWORD)
+    page = WordsExportPage(browser)
+    page.goto()
+
+    with allure.step("Select Anki Connect export method"):
+        page.select_export_method('ankiConnect')
+
+    with allure.step("Click export button"):
+        page.click_export_button()
+        page.wait_for_vue_updates()
+
+    # it's too tricky to test file downloaded inside Selenium Hub, so just test the page updated after export
+    with allure.step("Wait for export button to become disabled"):
+        assert page.wait_for_export_button_disabled(timeout=10), "Export button did not become disabled within the expected time"
+        mock_export.assert_called_once()
+        assert mock_export.call_args[0][0] == language
+        assert mock_export.call_args[0][2] == 'Lexiflux - English'
+
+    with allure.step("Verify success message"):
+        expected_message = "Successfully exported words to Anki."
+        success_message = page.wait_for_success_message(expected_message)
+        assert success_message is not None, f"Expected success message '{expected_message}' not found"
+        assert expected_message in success_message, f"Expected '{expected_message}', but got '{success_message}'"
