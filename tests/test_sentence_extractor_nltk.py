@@ -44,3 +44,12 @@ def test_break_into_sentences_unsupported_language():
     assert len(sentences) == 1
     assert sentences[0] == text
 
+
+@allure.epic('Book import')
+@allure.feature('SPACY: Break text into sentences')
+def test_break_into_sentences_spacy(sample_text_and_word_ids):
+    text, word_ids = sample_text_and_word_ids
+    sentences, word_to_sentence = break_into_sentences(text, word_ids, tokenizer=SentenceTokenizer.SPACY)
+
+    assert sentences == [' is a test.', 'It has three sentences.', 'How about that?', "We've"]
+    assert word_to_sentence == {0: 0, 1: 0, 2: 0, 3: 1, 4: 1, 5: 1, 6: 1, 7: 2, 8: 2, 9: 2, 10: 3}

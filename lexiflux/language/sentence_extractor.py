@@ -2,6 +2,10 @@
 
 from enum import Enum
 from typing import List, Tuple, Dict, Optional
+
+import spacy
+import spacy.language
+from spacy.tokens import Doc
 from lexiflux.language.nltk_tokenizer import get_punkt_tokenizer
 
 
@@ -9,6 +13,14 @@ class SentenceTokenizer(Enum):
     """Enum to select the sentence tokenizer."""
 
     NLTK = "nltk"
+    SPACY = "spacy"
+
+
+def get_spacy_sentencizer(lang_code: str) -> spacy.language.Language:
+    """Get a Spacy pipeline with just the sentencizer component."""
+    nlp = spacy.blank(lang_code)
+    nlp.add_pipe("sentencizer")
+    return nlp
 
 
 def break_into_sentences(
@@ -16,7 +28,7 @@ def break_into_sentences(
     word_slices: List[Tuple[int, int]],
     term_word_ids: Optional[List[int]] = None,  # pylint: disable=unused-argument
     lang_code: str = "en",
-    tokenizer: SentenceTokenizer = SentenceTokenizer.NLTK,
+    tokenizer: SentenceTokenizer = SentenceTokenizer.SPACY,
 ) -> Tuple[List[str], Dict[int, int]]:
     """
     Break plain text into sentences and map word IDs to sentence indices.
@@ -41,6 +53,10 @@ def break_into_sentences(
     if tokenizer == SentenceTokenizer.NLTK:
         punkt_tokenizer = get_punkt_tokenizer(lang_code)
         sentence_spans = list(punkt_tokenizer.span_tokenize(plain_text))
+    elif tokenizer == SentenceTokenizer.SPACY:
+        nlp = get_spacy_sentencizer(lang_code)
+        doc: Doc = nlp(plain_text)
+        sentence_spans = [(sent.start_char, sent.end_char) for sent in doc.sents]
     else:
         raise ValueError(f"Unsupported tokenizer: {tokenizer}")
 
