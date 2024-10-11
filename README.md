@@ -28,7 +28,7 @@
 | lexiflux/language/llm.py                              |      185 |       86 |     54% |44-47, 61-64, 69-74, 79-81, 86-88, 101-106, 113, 137, 192-197, 209-228, 264-277, 369-378, 385-436 |
 | lexiflux/language/nltk\_tokenizer.py                  |       29 |        5 |     83% |25, 37-39, 55 |
 | lexiflux/language/parse\_html\_text\_content.py       |      102 |        1 |     99% |       158 |
-| lexiflux/language/sentence\_extractor.py              |       20 |        2 |     90% |    45, 61 |
+| lexiflux/language/sentence\_extractor.py              |       32 |        2 |     94% |    61, 77 |
 | lexiflux/language/sentence\_extractor\_llm.py         |       52 |       39 |     25% |17, 48-92, 97-128, 133-169 |
 | lexiflux/language/translation.py                      |       22 |        1 |     95% |        32 |
 | lexiflux/language/word\_extractor.py                  |       85 |        8 |     91% |42-49, 53, 66 |
@@ -49,7 +49,7 @@
 | lexiflux/views/reader\_views.py                       |      210 |       56 |     73% |31-42, 50-73, 77-81, 111, 131, 228-233, 245, 270, 274, 289, 293, 306, 310, 322, 326, 344-365 |
 | lexiflux/views/words\_export.py                       |      143 |       28 |     80% |66-71, 106-111, 146, 170-178, 191, 240, 271, 294-300 |
 | lexiflux/wsgi.py                                      |        4 |        4 |      0% |      9-15 |
-|                                             **TOTAL** | **2720** |  **623** | **77%** |           |
+|                                             **TOTAL** | **2732** |  **623** | **77%** |           |
 
 
 ## Setup coverage badge
