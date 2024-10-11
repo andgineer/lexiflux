@@ -47,6 +47,7 @@ def test_words_export_page_with_history_no_exports(browser, user_with_translatio
 
     with allure.step("Check default values"):
         page.wait_for_vue_updates()
+        page.wait_for_export_button(status=True)
         assert not page.is_export_button_disabled()
         assert page.get_selected_language() == language.name
         assert page.get_selected_export_method() == 'ankiConnect'
@@ -119,7 +120,7 @@ def test_words_export_csv_file(browser, user_with_translations, language, transl
 
     # it's too tricky to test file downloaded inside Selenium Hub, so just test the page updated after export
     with allure.step("Wait for export button to become disabled"):
-        assert page.wait_for_export_button_disabled(timeout=10), "Export button did not become disabled within the expected time"
+        assert page.wait_for_export_button(timeout=10), "Export button did not become disabled within the expected time"
 
 @allure.epic('End-to-end (selenium)')
 @allure.feature('Words Export Page')
@@ -128,7 +129,7 @@ def test_words_export_csv_file(browser, user_with_translations, language, transl
 @pytest.mark.selenium
 @pytest.mark.django_db
 @patch("lexiflux.views.words_export.export_words_to_anki_connect")
-def test_words_export_anki_connect_file(mock_export, browser, user_with_translations, language, translation_history):
+def test_words_export_anki_connect(mock_export, browser, user_with_translations, language, translation_history):
     mock_export.return_value = 1
 
     browser.login(user_with_translations, USER_PASSWORD)
@@ -144,9 +145,10 @@ def test_words_export_anki_connect_file(mock_export, browser, user_with_translat
 
     # it's too tricky to test file downloaded inside Selenium Hub, so just test the page updated after export
     with allure.step("Wait for export button to become disabled"):
-        assert page.wait_for_export_button_disabled(timeout=10), "Export button did not become disabled within the expected time"
+        assert page.wait_for_export_button(timeout=10), "Export button did not become disabled within the expected time"
         mock_export.assert_called_once()
         assert mock_export.call_args[0][0] == language
+        assert mock_export.call_args[0][1].first().term == translation_history.term
         assert mock_export.call_args[0][2] == 'Lexiflux - English'
 
     with allure.step("Verify success message"):

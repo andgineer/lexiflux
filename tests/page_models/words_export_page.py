@@ -77,14 +77,16 @@ class WordsExportPage(BasePage):
         export_button = self.wait_for_clickable((By.ID, 'export-button'))
         export_button.click()
 
-    def wait_for_export_button_disabled(self, timeout=60):
+    def wait_for_export_button(self, timeout=60, status=False):
+        """Wait for the export button to become disabled (or enabled if status=True)"""
         start_time = time.time()
         poll_interval = 0.5  # Check every half second
+        target_status = 'enabled' if status else 'disabled'
 
         while time.time() - start_time < timeout:
             try:
-                if self.is_export_button_disabled():
-                    print("Export button became disabled")
+                if self.is_export_button_disabled() == (not status):
+                    print(f"Export button became {target_status}")
                     return True
 
             except (TimeoutException, NoSuchElementException, StaleElementReferenceException) as e:
@@ -92,7 +94,7 @@ class WordsExportPage(BasePage):
 
             time.sleep(poll_interval)
 
-        print(f"{datetime.now().isoformat()} - Timeout reached. Button did not become disabled.")
+        print(f"{datetime.now().isoformat()} - Timeout reached. Button did not become {target_status}.")
         return False
 
     def is_export_button_disabled(self):
