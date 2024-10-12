@@ -8,6 +8,10 @@ from pathlib import Path
 from typing import List
 
 
+# SECURITY WARNING: don't run with debug turned on in production!
+DEBUG = True
+DEBUGGER_TOOLBAR = False
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -20,9 +24,6 @@ SECRET_KEY = "django-insecure-(qy1)@^p*1x^l$ayy@(t-5cym8y5a#8e0jrlr2v#sprhv)cei#
 SESSION_ENGINE = "django.contrib.sessions.backends.db"
 SESSION_COOKIE_AGE = 1209600  # Two weeks
 SESSION_SAVE_EVERY_REQUEST = True
-
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
 
 ALLOWED_HOSTS: List[str] = [
     "localhost",
@@ -53,7 +54,6 @@ INSTALLED_APPS = [
     "allauth",
     "allauth.account",
     "allauth.socialaccount",
-    # Include providers as needed
     "allauth.socialaccount.providers.google",
     "allauth.socialaccount.providers.apple",
     "django_extensions",
@@ -150,10 +150,17 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
+    "formatters": {
+        "verbose": {
+            "format": "{asctime} {levelname} {module} {message}",
+            "style": "{",
+        },
+    },
     "handlers": {
         "console": {
             "level": "DEBUG",
             "class": "logging.StreamHandler",
+            "formatter": "verbose",
         },
     },
     "loggers": {
@@ -161,6 +168,11 @@ LOGGING = {
             "handlers": ["console"],
             "level": "INFO",
             "propagate": True,
+        },
+        "lexiflux": {
+            "handlers": ["console"],
+            "level": "DEBUG",
+            "propagate": False,
         },
     },
 }
@@ -171,3 +183,12 @@ CACHES = {
         "LOCATION": "unique-snowflake",
     }
 }
+
+if DEBUGGER_TOOLBAR:
+    INSTALLED_APPS += ["debug_toolbar"]
+    # Debug middleware should be after all system middleware but before custom middleware
+    MIDDLEWARE.insert(-1, "debug_toolbar.middleware.DebugToolbarMiddleware")
+    INTERNAL_IPS = ["127.0.0.1"]
+    DEBUG_TOOLBAR_CONFIG = {
+        "SHOW_TOOLBAR_CALLBACK": lambda request: True,
+    }

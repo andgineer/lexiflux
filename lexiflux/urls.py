@@ -11,6 +11,7 @@ import lexiflux.views.reader_views
 import lexiflux.views.ai_settings_views
 import lexiflux.views.words_export
 from lexiflux.views.auth_views import SignUpView, CustomLoginView
+from lexiflux import settings
 
 urlpatterns = [
     path("admin/", admin.site.urls),
@@ -93,3 +94,8 @@ urlpatterns = [
     path("api/export-words/", lexiflux.views.words_export.export_words, name="export_words"),
     path("api/word-count/", lexiflux.views.words_export.word_count, name="word_count"),
 ]
+
+if settings.DEBUGGER_TOOLBAR:
+    from debug_toolbar.toolbar import debug_toolbar_urls
+
+    urlpatterns += debug_toolbar_urls()

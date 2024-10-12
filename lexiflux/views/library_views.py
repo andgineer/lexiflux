@@ -22,6 +22,9 @@ from lexiflux.ebook.book_loader_epub import BookLoaderEpub
 from lexiflux.decorators import smart_login_required
 
 
+logger = logging.getLogger(__name__)
+
+
 @smart_login_required  # type: ignore
 def library_page(request: HttpRequest) -> HttpResponse:
     """Library page."""
