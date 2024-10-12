@@ -1,1 +1,0 @@
-WARNING  root:book_loader_epub.py:206 Empty cleaned chunk skipped in _split_large_element
