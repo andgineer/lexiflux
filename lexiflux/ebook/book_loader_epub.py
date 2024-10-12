@@ -8,6 +8,7 @@ from collections import defaultdict
 from typing import Any, Iterable, List, Optional, Tuple, Dict, Iterator
 
 from bs4 import BeautifulSoup, Tag, NavigableString
+from django.db import transaction
 from ebooklib import ITEM_DOCUMENT, epub, ITEM_IMAGE
 
 from lexiflux.ebook.book_loader_base import BookLoaderBase, MetadataField
@@ -36,6 +37,7 @@ class BookLoaderEpub(BookLoaderBase):
         super().__init__(*args, **kwargs)
         self.anchor_map: Dict[str, Dict[str, Any]] = {}
 
+    @transaction.atomic  # type: ignore
     def create(self, owner_email: str, forced_language: Optional[str] = None) -> Book:
         """Save the book to the database."""
         book = super().create(owner_email, forced_language)
