@@ -1,0 +1,5 @@
+INFO:root:Test finished
+INFO:root:Test started
+INFO:lexiflux.views.words_export:For language en last export datetime: None
+INFO:lexiflux.views.words_export:Words exported for English: 1 words using csvFile
+INFO:lexiflux.views.words_export:For language en last export datetime: 2024-10-12 08:37:41.521819+00:00

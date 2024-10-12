@@ -1,0 +1,14 @@
+ERROR    lexiflux.views.words_export:words_export.py:257 Error exporting words: Failed to connect to AnkiConnect
+Traceback (most recent call last):
+  File "/home/runner/work/lexiflux/lexiflux/lexiflux/views/words_export.py", line 224, in export_words
+    words_exported = export_words_to_anki_connect(language, terms, deck_name)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.12.6/x64/lib/python3.12/unittest/mock.py", line 1137, in __call__
+    return self._mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.12.6/x64/lib/python3.12/unittest/mock.py", line 1141, in _mock_call
+    return self._execute_mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.12.6/x64/lib/python3.12/unittest/mock.py", line 1196, in _execute_mock_call
+    raise effect
+ValueError: Failed to connect to AnkiConnect

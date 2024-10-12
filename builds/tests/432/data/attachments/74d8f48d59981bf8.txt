@@ -1,0 +1,1 @@
+INFO     lexiflux.anki.anki_connect:anki_connect.py:81 result {'result': [1, 2, 3, 4, 5, 6]}

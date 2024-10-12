@@ -1,0 +1,4 @@
+INFO:root:Test finished
+INFO:root:Test started
+INFO:lexiflux.language.nltk_tokenizer:Downloaded NLTK data: punkt
+WARNING:lexiflux.language.nltk_tokenizer:NLTK punkt tokenizer not available for en. Using default.
