@@ -9,6 +9,7 @@ faker
 selenium
 allure-pytest
 pytz
+django-debug-toolbar
 
 # build & reqs management
 

@@ -178,9 +178,12 @@ django==5.1.2
     # via
     #   -r requirements.txt
     #   django-allauth
+    #   django-debug-toolbar
     #   django-extensions
 django-allauth==65.0.2
     # via -r requirements.txt
+django-debug-toolbar==4.4.6
+    # via -r requirements.dev.in
 django-extensions==3.2.3
     # via -r requirements.txt
 django-widget-tweaks==1.5.0
@@ -256,7 +259,7 @@ googleapis-common-protos==1.65.0
     #   -r requirements.txt
     #   google-api-core
     #   grpcio-status
-griffe==1.3.2
+griffe==1.4.1
     # via mkdocstrings-python
 grpcio==1.66.2
     # via
@@ -890,6 +893,7 @@ sqlparse==0.5.1
     # via
     #   -r requirements.txt
     #   django
+    #   django-debug-toolbar
 srsly==2.4.8
     # via
     #   -r requirements.txt
@@ -1042,7 +1046,7 @@ wrapt==1.16.0
     #   smart-open
 wsproto==1.2.0
     # via trio-websocket
-yarl==1.14.0
+yarl==1.15.0
     # via
     #   -r requirements.txt
     #   aiohttp
