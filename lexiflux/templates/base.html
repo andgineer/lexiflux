@@ -150,7 +150,8 @@
     </head>
     <body data-book-code="{{ book.code }}"
           data-book-page-number="{{ page.number }}"
-          data-top-word="{{ top_word }}">
+          data-top-word="{{ top_word }}"
+          data-total-pages="{{ book.pages.count }}"  >
 
         {% block content %}{% endblock %}
 

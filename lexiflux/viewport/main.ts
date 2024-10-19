@@ -10,10 +10,6 @@ const CLICK_TIMEOUT_MS = 200;
 
 let clickTimeout: NodeJS.Timeout | null = null;
 
-async function goToPage(pageNum: number, topWord: number): Promise<void> {
-        await viewport.loadPage(pageNum, topWord);
-}
-
 async function handlePrevButtonClick(): Promise<void> {
     await viewport.scrollUp();
 }
@@ -131,6 +127,53 @@ function handleSideBarSettingsButtonClick(event: MouseEvent): void {
     window.location.href = '/language-preferences/';
 }
 
+async function goToPage(pageNum: number, topWord: number): Promise<void> {
+    await viewport.loadPage(pageNum, topWord);
+}
+
+function showModal(modalId: string): void {
+    const modal = document.getElementById(modalId);
+    if (modal instanceof HTMLElement) {
+        modal.style.display = 'block';
+        modal.removeAttribute('aria-hidden');
+        const firstInput = modal.querySelector('input');
+        if (firstInput instanceof HTMLInputElement) {
+            firstInput.focus();
+        }
+    }
+}
+
+function closeModal(modalId: string): void {
+    const modal = document.getElementById(modalId);
+    if (modal instanceof HTMLElement) {
+        modal.style.display = 'none';
+        modal.setAttribute('aria-hidden', 'true');
+    }
+}
+
+function handleSearchButtonClick(event: Event): void {
+    event.preventDefault();
+    showModal('searchModal');
+}
+
+function handleGoToPageButtonClick(event: Event): void {
+    event.preventDefault();
+    showModal('goToPageModal');
+}
+
+function handleModalSubmit(modalId: string, inputId: string, action: (value: string) => void): void {
+    const modal = document.getElementById(modalId);
+    const input = document.getElementById(inputId) as HTMLInputElement;
+    if (modal && input) {
+        const value = input.value.trim();
+        if (value) {
+            action(value);
+            input.value = '';
+            closeModal(modalId);
+        }
+    }
+}
+
 function reInitDom(): void {
     log('reInitDom called');
     let prevButton = document.getElementById('prev-button');
@@ -196,6 +239,67 @@ function reInitDom(): void {
                 lexicalPanelSwitched(activeTab.id);
             }
         });
+    }
+
+    let searchButton = document.getElementById('search-button');
+    if (searchButton) {
+        searchButton.removeEventListener('click', handleSearchButtonClick);
+        searchButton.addEventListener('click', handleSearchButtonClick);
+    }
+
+    let goToPageButton = document.getElementById('page-number');
+    if (goToPageButton) {
+        goToPageButton.removeEventListener('click', handleGoToPageButtonClick);
+        goToPageButton.addEventListener('click', handleGoToPageButtonClick);
+    }
+
+    // Close buttons for modals
+    document.querySelectorAll('.modal .close').forEach((closeButton) => {
+        closeButton.addEventListener('click', () => {
+            const modal = closeButton.closest('.modal') as HTMLElement;
+            if (modal) {
+                closeModal(modal.id);
+            }
+        });
+    });
+
+    // Submit buttons for modals
+    const searchSubmit = document.getElementById('searchSubmit');
+    if (searchSubmit) {
+        searchSubmit.addEventListener('click', () => {
+            handleModalSubmit('searchModal', 'searchInput', (value) => {
+                console.log('Search for:', value);
+                // Implement your search logic here
+            });
+        });
+    }
+
+    const goToPageSubmit = document.getElementById('goToPageSubmit');
+    if (goToPageSubmit) {
+        goToPageSubmit.addEventListener('click', () => {
+            handleModalSubmit('goToPageModal', 'pageNumberInput', (value) => {
+                const pageNum = parseInt(value);
+                if (!isNaN(pageNum)) {
+                    goToPage(pageNum, 0);
+                }
+            });
+        });
+    }
+
+    // Initialize modals as hidden
+    document.querySelectorAll('.modal').forEach((modal) => {
+        if (modal instanceof HTMLElement) {
+            modal.style.display = 'none';
+            modal.setAttribute('aria-hidden', 'true');
+        }
+    });
+
+}
+
+// Close modal when clicking outside of it
+window.onclick = function(event: MouseEvent) {
+    if (event.target instanceof Element && event.target.classList.contains('modal')) {
+        closeModal(event.target.id);
     }
 }
 

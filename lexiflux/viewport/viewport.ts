@@ -5,18 +5,32 @@ export class Viewport {
     static pageBookScrollerId = 'book-page-scroller';
     static wordsContainerId = 'words-container';
     static topNavbarId = 'top-navbar';
+    static totalPagesId = 'total-pages';
+    static progressBarId = 'progress-bar';
+    static pageNumberId = 'page-number';
+    static searchButtonId = 'search-button';
+    static goToPageModalId = 'goToPageModal';
+    static searchModalId = 'searchModal';
+    static maxPageNumberId = 'maxPageNumber';
 
     bookCode: string;
     pageNumber: number;
+    totalPages: number;
     totalWords: number = 0;
 
     wordsContainer: HTMLElement;
     bookPageScroller: HTMLElement;
     wordsContainerTopMargin: number;
 
+    progressBar: HTMLElement;
+    pageNumberElement: HTMLElement;
+    totalPagesElement: HTMLElement;
+    searchButton: HTMLElement;
+    goToPageModal: HTMLElement;
+    searchModal: HTMLElement;
+
     topWord: number = 0; // the first visible word index
     lineHeight: number = 0; // average line height
-
 
     constructor() {
         this.wordsContainer = this.getWordsContainer();
@@ -24,9 +38,34 @@ export class Viewport {
         this.wordsContainerTopMargin = getElement(Viewport.topNavbarId).getBoundingClientRect().height;
         this.bookCode = document.body.getAttribute('data-book-code') || '';
         this.pageNumber = parseInt(document.body.getAttribute('data-book-page-number') || '0');
+        this.totalPages = this.parseTotalPages();
+
+        this.progressBar = getElement(Viewport.progressBarId);
+        this.pageNumberElement = getElement(Viewport.pageNumberId);
+        this.totalPagesElement = getElement(Viewport.totalPagesId);
+        this.searchButton = getElement(Viewport.searchButtonId);
+
+        this.goToPageModal = getElement(Viewport.goToPageModalId);
+        this.searchModal = getElement(Viewport.searchModalId);
+
         (window as any).handleLinkClick = this.handleLinkClick.bind(this);
+        this.updateReadingProgress()
         log(`Viewport constructor: bookCode: ${this.bookCode}, pageNumber: ${this.pageNumber}`);
     }  // constructor
+
+    private parseTotalPages(): number {
+        const totalPagesAttr = document.body.getAttribute('data-total-pages');
+        if (totalPagesAttr === null) {
+            console.error('data-total-pages attribute is missing from the body element');
+            return 0;
+        }
+        const parsed = parseInt(totalPagesAttr, 10);
+        if (isNaN(parsed)) {
+            console.error(`Invalid data-total-pages value: "${totalPagesAttr}"`);
+            return 0;
+        }
+        return parsed;
+    }
 
     public getWordsContainer(): HTMLElement {
         return getElement(Viewport.wordsContainerId);
@@ -101,6 +140,7 @@ export class Viewport {
 
                     this.bookCode = data.data.bookCode;
                     this.pageNumber = parseInt(data.data.pageNumber);
+                    this.updateReadingProgress();
                     clearLexicalPanel();
                     this.bookPageScroller.scrollTop = 0;  // to calculate words positions
                     this.domChanged();
@@ -234,7 +274,50 @@ export class Viewport {
             })
             .catch(error => console.error('Error:', error));
     }  // reportReadingLocation
-    
+
+private updateReadingProgress(): void {
+    // Ensure totalPages is a valid number
+    if (isNaN(this.totalPages) || this.totalPages <= 0) {
+        console.error('Invalid total pages:', this.totalPages);
+        return;
+    }
+
+        const rawProgress = (this.pageNumber / this.totalPages) * 100;
+        const progress = Math.round(Math.max(1, Math.min(rawProgress, 100)));
+
+        // Update progress bar
+        if (this.progressBar) {
+            this.progressBar.setAttribute('aria-valuenow', progress.toString());
+            this.progressBar.style.width = progress + '%';
+            console.log(`Updating progress bar: ${progress}%`); // Debug log
+        } else {
+            console.error('Progress bar element not found'); // Debug log
+        }
+
+    // Update page number text
+    const pageNumberTextElement = this.pageNumberElement.querySelector('.page-number-text');
+    if (pageNumberTextElement) {
+        pageNumberTextElement.textContent = this.pageNumber.toString();
+    } else {
+        console.error('Page number text element not found');
+    }
+
+    // Update total pages
+    if (this.totalPagesElement) {
+        this.totalPagesElement.textContent = `/ ${this.totalPages}`;
+    } else {
+        console.error('Total pages element not found');
+    }
+
+    // Update max page number in modal
+    const maxPageNumberElement = getElement(Viewport.maxPageNumberId);
+    if (maxPageNumberElement) {
+        maxPageNumberElement.textContent = this.totalPages.toString();
+    } else {
+        console.error('Max page number element not found');
+    }
+}
+
     public async scrollUp(): Promise<void> {
         // Scroll one viewport up
         if (this.bookPageScroller.scrollTop === 0) {
