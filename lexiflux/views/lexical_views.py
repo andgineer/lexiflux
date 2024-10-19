@@ -7,6 +7,7 @@ from django.http import HttpRequest, HttpResponse, JsonResponse
 
 from django.template import TemplateDoesNotExist
 from django.template.loader import render_to_string
+import django.utils.timezone
 
 from pydantic import Field
 
@@ -157,12 +158,12 @@ def translate(request: HttpRequest, params: TranslateGetParams) -> HttpResponse:
 
         # Create or update TranslationHistory instance
         context = get_context_for_translation_history(book, book_page, term_word_ids)
-        translation_history, created = TranslationHistory.objects.get_or_create(
+        translation_history, created = TranslationHistory.objects.update_or_create(
             term=term_text,
-            translation=result["article"],
             source_language=book.language,
             user=request.user,
             defaults={
+                "translation": result["article"],
                 "target_language": language_preferences.user_language,
                 "context": context,
                 "book": book,
@@ -170,6 +171,7 @@ def translate(request: HttpRequest, params: TranslateGetParams) -> HttpResponse:
         )
         if not created:
             translation_history.lookup_count += 1
+            translation_history.last_lookup = django.utils.timezone.now()
             translation_history.save()
 
     else:
