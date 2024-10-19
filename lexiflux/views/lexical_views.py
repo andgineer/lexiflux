@@ -138,6 +138,9 @@ def translate(request: HttpRequest, params: TranslateGetParams) -> HttpResponse:
         ]
     )
 
+    if term_text.strip() == "":
+        return JsonResponse({"error": "Selected text is empty"}, status=400)
+
     result: Dict[str, Any] = {}
 
     if int(params.lexical_article) == 0:

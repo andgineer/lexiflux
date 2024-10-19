@@ -1,4 +1,4 @@
-.venv/
+.venv*/
 db.sqlite3
 ssl_certs/
 .idea/

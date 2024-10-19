@@ -128,7 +128,7 @@ function handleSideBarSettingsButtonClick(event: MouseEvent): void {
 }
 
 async function goToPage(pageNum: number, topWord: number): Promise<void> {
-    await viewport.loadPage(pageNum, topWord);
+    await viewport.jump(pageNum, topWord);
 }
 
 function showModal(modalId: string): void {
