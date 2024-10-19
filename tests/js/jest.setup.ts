@@ -24,6 +24,12 @@ global.document.body.innerHTML = `
   ${wordSpans}
   </div>
 </div>
+<div id="progress-bar"></div>
+<div id="page-number"></div>
+<div id="total-pages"></div>
+<div id="search-button"></div>
+<div id="goToPageModal"></div>
+<div id="searchModal"></div>
 <div id="book" data-book-code="alice-adventures-carroll" data-book-page-number="1" data-click-word-url="/click-word"></div>
 `;
 
