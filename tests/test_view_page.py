@@ -31,9 +31,9 @@ def test_page_view_handles_nonexistent_book_page(client, user, book):
     non_existent_page_number = 100
     response = client.get(reverse('page') + f'?book-code={book.code}&book-page-number={non_existent_page_number}')
 
-    assert response.status_code == 500
+    assert response.status_code == 200
     print(response.content.decode())
-    assert "error: Page" in response.content.decode()
+    assert response.json()['data']['pageNumber'] == book.pages.count()
 
 
 @allure.epic('Pages endpoints')
