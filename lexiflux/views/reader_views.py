@@ -191,8 +191,15 @@ def page(request: HttpRequest) -> HttpResponse:
     """Book page."""
     book_code = request.GET.get("book-code")
     page_number = request.GET.get("book-page-number")
+    book = Book.objects.filter(code=book_code).first() if book_code else None
+    if not book:
+        return HttpResponse("error: Book not found", status=404)
     try:
         page_number = int(page_number)
+        if page_number < 1:
+            page_number = 1
+        elif page_number > book.pages.count():
+            page_number = book.pages.count()
         book_page = BookPage.objects.filter(book__code=book_code, number=page_number).first()
         if not book_page:
             raise BookPage.DoesNotExist

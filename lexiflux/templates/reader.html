@@ -118,7 +118,7 @@
                             </li>
                             <li class="nav-item flex-grow-1">
                                 <div class="progress w-100">
-                                    <div id="progress-bar" class="progress-bar bg-info progress-bar-striped"
+                                    <div id="progress-bar" class="progress-bar bg-info"
                                          role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
                                 </div>
                             </li>
@@ -141,9 +141,7 @@
         <div class="modal-content">
           <div class="modal-header">
             <h5 id="goToPageModalLabel" class="modal-title">Go to Page</h5>
-            <button type="button" class="close" aria-label="Close">
-              <span aria-hidden="true">&times;</span>
-            </button>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
           <div class="modal-body">
             <label for="pageNumberInput">Enter page number (1-<span id="maxPageNumber"></span>):</label>
@@ -162,9 +160,7 @@
         <div class="modal-content">
           <div class="modal-header">
             <h5 id="searchModalLabel" class="modal-title">Search</h5>
-            <button type="button" class="close" aria-label="Close">
-              <span aria-hidden="true">&times;</span>
-            </button>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
           <div class="modal-body">
             <label for="searchInput">Enter search term:</label>

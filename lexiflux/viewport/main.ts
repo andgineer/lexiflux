@@ -254,7 +254,7 @@ function reInitDom(): void {
     }
 
     // Close buttons for modals
-    document.querySelectorAll('.modal .close').forEach((closeButton) => {
+    document.querySelectorAll('.modal .btn-close').forEach((closeButton) => {
         closeButton.addEventListener('click', () => {
             const modal = closeButton.closest('.modal') as HTMLElement;
             if (modal) {
