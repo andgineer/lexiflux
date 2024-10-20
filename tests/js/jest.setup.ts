@@ -30,6 +30,7 @@ global.document.body.innerHTML = `
 <div id="search-button"></div>
 <div id="goToPageModal"></div>
 <div id="searchModal"></div>
+<div id="empty-space"></div>
 <div id="book" data-book-code="alice-adventures-carroll" data-book-page-number="1" data-click-word-url="/click-word"></div>
 `;
 

@@ -18,6 +18,7 @@ export class Viewport {
     static goToPageModalId = 'goToPageModal';
     static searchModalId = 'searchModal';
     static maxPageNumberId = 'maxPageNumber';
+    static emptySpaceId = 'empty-space';
 
     bookCode: string;
     pageNumber: number;
@@ -34,6 +35,7 @@ export class Viewport {
     searchButton: HTMLElement;
     goToPageModal: HTMLElement;
     searchModal: HTMLElement;
+    emptySpace: HTMLElement;
 
     topWord: number = 0; // the first visible word index
     lineHeight: number = 0; // average line height
@@ -54,10 +56,16 @@ export class Viewport {
         this.goToPageModal = getElement(Viewport.goToPageModalId);
         this.searchModal = getElement(Viewport.searchModalId);
 
+        this.emptySpace = getElement(Viewport.emptySpaceId);
+
         (window as any).handleLinkClick = this.handleLinkClick.bind(this);
         this.updateReadingProgress()
         log(`Viewport constructor: bookCode: ${this.bookCode}, pageNumber: ${this.pageNumber}`);
     }  // constructor
+
+    private adjustEmptySpace(): void {
+        this.emptySpace.style.height = `${window.innerHeight}px`;
+    }
 
     private parseTotalPages(): number {
         const totalPagesAttr = document.body.getAttribute('data-total-pages');
@@ -108,6 +116,7 @@ export class Viewport {
     }  // domChanged
 
     public scrollToWord(wordId: number): void {
+        this.adjustEmptySpace();
         this.bookPageScroller.scrollTop = this.getWordTop(wordId);
     }
 
@@ -291,7 +300,6 @@ private updateReadingProgress(): void {
     if (this.progressBar) {
         this.progressBar.setAttribute('aria-valuenow', progress.toString());
         this.progressBar.style.width = progress + '%';
-        console.log(`Updating progress bar: ${progress}%`); // Debug log
     } else {
         console.error('Progress bar element not found'); // Debug log
     }
@@ -336,6 +344,7 @@ private updateReadingProgress(): void {
         // Scroll one viewport down
         const scrollerRect = this.bookPageScroller.getBoundingClientRect();
         const containerRect = this.wordsContainer.getBoundingClientRect();
+        this.adjustEmptySpace();
 
         if (containerRect.bottom <= scrollerRect.bottom) {
             // We've reached the bottom of the current page
