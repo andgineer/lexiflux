@@ -136,7 +136,7 @@
     </div>
 
     <!-- Go to Page Modal -->
-    <div id="goToPageModal" class="modal" aria-hidden="true" aria-labelledby="goToPageModalLabel" role="dialog">
+    <div id="goToPageModal" class="modal fade" aria-hidden="true" aria-labelledby="goToPageModalLabel" role="dialog">
       <div class="modal-dialog" role="document">
         <div class="modal-content">
           <div class="modal-header">
@@ -144,8 +144,10 @@
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
           <div class="modal-body">
-            <label for="pageNumberInput">Enter page number (1-<span id="maxPageNumber"></span>):</label>
-            <input type="number" id="pageNumberInput" min="1" required>
+            <div class="mb-3">
+                <label for="pageNumberInput">Enter page number (1-<span id="maxPageNumber"></span>):</label>
+                <input type="number" id="pageNumberInput" min="1" required>
+            </div>
           </div>
           <div class="modal-footer">
             <button type="button" id="goToPageSubmit" class="btn btn-primary">Go</button>
@@ -155,7 +157,7 @@
     </div>
 
     <!-- Search Modal -->
-    <div id="searchModal" class="modal" aria-hidden="true" aria-labelledby="searchModalLabel" role="dialog">
+    <div id="searchModal" class="modal fade" aria-hidden="true" aria-labelledby="searchModalLabel" role="dialog">
       <div class="modal-dialog" role="document">
         <div class="modal-content">
           <div class="modal-header">
@@ -163,8 +165,10 @@
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
           <div class="modal-body">
-            <label for="searchInput">Enter search term:</label>
-            <input type="text" id="searchInput" required>
+            <div class="mb-3">
+                <input type="text" id="searchInput" class="form-control" placeholder="Enter search term">
+            </div>
+            <div id="searchResults" class="mt-3"></div>
           </div>
           <div class="modal-footer">
             <button type="button" id="searchSubmit" class="btn btn-primary">Search</button>

@@ -1,5 +1,11 @@
-import {log, getElement} from './utils';
-import {clearLexicalPanel} from './translate';
+import { log, getElement, closeModal } from './utils';
+import { clearLexicalPanel } from './translate';
+
+interface SearchResult {
+    pageNumber: number;
+    wordIndex: number;
+    context: string;
+}
 
 export class Viewport {
     static pageBookScrollerId = 'book-page-scroller';
@@ -98,10 +104,6 @@ export class Viewport {
         this.bookPageScroller = this.getBookPageScroller();
         this.wordsContainerTopMargin = this.getTopNavbar().getBoundingClientRect().height;
         this.totalWords = this.calculateTotalWords();
-        const pageNumberElement = document.getElementById('page-number');
-        if (pageNumberElement) {
-            pageNumberElement.textContent = this.pageNumber.toString();
-        }
         log('domChanged. bookCode:', this.bookCode, 'pageNum:', this.pageNumber, 'totalWords:', this.totalWords, 'wordsContainerHeight:', this.getWordsContainerHeight());
     }  // domChanged
 
@@ -282,25 +284,20 @@ private updateReadingProgress(): void {
         return;
     }
 
-        const rawProgress = (this.pageNumber / this.totalPages) * 100;
-        const progress = Math.round(Math.max(1, Math.min(rawProgress, 100)));
+    const rawProgress = (this.pageNumber / this.totalPages) * 100;
+    const progress = Math.round(Math.max(1, Math.min(rawProgress, 100)));
 
-        // Update progress bar
-        if (this.progressBar) {
-            this.progressBar.setAttribute('aria-valuenow', progress.toString());
-            this.progressBar.style.width = progress + '%';
-            console.log(`Updating progress bar: ${progress}%`); // Debug log
-        } else {
-            console.error('Progress bar element not found'); // Debug log
-        }
+    // Update progress bar
+    if (this.progressBar) {
+        this.progressBar.setAttribute('aria-valuenow', progress.toString());
+        this.progressBar.style.width = progress + '%';
+        console.log(`Updating progress bar: ${progress}%`); // Debug log
+    } else {
+        console.error('Progress bar element not found'); // Debug log
+    }
 
     // Update page number text
-    const pageNumberTextElement = this.pageNumberElement.querySelector('.page-number-text');
-    if (pageNumberTextElement) {
-        pageNumberTextElement.textContent = this.pageNumber.toString();
-    } else {
-        console.error('Page number text element not found');
-    }
+    this.pageNumberElement.textContent = this.pageNumber.toString();
 
     // Update total pages
     if (this.totalPagesElement) {
@@ -476,6 +473,68 @@ private updateReadingProgress(): void {
     private getCsrfToken(): string {
         const csrfCookie = document.cookie.split(';').find(cookie => cookie.trim().startsWith('csrftoken='));
         return csrfCookie ? csrfCookie.split('=')[1] : '';
+    }
+
+
+    public async handleSearch(searchTerm: string): Promise<void> {
+        try {
+            const response = await fetch('/search/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': this.getCsrfToken(),
+                },
+                body: JSON.stringify({
+                    'book-code': viewport.bookCode,
+                    'search-term': searchTerm
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error('Search request failed');
+            }
+
+            const results: SearchResult[] = await response.json();
+            this.displaySearchResults(results);
+        } catch (error) {
+            console.error('Error during search:', error);
+            alert('An error occurred while searching. Please try again.');
+        }
+    }
+
+    private displaySearchResults(results: SearchResult[]): void {
+        const searchResultsContainer = document.getElementById('searchResults');
+        if (!searchResultsContainer) return;
+
+        searchResultsContainer.innerHTML = '';
+
+        if (results.length === 0) {
+            searchResultsContainer.innerHTML = '<p class="text-muted">No results found.</p>';
+            return;
+        }
+
+        const resultsList = document.createElement('ul');
+        resultsList.className = 'list-group';
+
+        results.forEach((result, index) => {
+            const listItem = document.createElement('li');
+            listItem.className = 'list-group-item list-group-item-action';
+            listItem.innerHTML = `
+                <div class="d-flex w-100 justify-content-between">
+                    <h6 class="mb-1">Page ${result.pageNumber}</h6>
+                </div>
+                <p class="mb-1">${result.context}</p>
+            `;
+            listItem.addEventListener('click', () => this.goToSearchResult(result.pageNumber, result.wordIndex));
+            resultsList.appendChild(listItem);
+        });
+
+        searchResultsContainer.appendChild(resultsList);
+    }
+
+    private goToSearchResult(pageNumber: number, wordIndex: number): void {
+        this.jump(pageNumber, wordIndex);
+        closeModal('searchModal');
     }
 
 }  // Viewport

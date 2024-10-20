@@ -1,5 +1,5 @@
 import { viewport } from './viewport';
-import {log} from './utils';
+import { log, showModal, closeModal } from './utils';
 import { sendTranslationRequest, lexicalPanelSwitched, clearLexicalPanel, hideTranslation } from './translate';
 
 const CLICK_TIMEOUT_MS = 200;
@@ -131,29 +131,26 @@ async function goToPage(pageNum: number, topWord: number): Promise<void> {
     await viewport.jump(pageNum, topWord);
 }
 
-function showModal(modalId: string): void {
-    const modal = document.getElementById(modalId);
-    if (modal instanceof HTMLElement) {
-        modal.style.display = 'block';
-        modal.removeAttribute('aria-hidden');
-        const firstInput = modal.querySelector('input');
-        if (firstInput instanceof HTMLInputElement) {
-            firstInput.focus();
-        }
+function clearSearchResults(): void {
+    const searchResultsContainer = document.getElementById('searchResults');
+    if (searchResultsContainer) {
+        searchResultsContainer.innerHTML = '';
     }
-}
-
-function closeModal(modalId: string): void {
-    const modal = document.getElementById(modalId);
-    if (modal instanceof HTMLElement) {
-        modal.style.display = 'none';
-        modal.setAttribute('aria-hidden', 'true');
+    const searchInput = document.getElementById('searchInput') as HTMLInputElement;
+    if (searchInput) {
+        searchInput.value = '';
     }
 }
 
 function handleSearchButtonClick(event: Event): void {
     event.preventDefault();
     showModal('searchModal');
+    clearSearchResults();
+    const searchInput = document.getElementById('searchInput') as HTMLInputElement;
+    if (searchInput) {
+        searchInput.value = '';
+        searchInput.focus();
+    }
 }
 
 function handleGoToPageButtonClick(event: Event): void {
@@ -174,6 +171,15 @@ function handleModalSubmit(modalId: string, inputId: string, action: (value: str
     }
 }
 
+function handleSearchModalSubmit(): void {
+    const searchInput = document.getElementById('searchInput') as HTMLInputElement;
+    if (searchInput) {
+        const searchTerm = searchInput.value.trim();
+        if (searchTerm) {
+            viewport.handleSearch(searchTerm);
+        }
+    }
+}
 function reInitDom(): void {
     log('reInitDom called');
     let prevButton = document.getElementById('prev-button');
@@ -263,15 +269,10 @@ function reInitDom(): void {
         });
     });
 
-    // Submit buttons for modals
     const searchSubmit = document.getElementById('searchSubmit');
     if (searchSubmit) {
-        searchSubmit.addEventListener('click', () => {
-            handleModalSubmit('searchModal', 'searchInput', (value) => {
-                console.log('Search for:', value);
-                // Implement your search logic here
-            });
-        });
+        searchSubmit.removeEventListener('click', handleSearchModalSubmit);
+        searchSubmit.addEventListener('click', handleSearchModalSubmit);
     }
 
     const goToPageSubmit = document.getElementById('goToPageSubmit');

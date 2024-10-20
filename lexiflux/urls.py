@@ -33,6 +33,7 @@ urlpatterns = [
     path("link_click", lexiflux.views.reader_views.link_click, name="link_click"),
     path("page", lexiflux.views.reader_views.page, name="page"),
     path("location", lexiflux.views.reader_views.location, name="location"),
+    path("search/", lexiflux.views.reader_views.search, name="search"),
     path("library", lexiflux.views.library_views.library_page, name="library"),
     path("translate", lexiflux.views.lexical_views.translate, name="translate"),
     path(

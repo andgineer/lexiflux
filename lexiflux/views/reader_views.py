@@ -1,7 +1,9 @@
 """Views for the reader page."""
 
+import json
 import logging
 import os
+import re
 from typing import List
 from urllib.parse import unquote
 
@@ -370,3 +372,57 @@ def link_click(request: HttpRequest) -> HttpResponse:
     reading_loc.jump(new_page_number, new_word)
 
     return JsonResponse({"success": True, "page_number": new_page_number, "word": new_word})
+
+
+@smart_login_required
+@require_POST  # type: ignore
+def search(request: HttpRequest) -> HttpResponse:
+    """Search for a term in the book."""
+    try:
+        data = json.loads(request.body)
+        book_code = data.get("book-code")
+        search_term = data.get("search-term")
+
+        if not book_code or not search_term:
+            return JsonResponse({"error": "Missing book code or search term"}, status=400)
+
+        book = get_object_or_404(Book, code=book_code)
+        if not can_see_book(request.user, book):
+            return HttpResponse("Forbidden", status=403)
+
+        # Perform the search
+        pages = BookPage.objects.filter(book=book, content__icontains=search_term)
+        results = []
+
+        for page_to_search in pages:
+            # Find all occurrences of the search term in the page content
+            start_indices = [
+                m.start()
+                for m in re.finditer(re.escape(search_term), page_to_search.content, re.IGNORECASE)
+            ]
+
+            for start_index in start_indices:
+                # Get the context around the search term
+                context_start = max(0, start_index - 30)
+                context_end = min(len(page_to_search.content), start_index + len(search_term) + 30)
+                context = page_to_search.content[context_start:context_end]
+
+                # Find the word index
+                word_index = sum(1 for w in page_to_search.words if w[0] < start_index)
+
+                results.append(
+                    {
+                        "pageNumber": page_to_search.number,
+                        "wordIndex": word_index,
+                        "context": context,
+                    }
+                )
+
+        # Limit to 10 results
+        results = results[:10]
+
+        return JsonResponse(results, safe=False)
+    except json.JSONDecodeError:
+        return JsonResponse({"error": "Invalid JSON"}, status=400)
+    except Exception as e:  # pylint: disable=broad-except
+        return JsonResponse({"error": str(e)}, status=500)
