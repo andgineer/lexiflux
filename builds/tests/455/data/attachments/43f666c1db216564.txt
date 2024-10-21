@@ -1,0 +1,2 @@
+INFO     root:reader_views.py:258 Location changed: book some-book-code, page 1, top word 10
+WARNING  django.request:log.py:248 Forbidden: /location

@@ -1,0 +1,4 @@
+INFO:root:Test finished
+INFO:root:Test started
+INFO:lexiflux.views.words_export:Words exported for English: 1 words
+INFO:lexiflux.views.words_export:Words exported for English: 1 words using ankiConnect

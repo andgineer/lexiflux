@@ -1,0 +1,2 @@
+INFO:root:Test started
+INFO:lexiflux.anki.anki_connect:result {'result': [1, 2, 3, 4, 5, 6]}

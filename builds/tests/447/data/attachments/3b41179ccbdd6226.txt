@@ -1,0 +1,1 @@
+INFO     lexiflux.views.words_export:words_export.py:162 For language en last export datetime: 2024-10-19 07:45:02.459012+00:00
