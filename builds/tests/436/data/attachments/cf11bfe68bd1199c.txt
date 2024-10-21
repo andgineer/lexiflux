@@ -1,3 +1,0 @@
-INFO:root:Test finished
-INFO:root:Test started
-INFO:lexiflux.views.words_export:For language 58 last export datetime: 2024-10-09 04:36:03.026006+00:00
