@@ -1,5 +1,6 @@
 import { log, getElement, closeModal } from './utils';
 import { clearLexicalPanel } from './translate';
+import { spanManager } from './TranslationSpanManager';
 
 interface SearchResult {
     pageNumber: number;
@@ -112,6 +113,7 @@ export class Viewport {
         this.bookPageScroller = this.getBookPageScroller();
         this.wordsContainerTopMargin = this.getTopNavbar().getBoundingClientRect().height;
         this.totalWords = this.calculateTotalWords();
+        spanManager.clear();
         log('domChanged. bookCode:', this.bookCode, 'pageNum:', this.pageNumber, 'totalWords:', this.totalWords, 'wordsContainerHeight:', this.getWordsContainerHeight());
     }  // domChanged
 

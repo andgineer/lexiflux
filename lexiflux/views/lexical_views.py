@@ -22,6 +22,7 @@ from lexiflux.language.llm import (
     SENTENCE_END_MARK,
     WORD_START_MARK,
     WORD_END_MARK,
+    logger,
 )
 from lexiflux.language.translation import get_translator
 from lexiflux.models import BookPage, LanguagePreferences, Book, CustomUser, TranslationHistory
@@ -137,6 +138,7 @@ def translate(request: HttpRequest, params: TranslateGetParams) -> HttpResponse:
             book_page.words[term_word_ids[0]][0] : book_page.words[term_word_ids[-1]][1]
         ]
     )
+    logger.info(f"Selected text: {term_text}")
 
     if term_text.strip() == "":
         return JsonResponse({"error": "Selected text is empty"}, status=400)
@@ -196,8 +198,6 @@ def translate(request: HttpRequest, params: TranslateGetParams) -> HttpResponse:
             )
         else:
             return JsonResponse({"error": "Lexical article not found"}, status=404)
-
-    print(f"Result: {result}")
     return JsonResponse(result)
 
 

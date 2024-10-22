@@ -7,6 +7,11 @@ export class TranslationSpanManager {
   private wordToSpanMap: Map<number, number> = new Map();
   private translationSpans: Map<number, TranslationSpan> = new Map();
 
+  clear(): void {
+    this.wordToSpanMap.clear();
+    this.translationSpans.clear();
+  }
+
   addSpan(firstWordId: number, lastWordId: number): void {
     for (let i = firstWordId; i <= lastWordId; i++) {
       this.wordToSpanMap.set(i, firstWordId);
@@ -40,6 +45,23 @@ export class TranslationSpanManager {
         affectedSpans.add(spanId);
       }
     });
+
+    // Add adjacent spans
+    const minWordId = Math.min(...wordIds);
+    const maxWordId = Math.max(...wordIds);
+
+    // Check for adjacent span before the first word
+    const beforeSpanId = this.wordToSpanMap.get(minWordId - 1);
+    if (beforeSpanId !== undefined) {
+      affectedSpans.add(beforeSpanId);
+    }
+
+    // Check for adjacent span after the last word
+    const afterSpanId = this.wordToSpanMap.get(maxWordId + 1);
+    if (afterSpanId !== undefined) {
+      affectedSpans.add(afterSpanId);
+    }
+
     return affectedSpans;
   }
 
@@ -59,3 +81,5 @@ export class TranslationSpanManager {
     return extendedWordIds;
   }
 }
+
+export const spanManager = new TranslationSpanManager();

@@ -1,5 +1,7 @@
 import { log } from './utils';
 import { viewport } from './viewport';
+import { spanManager, TranslationSpan } from './TranslationSpanManager';
+
 
 interface TranslationResponse {
   article?: string;
@@ -8,7 +10,7 @@ interface TranslationResponse {
 }
 
 let currentSelection: {
-  wordIds: string[] | null;
+  wordIds: number[] | null;
   updatedPanels: Set<string>;
 } = {
   wordIds: null,
@@ -25,7 +27,7 @@ function sendTranslationRequest(selectedRange: Range | null = null): void {
     return;
   }
 
-  if (wordIds === null) {
+  if (wordIds === null || wordIds.length === 0) {
     console.log('No word IDs to translate');
     return;
   }
@@ -44,11 +46,11 @@ function sendTranslationRequest(selectedRange: Range | null = null): void {
   }
 }
 
-function getWordIds(selectedRange: Range | null): string[] | null {
+function getWordIds(selectedRange: Range | null): number[] | null {
   return selectedRange ? getWordIdsFromRange(selectedRange) : currentSelection.wordIds;
 }
 
-function shouldSendRequest(selectedRange: Range | null, activePanelId: string | null, wordIds: string[] | null): boolean {
+function shouldSendRequest(selectedRange: Range | null, activePanelId: string | null, wordIds: number[] | null): boolean {
   if (!selectedRange && (!activePanelId || currentSelection.updatedPanels.has(activePanelId)) && currentSelection.wordIds === null) {
     return false;
   }
@@ -58,14 +60,33 @@ function shouldSendRequest(selectedRange: Range | null, activePanelId: string | 
   return true;
 }
 
-function handleInTextTranslation(selectedRange: Range, wordIds: string[]): void {
-  const translationSpan = createTranslationSpanWithSpinner(selectedRange);
-  const params = createRequestParams(wordIds, '0');
+function handleInTextTranslation(selectedRange: Range, wordIds: number[]): void {
+  const spansToRemove = spanManager.getAffectedSpans(wordIds);
+  const extendedWordIds = spanManager.getExtendedWordIds(wordIds);
+
+  // Remove old spans
+  spansToRemove.forEach(spanId => {
+    const span = document.getElementById(`translation-word-${spanId}`);
+    if (span) {
+      hideTranslation(span as HTMLElement);
+    }
+// todo: remove the span and words map from spanManager
+  });
+
+  // Create new translation span
+  const sortedWordIds = Array.from(extendedWordIds).sort((a, b) => a - b);
+  const firstWordId = sortedWordIds[0];
+  const lastWordId = sortedWordIds[sortedWordIds.length - 1];
+  const extendedRange = createRangeFromWords(firstWordId, lastWordId);
+  const translationSpan = createTranslationSpanWithSpinner(extendedRange);
+  const params = createRequestParams(sortedWordIds, '0');
 
   makeRequest(params)
     .then(result => {
       if (result) {
         updateTranslationSpan(result.data, translationSpan);
+        // Update span manager
+        spanManager.addSpan(firstWordId, lastWordId);
       } else {
         showErrorInTranslationSpan(translationSpan);
       }
@@ -75,7 +96,22 @@ function handleInTextTranslation(selectedRange: Range, wordIds: string[]): void 
     });
 }
 
-function handleLexicalArticleUpdate(activePanelId: string, wordIds: string[]): void {
+function createRangeFromWords(firstWordId: number, lastWordId: number): Range {
+  const container = document.getElementById('words-container');
+  if (!container) throw new Error('Words container not found');
+
+  const firstWord = document.getElementById(`word-${firstWordId}`);
+  const lastWord = document.getElementById(`word-${lastWordId}`);
+
+  if (!firstWord || !lastWord) throw new Error('First or last word not found');
+
+  const range = document.createRange();
+  range.setStart(firstWord, 0);
+  range.setEnd(lastWord, lastWord.childNodes.length);
+  return range;
+}
+
+function handleLexicalArticleUpdate(activePanelId: string, wordIds: number[]): void {
   const lexicalArticle = lexicalArticleNumFromId(activePanelId);
   if (lexicalArticle) {
     if (currentSelection.updatedPanels.has(lexicalArticle)) {
@@ -99,7 +135,7 @@ function handleLexicalArticleUpdate(activePanelId: string, wordIds: string[]): v
   }
 }
 
-function createRequestParams(wordIds: string[], lexicalArticle: string): URLSearchParams {
+function createRequestParams(wordIds: number[], lexicalArticle: string): URLSearchParams {
   const params = new URLSearchParams({
     'word-ids': wordIds.join('.'),
     'book-code': viewport.bookCode,
@@ -143,11 +179,12 @@ function adjustNodeToNearestWord(node: Node, direction: 'forward' | 'backward'):
     currentNode = currentNode.parentNode;
   }
 
-  if (currentNode instanceof HTMLElement && !currentNode.classList.contains('word')) {
+  if (currentNode instanceof HTMLElement) {
+    if (currentNode.classList.contains('word')) {
+      return currentNode;
+    }
     const selector = direction === 'forward' ? '.word' : '.word:last-child';
-    const closestWord = direction === 'forward'
-      ? currentNode.querySelector(selector)
-      : currentNode.querySelectorAll(selector)[0];
+    const closestWord = currentNode.querySelector(selector);
     return closestWord || currentNode;
   }
 
@@ -160,31 +197,50 @@ function adjustRangeToWholeWords(range: Range): void {
 
   if (startNode instanceof HTMLElement) {
     range.setStartBefore(startNode);
+  } else if (startNode.nodeType === Node.TEXT_NODE) {
+    range.setStart(startNode, 0);
   }
+
   if (endNode instanceof HTMLElement) {
     range.setEndAfter(endNode);
+  } else if (endNode.nodeType === Node.TEXT_NODE) {
+    range.setEnd(endNode, endNode.textContent?.length || 0);
   }
 }
 
-function getWordIdsFromRange(range: Range): string[] {
+function getWordIdsFromRange(range: Range): number[] {
   const container = document.getElementById('words-container');
   if (!container) return [];
 
-  const wordIds: string[] = [];
-  const startNode = adjustNodeToNearestWord(range.startContainer, 'forward');
-  const endNode = adjustNodeToNearestWord(range.endContainer, 'backward');
+  const wordIds: number[] = [];
+  let currentNode: Node | null = range.startContainer;
 
-  if (startNode && endNode) {
-    let currentNode: Node | null = startNode;
-    while (currentNode) {
-      if (currentNode.nodeType === Node.ELEMENT_NODE &&
-          (currentNode as HTMLElement).classList.contains('word')) {
-        const id = (currentNode as HTMLElement).id.replace('word-', '');
-        if (id) wordIds.push(id);
-      }
-      if (currentNode === endNode) break;
-      currentNode = getNextNode(currentNode);
+  // Check if the range starts inside a word
+  if (currentNode.nodeType === Node.TEXT_NODE && currentNode.parentNode) {
+    currentNode = currentNode.parentNode;
+  }
+
+  // Include the first word if it's partially selected
+  if (currentNode.nodeType === Node.ELEMENT_NODE &&
+      (currentNode as HTMLElement).classList.contains('word')) {
+    const id = (currentNode as HTMLElement).id.replace('word-', '');
+    wordIds.push(parseInt(id, 10));
+  }
+
+  // Move to the next node if we're not already at the end
+  if (currentNode !== range.endContainer) {
+    currentNode = getNextNode(currentNode);
+  }
+
+  while (currentNode && container.contains(currentNode)) {
+    if (currentNode.nodeType === Node.ELEMENT_NODE &&
+        (currentNode as HTMLElement).classList.contains('word')) {
+      const id = (currentNode as HTMLElement).id.replace('word-', '');
+      wordIds.push(parseInt(id, 10));
     }
+
+    if (currentNode === range.endContainer) break;
+    currentNode = getNextNode(currentNode);
   }
 
   return wordIds;
@@ -212,7 +268,7 @@ function createTranslationSpanWithSpinner(range: Range): HTMLSpanElement {
   translationSpan.appendChild(translationTextDiv);
   translationSpan.appendChild(originalTextDiv);
 
-  // Adjust the range to include full words
+  // Adjust the range to include only selected words
   adjustRangeToWholeWords(range);
 
   // Clone the contents of the adjusted range
@@ -281,6 +337,9 @@ function adjustTranslationWidth(translationSpan: HTMLSpanElement, translationTex
 }
 
 function hideTranslation(translationSpan: HTMLElement): void {
+  const spanId = parseInt(translationSpan.id.replace('translation-word-', ''), 10);
+  spanManager.removeSpan(spanId);
+
   const parent = translationSpan.parentNode;
   if (parent) {
     const originalTextDiv = translationSpan.querySelector('.original-text');
