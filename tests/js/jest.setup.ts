@@ -31,8 +31,10 @@ global.document.body.innerHTML = `
 <div id="goToPageModal"></div>
 <div id="searchModal"></div>
 <div id="empty-space"></div>
+<div id="maxPageNumber"></div>
 <div id="book" data-book-code="alice-adventures-carroll" data-book-page-number="1" data-click-word-url="/click-word"></div>
 `;
+document.body.setAttribute('data-total-pages', '245');
 
 import {viewport} from "../../lexiflux/viewport/viewport";  // load the module only after the DOM is set up
 
