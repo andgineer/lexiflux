@@ -44,7 +44,7 @@
 | lexiflux/views/ai\_settings\_views.py                 |       41 |       28 |     32% |25-26, 33-80 |
 | lexiflux/views/auth\_views.py                         |       32 |        3 |     91% | 43, 49-50 |
 | lexiflux/views/language\_preferences\_ajax.py         |      198 |      105 |     47% |143-145, 152-169, 181, 190-191, 214, 239-279, 287-314, 324-352, 360-376, 383-410 |
-| lexiflux/views/lexical\_views.py                      |       81 |       25 |     69% |47, 64, 83-116, 142, 176-198 |
+| lexiflux/views/lexical\_views.py                      |       81 |       25 |     69% |48, 65, 84-117, 144, 178-200 |
 | lexiflux/views/library\_views.py                      |      118 |       57 |     52% |61-62, 84-133, 153-154, 185-188, 194-205, 211-231 |
 | lexiflux/views/reader\_views.py                       |      247 |       86 |     65% |33-44, 52-75, 79-83, 113, 133, 198, 202, 207-209, 237-242, 254, 279, 283, 298, 302, 315, 319, 331, 335, 353-374, 381-428 |
 | lexiflux/views/words\_export.py                       |      143 |       28 |     80% |66-71, 106-111, 146, 170-178, 191, 240, 271, 294-300 |
