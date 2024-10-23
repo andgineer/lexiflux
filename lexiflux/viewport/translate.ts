@@ -216,7 +216,8 @@ function getWordIdsFromRange(range: Range): number[] {
   let currentNode: Node | null = range.startContainer;
 
   // Check if the range starts inside a word
-  if (currentNode.nodeType === Node.TEXT_NODE && currentNode.parentNode) {
+  if (currentNode.nodeType === Node.TEXT_NODE && currentNode.parentNode &&
+      (currentNode.parentNode as HTMLElement).classList.contains('word')) {
     currentNode = currentNode.parentNode;
   }
 
@@ -283,6 +284,16 @@ function createTranslationSpanWithSpinner(range: Range): HTMLSpanElement {
   const firstWordSpan = originalTextDiv.querySelector('.word');
   if (firstWordSpan) {
     translationSpan.id = 'translation-' + firstWordSpan.id;
+  }
+
+  // Create a new range for the original text and select it
+  const selection = window.getSelection();
+  if (selection) {
+    const newRange = document.createRange();
+    // Select all content within the originalTextDiv
+    newRange.selectNodeContents(originalTextDiv);
+    selection.removeAllRanges();
+    selection.addRange(newRange);
   }
 
   return translationSpan;
