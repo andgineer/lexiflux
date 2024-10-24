@@ -19,6 +19,8 @@ log = logging.getLogger()
 MAX_ITEM_SIZE = 6000
 TARGET_PAGE_SIZE = 3000
 
+PAGES_NUM_TO_DEBUG = 10  # number of page for detailed tracing
+
 
 class BookLoaderEpub(BookLoaderBase):
     """Import ebook from EPUB."""
@@ -91,7 +93,7 @@ class BookLoaderEpub(BookLoaderBase):
         )
         return meta, 0, -1  # todo: detect start/finish of the book
 
-    def pages(self) -> Iterator[str]:
+    def pages(self) -> Iterator[str]:  # pylint: disable=too-many-branches
         """Split a text into pages of approximately equal length."""
         self.toc = []
         page_num = 1
@@ -108,6 +110,8 @@ class BookLoaderEpub(BookLoaderBase):
                 )
                 soup = BeautifulSoup(item.get_body_content().decode("utf-8"), "html.parser")
                 content = str(soup)
+                if page_num < PAGES_NUM_TO_DEBUG:
+                    log.debug(f"Content: {content}")
                 if len(content) > MAX_ITEM_SIZE:
                     for sub_page in self._split_content(soup):
                         if sub_page.strip():  # Only process non-empty pages
@@ -115,6 +119,8 @@ class BookLoaderEpub(BookLoaderBase):
                             cleaned_content = clear_html(str(sub_soup)).strip()
                             if cleaned_content:
                                 self._process_anchors(item, page_num, cleaned_content)
+                                if page_num < PAGES_NUM_TO_DEBUG:
+                                    log.debug(f"SubPage {page_num}: {cleaned_content}")
                                 yield cleaned_content
                                 page_num += 1
                             else:
@@ -127,6 +133,8 @@ class BookLoaderEpub(BookLoaderBase):
                     cleaned_content = clear_html(content).strip()
                     if cleaned_content:
                         self._process_anchors(item, page_num, cleaned_content)
+                        if page_num < PAGES_NUM_TO_DEBUG:
+                            log.debug(f"Page {page_num}: {cleaned_content}")
                         yield cleaned_content
                         page_num += 1
                     else:

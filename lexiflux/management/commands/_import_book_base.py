@@ -11,6 +11,19 @@ from lexiflux.models import Language
 from lexiflux.utils import validate_log_level
 
 
+def change_log_level(log_level: int, db_log_level: int) -> None:
+    """Change the log level for the command."""
+    logging.getLogger().setLevel(log_level)
+    logging.getLogger("django").setLevel(log_level)
+    logging.getLogger("django.db.backends").setLevel(db_log_level)
+    if logging.getLogger().handlers:
+        logging.getLogger().handlers[0].setLevel(log_level)
+    if logging.getLogger("django").handlers:
+        logging.getLogger("django").handlers[0].setLevel(log_level)
+    if logging.getLogger("django.db.backends").handlers:
+        logging.getLogger("django.db.backends").handlers[0].setLevel(db_log_level)
+
+
 class ImportBookBaseCommand(BaseCommand):  # type: ignore
     """Base command for importing books from various file formats."""
 
@@ -74,10 +87,7 @@ class ImportBookBaseCommand(BaseCommand):  # type: ignore
                 raise CommandError(f"Language '--language={forced_language}' not found")
             forced_language = languages.first().name
 
-        # Configure Django logging level
-        logging.getLogger().setLevel(log_level)
-        logging.getLogger("django").setLevel(log_level)
-        logging.getLogger("django.db.backends").setLevel(db_log_level)
+        change_log_level(log_level, db_log_level)
 
         try:
             book = self.book_class(file_path).create(owner_email, forced_language)
