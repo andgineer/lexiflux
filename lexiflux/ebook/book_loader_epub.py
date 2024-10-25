@@ -7,11 +7,12 @@ import re
 from collections import defaultdict
 from typing import Any, Iterable, List, Optional, Tuple, Dict, Iterator
 
-from bs4 import BeautifulSoup, Tag, NavigableString
+from bs4 import BeautifulSoup
 from django.db import transaction
 from ebooklib import ITEM_DOCUMENT, epub, ITEM_IMAGE
 
 from lexiflux.ebook.book_loader_base import BookLoaderBase, MetadataField
+from lexiflux.ebook.html_page_splitter import HtmlPageSplitter
 from lexiflux.models import BookImage, Book
 
 log = logging.getLogger()
@@ -36,6 +37,7 @@ class BookLoaderEpub(BookLoaderBase):
     MAX_RANDOM_WORDS_ATTEMPTS = 10  # Maximum number of attempts to find a suitable page
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
+        self.page_splitter = HtmlPageSplitter(target_page_size=TARGET_PAGE_SIZE)
         super().__init__(*args, **kwargs)
         self.anchor_map: Dict[str, Dict[str, Any]] = {}
 
@@ -113,7 +115,7 @@ class BookLoaderEpub(BookLoaderBase):
                 if page_num < PAGES_NUM_TO_DEBUG:
                     log.debug(f"Content: {content}")
                 if len(content) > MAX_ITEM_SIZE:
-                    for sub_page in self._split_content(soup):
+                    for sub_page in self.page_splitter.split_content(soup):
                         if sub_page.strip():  # Only process non-empty pages
                             sub_soup = BeautifulSoup(sub_page, "html.parser")
                             cleaned_content = clear_html(str(sub_soup)).strip()
@@ -142,124 +144,6 @@ class BookLoaderEpub(BookLoaderBase):
 
         # Process TOC after all pages have been processed
         self._process_toc()
-
-    def _split_content(self, soup: BeautifulSoup) -> Iterator[str]:
-        """Split content into pages using recursive tag handling."""
-        contents = soup.body.contents if soup.body else soup.contents
-        yield from self._split_elements(contents)
-
-    def _split_elements(  # pylint: disable=too-many-locals,too-many-branches,too-many-statements
-        self, elements: List[Any], current_size: int = 0, current_chunk: Optional[List[str]] = None
-    ) -> Iterator[str]:
-        """Recursively split elements into chunks of appropriate size.
-
-        Args:
-            elements: List of BeautifulSoup elements to process
-            current_size: Running total of current chunk size
-            current_chunk: Accumulated content for current page
-        """
-        if current_chunk is None:
-            current_chunk = []
-
-        for element in elements:  # pylint: disable=too-many-nested-blocks
-            if isinstance(element, NavigableString):
-                # Handle text content
-                text = str(element).strip()
-                if not text:
-                    continue
-
-                sentences = re.split(r"([.!?。？！]+\s*)", text)
-
-                for i in range(0, len(sentences), 2):
-                    sentence = sentences[i]
-                    punctuation = sentences[i + 1] if i + 1 < len(sentences) else ""
-
-                    complete_sentence = sentence + (punctuation or "")
-                    sentence_size = len(complete_sentence)
-
-                    if current_size + sentence_size <= TARGET_PAGE_SIZE:
-                        current_chunk.append(complete_sentence)
-                        current_size += sentence_size
-                    else:
-                        if current_chunk:
-                            yield "".join(current_chunk)
-                            current_chunk.clear()
-                            current_size = 0
-
-                        # Handle sentences larger than target size
-                        if sentence_size > TARGET_PAGE_SIZE:
-                            words = complete_sentence.split()
-                            temp: List[str] = []
-                            temp_size = 0
-
-                            for word in words:
-                                word_size = len(word) + 1  # +1 for space
-                                if temp_size + word_size > TARGET_PAGE_SIZE and temp:
-                                    yield " ".join(temp)
-                                    temp = []
-                                    temp_size = 0
-                                temp.append(word)
-                                temp_size += word_size
-
-                            if temp:
-                                current_chunk.append(" ".join(temp))
-                                current_size = temp_size
-                        else:
-                            current_chunk.append(complete_sentence)
-                            current_size = sentence_size
-
-            elif isinstance(element, Tag):
-                # Convert tag to string to get its complete HTML representation
-                tag_html = str(element)
-                tag_size = len(tag_html)
-
-                # If the entire tag is small enough, keep it together
-                if tag_size <= TARGET_PAGE_SIZE * 1.5:  # Allow slightly larger for complete tags
-                    if current_size + tag_size > TARGET_PAGE_SIZE and current_chunk:
-                        yield "".join(current_chunk)
-                        current_chunk.clear()
-                        current_size = 0
-                    current_chunk.append(tag_html)
-                    current_size += tag_size
-                else:
-                    # split large tags while preserving tag structure
-                    attrs_str = " ".join(f'{k}="{v}"' for k, v in element.attrs.items())
-                    space = " " if element.attrs else ""
-                    opening_tag = f"<{element.name}{space}{attrs_str}>"
-
-                    closing_tag = f"</{element.name}>"
-
-                    # If current chunk exists and adding opening tag would exceed size, yield it
-                    if current_chunk and current_size + len(opening_tag) > TARGET_PAGE_SIZE:
-                        yield "".join(current_chunk)
-                        current_chunk.clear()
-                        current_size = 0
-
-                    # Add opening tag to new chunk
-                    current_chunk.append(opening_tag)
-                    current_size += len(opening_tag)
-
-                    # Process contents
-                    if element.contents:
-                        for content in self._split_elements(element.contents):
-                            if current_size + len(content) + len(closing_tag) <= TARGET_PAGE_SIZE:
-                                current_chunk.append(content)
-                                current_size += len(content)
-                            else:
-                                # End current chunk with closing tag
-                                current_chunk.append(closing_tag)
-                                yield "".join(current_chunk)
-                                # Start new chunk with opening tag
-                                current_chunk = [opening_tag, content]
-                                current_size = len(opening_tag) + len(content)
-
-                    # Add closing tag to last chunk
-                    current_chunk.append(closing_tag)
-                    current_size += len(closing_tag)
-
-        # Yield any remaining content
-        if current_chunk:
-            yield "".join(current_chunk)
 
     def _process_toc(self) -> None:
         """Process table of contents using the anchor_map."""
