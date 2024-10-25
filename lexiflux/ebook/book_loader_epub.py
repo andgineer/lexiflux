@@ -178,42 +178,78 @@ class BookLoaderEpub(BookLoaderBase):
             if page_content.strip():
                 yield page_content
 
-    def _split_large_element(self, element: Tag) -> Iterator[str]:
-        """Split a large element into smaller chunks."""
-        content = str(element)
-        chunks = []
-        current_chunk: List[str] = []
+    def _split_large_element(self, element: Tag) -> Iterator[str]:  # pylint: disable=too-many-branches,too-many-locals,too-many-nested-blocks
+        """Split a large element into smaller chunks using BeautifulSoup.
+
+        Improvements:
+        - Uses BeautifulSoup for reliable HTML parsing
+        - Supports all languages
+        - Maintains target size while preserving HTML structure
+        """
+        # Get all direct child nodes (tags and text)
+        current_chunk = []
         current_size = 0
 
-        # split at paragraph ends, multiple empty lines, or after a certain number of characters
-        for paragraph in re.split(
-            r"(\n\s*\n|\s*<\/p>\s*|.{" + str(TARGET_PAGE_SIZE) + "})", content
-        ):
-            if current_size + len(paragraph) > TARGET_PAGE_SIZE and current_chunk:
-                chunk_content = "".join(current_chunk)
-                if chunk_content.strip():
-                    chunks.append(chunk_content)
-                else:
-                    log.warning("Empty chunk skipped in _split_large_element")
-                current_chunk = []
-                current_size = 0
+        for child in element.children:  # pylint: disable=too-many-nested-blocks
+            if isinstance(child, NavigableString):
+                # Handle text content
+                text = str(child)
+                if not text.strip():
+                    continue
 
-            current_chunk.append(paragraph)
-            current_size += len(paragraph)
+                sentences = re.split(r"([.!?。？！]+\s*)", text)
+
+                for i in range(0, len(sentences), 2):
+                    sentence = sentences[i]
+                    punctuation = sentences[i + 1] if i + 1 < len(sentences) else ""
+
+                    complete_sentence = sentence + (punctuation or "")
+                    sentence_size = len(complete_sentence)
+
+                    if current_size + sentence_size <= TARGET_PAGE_SIZE:
+                        current_chunk.append(complete_sentence)
+                        current_size += sentence_size
+                    else:
+                        if current_chunk:
+                            yield "".join(current_chunk)
+                            current_chunk = []
+                            current_size = 0
+
+                        if sentence_size > TARGET_PAGE_SIZE:
+                            words = complete_sentence.split()
+                            temp: List[str] = []
+                            temp_size = 0
+
+                            for word in words:
+                                word_size = len(word) + 1  # +1 for space
+                                if temp_size + word_size > TARGET_PAGE_SIZE and temp:
+                                    yield " ".join(temp)
+                                    temp = []
+                                    temp_size = 0
+                                temp.append(word)
+                                temp_size += word_size
+
+                            if temp:
+                                current_chunk = temp
+                                current_size = temp_size
+                        else:
+                            current_chunk = [complete_sentence]
+                            current_size = sentence_size
+            else:
+                # Handle HTML tag
+                tag_str = str(child)
+                tag_size = len(tag_str)
+
+                if current_size + tag_size > TARGET_PAGE_SIZE and current_chunk:
+                    yield "".join(current_chunk)
+                    current_chunk = []
+                    current_size = 0
+
+                current_chunk.append(tag_str)
+                current_size += tag_size
 
         if current_chunk:
-            chunk_content = "".join(current_chunk)
-            if chunk_content.strip():
-                chunks.append(chunk_content)
-            else:
-                log.warning("Empty final chunk skipped in _split_large_element")
-
-        for chunk in chunks:
-            cleaned_chunk = clear_html(chunk).strip()
-            if cleaned_chunk:
-                yield cleaned_chunk
-            else:
-                log.warning("Empty cleaned chunk skipped in _split_large_element")
+            yield "".join(current_chunk)
 
     def _process_toc(self) -> None:
         """Process table of contents using the anchor_map."""
