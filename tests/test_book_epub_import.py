@@ -73,7 +73,7 @@ def test_import_epub_e2e():
     assert book.author.name == 'Theodore Dreiser'
     assert book.language.name == 'English'
     assert book.public is True
-    assert book.pages.count() == 719
+    assert book.pages.count() == 748
 
 
 @allure.epic('Book import')
@@ -222,165 +222,6 @@ def test_pages_content_splitting(book_epub):
                no_tags_pages), "No page of content without tags should be more than twice the TARGET_PAGE_SIZE"
 
 
-@allure.epic('Book import')
-@allure.feature('EPUB: parse pages')
-def test_split_large_element(book_epub):
-    # Test with a large HTML element
-    large_html_element = BeautifulSoup(
-        "<div><p>" + "HTML content " * 500 + "</p><p>" + "More HTML " * 500 + "</p></div>", "html.parser").div
-    html_pages = list(book_epub._split_large_element(large_html_element))
-
-    assert len(html_pages) > 1, "Large HTML element should be split into multiple pages"
-    assert all(len(page) <= TARGET_PAGE_SIZE * 2 for page in
-               html_pages), "No HTML page should be more than twice the TARGET_PAGE_SIZE"
-
-    # Test with a large <p> element (simulating a large paragraph of text)
-    large_p_element = BeautifulSoup("<p>" + "Large content " * 1000 + "</p>", "html.parser").p
-    p_pages = list(book_epub._split_large_element(large_p_element))
-
-    assert len(p_pages) > 1, "Large paragraph should be split into multiple pages"
-    assert all(len(page) <= TARGET_PAGE_SIZE * 2 for page in
-               p_pages), "No paragraph page should be more than twice the TARGET_PAGE_SIZE"
-
-    # Test with content without any HTML tags
-    no_tags_content = "Plain text content without any HTML tags. " * 1000
-    no_tags_pages = list(book_epub._split_large_element(no_tags_content))
-
-    print(f"HTML element pages: {len(html_pages)}, sizes: {[len(page) for page in html_pages]}")
-    print(f"Large paragraph pages: {len(p_pages)}, sizes: {[len(page) for page in p_pages]}")
-    print(f"No tags pages: {len(no_tags_pages)}, sizes: {[len(page) for page in no_tags_pages]}")
-
-    assert len(no_tags_pages) > 1, "Content without tags should be split into multiple pages"
-    assert all(len(page) <= TARGET_PAGE_SIZE * 2 for page in
-               no_tags_pages), "No page of content without tags should be more than twice the TARGET_PAGE_SIZE"
-
-
-@pytest.fixture
-def small_page_size(monkeypatch):
-    """Temporarily set TARGET_PAGE_SIZE to a small value for testing."""
-    monkeypatch.setattr('lexiflux.ebook.book_loader_epub.TARGET_PAGE_SIZE', 300)
-    return 300
-
-
-@allure.epic('Book import')
-@allure.feature('EPUB: parse pages')
-def test_split_large_element_sentence_boundaries(book_epub, small_page_size):
-    """Test that content is split at sentence boundaries with realistic text."""
-    russian_text = """
-    <p class="p1">Моя мать не боялась загробной жизни. Как и большинство евреев, она имела очень смутное представление о том, что ждет человека, попавшего в могилу, и она старалась не думать об этом. Ее страшили само умирание, безвозвратность ухода из жизни. Я до сих пор не могу забыть, с какой одержимостью она говорила о неизбежности конца, особенно в моменты расставаний. Все мое существование было наполнено экзальтированными и драматическими сценами прощаний. И когда они с отцом уезжали из Бостона в Нью-Йорк на уик-энд, и когда мать провожала меня в летний лагерь, и даже когда я уходил в школу, она прижималась ко мне и со слезами говорила о том, как она ослабла, предупреждая, что мы можем больше не увидеться. Если мы шли вместе куда-нибудь, она вдруг останавливалась, словно теряя сознание. Иногда она показывала мне вену на шее, брала меня за руку и просила пощупать пульс, чтобы удостовериться в том, как неровно бьется ее сердце.</p>
-    """
-
-    element = BeautifulSoup(russian_text, "html.parser").p
-    pages = list(book_epub._split_large_element(element))
-
-    # Print debug info
-    print(f"\nText size: {len(str(element))} chars")
-    print(f"Target page size: {small_page_size} chars")
-    for i, page in enumerate(pages):
-        print(f"Page {i + 1} size: {len(page)} chars")
-        print(f"Page {i + 1} ending: {page[-50:]}\n")
-
-    # Verify we get multiple pages due to small target size
-    assert len(pages) > 1, "Text should be split into multiple pages"
-
-    # Check that each page (except possibly the last) is close to but not over target size
-    for page in pages[:-1]:
-        assert len(page) <= small_page_size * 1.1, \
-            f"Page size ({len(page)}) significantly exceeds target size ({small_page_size})"
-
-    # Check that each page ends with a complete sentence
-    sentence_endings = r'[.!?](\s|</p>|$)'
-    for page in pages[:-1]:
-        print(f"Page content: {page}")
-        stripped_page = page.strip()
-        assert re.search(sentence_endings, stripped_page), \
-            f"Page should end with a complete sentence, but got: {stripped_page[-50:]}"
-
-
-@pytest.fixture
-def tiny_page_size(monkeypatch):
-    """Set an extremely small page size to test sentence splitting behavior."""
-    monkeypatch.setattr('lexiflux.ebook.book_loader_epub.TARGET_PAGE_SIZE', 50)
-    return 50
-
-
-@allure.epic('Book import')
-@allure.feature('EPUB: parse pages')
-def test_very_long_single_sentence(book_epub, tiny_page_size):
-    """Test handling of sentences longer than page size."""
-    long_sentence = "<p>This is a very long sentence that significantly exceeds our tiny page size limit and will need to be split into multiple pages somehow.</p>"
-    element = BeautifulSoup(long_sentence, "html.parser").p
-    pages = list(book_epub._split_large_element(element))
-
-    print(f"\nLong sentence size: {len(str(element))} chars")
-    print(f"Target page size: {tiny_page_size} chars")
-    for i, page in enumerate(pages):
-        print(f"Page {i + 1} size: {len(page)} chars")
-        print(f"Page {i + 1} content: {page}")
-
-    assert len(pages) > 1, "Very long sentence should be split"
-    assert all(len(page) <= tiny_page_size * 1.2 for page in pages[:-1]), \
-        "Split pages should not significantly exceed target size"
-
-
-@allure.epic('Book import')
-@allure.feature('EPUB: parse pages')
-def test_html_tag_integrity(book_epub, tiny_page_size):
-    """Test that HTML tags are never split across pages."""
-    complex_html = """
-    <p>Start of text 
-    <a href="../Text/chapter1.xhtml" class="very-long-class-name-to-force-splitting">
-    This is a link with a very long text that should be split across pages but the tag itself should stay intact
-    </a>
-    <span class="another-long-class-that-should-not-be-split">
-    More text that goes on and on and should also be split into multiple pages while preserving the HTML structure
-    </span>
-    </p>
-    """
-    element = BeautifulSoup(complex_html, "html.parser").p
-    pages = list(book_epub._split_large_element(element))
-
-    print("\nSplit pages content:")
-    for i, page in enumerate(pages):
-        print(f"\nPage {i + 1}:")
-        print(page)
-
-    # Check that no page ends with a partial opening tag
-    assert not any(page.rstrip().endswith('<') for page in pages), \
-        "Found page ending with partial opening tag"
-    assert not any(page.rstrip().endswith('="') for page in pages), \
-        "Found page ending inside tag attributes"
-
-    # Check that no page starts with a partial closing tag
-    assert not any(page.lstrip().startswith('>') for page in pages), \
-        "Found page starting with partial closing tag"
-
-    # Validate that when we join pages back together, we can parse them as valid HTML
-    full_content = ''.join(pages)
-    try:
-        soup = BeautifulSoup(full_content, "html.parser")
-        # Count tags in original and split content to ensure none were lost
-        original_tags = len(list(element.find_all()))
-        split_tags = len(list(soup.find_all()))
-        assert original_tags == split_tags, \
-            f"Tag count mismatch: original {original_tags}, split {split_tags}"
-    except Exception as e:
-        pytest.fail(f"Failed to parse joined content as HTML: {e}")
-
-    # Additional check for specific tags
-    for page in pages:
-        # Count opening and closing tags
-        opening_tags = len(re.findall(r'<[^/][^>]*>', page))
-        closing_tags = len(re.findall(r'</[^>]+>', page))
-        if opening_tags != closing_tags:
-            print(f"\nWarning: Unmatched tags in page: {page}")
-            print(f"Opening tags: {opening_tags}, Closing tags: {closing_tags}")
-
-    # Make sure no HTML entities are split
-    assert not any('&' in page and ';' not in page.split('&')[-1] for page in pages), \
-        "Found split HTML entity"
-
-
 @pytest.fixture
 def medium_page_size(monkeypatch):
     """Set medium page size for testing multiple paragraphs."""
@@ -521,3 +362,147 @@ def test_process_toc(book_epub):
         ("Section 1", 2, 0),
         ("Chapter 2", 3, 0)
     ]
+@allure.epic('Book import')
+@allure.feature('EPUB: parse pages')
+class TestEpubContentSplitting:
+    """Test suite for EPUB content splitting functionality."""
+
+    def test_split_large_element(self, book_epub):
+        """Test splitting of large HTML elements."""
+        # Test with a large HTML element
+        large_html_element = BeautifulSoup(
+            "<div><p>" + "HTML content " * 500 + "</p><p>" + "More HTML " * 500 + "</p></div>", "html.parser").div
+        html_pages = list(book_epub._split_elements([large_html_element]))
+
+        assert len(html_pages) > 1, "Large HTML element should be split into multiple pages"
+        assert all(len(page) <= TARGET_PAGE_SIZE * 2 for page in
+                html_pages), "No HTML page should be more than twice the TARGET_PAGE_SIZE"
+
+        # Test with a large paragraph
+        large_p_element = BeautifulSoup("<p>" + "Large content " * 1000 + "</p>", "html.parser").p
+        p_pages = list(book_epub._split_elements([large_p_element]))
+
+        assert len(p_pages) > 1, "Large paragraph should be split into multiple pages"
+        assert all(len(page) <= TARGET_PAGE_SIZE * 2 for page in
+                p_pages), "No paragraph page should be more than twice the TARGET_PAGE_SIZE"
+
+        print(f"HTML element pages: {len(html_pages)}, sizes: {[len(page) for page in html_pages]}")
+        print(f"Large paragraph pages: {len(p_pages)}, sizes: {[len(page) for page in p_pages]}")
+
+    def test_split_large_element_sentence_boundaries(self, book_epub, small_page_size):
+        """Test that content is split at sentence boundaries with realistic text."""
+        russian_text = """
+        <p class="p1">Моя мать не боялась загробной жизни. Как и большинство евреев, она имела очень смутное представление о том, что ждет человека, попавшего в могилу, и она старалась не думать об этом. Ее страшили само умирание, безвозвратность ухода из жизни. Я до сих пор не могу забыть, с какой одержимостью она говорила о неизбежности конца, особенно в моменты расставаний. Все мое существование было наполнено экзальтированными и драматическими сценами прощаний. И когда они с отцом уезжали из Бостона в Нью-Йорк на уик-энд, и когда мать провожала меня в летний лагерь, и даже когда я уходил в школу, она прижималась ко мне и со слезами говорила о том, как она ослабла, предупреждая, что мы можем больше не увидеться. Если мы шли вместе куда-нибудь, она вдруг останавливалась, словно теряя сознание. Иногда она показывала мне вену на шее, брала меня за руку и просила пощупать пульс, чтобы удостовериться в том, как неровно бьется ее сердце.</p>
+        """
+
+        element = BeautifulSoup(russian_text, "html.parser").p
+        pages = list(book_epub._split_elements([element]))
+
+        # Print debug info
+        print(f"\nText size: {len(str(element))} chars")
+        print(f"Target page size: {small_page_size} chars")
+        for i, page in enumerate(pages):
+            print(f"Page {i + 1}:\n{page}", )
+
+        # Verify we get multiple pages due to small target size
+        assert len(pages) > 1, "Text should be split into multiple pages"
+
+        # Check that each page (except possibly the last) is close to but not over target size
+        for page in pages[:-1]:
+            assert len(page) <= small_page_size * 1.1, \
+                f"Page size ({len(page)}) significantly exceeds target size ({small_page_size})"
+
+        # Check that each page ends with a complete sentence
+        sentence_endings = r'[.!?](\s|</p>|$)'
+        for page in pages[:-1]:
+            print(f"Page content: {page}")
+            stripped_page = page.strip()
+            assert re.search(sentence_endings, stripped_page), \
+                f"Page should end with a complete sentence, but got: {stripped_page[-50:]}"
+
+    def test_very_long_single_sentence(self, book_epub, tiny_page_size):
+        """Test handling of sentences longer than page size."""
+        long_sentence = "<p>This is a very long sentence that significantly exceeds our tiny page size limit and will need to be split into multiple pages somehow.</p>"
+        element = BeautifulSoup(long_sentence, "html.parser").p
+        pages = list(book_epub._split_elements([element]))
+
+        print(f"\nLong sentence size: {len(str(element))} chars")
+        print(f"Target page size: {tiny_page_size} chars")
+        for i, page in enumerate(pages):
+            print(f"Page {i + 1}:\n{page}")
+
+        assert len(pages) > 1, "Very long sentence should be split"
+        assert all(len(page) <= tiny_page_size * 1.2 for page in pages[:-1]), \
+            "Split pages should not significantly exceed target size"
+
+    def test_html_tag_integrity(self, book_epub, tiny_page_size):
+        """Test that HTML tags are never split across pages. Each page must be valid HTML."""
+        complex_html = """
+        <p>Start of text 
+        <a href="../Text/chapter1.xhtml" class="very-long-class-name-to-force-splitting">
+        This is a link with a very long text that should be split across pages but the tag itself should stay intact
+        </a>
+        <span class="another-long-class-that-should-not-be-split">
+        More text that goes on and on and should also be split into multiple pages while preserving the HTML structure
+        </span>
+        </p>
+        """
+        element = BeautifulSoup(complex_html, "html.parser").p
+        pages = list(book_epub._split_elements([element]))
+
+        print("\nSplit pages content:")
+        for i, page in enumerate(pages):
+            print(f"\nPage {i + 1}:")
+            print(page)
+
+        for i, page in enumerate(pages, 1):
+            # Try parsing each page as standalone HTML - should not raise exceptions
+            try:
+                soup = BeautifulSoup(page, "html.parser")
+            except Exception as e:
+                pytest.fail(f"Page {i} is not valid HTML: {e}")
+
+            # Each page should be wrapped in the same set of parent tags as they appear in that position
+            # in the original document (in this case, always <p>)
+            assert page.lstrip().startswith("<p>"), f"Page {i} doesn't start with opening <p> tag"
+            assert page.rstrip().endswith("</p>"), f"Page {i} doesn't end with closing </p> tag"
+
+            # Stack to track tags opened in this page
+            tag_stack = []
+
+            # Find all tags in the page
+            all_tags = re.finditer(r'</?[a-zA-Z][^>]*>', page)
+            for tag_match in all_tags:
+                tag = tag_match.group()
+                if tag.startswith('</'):
+                    # This is a closing tag
+                    if not tag_stack:
+                        pytest.fail(f"Found closing tag {tag} without matching opening tag in page {i}")
+                    if not tag[2:-1].lower() == tag_stack[-1].lower():
+                        pytest.fail(f"Closing tag {tag} doesn't match last opened tag {tag_stack[-1]} in page {i}")
+                    tag_stack.pop()
+                elif not tag.endswith('/>'):  # Ignore self-closing tags
+                    # This is an opening tag
+                    tag_name = re.match(r'<([a-zA-Z][^>\s]*)', tag).group(1)
+                    tag_stack.append(tag_name)
+
+            # At the end of the page, all tags should be closed
+            assert len(tag_stack) == 0, f"Unclosed tags {tag_stack} at end of page {i}"
+
+            # Make sure no HTML entities are split
+            if '&' in page:
+                parts = page.split('&')
+                for part in parts[1:]:  # Skip first part (before any &)
+                    assert ';' in part, f"Split HTML entity in page {i}"
+
+@pytest.fixture
+def small_page_size(monkeypatch):
+    """Temporarily set TARGET_PAGE_SIZE to a small value for testing."""
+    monkeypatch.setattr('lexiflux.ebook.book_loader_epub.TARGET_PAGE_SIZE', 300)
+    return 300
+
+@pytest.fixture
+def tiny_page_size(monkeypatch):
+    """Set an extremely small page size to test sentence splitting behavior."""
+    monkeypatch.setattr('lexiflux.ebook.book_loader_epub.TARGET_PAGE_SIZE', 50)
+    return 50

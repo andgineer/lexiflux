@@ -144,57 +144,28 @@ class BookLoaderEpub(BookLoaderBase):
         self._process_toc()
 
     def _split_content(self, soup: BeautifulSoup) -> Iterator[str]:
-        """Split large content into smaller pages."""
-        current_page: List[Any] = []
-        current_size = 0
-
+        """Split content into pages using recursive tag handling."""
         contents = soup.body.contents if soup.body else soup.contents
+        yield from self._split_elements(contents)
 
-        for element in contents:
-            if isinstance(element, (Tag, NavigableString)):
-                element_str = str(element)
-                element_size = len(element_str)
+    def _split_elements(  # pylint: disable=too-many-locals,too-many-branches,too-many-statements
+        self, elements: List[Any], current_size: int = 0, current_chunk: Optional[List[str]] = None
+    ) -> Iterator[str]:
+        """Recursively split elements into chunks of appropriate size.
 
-                if current_size + element_size > TARGET_PAGE_SIZE and current_page:
-                    page_content = "".join(map(str, current_page))
-                    if page_content.strip():
-                        yield page_content
-                    current_page = []
-                    current_size = 0
-
-                if element_size > TARGET_PAGE_SIZE:
-                    # If a single element is too large, we need to split it
-                    yield from self._split_large_element(element)
-                else:
-                    current_page.append(element)
-                    current_size += element_size
-            else:
-                # For NavigableString objects
-                current_page.append(element)
-                current_size += len(str(element))
-
-        if current_page:
-            page_content = "".join(map(str, current_page))
-            if page_content.strip():
-                yield page_content
-
-    def _split_large_element(self, element: Tag) -> Iterator[str]:  # pylint: disable=too-many-branches,too-many-locals,too-many-nested-blocks
-        """Split a large element into smaller chunks using BeautifulSoup.
-
-        Improvements:
-        - Uses BeautifulSoup for reliable HTML parsing
-        - Supports all languages
-        - Maintains target size while preserving HTML structure
+        Args:
+            elements: List of BeautifulSoup elements to process
+            current_size: Running total of current chunk size
+            current_chunk: Accumulated content for current page
         """
-        # Get all direct child nodes (tags and text)
-        current_chunk = []
-        current_size = 0
+        if current_chunk is None:
+            current_chunk = []
 
-        for child in element.children:  # pylint: disable=too-many-nested-blocks
-            if isinstance(child, NavigableString):
+        for element in elements:  # pylint: disable=too-many-nested-blocks
+            if isinstance(element, NavigableString):
                 # Handle text content
-                text = str(child)
-                if not text.strip():
+                text = str(element).strip()
+                if not text:
                     continue
 
                 sentences = re.split(r"([.!?。？！]+\s*)", text)
@@ -212,9 +183,10 @@ class BookLoaderEpub(BookLoaderBase):
                     else:
                         if current_chunk:
                             yield "".join(current_chunk)
-                            current_chunk = []
+                            current_chunk.clear()
                             current_size = 0
 
+                        # Handle sentences larger than target size
                         if sentence_size > TARGET_PAGE_SIZE:
                             words = complete_sentence.split()
                             temp: List[str] = []
@@ -230,24 +202,62 @@ class BookLoaderEpub(BookLoaderBase):
                                 temp_size += word_size
 
                             if temp:
-                                current_chunk = temp
+                                current_chunk.append(" ".join(temp))
                                 current_size = temp_size
                         else:
-                            current_chunk = [complete_sentence]
+                            current_chunk.append(complete_sentence)
                             current_size = sentence_size
-            else:
-                # Handle HTML tag
-                tag_str = str(child)
-                tag_size = len(tag_str)
 
-                if current_size + tag_size > TARGET_PAGE_SIZE and current_chunk:
-                    yield "".join(current_chunk)
-                    current_chunk = []
-                    current_size = 0
+            elif isinstance(element, Tag):
+                # Convert tag to string to get its complete HTML representation
+                tag_html = str(element)
+                tag_size = len(tag_html)
 
-                current_chunk.append(tag_str)
-                current_size += tag_size
+                # If the entire tag is small enough, keep it together
+                if tag_size <= TARGET_PAGE_SIZE * 1.5:  # Allow slightly larger for complete tags
+                    if current_size + tag_size > TARGET_PAGE_SIZE and current_chunk:
+                        yield "".join(current_chunk)
+                        current_chunk.clear()
+                        current_size = 0
+                    current_chunk.append(tag_html)
+                    current_size += tag_size
+                else:
+                    # split large tags while preserving tag structure
+                    attrs_str = " ".join(f'{k}="{v}"' for k, v in element.attrs.items())
+                    space = " " if element.attrs else ""
+                    opening_tag = f"<{element.name}{space}{attrs_str}>"
 
+                    closing_tag = f"</{element.name}>"
+
+                    # If current chunk exists and adding opening tag would exceed size, yield it
+                    if current_chunk and current_size + len(opening_tag) > TARGET_PAGE_SIZE:
+                        yield "".join(current_chunk)
+                        current_chunk.clear()
+                        current_size = 0
+
+                    # Add opening tag to new chunk
+                    current_chunk.append(opening_tag)
+                    current_size += len(opening_tag)
+
+                    # Process contents
+                    if element.contents:
+                        for content in self._split_elements(element.contents):
+                            if current_size + len(content) + len(closing_tag) <= TARGET_PAGE_SIZE:
+                                current_chunk.append(content)
+                                current_size += len(content)
+                            else:
+                                # End current chunk with closing tag
+                                current_chunk.append(closing_tag)
+                                yield "".join(current_chunk)
+                                # Start new chunk with opening tag
+                                current_chunk = [opening_tag, content]
+                                current_size = len(opening_tag) + len(content)
+
+                    # Add closing tag to last chunk
+                    current_chunk.append(closing_tag)
+                    current_size += len(closing_tag)
+
+        # Yield any remaining content
         if current_chunk:
             yield "".join(current_chunk)
 
