@@ -20,7 +20,7 @@
 | lexiflux/ebook/book\_loader\_html.py                  |        3 |        0 |    100% |           |
 | lexiflux/ebook/book\_loader\_plain\_text.py           |      114 |        9 |     92% |48-49, 104-108, 130, 177 |
 | lexiflux/ebook/headings.py                            |       36 |        0 |    100% |           |
-| lexiflux/ebook/html\_page\_splitter.py                |       93 |        0 |    100% |           |
+| lexiflux/ebook/html\_page\_splitter.py                |      106 |        5 |     95% |18-19, 23-24, 58 |
 | lexiflux/ebook/page\_splitter.py                      |       37 |        5 |     86% |     23-29 |
 | lexiflux/forms.py                                     |       33 |       18 |     45% |14-18, 35-51 |
 | lexiflux/language/detect\_language\_detectlanguage.py |       25 |        4 |     84% |29-31, 33-37 |
@@ -50,7 +50,7 @@
 | lexiflux/views/reader\_views.py                       |      247 |       86 |     65% |33-44, 52-75, 79-83, 113, 133, 198, 202, 207-209, 237-242, 254, 279, 283, 298, 302, 315, 319, 331, 335, 353-374, 381-428 |
 | lexiflux/views/words\_export.py                       |      143 |       28 |     80% |66-71, 106-111, 146, 170-178, 191, 240, 271, 294-300 |
 | lexiflux/wsgi.py                                      |        4 |        4 |      0% |      9-15 |
-|                                             **TOTAL** | **2856** |  **666** | **77%** |           |
+|                                             **TOTAL** | **2869** |  **671** | **77%** |           |
 
 
 ## Setup coverage badge
