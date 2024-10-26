@@ -1,8 +1,27 @@
 """Split HTML content into pages of approximately equal length."""
 
+from dataclasses import dataclass
 from typing import Iterator, List, Any, Optional
 import re
 from bs4 import BeautifulSoup, Tag, NavigableString
+
+
+@dataclass
+class SplitterContext:
+    """Context for holding mutable state during HTML splitting."""
+
+    size: int
+    chunk: List[str]
+
+    def clear_chunk(self) -> None:
+        """Clear the current chunk and reset size."""
+        self.chunk.clear()
+        self.size = 0
+
+    def append_content(self, content: str) -> None:
+        """Append content and update size."""
+        self.chunk.append(content)
+        self.size += len(content)
 
 
 class HtmlPageSplitter:
@@ -30,17 +49,13 @@ class HtmlPageSplitter:
         return None
 
     def split_elements(  # pylint: disable=too-many-branches,too-many-locals,too-many-statements
-        self, elements: List[Any], current_size: int = 0, current_chunk: Optional[List[str]] = None
+        self, elements: List[Any], context: Optional[SplitterContext] = None
     ) -> Iterator[str]:
-        """Recursively split elements into chunks of appropriate size.
-
-        Args:
-            elements: List of BeautifulSoup elements to process
-            current_size: Running total of current chunk size
-            current_chunk: Accumulated content for current page
-        """
-        if current_chunk is None:
-            current_chunk = []
+        """Recursively split elements into chunks of appropriate size."""
+        if context is None:
+            context = SplitterContext(size=0, chunk=[])
+        if context.chunk is None:
+            context.chunk = []
 
         for element in elements:  # pylint: disable=too-many-nested-blocks
             if isinstance(element, NavigableString):
@@ -58,14 +73,14 @@ class HtmlPageSplitter:
                     complete_sentence = sentence + (punctuation or "")
                     sentence_size = len(complete_sentence)
 
-                    if current_size + sentence_size <= self.target_page_size:
-                        current_chunk.append(complete_sentence)
-                        current_size += sentence_size
+                    if context.size + sentence_size <= self.target_page_size:
+                        context.chunk.append(complete_sentence)
+                        context.size += sentence_size
                     else:
-                        if chunk := self._non_empty_chunk(current_chunk):
+                        if chunk := self._non_empty_chunk(context.chunk):
                             yield chunk
-                        current_chunk.clear()
-                        current_size = 0
+                        context.chunk.clear()
+                        context.size = 0
 
                         # Handle sentences larger than target size
                         if sentence_size > self.target_page_size:
@@ -83,11 +98,11 @@ class HtmlPageSplitter:
                                 temp_size += word_size
 
                             if temp:
-                                current_chunk.append(" ".join(temp))
-                                current_size = temp_size
+                                context.chunk.append(" ".join(temp))
+                                context.size = temp_size
                         else:
-                            current_chunk.append(complete_sentence)
-                            current_size = sentence_size
+                            context.chunk.append(complete_sentence)
+                            context.size = sentence_size
 
             elif isinstance(element, Tag):
                 # Convert tag to string to get its complete HTML representation
@@ -98,13 +113,13 @@ class HtmlPageSplitter:
                 if (
                     tag_size <= self.target_page_size * 1.5
                 ):  # Allow slightly larger for complete tags
-                    if current_size + tag_size > self.target_page_size and current_chunk:
-                        if chunk := self._non_empty_chunk(current_chunk):
+                    if context.size + tag_size > self.target_page_size and context.chunk:
+                        if chunk := self._non_empty_chunk(context.chunk):
                             yield chunk
-                        current_chunk.clear()
-                        current_size = 0
-                    current_chunk.append(tag_html)
-                    current_size += tag_size
+                        context.chunk.clear()
+                        context.size = 0
+                    context.chunk.append(tag_html)
+                    context.size += tag_size
                 else:
                     # split large tags while preserving tag structure
                     attrs_str = " ".join(f'{k}="{v}"' for k, v in element.attrs.items())
@@ -113,39 +128,39 @@ class HtmlPageSplitter:
                     closing_tag = f"</{element.name}>"
 
                     # If current chunk exists and adding opening tag would exceed size, yield it
-                    if current_chunk and current_size + len(opening_tag) > self.target_page_size:
-                        if chunk := self._non_empty_chunk(current_chunk):
+                    if context.chunk and context.size + len(opening_tag) > self.target_page_size:
+                        if chunk := self._non_empty_chunk(context.chunk):
                             yield chunk
-                        current_chunk.clear()
-                        current_size = 0
+                        context.chunk.clear()
+                        context.size = 0
 
                     # Add opening tag to new chunk
-                    current_chunk.append(opening_tag)
-                    current_size += len(opening_tag)
+                    context.chunk.append(opening_tag)
+                    context.size += len(opening_tag)
 
                     # Process contents
                     if element.contents:
                         for content in self.split_elements(element.contents):
                             if (
-                                current_size + len(content) + len(closing_tag)
+                                context.size + len(content) + len(closing_tag)
                                 <= self.target_page_size
                             ):
-                                current_chunk.append(content)
-                                current_size += len(content)
+                                context.chunk.append(content)
+                                context.size += len(content)
                             else:
                                 # End current chunk with closing tag
-                                current_chunk.append(closing_tag)
-                                if chunk := self._non_empty_chunk(current_chunk):
+                                context.chunk.append(closing_tag)
+                                if chunk := self._non_empty_chunk(context.chunk):
                                     yield chunk
                                 # Start new chunk with opening tag
-                                current_chunk = [opening_tag, content]
-                                current_size = len(opening_tag) + len(content)
+                                context.chunk = [opening_tag, content]
+                                context.size = len(opening_tag) + len(content)
 
                     # Add closing tag to last chunk
-                    current_chunk.append(closing_tag)
-                    current_size += len(closing_tag)
+                    context.chunk.append(closing_tag)
+                    context.size += len(closing_tag)
 
         # Yield any remaining content
-        if current_chunk:
-            if chunk := self._non_empty_chunk(current_chunk):
+        if context.chunk:
+            if chunk := self._non_empty_chunk(context.chunk):
                 yield chunk
