@@ -48,7 +48,7 @@ class HtmlPageSplitter:
                 return chunk
         return None
 
-    def split_elements(  # pylint: disable=too-many-branches,too-many-locals,too-many-statements
+    def split_elements(
         self, elements: List[Any], context: Optional[SplitterContext] = None
     ) -> Iterator[str]:
         """Recursively split elements into chunks of appropriate size."""
@@ -57,110 +57,105 @@ class HtmlPageSplitter:
         if context.chunk is None:
             context.chunk = []
 
-        for element in elements:  # pylint: disable=too-many-nested-blocks
+        for element in elements:
             if isinstance(element, NavigableString):
-                # Handle text content
-                text = str(element).strip()
-                if not text:
-                    continue
-
-                sentences = re.split(r"([.!?。？！]+\s*)", text)
-
-                for i in range(0, len(sentences), 2):
-                    sentence = sentences[i]
-                    punctuation = sentences[i + 1] if i + 1 < len(sentences) else ""
-
-                    complete_sentence = sentence + (punctuation or "")
-                    sentence_size = len(complete_sentence)
-
-                    if context.size + sentence_size <= self.target_page_size:
-                        context.chunk.append(complete_sentence)
-                        context.size += sentence_size
-                    else:
-                        if chunk := self._non_empty_chunk(context.chunk):
-                            yield chunk
-                        context.chunk.clear()
-                        context.size = 0
-
-                        # Handle sentences larger than target size
-                        if sentence_size > self.target_page_size:
-                            words = complete_sentence.split()
-                            temp: List[str] = []
-                            temp_size = 0
-
-                            for word in words:
-                                word_size = len(word) + 1  # +1 for space
-                                if temp_size + word_size > self.target_page_size and temp:
-                                    yield " ".join(temp)
-                                    temp = []
-                                    temp_size = 0
-                                temp.append(word)
-                                temp_size += word_size
-
-                            if temp:
-                                context.chunk.append(" ".join(temp))
-                                context.size = temp_size
-                        else:
-                            context.chunk.append(complete_sentence)
-                            context.size = sentence_size
+                if text := str(element).strip():
+                    yield from self._split_text(context, text)
 
             elif isinstance(element, Tag):
-                # Convert tag to string to get its complete HTML representation
-                tag_html = str(element)
-                tag_size = len(tag_html)
-
-                # If the entire tag is small enough, keep it together
-                if (
-                    tag_size <= self.target_page_size * 1.5
-                ):  # Allow slightly larger for complete tags
-                    if context.size + tag_size > self.target_page_size and context.chunk:
-                        if chunk := self._non_empty_chunk(context.chunk):
-                            yield chunk
-                        context.chunk.clear()
-                        context.size = 0
-                    context.chunk.append(tag_html)
-                    context.size += tag_size
-                else:
-                    # split large tags while preserving tag structure
-                    attrs_str = " ".join(f'{k}="{v}"' for k, v in element.attrs.items())
-                    space = " " if element.attrs else ""
-                    opening_tag = f"<{element.name}{space}{attrs_str}>"
-                    closing_tag = f"</{element.name}>"
-
-                    # If current chunk exists and adding opening tag would exceed size, yield it
-                    if context.chunk and context.size + len(opening_tag) > self.target_page_size:
-                        if chunk := self._non_empty_chunk(context.chunk):
-                            yield chunk
-                        context.chunk.clear()
-                        context.size = 0
-
-                    # Add opening tag to new chunk
-                    context.chunk.append(opening_tag)
-                    context.size += len(opening_tag)
-
-                    # Process contents
-                    if element.contents:
-                        for content in self.split_elements(element.contents):
-                            if (
-                                context.size + len(content) + len(closing_tag)
-                                <= self.target_page_size
-                            ):
-                                context.chunk.append(content)
-                                context.size += len(content)
-                            else:
-                                # End current chunk with closing tag
-                                context.chunk.append(closing_tag)
-                                if chunk := self._non_empty_chunk(context.chunk):
-                                    yield chunk
-                                # Start new chunk with opening tag
-                                context.chunk = [opening_tag, content]
-                                context.size = len(opening_tag) + len(content)
-
-                    # Add closing tag to last chunk
-                    context.chunk.append(closing_tag)
-                    context.size += len(closing_tag)
+                yield from self._split_tag(context, element)
 
         # Yield any remaining content
         if context.chunk:
             if chunk := self._non_empty_chunk(context.chunk):
                 yield chunk
+
+    def _split_tag(self, context: SplitterContext, element: Any) -> Iterator[str]:
+        """Convert tag to string to get its complete HTML representation."""
+        tag_html = str(element)
+        tag_size = len(tag_html)
+        # If the entire tag is small enough, keep it together
+        if tag_size <= self.target_page_size * 1.5:  # Allow slightly larger for complete tags
+            if context.size + tag_size > self.target_page_size and context.chunk:
+                if chunk := self._non_empty_chunk(context.chunk):
+                    yield chunk
+                context.chunk.clear()
+                context.size = 0
+            context.chunk.append(tag_html)
+            context.size += tag_size
+        else:
+            # split large tags while preserving tag structure
+            attrs_str = " ".join(f'{k}="{v}"' for k, v in element.attrs.items())
+            space = " " if element.attrs else ""
+            opening_tag = f"<{element.name}{space}{attrs_str}>"
+            closing_tag = f"</{element.name}>"
+
+            # If current chunk exists and adding opening tag would exceed size, yield it
+            if context.chunk and context.size + len(opening_tag) > self.target_page_size:
+                if chunk := self._non_empty_chunk(context.chunk):
+                    yield chunk
+                context.chunk.clear()
+                context.size = 0
+
+            # Add opening tag to new chunk
+            context.chunk.append(opening_tag)
+            context.size += len(opening_tag)
+
+            # Process contents
+            if element.contents:
+                for content in self.split_elements(element.contents):
+                    if context.size + len(content) + len(closing_tag) <= self.target_page_size:
+                        context.chunk.append(content)
+                        context.size += len(content)
+                    else:
+                        # End current chunk with closing tag
+                        context.chunk.append(closing_tag)
+                        if chunk := self._non_empty_chunk(context.chunk):
+                            yield chunk
+                        # Start new chunk with opening tag
+                        context.chunk = [opening_tag, content]
+                        context.size = len(opening_tag) + len(content)
+
+            # Add closing tag to last chunk
+            context.chunk.append(closing_tag)
+            context.size += len(closing_tag)
+
+    def _split_text(self, context: SplitterContext, text: str) -> Iterator[str]:
+        sentences = re.split(r"([.!?。？！]+\s*)", text)
+        for i in range(0, len(sentences), 2):
+            sentence = sentences[i]
+            punctuation = sentences[i + 1] if i + 1 < len(sentences) else ""
+
+            complete_sentence = sentence + (punctuation or "")
+            sentence_size = len(complete_sentence)
+
+            if context.size + sentence_size <= self.target_page_size:
+                context.chunk.append(complete_sentence)
+                context.size += sentence_size
+            else:
+                if chunk := self._non_empty_chunk(context.chunk):
+                    yield chunk
+                context.chunk.clear()
+                context.size = 0
+
+                # Handle sentences larger than target size
+                if sentence_size > self.target_page_size:
+                    words = complete_sentence.split()
+                    temp: List[str] = []
+                    temp_size = 0
+
+                    for word in words:
+                        word_size = len(word) + 1  # +1 for space
+                        if temp_size + word_size > self.target_page_size and temp:
+                            yield " ".join(temp)
+                            temp = []
+                            temp_size = 0
+                        temp.append(word)
+                        temp_size += word_size
+
+                    if temp:
+                        context.chunk.append(" ".join(temp))
+                        context.size = temp_size
+                else:
+                    context.chunk.append(complete_sentence)
+                    context.size = sentence_size
