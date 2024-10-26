@@ -21,6 +21,14 @@ class HtmlPageSplitter:
         soup = BeautifulSoup(html, "html.parser")
         return bool(soup.get_text(strip=True) or soup.find("img"))
 
+    def _non_empty_chunk(self, current_chunk: List[str]) -> Optional[str]:
+        """Return chunk content if non-empty, otherwise None."""
+        if current_chunk:
+            chunk = "".join(current_chunk)
+            if self._has_content(chunk):
+                return chunk
+        return None
+
     def split_elements(  # pylint: disable=too-many-branches,too-many-locals,too-many-statements
         self, elements: List[Any], current_size: int = 0, current_chunk: Optional[List[str]] = None
     ) -> Iterator[str]:
@@ -54,8 +62,7 @@ class HtmlPageSplitter:
                         current_chunk.append(complete_sentence)
                         current_size += sentence_size
                     else:
-                        chunk = "".join(current_chunk)
-                        if self._has_content(chunk):
+                        if chunk := self._non_empty_chunk(current_chunk):
                             yield chunk
                         current_chunk.clear()
                         current_size = 0
@@ -92,8 +99,7 @@ class HtmlPageSplitter:
                     tag_size <= self.target_page_size * 1.5
                 ):  # Allow slightly larger for complete tags
                     if current_size + tag_size > self.target_page_size and current_chunk:
-                        chunk = "".join(current_chunk)
-                        if self._has_content(chunk):
+                        if chunk := self._non_empty_chunk(current_chunk):
                             yield chunk
                         current_chunk.clear()
                         current_size = 0
@@ -108,8 +114,7 @@ class HtmlPageSplitter:
 
                     # If current chunk exists and adding opening tag would exceed size, yield it
                     if current_chunk and current_size + len(opening_tag) > self.target_page_size:
-                        chunk = "".join(current_chunk)
-                        if self._has_content(chunk):
+                        if chunk := self._non_empty_chunk(current_chunk):
                             yield chunk
                         current_chunk.clear()
                         current_size = 0
@@ -130,8 +135,7 @@ class HtmlPageSplitter:
                             else:
                                 # End current chunk with closing tag
                                 current_chunk.append(closing_tag)
-                                chunk = "".join(current_chunk)
-                                if self._has_content(chunk):
+                                if chunk := self._non_empty_chunk(current_chunk):
                                     yield chunk
                                 # Start new chunk with opening tag
                                 current_chunk = [opening_tag, content]
@@ -143,6 +147,5 @@ class HtmlPageSplitter:
 
         # Yield any remaining content
         if current_chunk:
-            chunk = "".join(current_chunk)
-            if self._has_content(chunk):
+            if chunk := self._non_empty_chunk(current_chunk):
                 yield chunk
