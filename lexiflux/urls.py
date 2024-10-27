@@ -37,6 +37,11 @@ urlpatterns = [
     path("library", lexiflux.views.library_views.library_page, name="library"),
     path("translate", lexiflux.views.lexical_views.translate, name="translate"),
     path(
+        "api/reader-settings/",
+        lexiflux.views.reader_views.save_reader_settings,
+        name="save_reader_settings",
+    ),
+    path(
         "language-preferences/",
         lexiflux.views.language_preferences_ajax.language_preferences_editor,
         name="language-preferences",

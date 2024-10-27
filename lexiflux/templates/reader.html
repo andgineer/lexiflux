@@ -56,7 +56,8 @@
 
         <div class="flex-grow-1 d-flex flex-column flex-md-row overflow-hidden">
             <div id="book-page-scroller" class="flex-grow-1 overflow-hidden h-100">
-                <div id="words-container">
+                <div id="words-container"
+                     {% if settings.font_family is not None %}style="font-family: {{ settings.font_family }}; font-size: {{ settings.font_size }}"{% endif %}>
                     {{ pageHtml|safe }}
                 </div>
                 <div id="empty-space"></div>

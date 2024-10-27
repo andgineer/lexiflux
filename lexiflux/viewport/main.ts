@@ -1,7 +1,7 @@
 import { viewport } from './viewport';
 import { log, showModal, closeModal } from './utils';
 import { sendTranslationRequest, lexicalPanelSwitched, clearLexicalPanel, hideTranslation } from './translate';
-import { initializeFontSettings, initializeFontEventListeners } from './font';
+import { initializeReaderSettings, initializeReaderEventListeners } from './readerSettings';
 
 const CLICK_TIMEOUT_MS = 200;
 
@@ -295,7 +295,7 @@ function reInitDom(): void {
             modal.setAttribute('aria-hidden', 'true');
         }
     });
-    initializeFontEventListeners();
+    initializeReaderEventListeners();
 }
 
 // Close modal when clicking outside of it
@@ -309,7 +309,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const topWord = parseInt(document.body.getAttribute('data-top-word') || '0');
     viewport.loadPage(viewport.pageNumber, topWord).then(() => {
         reInitDom();
-        initializeFontSettings();
+        initializeReaderSettings();
     }).catch((error: Error) => {
         console.error('Failed to load page:', error);
     });

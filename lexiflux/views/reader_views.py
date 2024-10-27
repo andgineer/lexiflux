@@ -9,6 +9,7 @@ from urllib.parse import unquote
 
 from bs4 import BeautifulSoup
 from django.core.cache import cache
+from django.core.exceptions import ValidationError
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import redirect, render, get_object_or_404
 from django.urls import reverse
@@ -22,6 +23,7 @@ from lexiflux.models import (
     ReadingLoc,
     LanguagePreferences,
     BookImage,
+    ReaderSettings,
 )
 
 
@@ -174,6 +176,11 @@ def reader(request: HttpRequest) -> HttpResponse:
         f"is_last_jump {is_last_jump}"
     )
 
+    reader_settings = ReaderSettings.get_settings(
+        user=request.user,
+        book=book,
+    )
+
     return render(
         request,
         "reader.html",
@@ -184,6 +191,7 @@ def reader(request: HttpRequest) -> HttpResponse:
             "top_word": reading_location.word if reading_location else 0,
             "is_first_jump": is_first_jump,
             "is_last_jump": is_last_jump,
+            "settings": reader_settings,
         },
     )
 
@@ -426,3 +434,84 @@ def search(request: HttpRequest) -> HttpResponse:
         return JsonResponse({"error": "Invalid JSON"}, status=400)
     except Exception as e:  # pylint: disable=broad-except
         return JsonResponse({"error": str(e)}, status=500)
+
+
+def get_reader_settings_fields() -> List[str]:
+    """Get all fields from ReaderSettings model except user and book."""
+    return [
+        field.name
+        for field in ReaderSettings._meta.get_fields()
+        if field.name not in ["id", "user", "book"]
+    ]
+
+
+@smart_login_required  # type: ignore
+def load_reader_settings(request: HttpRequest) -> HttpResponse:
+    """Load reader settings for a user and specific book.
+
+    Obsolete - we load reader settings as part of the reader view.
+
+    Query Parameters:
+        book_code (required): The unique code of the book
+
+    Returns:
+        JsonResponse containing reader settings including:
+        - font_size
+        - font_family
+        - other future settings
+    """
+    try:
+        book_code = request.GET.get("book_code")
+        if not book_code:
+            return JsonResponse({"error": "Book code is required"}, status=400)
+
+        book = Book.objects.get(code=book_code)
+        settings_dict = ReaderSettings.get_settings(user=request.user, book=book)
+
+        return JsonResponse(settings_dict)
+
+    except Book.DoesNotExist:
+        return JsonResponse({"error": "Book not found"}, status=404)
+    except Exception as e:  # pylint: disable=broad-except
+        log.error(f"Error loading reader settings: {str(e)}")
+        return JsonResponse({"error": "Failed to load settings"}, status=500)
+
+
+@smart_login_required
+@require_POST  # type: ignore
+def save_reader_settings(request: HttpRequest) -> HttpResponse:
+    """Save reader settings for a user and specific book.
+
+    POST Parameters:
+        book_code (required): The unique code of the book
+        Any field from ReaderSettings model can be provided
+
+    Returns:
+        HttpResponse with appropriate status code
+    """
+    try:
+        book_code = request.POST.get("book_code")
+        if not book_code:
+            return JsonResponse({"error": "Book code is required"}, status=400)
+
+        book = Book.objects.get(code=book_code)
+
+        # Pass all provided settings to the model
+        settings = dict(request.POST.items())
+        settings.pop("book_code")  # Remove book_code from settings dict
+
+        if not settings:
+            return JsonResponse({"error": "No settings provided"}, status=400)
+
+        ReaderSettings.save_settings(user=request.user, reader_settings=settings, book=book)
+
+        return HttpResponse(status=200)
+
+    except Book.DoesNotExist:
+        return JsonResponse({"error": "Book not found"}, status=404)
+    except ValidationError as e:
+        log.error(f"Validation error saving reader settings: {str(e)}")
+        return JsonResponse({"error": str(e)}, status=400)
+    except Exception as e:  # pylint: disable=broad-except
+        log.error(f"Error saving reader settings: {str(e)}")
+        return JsonResponse({"error": "Failed to save settings"}, status=500)

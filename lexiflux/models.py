@@ -387,6 +387,75 @@ class BookImage(models.Model):  # type: ignore
         return f"Image {self.filename} for {self.book.title}"
 
 
+class ReaderSettings(models.Model):  # type: ignore
+    """Font settings for books."""
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="reader_settings"
+    )
+    book = models.ForeignKey(
+        "Book",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        help_text="If null, these are the user's default font settings",
+    )
+    font_family = models.CharField(
+        max_length=255, help_text="Font family name or system font stack"
+    )
+    font_size = models.CharField(max_length=10, help_text="Font size with units (e.g., '16px')")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ["user", "book"]
+        ordering = ["-updated_at"]
+        indexes = [
+            models.Index(fields=["user", "book"]),
+            models.Index(fields=["user", "-updated_at"]),
+        ]
+
+    @classmethod
+    def get_settings(cls, user: CustomUser, book: Book) -> Dict[str, Optional[str]]:
+        """Get reader settings for a user and book.
+
+        Return the most recently saved settings.
+        If no settings exist at all, return default.
+        """
+        if reader_settings := cls.objects.filter(user=user, book=book).first():
+            return cls._settings_to_dict(reader_settings)
+        if reader_settings := cls.objects.filter(user=user).first():
+            return cls._settings_to_dict(reader_settings)
+        return {
+            "font_family": None,  # brawser default
+            "font_size": None,  # brawser default
+        }
+
+    @staticmethod
+    def _settings_to_dict(reader_settings: "ReaderSettings") -> Dict[str, Optional[str]]:
+        """Convert settings model to dictionary, excluding None values."""
+        result = {}
+        if reader_settings.font_family is not None:
+            result["font_family"] = reader_settings.font_family
+        if reader_settings.font_size is not None:
+            result["font_size"] = reader_settings.font_size
+        return result
+
+    @classmethod
+    def save_settings(
+        cls,
+        user: CustomUser,
+        reader_settings: Dict[str, Optional[str]],
+        book: Book,
+    ) -> None:
+        """Save reader settings for a user and optionally a specific book."""
+        reader_settings, _ = cls.objects.update_or_create(
+            user=user,
+            book=book,
+            defaults=reader_settings,
+        )
+
+
 class AIModelConfig(models.Model):  # type: ignore
     """Model to store settings for AI models used in the application."""
 

@@ -1,10 +1,9 @@
 import { showModal, closeModal } from './utils';
 import { viewport } from './viewport';
 
-// Interfaces
-export interface FontSettings {
-  size: string;
-  family: string;
+export interface ReaderSettings {
+    font_size: string;
+    font_family: string;
 }
 
 interface FontOption {
@@ -13,7 +12,6 @@ interface FontOption {
   type: 'system' | 'google';
 }
 
-// Constants
 const SYSTEM_FONTS: FontOption[] = [
   { name: 'System Default', value: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif', type: 'system' },
   { name: 'Serif', value: 'serif', type: 'system' },
@@ -44,32 +42,64 @@ function loadGoogleFonts(): void {
   document.head.appendChild(link);
 }
 
-function applyFontSettings(settings: FontSettings): void {
+function applyReaderSettings(settings: ReaderSettings): void {
   const wordsContainer = viewport.getWordsContainer();
   if (wordsContainer) {
-    wordsContainer.style.fontSize = settings.size;
-    wordsContainer.style.fontFamily = settings.family;
+    wordsContainer.style.fontSize = settings.font_size;
+    wordsContainer.style.fontFamily = settings.font_family;
   }
 }
 
-function handleFontSettingsSubmit(): void {
+async function saveReaderSettings(settings: ReaderSettings): Promise<void> {
+    try {
+        const formData = new FormData();
+        formData.append('book_code', viewport.bookCode);
+        formData.append('font_family', settings.font_family);
+        formData.append('font_size', settings.font_size);
+
+        const response = await fetch('/api/reader-settings/', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': getCsrfToken(),
+            },
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Failed to save reader settings:', errorText);
+            throw new Error(errorText);
+        }
+    } catch (error) {
+        console.error('Error saving reader settings:', error);
+        throw error;
+    }
+}
+
+function getCsrfToken(): string {
+  const csrfCookie = document.cookie
+    .split(';')
+    .find(cookie => cookie.trim().startsWith('csrftoken='));
+  return csrfCookie ? csrfCookie.split('=')[1] : '';
+}
+
+function handleReaderSettingsSubmit(): void {
   const sizeSelect = document.getElementById('fontSizeSelect') as HTMLSelectElement;
   const familySelect = document.getElementById('fontFamilySelect') as HTMLSelectElement;
 
   if (sizeSelect && familySelect) {
-    const newSettings: FontSettings = {
-      size: sizeSelect.value,
-      family: familySelect.value
+    const newSettings: ReaderSettings = {
+      font_size: sizeSelect.value,
+      font_family: familySelect.value
     };
 
-    applyFontSettings(newSettings);
-//     savePreference('fontSize', newSettings.size);
-//     savePreference('fontFamily', newSettings.family);
+    applyReaderSettings(newSettings);
+    saveReaderSettings(newSettings);
     closeModal('fontSettingsModal');
   }
 }
 
-function handleFontSettingsButtonClick(event: Event): void {
+function handleReaderSettingsButtonClick(event: Event): void {
   event.preventDefault();
   showModal('fontSettingsModal');
 }
@@ -83,13 +113,11 @@ function handleFontSelectChange(event: Event): void {
   }
 }
 
-export function initializeFontSettings(): void {
+export function initializeReaderSettings(): void {
   loadGoogleFonts();
 
-  const savedSize = DEFAULT_FONT_SIZE;  //loadPreference('fontSize') || DEFAULT_FONT_SIZE;
-  const savedFamily = DEFAULT_FONT_FAMILY; //loadPreference('fontFamily') || DEFAULT_FONT_FAMILY;
-
-  applyFontSettings({ size: savedSize, family: savedFamily });
+  const savedSize = DEFAULT_FONT_SIZE;
+  const savedFamily = DEFAULT_FONT_FAMILY;
 
   const sizeSelect = document.getElementById('fontSizeSelect') as HTMLSelectElement;
   const familySelect = document.getElementById('fontFamilySelect') as HTMLSelectElement;
@@ -113,17 +141,17 @@ export function initializeFontSettings(): void {
   if (sizeSelect) sizeSelect.value = savedSize;
 }
 
-export function initializeFontEventListeners(): void {
+export function initializeReaderEventListeners(): void {
   let fontSettingsButton = document.getElementById('font-settings-button');
   if (fontSettingsButton) {
-    fontSettingsButton.removeEventListener('click', handleFontSettingsButtonClick);
-    fontSettingsButton.addEventListener('click', handleFontSettingsButtonClick);
+    fontSettingsButton.removeEventListener('click', handleReaderSettingsButtonClick);
+    fontSettingsButton.addEventListener('click', handleReaderSettingsButtonClick);
   }
 
   let fontSettingsSubmit = document.getElementById('fontSettingsSubmit');
   if (fontSettingsSubmit) {
-    fontSettingsSubmit.removeEventListener('click', handleFontSettingsSubmit);
-    fontSettingsSubmit.addEventListener('click', handleFontSettingsSubmit);
+    fontSettingsSubmit.removeEventListener('click', handleReaderSettingsSubmit);
+    fontSettingsSubmit.addEventListener('click', handleReaderSettingsSubmit);
   }
 
   let fontFamilySelect = document.getElementById('fontFamilySelect');
