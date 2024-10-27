@@ -20,10 +20,10 @@ const SYSTEM_FONTS: FontOption[] = [
 ];
 
 const GOOGLE_FONTS: FontOption[] = [
-  { name: 'Roboto', value: 'Roboto', type: 'google' },
-  { name: 'Open Sans', value: 'Open Sans', type: 'google' },
-  { name: 'Noto Sans', value: 'Noto Sans', type: 'google' },
-  { name: 'Lato', value: 'Lato', type: 'google' },
+  { name: 'Roboto', value: '"Roboto", sans-serif', type: 'google' },
+  { name: 'Open Sans', value: '"Open Sans", sans-serif', type: 'google' },
+  { name: 'Noto Sans', value: '"Noto Sans", sans-serif', type: 'google' },
+  { name: 'Lato', value: '"Lato", sans-serif', type: 'google' },
 ];
 
 const ALL_FONTS = [...SYSTEM_FONTS, ...GOOGLE_FONTS];
@@ -33,11 +33,39 @@ const DEFAULT_FONT_FAMILY = SYSTEM_FONTS[0].value;
 
 // Functions
 function loadGoogleFonts(): void {
+  // Check if Google Fonts are already loaded
+  const existingLink = document.querySelector('link[href*="fonts.googleapis.com"]');
+  if (existingLink) {
+    return;
+  }
+
   const link = document.createElement('link');
   link.rel = 'stylesheet';
 
-  const fonts = GOOGLE_FONTS.map(font => font.name.replace(' ', '+')).join('|');
-  link.href = `https://fonts.googleapis.com/css2?family=${fonts}&display=swap`;
+  // Add weights and styles for better font rendering
+  const fontsWithWeights = GOOGLE_FONTS.map(font => {
+    const fontName = font.name.replace(' ', '+');
+    return `family=${fontName}:wght@400;500;700&display=swap`;
+  }).join('&');
+
+  link.href = `https://fonts.googleapis.com/css2?${fontsWithWeights}`;
+
+  // Add onload handler to ensure fonts are loaded
+  link.onload = () => {
+    console.log('Google Fonts loaded successfully');
+    // Force a redraw of the preview text
+    const previewText = document.getElementById('fontPreviewText');
+    if (previewText) {
+      const currentFont = (document.getElementById('fontFamilySelect') as HTMLSelectElement)?.value;
+      if (currentFont) {
+        previewText.style.fontFamily = currentFont;
+      }
+    }
+  };
+
+  link.onerror = (err) => {
+    console.error('Failed to load Google Fonts:', err);
+  };
 
   document.head.appendChild(link);
 }
@@ -118,8 +146,15 @@ function handleReaderSettingsSubmit(): void {
     };
 
     applyReaderSettings(newSettings);
-    saveReaderSettings(newSettings);
-    closeModal('fontSettingsModal');
+    saveReaderSettings(newSettings)
+      .then(() => {
+        console.log('Reader settings saved successfully');
+        closeModal('fontSettingsModal');
+      })
+      .catch(error => {
+        console.error('Failed to save reader settings:', error);
+        // Optionally show an error message to the user
+      });
   }
 }
 
@@ -138,6 +173,7 @@ function handleFontSelectChange(event: Event): void {
 }
 
 export function initializeReaderSettings(): void {
+  // Load Google Fonts first
   loadGoogleFonts();
 
   const initialSettings = getInitialSettings();
@@ -179,13 +215,13 @@ export function initializeReaderEventListeners(): void {
     fontSettingsButton.addEventListener('click', handleReaderSettingsButtonClick);
   }
 
-  let fontSettingsSubmit = document.getElementById('fontSettingsSubmit');
+  const fontSettingsSubmit = document.getElementById('fontSettingsSubmit');
   if (fontSettingsSubmit) {
     fontSettingsSubmit.removeEventListener('click', handleReaderSettingsSubmit);
     fontSettingsSubmit.addEventListener('click', handleReaderSettingsSubmit);
   }
 
-  let fontFamilySelect = document.getElementById('fontFamilySelect');
+  const fontFamilySelect = document.getElementById('fontFamilySelect');
   if (fontFamilySelect) {
     fontFamilySelect.removeEventListener('change', handleFontSelectChange);
     fontFamilySelect.addEventListener('change', handleFontSelectChange);

@@ -2,8 +2,8 @@
 {% load static %}
 {% block content %}
     <div id="reader-settings-data"
-         data-font-family="{% if settings.font_family %}{{ settings.font_family }}{% endif %}"
-         data-font-size="{% if settings.font_size %}{{ settings.font_size }}{% endif %}"
+         data-font-family="{% if settings.font_family is not None %}{{ settings.font_family }}{% endif %}"
+         data-font-size="{% if settings.font_size is not None %}{{ settings.font_size }}{% endif %}"
          style="display: none;">
     </div>
     <div id="reader" class="d-flex flex-column vh-100 overflow-hidden">
@@ -193,12 +193,12 @@
       </div>
     </div>
 
-    <!-- Font Settings Modal -->
+    <!-- Reader Settings Modal -->
     <div id="fontSettingsModal" class="modal fade" aria-hidden="true" aria-labelledby="fontSettingsModalLabel" role="dialog">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 id="fontSettingsModalLabel" class="modal-title">Font Settings</h5>
+                    <h5 id="fontSettingsModalLabel" class="modal-title">Reader Settings</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
