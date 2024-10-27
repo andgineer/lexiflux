@@ -38,6 +38,11 @@
                     <i class="bi bi-search me-1"></i>Search
                   </button>
               </li>
+              <li class="nav-item">
+                  <button id="font-settings-button" class="btn btn-outline-secondary ms-2" type="button" title="Font Settings">
+                      <i class="bi bi-type"></i>
+                  </button>
+              </li>
             </ul>
             <button id="lexical-panel-button" class="btn btn-primary" type="button"
                     data-bs-toggle="collapse" data-bs-target="#lexical-panel"
@@ -180,6 +185,41 @@
           </div>
         </div>
       </div>
+    </div>
+
+    <!-- Font Settings Modal -->
+    <div id="fontSettingsModal" class="modal fade" aria-hidden="true" aria-labelledby="fontSettingsModalLabel" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 id="fontSettingsModalLabel" class="modal-title">Font Settings</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="fontSizeSelect" class="form-label">Font Size</label>
+                        <select class="form-select" id="fontSizeSelect">
+                            <option value="12px">Small (12px)</option>
+                            <option value="14px">Medium (14px)</option>
+                            <option value="16px">Normal (16px)</option>
+                            <option value="18px">Large (18px)</option>
+                            <option value="20px">Extra Large (20px)</option>
+                            <option value="24px">Huge (24px)</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="fontFamilySelect" class="form-label">Font Family</label>
+                        <select class="form-select" id="fontFamilySelect"></select>
+                        <div id="fontPreviewText" class="mt-2 p-2 border rounded">
+                            Preview text - The quick brown fox jumps over the lazy dog
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" id="fontSettingsSubmit" class="btn btn-primary">Apply</button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script src="{% static 'lexiflux/bundle.js' %}"></script>
