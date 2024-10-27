@@ -42,6 +42,30 @@ function loadGoogleFonts(): void {
   document.head.appendChild(link);
 }
 
+function getInitialSettings(): ReaderSettings {
+  const settingsData = document.getElementById('reader-settings-data');
+
+  const settings: ReaderSettings = {
+    font_size: DEFAULT_FONT_SIZE,
+    font_family: DEFAULT_FONT_FAMILY
+  };
+
+  if (settingsData) {
+    const fontFamily = settingsData.dataset.fontFamily;
+    const fontSize = settingsData.dataset.fontSize;
+
+    if (fontFamily) {
+      settings.font_family = fontFamily;
+    }
+
+    if (fontSize) {
+      settings.font_size = fontSize;
+    }
+  }
+
+  return settings;
+}
+
 function applyReaderSettings(settings: ReaderSettings): void {
   const wordsContainer = viewport.getWordsContainer();
   if (wordsContainer) {
@@ -116,8 +140,7 @@ function handleFontSelectChange(event: Event): void {
 export function initializeReaderSettings(): void {
   loadGoogleFonts();
 
-  const savedSize = DEFAULT_FONT_SIZE;
-  const savedFamily = DEFAULT_FONT_FAMILY;
+  const initialSettings = getInitialSettings();
 
   const sizeSelect = document.getElementById('fontSizeSelect') as HTMLSelectElement;
   const familySelect = document.getElementById('fontFamilySelect') as HTMLSelectElement;
@@ -135,12 +158,20 @@ export function initializeReaderSettings(): void {
       familySelect.appendChild(option);
     });
 
-    familySelect.value = savedFamily;
+    // Set the initial font family
+    familySelect.value = initialSettings.font_family;
   }
 
-  if (sizeSelect) sizeSelect.value = savedSize;
-}
+  if (sizeSelect) {
+    sizeSelect.value = initialSettings.font_size;
+  }
 
+  // Update preview text with initial font
+  const previewText = document.getElementById('fontPreviewText');
+  if (previewText) {
+    previewText.style.fontFamily = initialSettings.font_family;
+  }
+}
 export function initializeReaderEventListeners(): void {
   let fontSettingsButton = document.getElementById('font-settings-button');
   if (fontSettingsButton) {

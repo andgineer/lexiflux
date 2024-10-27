@@ -1,6 +1,11 @@
 {% extends "base.html" %}
 {% load static %}
 {% block content %}
+    <div id="reader-settings-data"
+         data-font-family="{% if settings.font_family %}{{ settings.font_family }}{% endif %}"
+         data-font-size="{% if settings.font_size %}{{ settings.font_size }}{% endif %}"
+         style="display: none;">
+    </div>
     <div id="reader" class="d-flex flex-column vh-100 overflow-hidden">
 
       <nav id="top-navbar" class="navbar navbar-expand-sm navbar-light bg-light">
