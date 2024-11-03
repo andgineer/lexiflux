@@ -21,27 +21,39 @@ let dictionaryWindows: { [key: string]: Window | null } = {};
 
 function sendTranslationRequest(selectedRange: Range | null = null): void {
   const activePanelId = getActiveLexicalArticleId();
-  const wordIds = getWordIds(selectedRange);
+  const initialWordIds = getWordIds(selectedRange);
 
-  if (!shouldSendRequest(selectedRange, activePanelId, wordIds)) {
+  if (!shouldSendRequest(selectedRange, activePanelId, initialWordIds)) {
     return;
   }
 
-  if (wordIds === null || wordIds.length === 0) {
+  if (initialWordIds === null || initialWordIds.length === 0) {
     console.log('No word IDs to translate');
     return;
   }
 
-  currentSelection.wordIds = wordIds;
+  // Get affected spans and extended word IDs
+  const spansToRemove = spanManager.getAffectedSpans(initialWordIds);
+  const extendedWordIds = Array.from(spanManager.getExtendedWordIds(initialWordIds)).sort((a, b) => a - b);
+
+  // Remove old spans
+  spansToRemove.forEach(spanId => {
+    const span = document.getElementById(`translation-word-${spanId}`);
+    if (span) {
+      hideTranslation(span as HTMLElement);
+    }
+  });
+
+  currentSelection.wordIds = extendedWordIds;
 
   if (selectedRange) {
-    handleInTextTranslation(selectedRange, wordIds);
+    handleInTextTranslation(selectedRange, extendedWordIds);
   }
 
   if (activePanelId) {
     const lexicalArticle = lexicalArticleNumFromId(activePanelId);
     if (lexicalArticle && !currentSelection.updatedPanels.has(lexicalArticle)) {
-      handleLexicalArticleUpdate(activePanelId, wordIds);
+      handleLexicalArticleUpdate(activePanelId, extendedWordIds);
     }
   }
 }
@@ -61,25 +73,12 @@ function shouldSendRequest(selectedRange: Range | null, activePanelId: string | 
 }
 
 function handleInTextTranslation(selectedRange: Range, wordIds: number[]): void {
-  const spansToRemove = spanManager.getAffectedSpans(wordIds);
-  const extendedWordIds = spanManager.getExtendedWordIds(wordIds);
-
-  // Remove old spans
-  spansToRemove.forEach(spanId => {
-    const span = document.getElementById(`translation-word-${spanId}`);
-    if (span) {
-      hideTranslation(span as HTMLElement);
-    }
-// todo: remove the span and words map from spanManager
-  });
-
   // Create new translation span
-  const sortedWordIds = Array.from(extendedWordIds).sort((a, b) => a - b);
-  const firstWordId = sortedWordIds[0];
-  const lastWordId = sortedWordIds[sortedWordIds.length - 1];
+  const firstWordId = wordIds[0];
+  const lastWordId = wordIds[wordIds.length - 1];
   const extendedRange = createRangeFromWords(firstWordId, lastWordId);
   const translationSpan = createTranslationSpanWithSpinner(extendedRange);
-  const params = createRequestParams(sortedWordIds, '0');
+  const params = createRequestParams(wordIds, '0');
 
   makeRequest(params)
     .then(result => {
