@@ -19,8 +19,8 @@ jobs:
       PRIMARY_PYTHON_VERSION: '3.12'
       DJANGO_SETTINGS_MODULE: 'lexiflux.settings'
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-python@v3
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PRIMARY_PYTHON_VERSION  }}
       - uses: andgineer/uv-venv@v1

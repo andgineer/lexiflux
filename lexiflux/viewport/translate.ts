@@ -454,13 +454,12 @@ function updateLexicalPanel(data: TranslationResponse, activePanelId: string): v
     if (data.window) {
       // Hide spinner and show button
       contentDiv.innerHTML = `
-        ..see separate window.. <br><br>
         <button id="openWindowButton-${articleId}" class="btn btn-primary btn-sm">Open in new window</button>
       `;
       const openWindowButton = document.getElementById(`openWindowButton-${articleId}`);
       openWindowButton?.removeEventListener('click', () => handleOpenLexicalWindow(url, windowKey, windowFeatures));
       openWindowButton?.addEventListener('click', () => handleOpenLexicalWindow(url, windowKey, windowFeatures));
-      openWindowButton?.click();
+//       openWindowButton?.click();
     } else {
       // Load URL in iframe
       contentDiv.innerHTML = ''; // Hide spinner
