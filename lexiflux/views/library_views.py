@@ -17,7 +17,7 @@ from django.db.models import Q
 from lexiflux.ebook.book_loader_base import BookLoaderBase
 from lexiflux.models import Book, Author, Language
 from lexiflux.ebook.book_loader_plain_text import BookLoaderPlainText
-from lexiflux.ebook.book_loader_html import BookHtml
+from lexiflux.ebook.book_loader_html import BookLoaderHtml
 from lexiflux.ebook.book_loader_epub import BookLoaderEpub
 from lexiflux.decorators import smart_login_required
 
@@ -95,7 +95,7 @@ def import_book(request: HttpRequest) -> JsonResponse:
     if file_extension == "txt":
         book_class = BookLoaderPlainText
     elif file_extension == "html":
-        book_class = BookHtml
+        book_class = BookLoaderHtml
     elif file_extension == "epub":
         book_class = BookLoaderEpub
     else:
