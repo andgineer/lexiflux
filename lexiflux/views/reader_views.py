@@ -78,11 +78,13 @@ def set_sources(content: str, book: Book) -> str:
 
     # Retarget internal links
     for link in soup.find_all("a", href=True):
-        href = normalize_path(link["href"])
-        if href.startswith("#") or "://" not in href:
-            # This is an internal link
-            link["href"] = "javascript:void(0);"
-            link["data-href"] = href  # Store the original href in a data attribute
+        href = link["href"]
+        if href.startswith(("http://", "https://", "ftp://", "mailto:")):
+            continue  # Skip external links
+
+        normalized_href = normalize_path(href)
+        link["href"] = "javascript:void(0);"
+        link["data-href"] = normalized_href
 
     return str(soup)
 
@@ -446,7 +448,7 @@ def get_reader_settings_fields() -> List[str]:
 
 
 @smart_login_required  # type: ignore
-def load_reader_settings(request: HttpRequest) -> HttpResponse:
+def load_reader_settings(request: HttpRequest) -> HttpResponse:  # pragma: no cover
     """Load reader settings for a user and specific book.
 
     Obsolete - we load reader settings as part of the reader view.

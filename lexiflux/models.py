@@ -449,7 +449,7 @@ class ReaderSettings(models.Model):  # type: ignore
         book: Book,
     ) -> None:
         """Save reader settings for a user and optionally a specific book."""
-        reader_settings, _ = cls.objects.update_or_create(
+        cls.objects.update_or_create(
             user=user,
             book=book,
             defaults=reader_settings,
