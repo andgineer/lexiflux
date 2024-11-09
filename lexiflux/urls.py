@@ -4,7 +4,7 @@ from django.urls import path, include
 from django.contrib.auth.views import LogoutView
 from django.contrib import admin
 
-import lexiflux.views.language_preferences_ajax
+import lexiflux.views.language_preferences_views
 import lexiflux.views.lexical_views
 import lexiflux.views.library_views
 import lexiflux.views.reader_views
@@ -43,37 +43,37 @@ urlpatterns = [
     ),
     path(
         "language-preferences/",
-        lexiflux.views.language_preferences_ajax.language_preferences_editor,
+        lexiflux.views.language_preferences_views.language_preferences_editor,
         name="language-preferences",
     ),
     path(
         "api/update-user-language/",
-        lexiflux.views.language_preferences_ajax.update_user_language,
+        lexiflux.views.language_preferences_views.update_user_language,
         name="api_update_user_language",
     ),
     path(
         "api/get-language-preferences/",
-        lexiflux.views.language_preferences_ajax.get_language_preferences,
+        lexiflux.views.language_preferences_views.get_language_preferences,
         name="get_language_preferences",
     ),
     path(
         "api/manage-lexical-article/",
-        lexiflux.views.language_preferences_ajax.manage_lexical_article,
+        lexiflux.views.language_preferences_views.manage_lexical_article,
         name="manage_lexical_article",
     ),
     path(
         "api/save-inline-translation/",
-        lexiflux.views.language_preferences_ajax.save_inline_translation,
+        lexiflux.views.language_preferences_views.save_inline_translation,
         name="save_inline_translation",
     ),
     path(
         "api/save-inline-translation/",
-        lexiflux.views.language_preferences_ajax.save_inline_translation,
+        lexiflux.views.language_preferences_views.save_inline_translation,
         name="save_inline_translation",
     ),
     path(
         "api/update-article-order/",
-        lexiflux.views.language_preferences_ajax.update_article_order,
+        lexiflux.views.language_preferences_views.update_article_order,
         name="update_article_order",
     ),
     path("api/import-book/", lexiflux.views.library_views.import_book, name="import_book"),
