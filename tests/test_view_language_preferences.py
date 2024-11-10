@@ -6,10 +6,11 @@ import pytest
 from deep_translator.exceptions import LanguageNotSupportedException
 from django.urls import reverse
 
+from lexiflux.language_preferences_default import DEFAULT_LEXICAL_ARTICLES
 from lexiflux.models import LanguagePreferences, Language, LexicalArticle
 
 
-DEFAULT_ARTICLES_NUM = 5  # created in migrations
+DEFAULT_ARTICLES_NUM = len(DEFAULT_LEXICAL_ARTICLES)  # created in migrations
 
 @allure.epic('Pages endpoints')
 @allure.story('Language Preferences')
@@ -305,9 +306,9 @@ def test_update_article_order_success(client, approved_user, language):
     # articles[1] -> order 0
     # articles[0] -> order 1
     # articles[2] -> order 2
-    assert articles[1].order == DEFAULT_ARTICLES_NUM + 2
+    assert articles[1].order == DEFAULT_ARTICLES_NUM + 1
     assert articles[0].order == 1
-    assert articles[2].order == DEFAULT_ARTICLES_NUM + 3
+    assert articles[2].order == DEFAULT_ARTICLES_NUM + 2
 
     # Verify the order in the database matches our expected order
     db_orders = list(
@@ -365,9 +366,9 @@ def test_update_article_order_to_end(client, approved_user, language):
         article.refresh_from_db()
         print(f"{article.title} -> {article.order}")
 
-    assert articles[1].order == DEFAULT_ARTICLES_NUM + 1
-    assert articles[2].order == DEFAULT_ARTICLES_NUM + 2
-    assert articles[0].order == DEFAULT_ARTICLES_NUM + 3
+    assert articles[1].order == DEFAULT_ARTICLES_NUM
+    assert articles[2].order == DEFAULT_ARTICLES_NUM + 1
+    assert articles[0].order == DEFAULT_ARTICLES_NUM + 2
 
     # Verify the order in the database
     db_orders = list(
@@ -375,7 +376,7 @@ def test_update_article_order_to_end(client, approved_user, language):
         .order_by('order')
         .values_list('title', flat=True)
     )
-    assert db_orders[DEFAULT_ARTICLES_NUM+1:] == ['Article 2', 'Article 3', 'Article 1']
+    assert db_orders[DEFAULT_ARTICLES_NUM:] == ['Article 2', 'Article 3', 'Article 1']
 
 
 @allure.epic('Pages endpoints')
