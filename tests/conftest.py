@@ -60,6 +60,15 @@ browser_options = {
 }
 
 
+
+def pytest_addoption(parser):
+    parser.addoption(
+        "--use-llm",
+        action="store_true",
+        help="Use real LLM (chatGPT) so tests will spend money",
+    )
+
+
 def is_docker_compose_running(service_name: str) -> bool:
     """Check if a Docker service is running."""
     try:

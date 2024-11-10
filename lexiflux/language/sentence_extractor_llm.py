@@ -23,6 +23,25 @@ WORD_START_MARK = "[HIGHLIGHT]"
 WORD_END_MARK = "[/HIGHLIGHT]"
 
 
+def validate_inputs(
+    plain_text: str, word_slices: List[Tuple[int, int]], terms_word_ids: List[int]
+) -> None:
+    """Validate input parameters for break_into_sentences_llm."""
+    if not plain_text:
+        raise ValueError("Input text cannot be empty")
+
+    if not word_slices:
+        raise ValueError("Word slices list cannot be empty")
+
+    if not terms_word_ids:
+        raise ValueError("Term word IDs list cannot be empty")
+
+    if any(word_id >= len(word_slices) for word_id in terms_word_ids):
+        raise ValueError(
+            f"Invalid highlighted word ID. Word IDs must be less than {len(word_slices)}"
+        )
+
+
 def break_into_sentences_llm(  # pylint: disable=too-many-locals
     plain_text: str,
     word_slices: List[Tuple[int, int]],
@@ -45,6 +64,7 @@ def break_into_sentences_llm(  # pylint: disable=too-many-locals
         - Dictionary mapping word index to sentence index
     """
     # Step 1: Mark the highlighted term with **
+    validate_inputs(plain_text, word_slices, term_word_ids)
     term_start = word_slices[term_word_ids[0]][0]
     term_end = word_slices[term_word_ids[-1]][1]
     marked_text = (
