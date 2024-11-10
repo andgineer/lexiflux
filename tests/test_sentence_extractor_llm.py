@@ -77,34 +77,20 @@ class MockChain:
 
 
 @pytest.fixture
-def mock_llm_chain():
+def mock_llm_chain(request):
     """Fixture to mock the LangChain chain when skip_llm is True."""
-    mock_chain = MockChain()
-    with patch('lexiflux.language.sentence_extractor_llm.ChatPromptTemplate.from_messages') as mock_prompt:
-        with patch('lexiflux.language.sentence_extractor_llm.ChatOpenAI') as mock_chat:
-            with patch('lexiflux.language.sentence_extractor_llm.TextOutputParser') as mock_parser:
-                # Create a mock chain that will be returned by the | operations
-                chain = MagicMock()
-                chain.invoke = mock_chain.invoke
-
-                # Make the | operator return our mock chain
-                mock_prompt.return_value.__or__.return_value.__or__.return_value = chain
-                yield mock_chain
-
-
-def validate_inputs(plain_text: str, word_slices: List[Tuple[int, int]], term_word_ids: List[int]) -> None:
-    """Validate input parameters for break_into_sentences_llm."""
-    if not plain_text:
-        raise ValueError("Input text cannot be empty")
-
-    if not word_slices:
-        raise ValueError("Word slices list cannot be empty")
-
-    if not term_word_ids:
-        raise ValueError("Term word IDs list cannot be empty")
-
-    if any(word_id >= len(word_slices) for word_id in term_word_ids):
-        raise ValueError(f"Invalid highlighted word ID. Word IDs must be less than {len(word_slices)}")
+    if request.config.getoption("--use-llm"):
+        # Don't mock anything when using real LLM
+        yield None
+    else:
+        mock_chain = MockChain()
+        with patch('lexiflux.language.sentence_extractor_llm.ChatPromptTemplate.from_messages') as mock_prompt:
+            with patch('lexiflux.language.sentence_extractor_llm.ChatOpenAI') as mock_chat:
+                with patch('lexiflux.language.sentence_extractor_llm.TextOutputParser') as mock_parser:
+                    chain = MagicMock()
+                    chain.invoke = mock_chain.invoke
+                    mock_prompt.return_value.__or__.return_value.__or__.return_value = chain
+                    yield chain
 
 
 @allure.epic('Book import')
@@ -135,19 +121,9 @@ def test_break_into_sentences_llm(
         expected_sentences: List[str],
         expected_word_to_sentence: Dict[int, int],
         mock_llm_chain,
-        request
 ):
     """Test break_into_sentences_llm with either real or mocked LLM based on skip_llm flag."""
-    if request.config.getoption("--use-llm"):
-        print("#" * 20, " Using real ChatGPT ", "#" * 20)
-        with patch('lexiflux.language.sentence_extractor_llm.ChatOpenAI') as mock:
-            mock.return_value = mock_llm_chain
-            sentences, word_to_sentence = break_into_sentences_llm(text, word_ids, highlighted_word_ids)
-    else:
-        # Using the mock
-        with patch('lexiflux.language.sentence_extractor_llm.validate_inputs', wraps=validate_inputs):
-            sentences, word_to_sentence = break_into_sentences_llm(text, word_ids, highlighted_word_ids)
-
+    sentences, word_to_sentence = break_into_sentences_llm(text, word_ids, highlighted_word_ids)
 
     assert sentences == expected_sentences, f"Expected {expected_sentences}, but got {sentences}"
     assert word_to_sentence == expected_word_to_sentence, \
@@ -172,17 +148,9 @@ def test_break_into_sentences_edge_cases(
         highlighted_word_ids: List[int],
         expected_error: str,
         mock_llm_chain,
-        request
 ):
     """Test edge cases with either real or mocked LLM based on skip_llm flag."""
-    if request.config.getoption("--use-llm"):
-        with pytest.raises(ValueError) as exc_info:
-            with patch('lexiflux.language.sentence_extractor_llm.validate_inputs', wraps=validate_inputs):
-                break_into_sentences_llm(text, word_ids, highlighted_word_ids)
-    else:
-        with patch('lexiflux.language.sentence_extractor_llm.ChatOpenAI') as mock:
-            mock.return_value = mock_llm_chain
-            with pytest.raises(ValueError) as exc_info:
-                break_into_sentences_llm(text, word_ids, highlighted_word_ids)
+    with pytest.raises(ValueError) as exc_info:
+        break_into_sentences_llm(text, word_ids, highlighted_word_ids)
 
     assert expected_error in str(exc_info.value)

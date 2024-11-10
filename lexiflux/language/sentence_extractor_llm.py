@@ -103,9 +103,7 @@ def break_into_sentences_llm(  # pylint: disable=too-many-locals
 
     for word_id, (word_start, word_end) in enumerate(word_slices):  # pylint: disable=redefined-outer-name
         if sentence_start <= word_start < sentence_end:
-            # print(f"Word ID {word_id} (started at {word_start}) is in sentence:
-            # {plain_text[0:word_start]}@@@{plain_text[word_start:word_end]}
-            # @@@{plain_text[word_end:]}")
+            # ic(current_sentence, word_id, word_start, word_end)
             map_word_to_sentence[word_id] = current_sentence
             word_slices[word_id] = (word_start, word_end)
 
@@ -116,9 +114,9 @@ def detect_sentence_llm(text: str, text_language: str) -> str:
     """Use LLM to detect and mark the sentence containing the highlighted word."""
     preprocessing_template = (
         "Given a text in {text_language}, identify the full sentence"
-        "that contains the word(s) marked with double asterisks **like this**."
-        "Mark the sentence containing the marked word(s) with double vertical bars before"
-        "and after the sentence, like this:"
+        f"that contains the word(s) marked {WORD_START_MARK}like this{WORD_END_MARK}."
+        "Mark the sentence containing the marked word(s) with "
+        f"{SENTENCE_START_MARK}{SENTENCE_END_MARK}, like this: "
         f"{SENTENCE_START_MARK}This is the marked sentence "
         f"containing {WORD_START_MARK}the word{WORD_END_MARK}.{SENTENCE_END_MARK}"
         "Definition of a sentence: grammatical unit that consists of one or more words,"
@@ -132,7 +130,6 @@ def detect_sentence_llm(text: str, text_language: str) -> str:
         "that are part of the main thought."
         "Return the result as plain text with the marked sentence."
     )
-
     preprocessing_prompt_template = ChatPromptTemplate.from_messages(
         [("system", preprocessing_template), ("user", "{text}")]
     )
@@ -143,9 +140,7 @@ def detect_sentence_llm(text: str, text_language: str) -> str:
     )
 
     chain = preprocessing_prompt_template | model | TextOutputParser()
-    result = chain.invoke({"text": text, "text_language": text_language})
-
-    return result
+    return chain.invoke({"text": text, "text_language": text_language})
 
 
 if __name__ == "__main__":
