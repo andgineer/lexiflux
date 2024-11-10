@@ -35,7 +35,7 @@ def export_words_to_anki_connect(  # pylint: disable=unused-argument
             notes.extend(create_anki_notes_data(term, model_name, deck_name))
 
         skipped_count = add_notes(anki_connect_url, notes)
-        return (  # type: ignore
+        return (
             len(terms) - skipped_count // NOTES_PER_TERM
             if skipped_count is not None
             else len(terms)
