@@ -26,11 +26,11 @@
 | lexiflux/language/detect\_language\_detectlanguage.py |       25 |        4 |     84% |29-31, 33-37 |
 | lexiflux/language/detect\_language\_fasttext.py       |       29 |        1 |     97% |        34 |
 | lexiflux/language/google\_languages.py                |       40 |        1 |     98% |        78 |
-| lexiflux/language/llm.py                              |      185 |       86 |     54% |44-47, 61-64, 69-74, 79-81, 86-88, 101-106, 113, 137, 192-197, 209-228, 264-277, 369-378, 385-436 |
+| lexiflux/language/llm.py                              |      185 |       18 |     90% |137, 218, 221-228, 409-434 |
 | lexiflux/language/nltk\_tokenizer.py                  |       29 |        5 |     83% |25, 37-39, 55 |
 | lexiflux/language/parse\_html\_text\_content.py       |      102 |        1 |     99% |       158 |
 | lexiflux/language/sentence\_extractor.py              |       32 |        2 |     94% |    61, 77 |
-| lexiflux/language/sentence\_extractor\_llm.py         |       61 |       13 |     79% |17, 88, 93, 148-184 |
+| lexiflux/language/sentence\_extractor\_llm.py         |       50 |        3 |     94% |17, 88, 93 |
 | lexiflux/language/translation.py                      |       22 |        1 |     95% |        32 |
 | lexiflux/language/word\_extractor.py                  |       85 |        8 |     91% |42-49, 53, 66 |
 | lexiflux/language\_preferences\_default.py            |       16 |        2 |     88% |     46-47 |
@@ -50,7 +50,7 @@
 | lexiflux/views/reader\_views.py                       |      275 |       37 |     87% |69-71, 117, 137, 208, 212, 217-219, 264, 289, 293, 308, 312, 325, 329, 341, 345, 373, 397, 401, 435-438, 443, 497, 506, 512-519 |
 | lexiflux/views/words\_export.py                       |      143 |       28 |     80% |66-71, 106-111, 146, 170-178, 191, 240, 271, 294-300 |
 | lexiflux/wsgi.py                                      |        4 |        4 |      0% |      9-15 |
-|                                             **TOTAL** | **2916** |  **432** | **85%** |           |
+|                                             **TOTAL** | **2905** |  **354** | **88%** |           |
 
 
 ## Setup coverage badge
