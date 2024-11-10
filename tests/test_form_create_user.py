@@ -4,7 +4,7 @@ from lexiflux.forms import CustomUserCreationForm
 
 
 @allure.epic('Auth')
-@allure.story('Forms')
+@allure.story('Create user form')
 @pytest.mark.django_db
 class TestCustomUserCreationForm:
     @allure.title("Test user creation with valid data")

@@ -143,7 +143,7 @@ def detect_sentence_llm(text: str, text_language: str) -> str:
     return chain.invoke({"text": text, "text_language": text_language})
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
     # Example usage
     SAMPLE_TEXT = "The quick brown fox jumps over the lazy dog. It was a sunny day in the forest."
     sample_word_ids = [
