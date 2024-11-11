@@ -280,46 +280,169 @@ class TestModelManagement:
 @allure.epic('Language Processing')
 @allure.feature('Article Generation')
 class TestArticleGeneration:
-    @pytest.mark.skip(reason="This test is not yet implemented")
-    def test_generate_article_cached(self, request, approved_user):
-        llm = Llm()
-        article_name = "Translate"
-        params = (("model", "gpt-4o"), ("user", approved_user))
-        data = (
-            ("text", "Test text"),
-            ("text_language", "en"),
-            ("user_language", "fr"),
-            ("detected_language", "en")  # Add detected_language to match the actual usage
-        )
+    @pytest.mark.parametrize("article_name,expected_prompt_file", [
+        ("Translate", "Translate.txt"),
+        ("Lexical", "Lexical.txt"),
+        ("Explain", "Explain.txt"),
+        ("Sentence", "Sentence.txt"),
+    ])
+    def test_generate_article_cached_with_different_articles(self, request, mock_book_page, llm_instance,
+                                                             approved_user, article_name, expected_prompt_file):
+        # Prepare test data
+        params = {
+            "model": "gpt-4o",
+            "user": approved_user
+        }
+        data = {
+            "book_code": mock_book_page.book.code,
+            "book_page_number": mock_book_page.number,
+            "term_word_ids": [4, 5],  # "Word5 word6"
+            "text_language": "en",
+            "user_language": "fr"
+        }
 
-        with patch.object(Llm, 'mark_term_and_sentence', return_value="marked text"), \
-                patch('lexiflux.language.parse_html_text_content.extract_content_from_html',
-                      return_value="extracted text"):
+        # Read expected prompt
+        import os
+        from django.conf import settings
+        prompt_path = os.path.join(settings.BASE_DIR, "lexiflux", "resources", "prompts", expected_prompt_file)
+        with open(prompt_path, "r", encoding="utf8") as f:
+            expected_prompt = f.read().strip()
 
-            if not request.config.getoption("--use-llm"):
-                # Create a mock for ChatPromptTemplate
-                mock_prompt_template = MagicMock()
-                mock_prompt_template.__or__.return_value = lambda x: x
+        # Expected response from the AI model
+        expected_response = "AI generated response"
 
-                # Create a mock for the chat model
-                mock_chat = MagicMock()
-                mock_chat.invoke.return_value = "Generated response"
-                mock_chat.__or__.return_value = lambda x: "Generated response"
+        if request.config.getoption("--use-llm"):
+            # Use real LLM
+            result = llm_instance._generate_article_cached(
+                article_name,
+                llm_instance.hashable_dict(params),
+                llm_instance.hashable_dict(data)
+            )
+            assert isinstance(result, str)
+            assert len(result) > 0
+        else:
+            # Mock the AI model responses
+            mock_chat = MagicMock()
+            mock_chat.invoke.return_value = expected_response
 
-                with patch.dict(llm._prompt_templates, {"Translate": mock_prompt_template}), \
-                     patch('lexiflux.language.llm.ChatOpenAI', return_value=mock_chat):
+            # Create a pipeline that mimics langchain's behavior
+            class MockPipeline:
+                def __init__(self, response):
+                    self.response = response
 
-                    result = llm._generate_article_cached(article_name, params, data)
+                def invoke(self, *args, **kwargs):
+                    return self.response
+
+            mock_pipeline = MockPipeline(expected_response)
+
+            # Mock the factory function to return our pipeline
+            original_factory = llm_instance._article_pipelines_factory[article_name]
+            llm_instance._article_pipelines_factory[article_name] = lambda model: mock_pipeline
+
+            try:
+                with patch('lexiflux.language.llm.ChatOpenAI', return_value=mock_chat) as mock_openai:
+                    # Call the method
+                    result = llm_instance._generate_article_cached(
+                        article_name,
+                        llm_instance.hashable_dict(params),
+                        llm_instance.hashable_dict(data)
+                    )
 
                     # Verify the result
-                    assert isinstance(result, str)
-                    assert result == "Generated response"
+                    assert result == expected_response
 
-                    # Verify that the chat model was properly initialized
-                    mock_chat.invoke.assert_called()
-            else:
-                result = llm._generate_article_cached(article_name, params, data)
-                assert isinstance(result, str)
+                    # Verify ChatOpenAI was initialized correctly
+                    mock_openai.assert_called_once()
+                    call_kwargs = mock_openai.call_args.kwargs
+                    assert call_kwargs["model"] == "gpt-4o"
+                    assert "temperature" in call_kwargs
+            finally:
+                # Restore the original factory function
+                llm_instance._article_pipelines_factory[article_name] = original_factory
+
+    def test_generate_article_cached_ai_type(self, request, mock_book_page, llm_instance, approved_user):
+        # Prepare test data
+        params = {
+            "model": "gpt-4o",
+            "user": approved_user,
+            "prompt": "Custom system prompt for AI article"
+        }
+        data = {
+            "book_code": mock_book_page.book.code,
+            "book_page_number": mock_book_page.number,
+            "term_word_ids": [4, 5],
+            "text_language": "en",
+            "user_language": "fr"
+        }
+
+        expected_response = "AI generated response for custom prompt"
+
+        if request.config.getoption("--use-llm"):
+            # Use real LLM
+            result = llm_instance._generate_article_cached(
+                "AI",
+                llm_instance.hashable_dict(params),
+                llm_instance.hashable_dict(data)
+            )
+            assert isinstance(result, str)
+            assert len(result) > 0
+        else:
+            # Mock the AI model and its response
+            mock_chat = MagicMock()
+            mock_chat.invoke.return_value = "AI generated response for custom prompt"
+
+            # Create a pipeline that mimics langchain's behavior
+            class MockPipeline:
+                def __init__(self, response):
+                    self.response = response
+
+                def invoke(self, messages):
+                    return self.response
+
+            mock_pipeline = MockPipeline(expected_response)
+
+            # Mock the factory function
+            original_factory = llm_instance._article_pipelines_factory["AI"]
+            llm_instance._article_pipelines_factory["AI"] = lambda model: mock_pipeline
+
+            try:
+                with patch('lexiflux.language.llm.ChatOpenAI', return_value=mock_chat) as mock_openai:
+                    result = llm_instance._generate_article_cached(
+                        "AI",
+                        llm_instance.hashable_dict(params),
+                        llm_instance.hashable_dict(data)
+                    )
+
+                    # Verify the result
+                    assert result == expected_response
+
+                    # Verify ChatOpenAI was initialized correctly
+                    mock_openai.assert_called_once()
+                    call_kwargs = mock_openai.call_args.kwargs
+                    assert call_kwargs["model"] == "gpt-4o"
+                    assert "temperature" in call_kwargs
+            finally:
+                # Restore the original factory function
+                llm_instance._article_pipelines_factory["AI"] = original_factory
+
+    def test_generate_article_cached_invalid_article(self, llm_instance, approved_user):
+        # Prepare test data
+        params = {
+            "model": "gpt-4o",
+            "user": approved_user
+        }
+        data = {
+            "text": "Sample text",
+            "text_language": "en",
+            "user_language": "fr"
+        }
+
+        with pytest.raises(ValueError, match="Lexical article 'InvalidArticle' not found"):
+            llm_instance._generate_article_cached(
+                "InvalidArticle",
+                llm_instance.hashable_dict(params),
+                llm_instance.hashable_dict(data)
+            )
 
     def test_generate_article_error_handling(self, approved_user):
         llm = Llm()
@@ -334,36 +457,6 @@ class TestArticleGeneration:
             assert exc_info.value.model_name == "gpt-4o"
             assert "Test error" in str(exc_info.value)
 
-    @pytest.mark.skip(reason="This test is not yet implemented")
-    def test_generate_article_model_settings(self, approved_user):
-        llm = Llm()
-        article_name = "Translate"
-        params = {"model": "gpt-4o", "user": approved_user}
-        data = {"text": "Test text", "text_language": "en", "user_language": "fr"}
-
-        # Mock the model settings retrieval
-        mock_settings = {"api_key": "test_key", "temperature": 0.7}
-        mock_chat = MagicMock()
-        mock_chat.invoke = MagicMock(return_value="Generated response")
-
-        with patch.object(Llm, 'get_model_settings', return_value=mock_settings), \
-             patch.object(Llm, 'mark_term_and_sentence', return_value="marked text"), \
-             patch('lexiflux.language.parse_html_text_content.extract_content_from_html',
-                   return_value="extracted text"), \
-             patch('lexiflux.language.llm.ChatOpenAI', return_value=mock_chat) as mock_openai:
-
-            result = llm.generate_article(article_name, params, data)
-
-            # Verify the result
-            assert isinstance(result, str)
-            assert result == "Generated response"
-
-            # Verify that ChatOpenAI was initialized with correct settings
-            mock_openai.assert_called_once_with(
-                model="gpt-4o",
-                openai_api_key="test_key",
-                temperature=0.7
-            )
 
     def test_generate_article_invalid_article(self):
         llm = Llm()
