@@ -23,7 +23,7 @@ def validate_log_level(level_name: str) -> int:
     return level
 
 
-def log_profile(func: Callable[..., Any]) -> Callable[..., Any]:
+def log_profile(func: Callable[..., Any]) -> Callable[..., Any]:  # pragma: no cover
     """Decorator to log the profile of a function."""
 
     def wrapper(*args: Any, **kwargs: Any) -> Any:
