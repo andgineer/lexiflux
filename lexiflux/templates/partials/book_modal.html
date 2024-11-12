@@ -1,0 +1,89 @@
+{% load static %}
+
+<div id="editBookModal" class="modal fade" tabindex="-1" aria-labelledby="editBookModalLabel" aria-hidden="true"
+     hx-target="this" hx-swap="outerHTML">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div>
+          <h5 class="modal-title" id="editBookModalLabel">
+            {% if is_new %}Imported Book{% else %}Edit Book{% endif %}
+          </h5>
+          {% if book.code %}
+          <div class="text-muted small">
+            <span class="font-monospace">{{ book.code }}</span>
+          </div>
+          {% endif %}
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+
+      <form hx-put="{% url 'edit_book_modal' book.id %}" hx-target="#editBookModal">
+        <div class="modal-body">
+          {% if error_message %}
+          <div class="alert alert-danger" role="alert">
+            {{ error_message }}
+          </div>
+          {% endif %}
+
+          <div class="mb-3">
+            <label for="bookTitle" class="form-label">Title</label>
+            <input type="text"
+                   class="form-control"
+                   id="bookTitle"
+                   name="title"
+                   value="{{ book.title }}"
+                   required>
+          </div>
+
+          <div class="mb-3">
+            <label for="bookAuthor" class="form-label">Author</label>
+            <input type="text"
+                   class="form-control"
+                   id="bookAuthor"
+                   name="author"
+                   value="{{ book.author.name }}"
+                   hx-get="{% url 'search_authors' %}"
+                   hx-trigger="keyup changed delay:300ms"
+                   hx-target="#authorSuggestions"
+                   required>
+            <ul id="authorSuggestions" class="list-group mt-2">
+              <!-- Author suggestions will be populated here -->
+            </ul>
+          </div>
+
+          <div class="mb-3">
+            <label for="bookLanguage" class="form-label">Language</label>
+            <select class="form-select" id="bookLanguage" name="language" required>
+              {% for lang in languages %}
+              <option value="{{ lang.google_code }}"
+                      {% if lang.google_code == book.language.google_code %}selected{% endif %}>
+                {{ lang.name }}
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+
+        <div class="modal-footer justify-content-between">
+          <button type="button"
+                  class="btn btn-outline-danger"
+                  hx-delete="{% url 'book_detail' book.id %}"
+                  hx-confirm="Are you sure you want to delete this book?"
+                  hx-target="closest .modal"
+                  title="Delete Book">
+            <i class="bi bi-trash"></i>
+          </button>
+          <div>
+            {% if not is_new %}
+            <button type="button" class="btn btn-outline-secondary me-2" data-bs-dismiss="modal">Close</button>
+            {% endif %}
+            <button type="submit" class="btn btn-primary">
+              <i class="bi bi-check-lg me-1"></i>Save
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

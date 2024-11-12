@@ -1,0 +1,50 @@
+{% load static %}
+
+<div id="importModal" class="modal fade" tabindex="-1" aria-labelledby="importModalLabel" aria-hidden="true"
+     hx-target="this" hx-swap="outerHTML">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="importModalLabel">Import Book</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+
+      <form hx-post="{% url 'import_book' %}"
+            hx-encoding="multipart/form-data"
+            hx-target="#modalContainer">
+        <div class="modal-body">
+          {% if error_message %}
+          <div class="alert alert-danger" role="alert">
+            {{ error_message }}
+          </div>
+          {% endif %}
+
+          <div class="mb-3">
+            <label for="bookFile" class="form-label">Select Book File</label>
+            <input type="file"
+                   class="form-control"
+                   id="bookFile"
+                   name="file"
+                   accept=".epub,.txt,.html"
+                   required>
+          </div>
+
+          <small class="form-text text-muted d-block mb-3">
+            Supported formats: EPUB, TXT, HTML (defined by file extension)
+          </small>
+
+          <button type="submit"
+                  class="btn btn-primary"
+                  hx-indicator="#importSpinner">
+            <span id="importSpinner"
+                  class="spinner-border spinner-border-sm me-2 htmx-indicator"
+                  role="status"
+                  aria-hidden="true"></span>
+            Import
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+

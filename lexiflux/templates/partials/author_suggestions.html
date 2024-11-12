@@ -1,0 +1,14 @@
+{% if authors %}
+  {% for author in authors %}
+  <li class="list-group-item list-group-item-action"
+      role="button"
+      hx-get="{% url 'select_author' %}"
+      hx-vals='{"author": "{{ author }}"}'
+      hx-target="#bookAuthor">
+    {{ author }}
+  </li>
+  {% endfor %}
+  {% if has_more %}
+  <li class="list-group-item">...</li>
+  {% endif %}
+{% endif %}
