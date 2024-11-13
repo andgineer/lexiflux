@@ -18,7 +18,10 @@
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
 
-      <form hx-put="{% url 'edit_book_modal' book.id %}" hx-target="#editBookModal">
+      <form hx-put="{% url 'edit_book_modal' book_id=book.id %}"
+            hx-target="#modalContainer"
+            hx-trigger="submit">
+        {% csrf_token %}
         <div class="modal-body">
           {% if error_message %}
           <div class="alert alert-danger" role="alert">
@@ -70,8 +73,8 @@
                   class="btn btn-outline-danger"
                   hx-delete="{% url 'book_detail' book.id %}"
                   hx-confirm="Are you sure you want to delete this book?"
-                  hx-target="closest .modal"
-                  title="Delete Book">
+                  hx-target="#modalContainer"
+                  hx-trigger="click">
             <i class="bi bi-trash"></i>
           </button>
           <div>
@@ -87,3 +90,7 @@
     </div>
   </div>
 </div>
+
+<script>
+  new bootstrap.Modal(document.getElementById('editBookModal')).show();
+</script>

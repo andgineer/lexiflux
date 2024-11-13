@@ -1,7 +1,6 @@
 {% load static %}
 
-<div id="importModal" class="modal fade" tabindex="-1" aria-labelledby="importModalLabel" aria-hidden="true"
-     hx-target="this" hx-swap="outerHTML">
+<div id="importModal" class="modal fade" tabindex="-1" aria-labelledby="importModalLabel" aria-hidden="true">
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
@@ -12,6 +11,7 @@
       <form hx-post="{% url 'import_book' %}"
             hx-encoding="multipart/form-data"
             hx-target="#modalContainer">
+        {% csrf_token %}
         <div class="modal-body">
           {% if error_message %}
           <div class="alert alert-danger" role="alert">
@@ -32,12 +32,12 @@
           <small class="form-text text-muted d-block mb-3">
             Supported formats: EPUB, TXT, HTML (defined by file extension)
           </small>
+        </div>
 
-          <button type="submit"
-                  class="btn btn-primary"
-                  hx-indicator="#importSpinner">
-            <span id="importSpinner"
-                  class="spinner-border spinner-border-sm me-2 htmx-indicator"
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          <button type="submit" class="btn btn-primary">
+            <span class="spinner-border spinner-border-sm me-2 htmx-indicator"
                   role="status"
                   aria-hidden="true"></span>
             Import
@@ -48,3 +48,6 @@
   </div>
 </div>
 
+<script>
+  new bootstrap.Modal(document.getElementById('importModal')).show();
+</script>

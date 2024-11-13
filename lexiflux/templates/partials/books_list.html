@@ -38,8 +38,10 @@
                 </td>
                 <td>
                     <button class="btn btn-outline-secondary btn-sm"
-                            hx-get="{% url 'edit_book_modal' book.id %}"
-                            hx-target="#modalContainer">
+                            hx-get="{% url 'edit_book_modal' book_id=book.id %}"
+                            hx-target="#modalContainer"
+                            hx-trigger="click"
+                            _="on htmx:afterSettle call new bootstrap.Modal('#editBookModal').show()">
                         Edit
                     </button>
                 </td>
