@@ -18,10 +18,11 @@
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
 
-      <form hx-put="{% url 'edit_book_modal' book_id=book.id %}"
+      <form hx-post="{% url 'edit_book_modal' book_id=book.id %}"
+            hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
             hx-target="#modalContainer"
             hx-trigger="submit"
-            hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+      >
         {% csrf_token %}
         <div class="modal-body">
           {% if error_message %}
@@ -48,9 +49,9 @@
                    name="author"
                    value="{{ book.author.name }}"
                    hx-get="{% url 'search_authors' %}"
+                   hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
                    hx-trigger="keyup changed delay:300ms"
                    hx-target="#authorSuggestions"
-                   hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
                    required>
             <ul id="authorSuggestions" class="list-group mt-2">
               <!-- Author suggestions will be populated here -->
@@ -108,9 +109,9 @@
         <button type="button"
                 class="btn btn-danger"
                 hx-delete="{% url 'book_detail' book.id %}"
+                hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
                 hx-target="body"
                 hx-swap="none"
-                hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
                 hx-on::after-request="
                   if(event.detail.successful) {
                     document.querySelectorAll('.modal-backdrop').forEach(backdrop => backdrop.remove());

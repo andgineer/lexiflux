@@ -39,6 +39,7 @@
                 <td>
                     <button class="btn btn-outline-secondary btn-sm"
                             hx-get="{% url 'edit_book_modal' book_id=book.id %}"
+                            hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
                             hx-target="#modalContainer"
                             hx-trigger="click"
                             _="on htmx:afterSettle call new bootstrap.Modal('#editBookModal').show()">
@@ -60,6 +61,7 @@
             <li class="page-item">
                 <button class="page-link"
                         hx-get="{% url 'books_list' %}?page={{ books.previous_page_number }}"
+                        hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
                         hx-target="#booksList">
                     Previous
                 </button>
@@ -70,6 +72,7 @@
             <li class="page-item {% if books.number == num %}active{% endif %}">
                 <button class="page-link"
                         hx-get="{% url 'books_list' %}?page={{ num }}"
+                        hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
                         hx-target="#booksList">
                     {{ num }}
                 </button>
@@ -80,6 +83,7 @@
             <li class="page-item">
                 <button class="page-link"
                         hx-get="{% url 'books_list' %}?page={{ books.next_page_number }}"
+                        hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
                         hx-target="#booksList">
                     Next
                 </button>

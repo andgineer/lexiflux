@@ -84,7 +84,7 @@ class EditBookModalPartial(TemplateView):  # type: ignore
         )
         return context  # type: ignore
 
-    def put(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
+    def post(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
         """Update book details."""
         book = get_object_or_404(Book, id=kwargs["book_id"])
         if book.owner != request.user and not request.user.is_superuser:

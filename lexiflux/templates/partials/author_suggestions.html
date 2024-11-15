@@ -3,6 +3,7 @@
   <li class="list-group-item list-group-item-action"
       role="button"
       hx-get="{% url 'select_author' %}"
+      hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
       hx-vals='{"author": "{{ author }}"}'
       hx-target="#bookAuthor">
     {{ author }}
