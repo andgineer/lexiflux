@@ -201,11 +201,11 @@ def import_book(request: HttpRequest) -> HttpResponse:
 
 
 @smart_login_required  # type: ignore
-def search_authors(request: HttpRequest) -> JsonResponse:
+def search_authors(request: HttpRequest) -> HttpResponse:
     """Search authors based on input string."""
-    query = request.GET.get("q", "").strip()
+    query = request.GET.get("author", "").strip()
     if not query:
-        return JsonResponse({"authors": [], "has_more": False})
+        return HttpResponse("")  # Return empty response if no query
 
     # If the query contains spaces (more than one word), search for the entire string
     if " " in query:
@@ -223,4 +223,6 @@ def search_authors(request: HttpRequest) -> JsonResponse:
     has_more = len(authors) > 100
     authors = authors[:100]  # Trim to 100 if there are more
 
-    return JsonResponse({"authors": [author.name for author in authors], "has_more": has_more})
+    return render(
+        request, "partials/author_suggestions.html", {"authors": authors, "has_more": has_more}
+    )

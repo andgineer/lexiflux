@@ -2,14 +2,11 @@
   {% for author in authors %}
   <li class="list-group-item list-group-item-action"
       role="button"
-      hx-get="{% url 'select_author' %}"
-      hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
-      hx-vals='{"author": "{{ author }}"}'
-      hx-target="#bookAuthor">
-    {{ author }}
+      onclick="document.getElementById('bookAuthor').value = this.textContent.trim(); document.getElementById('authorSuggestions').innerHTML = '';">
+    {{ author.name }}
   </li>
   {% endfor %}
   {% if has_more %}
-  <li class="list-group-item">...</li>
+  <li class="list-group-item">And more...</li>
   {% endif %}
 {% endif %}

@@ -83,9 +83,6 @@ urlpatterns = [
         lexiflux.views.library_views.BookDetailView.as_view(),
         name="book_detail",
     ),
-    path(
-        "api/search-authors/", lexiflux.views.library_views.search_authors, name="search_authors"
-    ),
     path("ai-settings/", lexiflux.views.ai_settings_views.ai_settings, name="ai-settings"),
     path(
         "api/ai-settings/",
@@ -108,7 +105,9 @@ urlpatterns += [
         "modals/edit-book/<int:book_id>/", EditBookModalPartial.as_view(), name="edit_book_modal"
     ),
     path(
-        "api/select-author/", lexiflux.views.library_partials.search_authors, name="select_author"
+        "api/search-authors/",
+        lexiflux.views.library_partials.search_authors,
+        name="search_authors",
     ),
     path("library/books/", lexiflux.views.library_partials.books_list, name="books_list"),
     path("library/import/", lexiflux.views.library_partials.import_modal, name="import_modal"),
