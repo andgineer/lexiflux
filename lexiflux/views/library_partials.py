@@ -184,13 +184,14 @@ def import_book(request: HttpRequest) -> HttpResponse:
         context = {
             "book": book,
             "languages": Language.objects.all(),
+            "is_new": True,
         }
         return HttpResponse(f"""
             <script>
                 document.body.classList.remove('modal-open');
                 document.body.style.removeProperty('padding-right');
                 document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
-                htmx.trigger('body', 'show-edit-modal', {{id: {book.id}, skip_confirm: true}});
+                htmx.trigger('body', 'show-edit-modal');
             </script>
             {render(request, "partials/book_modal.html", context).content.decode('utf-8')}
         """)

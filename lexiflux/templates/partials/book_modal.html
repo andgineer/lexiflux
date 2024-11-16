@@ -70,8 +70,21 @@
         <div class="modal-footer justify-content-between">
           <button type="button"
                   class="btn btn-outline-danger"
-                  data-bs-toggle="modal"
-                  data-bs-target="#deleteConfirmModal">
+                  {% if not is_new %}
+                    data-bs-toggle="modal"
+                    data-bs-target="#deleteConfirmModal"
+                                    {% else %}
+                  hx-delete="{% url 'edit_book_modal' book.id %}"
+                  hx-target="body"
+                  hx-swap="none"
+                  hx-on::after-request="
+                    if(event.detail.successful) {
+                      bootstrap.Modal.getInstance(document.getElementById('editBookModal')).hide();
+                      htmx.trigger('#booksList', 'refresh')
+                    }
+                  "
+                  {% endif %}
+          >
             <i class="bi bi-trash"></i>
           </button>
           <div>
@@ -101,7 +114,9 @@
         <p class="text-muted small mb-0">This action cannot be undone.</p>
       </div>
       <div class="modal-footer">
+        {% if not is_new %}
         <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+        {% endif %}
         <button type="button"
                 class="btn btn-danger"
                 hx-delete="{% url 'edit_book_modal' book.id %}"
