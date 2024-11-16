@@ -106,11 +106,12 @@ class EditBookModalPartial(TemplateView):  # type: ignore
 
             # Return HTML that will close modal and refresh book list
             return HttpResponse("""
-                <div data-bs-dismiss="modal">
-                    <script>
-                        htmx.trigger('#booksList', 'refresh');
-                    </script>
-                </div>
+                <script>
+                    document.body.classList.remove('modal-open');
+                    document.body.style.removeProperty('padding-right');
+                    document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
+                    htmx.trigger('#booksList', 'refresh');
+                </script>
             """)
 
         except Exception as e:  # pylint: disable=broad-except
