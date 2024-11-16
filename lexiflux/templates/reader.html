@@ -38,6 +38,19 @@
                   {% endfor %}
                 </ul>
               </li>
+              <li class="nav-item" x-data>
+                  <button class="btn btn-outline-secondary ms-2"
+                            @click="$dispatch('edit-book', {
+                                id: {{ book.id }},
+                                title: '{{ book.title|escapejs }}',
+                                author: '{{ book.author.name|escapejs }}',
+                                language: '{{ book.language.google_code }}',
+                                code: '{{ book.code|escapejs }}'
+                            })"
+                            title="Edit Book">
+                    <i class="bi bi-pencil"></i>
+                  </button>
+              </li>
               <li class="nav-item">
                   <button id="search-button" class="btn btn-outline-secondary ms-2" type="button" title="Search">
                     <i class="bi bi-search me-1"></i>Search

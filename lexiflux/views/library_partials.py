@@ -1,5 +1,6 @@
 """Library partial views."""
 
+import logging
 from typing import Type, Dict, Any
 
 from django.core.files.storage import FileSystemStorage
@@ -20,6 +21,9 @@ from lexiflux.ebook.book_loader_html import BookLoaderHtml
 from lexiflux.ebook.book_loader_plain_text import BookLoaderPlainText
 from lexiflux.models import Book, Language, Author
 from lexiflux.decorators import smart_login_required
+
+
+logger = logging.getLogger(__name__)
 
 
 @smart_login_required
@@ -86,9 +90,7 @@ class EditBookModalPartial(TemplateView):  # type: ignore
 
     def post(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
         """Update book details."""
-        book = get_object_or_404(Book, id=kwargs["book_id"])
-        if book.owner != request.user and not request.user.is_superuser:
-            return HttpResponse("Unauthorized", status=403)
+        book = Book.get_if_can_be_read(request.user, id=kwargs["book_id"])
 
         try:
             book.title = request.POST.get("title", book.title)
@@ -102,20 +104,34 @@ class EditBookModalPartial(TemplateView):  # type: ignore
 
             book.save()
 
-            # Return success response that closes modal and refreshes book list
+            # Return HTML that will close modal and refresh book list
             return HttpResponse("""
-                <script>
-                    document.querySelector('#editBookModal').addEventListener('hidden.bs.modal', function() {
+                <div data-bs-dismiss="modal">
+                    <script>
                         htmx.trigger('#booksList', 'refresh');
-                    });
-                    bootstrap.Modal.getInstance(document.querySelector('#editBookModal')).hide();
-                </script>
+                    </script>
+                </div>
             """)
 
         except Exception as e:  # pylint: disable=broad-except
             context = self.get_context_data()
             context["error_message"] = str(e)
             return TemplateResponse(request, self.template_name, context)
+
+    def delete(self, request: HttpRequest, book_id: int) -> JsonResponse:
+        """Delete a book."""
+        try:
+            book = Book.objects.get(id=book_id)
+            if book.owner and (book.owner != request.user and not request.user.is_superuser):
+                return JsonResponse(
+                    {"error": "You don't have permission to delete this book"}, status=403
+                )
+            book.delete()
+            return JsonResponse({"success": "Book deleted successfully"})
+        except Book.DoesNotExist:
+            return JsonResponse({"error": "Book not found"}, status=404)
+        except Exception as e:  # pylint: disable=broad-except
+            return JsonResponse({"error": str(e)}, status=500)
 
 
 @smart_login_required
@@ -164,12 +180,19 @@ def import_book(request: HttpRequest) -> HttpResponse:
             finally:
                 fs.delete(filename)
 
-        # Redirect to edit modal for the new book
-        return TemplateResponse(
-            request,
-            "partials/book_modal.html",
-            {"book": book, "is_new": True, "languages": Language.objects.all()},
-        )
+        context = {
+            "book": book,
+            "languages": Language.objects.all(),
+        }
+        return HttpResponse(f"""
+            <script>
+                document.body.classList.remove('modal-open');
+                document.body.style.removeProperty('padding-right');
+                document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
+                htmx.trigger('body', 'show-edit-modal', {{id: {book.id}, skip_confirm: true}});
+            </script>
+            {render(request, "partials/book_modal.html", context).content.decode('utf-8')}
+        """)
 
     except Exception as e:  # pylint: disable=broad-except
         return TemplateResponse(request, "partials/import_modal.html", {"error_message": str(e)})

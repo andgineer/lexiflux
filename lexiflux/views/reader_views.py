@@ -18,12 +18,12 @@ from django.views.decorators.http import require_POST
 from lexiflux.decorators import smart_login_required
 from lexiflux.models import (
     BookPage,
-    CustomUser,
     Book,
     ReadingLoc,
     LanguagePreferences,
     BookImage,
     ReaderSettings,
+    Language,
 )
 
 
@@ -117,11 +117,6 @@ def redirect_to_reader(request: HttpRequest) -> HttpResponse:
     return redirect("reader")
 
 
-def can_see_book(user: CustomUser, book: Book) -> bool:
-    """Check if the user can see the book."""
-    return user.is_superuser or book.owner == user or user in book.shared_with.all() or book.public
-
-
 @smart_login_required  # type: ignore
 def reader(request: HttpRequest) -> HttpResponse:
     """Open the book in reader.
@@ -144,9 +139,7 @@ def reader(request: HttpRequest) -> HttpResponse:
         book = reading_location.book
         book_code = book.code  # Update book_code to be used in the response
         page_number = reading_location.page_number
-    # Security check to ensure the user is authorized to view the book
-    if not can_see_book(request.user, book):
-        return HttpResponse("Forbidden", status=403)
+    book.ensure_can_be_read_by(request.user)
 
     if not page_number:
         # if the book-code is provided but book-page-number is not: first page or last read page
@@ -194,6 +187,7 @@ def reader(request: HttpRequest) -> HttpResponse:
             "is_first_jump": is_first_jump,
             "is_last_jump": is_last_jump,
             "settings": reader_settings,
+            "languages": Language.objects.values("google_code", "name"),
         },
     )
 
@@ -203,9 +197,10 @@ def page(request: HttpRequest) -> HttpResponse:
     """Book page."""
     book_code = request.GET.get("book-code")
     page_number = request.GET.get("book-page-number")
-    book = Book.objects.filter(code=book_code).first() if book_code else None
-    if not book:
-        return HttpResponse("error: Book not found", status=404)
+    if not book_code:
+        return HttpResponse("error: Book code is required", status=400)
+
+    book = Book.get_if_can_be_read(request.user, code=book_code)
     try:
         page_number = int(page_number)
         if page_number < 1:
@@ -219,9 +214,6 @@ def page(request: HttpRequest) -> HttpResponse:
         return HttpResponse(
             f"error: Page {page_number} not found in book '{book_code}'", status=500
         )
-    # check access
-    if not can_see_book(request.user, book_page.book):
-        return HttpResponse(status=403)
 
     cache_key = f"page_html_{book_code}_{page_number}"
     page_html = cache.get(cache_key)
@@ -244,9 +236,7 @@ def page(request: HttpRequest) -> HttpResponse:
 @smart_login_required  # type: ignore
 def serve_book_image(request, book_code, image_filename):
     """Serve the book image."""
-    book = get_object_or_404(Book, code=book_code)
-    if not can_see_book(request.user, book):
-        return HttpResponse("Forbidden", status=403)
+    book = Book.get_if_can_be_read(request.user, code=book_code)
 
     image = get_object_or_404(BookImage, book=book, filename=image_filename)
     return HttpResponse(image.image_data, content_type=image.content_type)
@@ -266,9 +256,7 @@ def location(request: HttpRequest) -> HttpResponse:
         return HttpResponse("Invalid or missing parameters", status=400)
 
     log.info(f"Location changed: book {book_code}, page {page_number}, top word {top_word}")
-    book = Book.objects.get(code=book_code)
-    if not can_see_book(request.user, book):
-        return HttpResponse(status=403)  # Forbidden
+    book = Book.get_if_can_be_read(request.user, code=book_code)
 
     ReadingLoc.update_reading_location(
         user=request.user, book_id=book.id, page_number=page_number, top_word_id=top_word
@@ -288,9 +276,7 @@ def jump(request: HttpRequest) -> HttpResponse:
         if not book_code:
             return JsonResponse({"error": "Missing book code"}, status=400)
 
-        book = get_object_or_404(Book, code=book_code)
-        if not can_see_book(request.user, book):
-            return HttpResponse("Forbidden", status=403)
+        book = Book.get_if_can_be_read(request.user, code=book_code)
         reading_loc = ReadingLoc.get_or_create_reading_loc(user=request.user, book=book)
         reading_loc.jump(page_number, top_word)
 
@@ -307,9 +293,7 @@ def jump_back(request: HttpRequest) -> HttpResponse:
     if not book_code:
         return JsonResponse({"error": "Missing book code"}, status=400)
 
-    book = get_object_or_404(Book, code=book_code)
-    if not can_see_book(request.user, book):
-        return HttpResponse("Forbidden", status=403)
+    book = Book.get_if_can_be_read(request.user, code=book_code)
     reading_loc = ReadingLoc.get_or_create_reading_loc(user=request.user, book=book)
 
     page_number, word = reading_loc.jump_back()
@@ -324,9 +308,7 @@ def jump_forward(request: HttpRequest) -> HttpResponse:
     if not book_code:
         return JsonResponse({"error": "Missing book code"}, status=400)
 
-    book = get_object_or_404(Book, code=book_code)
-    if not can_see_book(request.user, book):
-        return HttpResponse("Forbidden", status=403)
+    book = Book.get_if_can_be_read(request.user, code=book_code)
     reading_loc = ReadingLoc.get_or_create_reading_loc(user=request.user, book=book)
 
     page_number, word = reading_loc.jump_forward()
@@ -340,9 +322,7 @@ def get_jump_status(request: HttpRequest) -> HttpResponse:
     if not book_code:
         return JsonResponse({"error": "Missing book code"}, status=400)
 
-    book = get_object_or_404(Book, code=book_code)
-    if not can_see_book(request.user, book):
-        return HttpResponse("Forbidden", status=403)
+    book = Book.get_if_can_be_read(request.user, code=book_code)
 
     reading_loc = ReadingLoc.get_or_create_reading_loc(user=request.user, book=book)
 
@@ -397,8 +377,7 @@ def search(request: HttpRequest) -> HttpResponse:
             return JsonResponse({"error": "Missing book code or search term"}, status=400)
 
         book = get_object_or_404(Book, code=book_code)
-        if not can_see_book(request.user, book):
-            return HttpResponse("Forbidden", status=403)
+        book.ensure_can_be_read_by(request.user)
 
         # Perform the search
         pages = BookPage.objects.filter(book=book, content__icontains=search_term)

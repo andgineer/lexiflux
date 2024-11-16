@@ -12,6 +12,7 @@ import lexiflux.views.ai_settings_views
 import lexiflux.views.words_export
 from lexiflux.views.auth_views import SignUpView, CustomLoginView
 from lexiflux import settings
+from lexiflux.views.library_partials import EditBookModalPartial
 
 urlpatterns = [
     path("admin/", admin.site.urls),
@@ -76,7 +77,7 @@ urlpatterns = [
         lexiflux.views.language_preferences_views.update_article_order,
         name="update_article_order",
     ),
-    path("api/import-book/", lexiflux.views.library_views.import_book, name="import_book"),
+    path("api/import-book/", lexiflux.views.library_partials.import_book, name="import_book"),
     path(
         "api/books/<int:book_id>/",
         lexiflux.views.library_views.BookDetailView.as_view(),
@@ -99,6 +100,18 @@ urlpatterns = [
     ),
     path("api/export-words/", lexiflux.views.words_export.export_words, name="export_words"),
     path("api/word-count/", lexiflux.views.words_export.word_count, name="word_count"),
+]
+
+# library partials
+urlpatterns += [
+    path(
+        "modals/edit-book/<int:book_id>/", EditBookModalPartial.as_view(), name="edit_book_modal"
+    ),
+    path(
+        "api/select-author/", lexiflux.views.library_partials.search_authors, name="select_author"
+    ),
+    path("library/books/", lexiflux.views.library_partials.books_list, name="books_list"),
+    path("library/import/", lexiflux.views.library_partials.import_modal, name="import_modal"),
 ]
 
 if settings.DEBUGGER_TOOLBAR:

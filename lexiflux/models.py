@@ -8,8 +8,9 @@ from typing import TypeAlias, Tuple, List, Any, Dict, Optional
 
 from django.conf import settings
 from django.db import models, transaction
+from django.shortcuts import get_object_or_404
 from django.utils import timezone
-from django.core.exceptions import ValidationError
+from django.core.exceptions import ValidationError, PermissionDenied
 from django.contrib.auth.models import AbstractUser
 from django.utils.translation import gettext_lazy as _
 from django.db.models import Q
@@ -230,6 +231,38 @@ class Book(models.Model):  # type: ignore
     def reading_loc(self, user: CustomUser) -> "ReadingLoc":
         """Get the reading location for the given user."""
         return ReadingLoc.get_or_create_reading_loc(user, self)
+
+    def can_be_read_by(self, user: CustomUser) -> bool:
+        """Check if the user can see the book."""
+        return (
+            user.is_superuser
+            or self.owner == user
+            or user in self.shared_with.all()
+            or self.public
+        )
+
+    def ensure_can_be_read_by(self, user: CustomUser) -> None:
+        """Ensure the user can see the book."""
+        if not self.can_be_read_by(user):
+            user_identifier = user.email if not user.is_anonymous else "Anonymous user"
+            raise PermissionDenied(
+                f"{user_identifier} does not have permission to read book " f"'(ID: {self.id})"
+            )
+
+    @classmethod
+    def get_if_can_be_read(cls, user: CustomUser, **kwargs: Any) -> "Book":
+        """
+        Get book if user can read it.
+
+        Expects fields to filter by (e.g., id=1, code='abc') in kwargs.
+
+        Raises:
+            Http404: If book not found
+            PermissionDenied: If user can't read the book
+        """
+        book = get_object_or_404(cls, **kwargs)
+        book.ensure_can_be_read_by(user)
+        return book  # type: ignore
 
     def save(self, *args: Any, **kwargs: Any) -> None:
         if self.pk:  # Checks if the object already exists in the database

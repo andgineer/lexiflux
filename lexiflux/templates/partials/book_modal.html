@@ -1,7 +1,7 @@
 {% load static %}
 
 <div id="editBookModal" class="modal fade" tabindex="-1" aria-labelledby="editBookModalLabel" aria-hidden="true"
-     hx-target="this" hx-swap="outerHTML">
+     data-bs-show="true" hx-target="this" hx-swap="outerHTML">
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
@@ -18,12 +18,9 @@
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
 
-      <form hx-post="{% url 'edit_book_modal' book_id=book.id %}"
-            hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
-            hx-target="#modalContainer"
-            hx-trigger="submit"
+      <form hx-post="{% url 'edit_book_modal' book.id %}"
+            hx-target="closest .modal"
       >
-        {% csrf_token %}
         <div class="modal-body">
           {% if error_message %}
           <div class="alert alert-danger" role="alert">
@@ -49,7 +46,6 @@
                    name="author"
                    value="{{ book.author.name }}"
                    hx-get="{% url 'search_authors' %}"
-                   hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
                    hx-trigger="keyup changed delay:300ms"
                    hx-target="#authorSuggestions"
                    required>
@@ -108,20 +104,17 @@
         <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
         <button type="button"
                 class="btn btn-danger"
-                hx-delete="{% url 'book_detail' book.id %}"
-                hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+                hx-delete="{% url 'edit_book_modal' book.id %}"
                 hx-target="body"
                 hx-swap="none"
+                data-bs-dismiss="modal"
                 hx-on::after-request="
                   if(event.detail.successful) {
-                    document.querySelectorAll('.modal-backdrop').forEach(backdrop => backdrop.remove());
-                    document.body.classList.remove('modal-open');
-                    document.body.style.removeProperty('overflow');
-                    document.body.style.removeProperty('padding-right');
-                    htmx.trigger('#booksList', 'refresh');
-                    document.querySelector('#editBookModal').remove();
-                    document.querySelector('#deleteConfirmModal').remove();
-                  }">
+                    bootstrap.Modal.getInstance(document.getElementById('editBookModal')).hide();
+                    htmx.trigger('#booksList', 'refresh')
+                  }
+                "
+        >
           Delete
         </button>
       </div>

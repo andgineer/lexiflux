@@ -13,6 +13,7 @@ from django.shortcuts import render
 from django.utils.decorators import method_decorator
 from django.views import View
 from django.db.models import Q
+from django.views.decorators.http import require_POST
 
 from lexiflux.ebook.book_loader_base import BookLoaderBase
 from lexiflux.models import Book, Author, Language
@@ -39,6 +40,7 @@ def library_page(request: HttpRequest) -> HttpResponse:
             | models.Q(public=True)
         )
 
+    # todo: only books user has access to
     books_query = (
         books_query.annotate(
             updated=models.Max(
@@ -78,12 +80,10 @@ def library_page(request: HttpRequest) -> HttpResponse:
     return render(request, "library.html", context)
 
 
-@smart_login_required  # type: ignore
+@smart_login_required
+@require_POST  # type: ignore
 def import_book(request: HttpRequest) -> JsonResponse:
     """Import a book from a file."""
-    if request.method != "POST":
-        return JsonResponse({"error": "Invalid request method"}, status=405)
-
     file = request.FILES.get("file")
     if not file:
         return JsonResponse({"error": "No file provided"}, status=400)
@@ -157,14 +157,21 @@ class BookDetailView(View):  # type: ignore
         """Update book details."""
         try:
             book = Book.objects.get(id=book_id)
-            data = json.loads(request.body)
+            try:
+                data = json.loads(request.body)
+                logger.info("Updating book %s with JSON data: %s", book_id, data)
+            except json.JSONDecodeError:
+                data = request.POST
+                logger.info("Updating book %s with form data: %s", book_id, data)
 
             book.owner = request.user
 
             book.title = data.get("title", book.title)
 
             author_name = data.get("author", book.author.name)
-            author, _ = Author.objects.get_or_create(name=author_name)
+            author, created = Author.objects.get_or_create(name=author_name)
+            logger.info("Author after get_or_create: %s (created: %s)", author.name, created)
+
             book.author = author
 
             language = Language.objects.get(
