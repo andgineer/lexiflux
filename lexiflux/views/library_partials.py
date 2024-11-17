@@ -5,7 +5,7 @@ from typing import Type, Dict, Any
 
 from django.core.files.storage import FileSystemStorage
 from django.core.files.uploadedfile import TemporaryUploadedFile
-from django.core.paginator import Paginator
+from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.db.models import Q
 from django.http import HttpResponse, HttpRequest, JsonResponse
 from django.shortcuts import get_object_or_404, render
@@ -25,6 +25,8 @@ from lexiflux.decorators import smart_login_required
 
 logger = logging.getLogger(__name__)
 
+AUTHOR_SUGGESTION_PAGE_SIZE = 100
+
 
 @smart_login_required
 @require_GET  # type: ignore
@@ -38,8 +40,10 @@ def library_page(request: HttpRequest) -> HttpResponse:
 def books_list(request: HttpRequest) -> HttpResponse:
     """Return the paginated books list partial."""
     if request.user.is_superuser:
+        # If the user is a superuser, show all books
         books_query = Book.objects.all()
     else:
+        # Filter books for regular users
         books_query = Book.objects.filter(
             models.Q(owner=request.user)
             | models.Q(shared_with=request.user)
@@ -57,10 +61,20 @@ def books_list(request: HttpRequest) -> HttpResponse:
         .distinct()
     )
 
-    page_number = request.GET.get("page", 1)
-    paginator = Paginator(books_query, 10)
-    books_page = paginator.get_page(page_number)
+    # Pagination
+    page_number = request.GET.get("page")
+    paginator = Paginator(books_query, 10)  # Show 10 books per page
 
+    try:
+        books_page = paginator.page(page_number)
+    except PageNotAnInteger:
+        books_page = paginator.page(1)  # Default to the first page
+    except EmptyPage:
+        books_page = paginator.page(
+            paginator.num_pages
+        )  # Go to the last page if the page is out of range
+
+    # Format last_read for each book
     for book in books_page:
         book.formatted_last_read = book.format_last_read(request.user)
         book.last_position_percent = book.reading_loc(request.user).last_position_percent
@@ -162,7 +176,7 @@ def import_book(request: HttpRequest) -> HttpResponse:
         elif file_extension == "epub":
             book_class = BookLoaderEpub
         else:
-            return JsonResponse({"error": "Unsupported file format"}, status=400)
+            raise ValueError(f"Unsupported file format for {file.name}")
 
         if isinstance(file, TemporaryUploadedFile):
             book_processor = book_class(
@@ -197,12 +211,13 @@ def import_book(request: HttpRequest) -> HttpResponse:
         """)
 
     except Exception as e:  # pylint: disable=broad-except
-        return TemplateResponse(request, "partials/import_modal.html", {"error_message": str(e)})
+        logging.error("Error importing book: %s", e, exc_info=True)
+        raise ValueError(request, str(e)) from e
 
 
 @smart_login_required  # type: ignore
 def search_authors(request: HttpRequest) -> HttpResponse:
-    """Search authors based on input string."""
+    """Search authors based on input string in `author`."""
     query = request.GET.get("author", "").strip()
     if not query:
         return HttpResponse("")  # Return empty response if no query
@@ -220,8 +235,8 @@ def search_authors(request: HttpRequest) -> HttpResponse:
             | Q(name__icontains=f".{query}")  # Period before query
         )[:101]
 
-    has_more = len(authors) > 100
-    authors = authors[:100]  # Trim to 100 if there are more
+    has_more = len(authors) > AUTHOR_SUGGESTION_PAGE_SIZE
+    authors = authors[:AUTHOR_SUGGESTION_PAGE_SIZE]  # Trim if there are more
 
     return render(
         request, "partials/author_suggestions.html", {"authors": authors, "has_more": has_more}

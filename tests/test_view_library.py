@@ -9,6 +9,7 @@ from django.urls import reverse
 from pytest_django.asserts import assertTemplateUsed
 
 from lexiflux.models import Book, Author, Language
+from lexiflux.views.library_partials import AUTHOR_SUGGESTION_PAGE_SIZE
 
 
 @allure.epic('Pages endpoints')
@@ -30,6 +31,7 @@ def test_library_view_for_regular_user(client, user, book):
     response = client.get(reverse('library'))
 
     assert response.status_code == 200
+    print(response.content)  # <!-- Books list will be loaded here -->
     assert len(response.context['books']) == 3  # Expecting 3 books: owned, shared, and public
     assertTemplateUsed(response, 'library.html')
 
@@ -94,7 +96,8 @@ class TestImportBook:
         client.force_login(approved_user)
         response = client.get(reverse('import_book'))
         assert response.status_code == 405
-        assert json.loads(response.content)['error'] == 'Invalid request method'
+        print(response.content)
+        assert "Method GET not allowed" in json.loads(response.content)['error']
 
     def test_import_book_no_file(self, client, approved_user):
         client.force_login(approved_user)
@@ -107,7 +110,7 @@ class TestImportBook:
         file = SimpleUploadedFile('test.pdf', b'file content', content_type='application/pdf')
         response = client.post(reverse('import_book'), {'file': file})
         assert response.status_code == 400
-        assert json.loads(response.content)['error'] == 'Unsupported file format'
+        assert 'Unsupported file format' in json.loads(response.content)['error']
 
     @pytest.mark.parametrize('file_ext,loader_class', [
         ('txt', 'BookLoaderPlainText'),
@@ -124,7 +127,7 @@ class TestImportBook:
             content_type=f'text/{file_ext}'
         )
 
-        with patch(f'lexiflux.views.library_views.{loader_class}') as MockLoader:
+        with patch(f'lexiflux.views.library_partials.{loader_class}') as MockLoader:
             mock_processor = MagicMock()
             mock_processor.create.return_value = book
             MockLoader.return_value = mock_processor
@@ -132,11 +135,11 @@ class TestImportBook:
             response = client.post(reverse('import_book'), {'file': file})
 
         assert response.status_code == 200
-        response_data = json.loads(response.content)
-        assert response_data['id'] == book.id
-        assert response_data['title'] == book.title
-        assert response_data['author'] == book.author.name
-        assert response_data['language'] == book.language.google_code
+        assert len(response.content) > 5000
+        assert 'id="editBookModal"' in response.content.decode()
+        assert book.title in response.content.decode()
+        assert book.author.name in response.content.decode()
+
 
     def test_import_book_with_temporary_file(self, client, approved_user, book):
         client.force_login(approved_user)
@@ -146,7 +149,7 @@ class TestImportBook:
         mock_temp_file.name = 'test.txt'
         mock_temp_file.temporary_file_path.return_value = '/tmp/test.txt'
 
-        with patch('lexiflux.views.library_views.BookLoaderPlainText') as MockLoader:
+        with patch('lexiflux.views.library_partials.BookLoaderPlainText') as MockLoader:
             mock_processor = MagicMock()
             mock_processor.create.return_value = book
             MockLoader.return_value = mock_processor
@@ -159,21 +162,21 @@ class TestImportBook:
                 )
 
         assert response.status_code == 200
-        response_data = json.loads(response.content)
-        print(response_data)
-        assert response_data['id'] == book.id
-        assert response_data['title'] == book.title
+        assert len(response.content) > 5000
+        assert 'id="editBookModal"' in response.content.decode()
+        assert book.title in response.content.decode()
+        assert book.author.name in response.content.decode()
 
     def test_import_book_error_handling(self, client, approved_user):
         client.force_login(approved_user)
         file = SimpleUploadedFile('test.txt', b'file content', content_type='text/plain')
 
-        with patch('lexiflux.views.library_views.BookLoaderPlainText') as MockLoader:
+        with patch('lexiflux.views.library_partials.BookLoaderPlainText') as MockLoader:
             MockLoader.side_effect = Exception('Test error')
             response = client.post(reverse('import_book'), {'file': file})
 
-        assert response.status_code == 500
-        assert json.loads(response.content)['error'] == 'Test error'
+        assert response.status_code == 400
+        assert 'Test error' == json.loads(response.content)['error']
 
 
 @allure.epic('Pages endpoints')
@@ -272,38 +275,34 @@ class TestBookDetailView:
 class TestSearchAuthors:
     def test_search_authors_empty_query(self, client, approved_user, author):
         client.force_login(approved_user)
-        response = client.get(reverse('search_authors'), {'q': ''})
+        response = client.get(reverse('search_authors'), {'author': ''})
         assert response.status_code == 200
-        data = json.loads(response.content)
-        assert data['authors'] == []
-        assert data['has_more'] is False
+        assert response.content == b""
 
     def test_search_authors_single_word(self, client, approved_user, author):
         # Use the existing author fixture and create one additional author
         get_user_model().objects.create_user('otheruser', 'other@example.com', 'password123')
 
         client.force_login(approved_user)
-        response = client.get(reverse('search_authors'), {'q': author.name.split()[0]})
+        response = client.get(reverse('search_authors'), {'author': author.name.split()[0]})
 
         assert response.status_code == 200
-        data = json.loads(response.content)
-        assert len(data['authors']) == 1
-        assert data['authors'][0] == author.name
-        assert data['has_more'] is False
+        print(response.content)
+        assert author.name in response.content.decode()
+        assert response.content.count(b"<li") == 1
 
     def test_search_authors_pagination(self, client, approved_user, author):
         # Create additional authors with similar names to test pagination
         base_name = author.name.split()[0]
-        for i in range(100):  # Create enough authors to trigger pagination
+        for i in range(AUTHOR_SUGGESTION_PAGE_SIZE):  # Create enough authors to trigger pagination
             author._meta.model.objects.create(name=f"{base_name} {i}")
 
         client.force_login(approved_user)
-        response = client.get(reverse('search_authors'), {'q': base_name})
+        response = client.get(reverse('search_authors'), {'author': base_name})
 
         assert response.status_code == 200
-        data = json.loads(response.content)
-        assert len(data['authors']) == 100
-        assert data['has_more'] is True
+        assert response.content.count(b"<li") == AUTHOR_SUGGESTION_PAGE_SIZE + 1  # +1 for the "And more..." link
+        assert "And more..." in response.content.decode()
 
     def test_search_authors_special_characters(self, client, approved_user, author):
         # Create authors with special characters in their names using the Author model
@@ -313,11 +312,10 @@ class TestSearchAuthors:
         client.force_login(approved_user)
 
         # Test hyphenated name
-        response = client.get(reverse('search_authors'), {'q': 'Paul'})
-        data = json.loads(response.content)
-        assert 'Jean-Paul' in data['authors']
+        response = client.get(reverse('search_authors'), {'author': 'Paul'})
+        assert 'Jean-Paul' in response.content.decode()
 
         # Test name with period
-        response = client.get(reverse('search_authors'), {'q': 'John'})
-        data = json.loads(response.content)
-        assert 'St. John' in data['authors']
+        response = client.get(reverse('search_authors'), {'author': 'John'})
+        assert 'St. John' in response.content.decode()
+

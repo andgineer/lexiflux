@@ -5,7 +5,7 @@ from typing import Any
 
 from django.contrib.auth import authenticate, login
 from django.core.exceptions import PermissionDenied
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponseNotAllowed
 
 from lexiflux.lexiflux_settings import settings
 
@@ -29,17 +29,52 @@ class AutoLoginMiddleware:  # pylint: disable=too-few-public-methods
         return self.get_response(request)
 
 
-class JSONPermissionDeniedMiddleware:
+class ExceptionJSONResponseMiddleware:
     """Middleware to format responses in case of PermissionDenied exceptions."""
 
     def __init__(self, get_response: Any) -> None:
         self.get_response = get_response
 
     def __call__(self, request: Any) -> Any:
-        return self.get_response(request)
+        response = self.get_response(request)
+        # Convert HttpResponseNotAllowed to JSON format
+        if isinstance(response, HttpResponseNotAllowed):
+            allowed_methods = response.headers.get("Allow", "")
+            return JsonResponse(
+                {
+                    "error": (
+                        f"Method {request.method} not allowed. Allowed methods: {allowed_methods}"
+                    ),
+                    "details": [request.path],
+                },
+                status=405,
+            )
+        return response
 
     def process_exception(self, request: Any, exception: Any) -> Any:
-        """Process exception."""
+        """Process exceptions and return JSON response."""
+        logger.error("Exception: %s", exception, exc_info=True)
+
+        if isinstance(exception.args, tuple) and len(exception.args) > 0:
+            # Convert WSGIRequest objects to their URL path and keep other args as strings
+            exception_args = [
+                arg.path if str(type(arg)).endswith("WSGIRequest") else str(arg)
+                for arg in exception.args[:-1]
+            ]
+            error_message = exception.args[-1]
+        else:
+            error_message = str(exception)
+            exception_args = [str(exception.args)]
         if isinstance(exception, PermissionDenied):
-            return JsonResponse({"error": str(exception) or "Permission denied"}, status=403)
-        return None
+            return JsonResponse(
+                {"error": error_message or "Permission denied", "details": exception_args},
+                status=403,
+            )
+        if isinstance(exception, ValueError):
+            return JsonResponse(
+                {"error": error_message or "Bad request", "details": exception_args}, status=400
+            )
+        return JsonResponse(
+            {"error": error_message or "Internal server error", "details": exception_args},
+            status=500,
+        )
