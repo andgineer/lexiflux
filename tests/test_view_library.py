@@ -18,6 +18,18 @@ from lexiflux.views.library_partials import AUTHOR_SUGGESTION_PAGE_SIZE
 def test_library_view_for_regular_user(client, user, book):
     # Assuming 'user' fixture creates a regular user and 'book' fixture creates a book owned by the user
     client.force_login(user)
+    response = client.get(reverse('library'))
+
+    assert response.status_code == 200
+    assertTemplateUsed(response, 'library.html')
+
+
+@allure.epic('Pages endpoints')
+@allure.story('Library')
+@pytest.mark.django_db
+def test_library_view_books_list_for_regular_user(client, user, book):
+    # Assuming 'user' fixture creates a regular user and 'book' fixture creates a book owned by the user
+    client.force_login(user)
 
     another_user = get_user_model().objects.create_user('another_user', password='12345', email="email")
     shared_book = Book.objects.create(title="Shared Book", author=book.author, language=book.language,
@@ -28,13 +40,12 @@ def test_library_view_for_regular_user(client, user, book):
     Book.objects.create(title="Private Book", author=book.author, language=book.language, code='private-book-code',
                         owner=another_user, public=False)
 
-    response = client.get(reverse('library'))
+    response = client.get(reverse('books_list'))
 
     assert response.status_code == 200
-    print(response.content)  # <!-- Books list will be loaded here -->
-    assert len(response.context['books']) == 3  # Expecting 3 books: owned, shared, and public
-    assertTemplateUsed(response, 'library.html')
-
+    assert response.content.count(b"<tr>") == 3 +1  # +1 for the header row
+    assert "Shared Book" in response.content.decode()
+    assertTemplateUsed(response, 'partials/books_list.html')
 
 @allure.epic('Pages endpoints')
 @allure.story('Library')
@@ -51,12 +62,11 @@ def test_library_view_for_superuser(client, book):
     Book.objects.create(title="Another Book", author=author, language=language, code='another-book-code', owner=another_user, public=False)
     Book.objects.create(title="Public Book", author=author, language=language, code='public-book-code', public=True)
 
-    response = client.get(reverse('library'))
+    response = client.get(reverse('books_list'))
 
     # Verify that the superuser sees all books, regardless of ownership or public status
     assert response.status_code == 200
-    books = response.context['books']
-    assert len(books) >= 3, "Superuser should see all books in the library"
+    assert response.content.count(b"<tr>") >= 3, "Superuser should see all books in the library"
 
 
 @allure.epic('Pages endpoints')
@@ -79,7 +89,7 @@ def test_library_view_pagination(client, user, author, book):
             public=True if i % 2 != 0 else False  # Alternate between public and private
         )
 
-    response = client.get(reverse('library'), {'page': 2})
+    response = client.get(reverse('books_list'), {'page': 2})
 
     # Verify the response and pagination
     assert response.status_code == 200

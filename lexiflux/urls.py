@@ -15,11 +15,13 @@ from lexiflux import settings
 from lexiflux.views.library_partials import EditBookModalPartial
 
 urlpatterns = [
+    # admin
     path("admin/", admin.site.urls),
     path("accounts/login/", CustomLoginView.as_view(), name="login"),
     path("accounts/logout/", LogoutView.as_view(next_page="login"), name="logout"),
     path("accounts/signup/", SignUpView.as_view(), name="signup"),
     path("accounts/", include("django.contrib.auth.urls")),
+    # reader
     path("", lexiflux.views.reader_views.redirect_to_reader, name="redirect_to_reader"),
     path("reader", lexiflux.views.reader_views.reader, name="reader"),
     path(
@@ -35,8 +37,8 @@ urlpatterns = [
     path("page", lexiflux.views.reader_views.page, name="page"),
     path("location", lexiflux.views.reader_views.location, name="location"),
     path("search/", lexiflux.views.reader_views.search, name="search"),
-    path("library", lexiflux.views.library_partials.library_page, name="library"),
     path("translate", lexiflux.views.lexical_views.translate, name="translate"),
+    # lexical
     path(
         "api/reader-settings/",
         lexiflux.views.reader_views.save_reader_settings,
@@ -77,18 +79,21 @@ urlpatterns = [
         lexiflux.views.language_preferences_views.update_article_order,
         name="update_article_order",
     ),
-    path("api/import-book/", lexiflux.views.library_partials.import_book, name="import_book"),
+    # library
+    path("library", lexiflux.views.library_partials.library_page, name="library"),
     path(
         "api/books/<int:book_id>/",
         lexiflux.views.library_views.BookDetailView.as_view(),
         name="book_detail",
     ),
+    # ai settings
     path("ai-settings/", lexiflux.views.ai_settings_views.ai_settings, name="ai-settings"),
     path(
         "api/ai-settings/",
         lexiflux.views.ai_settings_views.ai_settings_api,
         name="ai_settings_api",
     ),
+    # words export
     path("words-export/", lexiflux.views.words_export.words_export_page, name="words-export"),
     path(
         "api/last-export-datetime/",
@@ -101,6 +106,8 @@ urlpatterns = [
 
 # library partials
 urlpatterns += [
+    path("library/books/", lexiflux.views.library_partials.books_list, name="books_list"),
+    path("library/import/", lexiflux.views.library_partials.import_modal, name="import_modal"),
     path(
         "modals/edit-book/<int:book_id>/", EditBookModalPartial.as_view(), name="edit_book_modal"
     ),
@@ -109,8 +116,7 @@ urlpatterns += [
         lexiflux.views.library_partials.search_authors,
         name="search_authors",
     ),
-    path("library/books/", lexiflux.views.library_partials.books_list, name="books_list"),
-    path("library/import/", lexiflux.views.library_partials.import_modal, name="import_modal"),
+    path("api/import-book/", lexiflux.views.library_partials.import_book, name="import_book"),
 ]
 
 if settings.DEBUGGER_TOOLBAR:

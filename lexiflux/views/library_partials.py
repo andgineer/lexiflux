@@ -25,7 +25,7 @@ from lexiflux.decorators import smart_login_required
 
 logger = logging.getLogger(__name__)
 
-AUTHOR_SUGGESTION_PAGE_SIZE = 100
+AUTHOR_SUGGESTION_PAGE_SIZE = 15
 
 
 @smart_login_required
@@ -78,6 +78,8 @@ def books_list(request: HttpRequest) -> HttpResponse:
     for book in books_page:
         book.formatted_last_read = book.format_last_read(request.user)
         book.last_position_percent = book.reading_loc(request.user).last_position_percent
+
+    print("@" * 20, books_page)
 
     return render(request, "partials/books_list.html", {"books": books_page})
 
