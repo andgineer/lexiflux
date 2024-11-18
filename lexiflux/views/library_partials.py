@@ -107,20 +107,30 @@ class EditBookModalPartial(TemplateView):  # type: ignore
     def post(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
         """Update book details."""
         book = Book.get_if_can_be_read(request.user, id=kwargs["book_id"])
+        context = self.get_context_data(**kwargs)
 
         try:
-            book.title = request.POST.get("title", book.title)
-            author_name = request.POST.get("author", book.author.name)
+            # Validate required fields
+            title = request.POST.get("title")
+            author_name = request.POST.get("author")
+            language_code = request.POST.get("language")
+
+            if not title:
+                raise ValueError("Title is required")
+            if not author_name:
+                raise ValueError("Author is required")
+            if not language_code:
+                raise ValueError("Language is required")
+
+            # Update book details
+            book.title = title
             author, _ = Author.objects.get_or_create(name=author_name)
             book.author = author
-
-            language_code = request.POST.get("language", book.language.google_code)
             language = Language.objects.get(google_code=language_code)
             book.language = language
-
             book.save()
 
-            # Return HTML that will close modal and refresh book list
+            # Return success response that closes modal and refreshes book list
             return HttpResponse("""
                 <script>
                     document.body.classList.remove('modal-open');
@@ -130,9 +140,15 @@ class EditBookModalPartial(TemplateView):  # type: ignore
                 </script>
             """)
 
-        except Exception as e:  # pylint: disable=broad-except
-            context = self.get_context_data()
+        except ValueError as e:
             context["error_message"] = str(e)
+            return TemplateResponse(request, self.template_name, context)
+        except Language.DoesNotExist:
+            context["error_message"] = "Invalid language selection"
+            return TemplateResponse(request, self.template_name, context)
+        except Exception as e:  # pylint: disable=broad-except
+            logger.error("Error updating book: %s", e, exc_info=True)
+            context["error_message"] = f"An error occurred while saving the book: {str(e)}"
             return TemplateResponse(request, self.template_name, context)
 
     def delete(self, request: HttpRequest, book_id: int) -> JsonResponse:

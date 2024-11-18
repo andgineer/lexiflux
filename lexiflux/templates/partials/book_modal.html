@@ -20,18 +20,19 @@
 
       <form hx-post="{% url 'edit_book_modal' book.id %}"
             hx-target="closest .modal"
-      >
+            hx-swap="outerHTML">
         <div class="modal-body">
           {% if error_message %}
-          <div class="alert alert-danger" role="alert">
+          <div class="alert alert-danger alert-dismissible fade show" role="alert">
             {{ error_message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
           </div>
           {% endif %}
 
           <div class="mb-3">
             <label for="bookTitle" class="form-label">Title</label>
             <input type="text"
-                   class="form-control"
+                   class="form-control {% if error_message and not book.title %}is-invalid{% endif %}"
                    id="bookTitle"
                    name="title"
                    value="{{ book.title }}"
@@ -41,15 +42,14 @@
           <div class="mb-3">
             <label for="bookAuthor" class="form-label">Author</label>
             <input type="text"
-                   class="form-control"
+                   class="form-control {% if error_message and not book.author.name %}is-invalid{% endif %}"
                    id="bookAuthor"
                    name="author"
                    value="{{ book.author.name }}"
                    hx-get="{% url 'search_authors' %}"
                    hx-trigger="keyup changed delay:300ms"
                    hx-target="#authorSuggestions"
-                   required
-            >
+                   required>
             <ul id="authorSuggestions" class="list-group mt-2">
               <!-- Author suggestions will be populated here -->
             </ul>
@@ -57,7 +57,10 @@
 
           <div class="mb-3">
             <label for="bookLanguage" class="form-label">Language</label>
-            <select class="form-select" id="bookLanguage" name="language" required>
+            <select class="form-select {% if error_message and not book.language %}is-invalid{% endif %}"
+                    id="bookLanguage"
+                    name="language"
+                    required>
               {% for lang in languages %}
               <option value="{{ lang.google_code }}"
                       {% if lang.google_code == book.language.google_code %}selected{% endif %}>
