@@ -230,7 +230,16 @@ def import_book(request: HttpRequest) -> HttpResponse:
 
     except Exception as e:  # pylint: disable=broad-except
         logging.error("Error importing book: %s", e, exc_info=True)
-        raise ValueError(request, str(e)) from e
+        return render(
+            request,
+            "partials/import_modal.html",
+            {
+                "error_message": str(e),
+                "last_filename": request.FILES.get("file").name
+                if request.FILES.get("file")
+                else None,
+            },
+        )
 
 
 @smart_login_required  # type: ignore
