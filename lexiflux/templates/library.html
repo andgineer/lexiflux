@@ -40,6 +40,17 @@
 
     <!-- Modal Container -->
     <div id="modalContainer"></div>
+
+    <!-- Error Modal -->
+    {% include "partials/error_modal.html" %}
 </div>
+
+<script>
+    htmx.on("htmx:responseError", function(evt) {
+        var errorModal = new bootstrap.Modal(document.getElementById('errorModal'));
+        document.querySelector('#errorModal .error-message').textContent = evt.detail.xhr.response;
+        errorModal.show();
+    });
+</script>
 {% endblock %}
 

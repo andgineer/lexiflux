@@ -1,8 +1,9 @@
 """Library partial views."""
 
 import logging
-from typing import Type, Dict, Any
+from typing import Type, Dict, Any, Optional
 
+from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
 from django.core.files.storage import FileSystemStorage
 from django.core.files.uploadedfile import TemporaryUploadedFile
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
@@ -80,14 +81,26 @@ class EditBookModalPartial(TemplateView):  # type: ignore
     """Edit book modal partial view."""
 
     template_name = "partials/book_modal.html"
+    book: Optional[Book] = None
+
+    def dispatch(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
+        """Handle all HTTP methods with proper error checking."""
+        try:
+            self.book = Book.get_if_can_be_read(request.user, id=kwargs.get("book_id"))
+            return super().dispatch(request, *args, **kwargs)
+        except (ObjectDoesNotExist, PermissionDenied, ValueError) as e:
+            # The middleware will handle converting this to the appropriate JSON response
+            raise e
+        except Exception as e:
+            logger.error("Error accessing book: %s", e, exc_info=True)
+            raise ValueError("An error occurred while processing your request") from e
 
     def get_context_data(self, **kwargs: Any) -> Dict[str, Any]:
+        """Get context data for the template."""
         context = super().get_context_data(**kwargs)
-        book = Book.get_if_can_be_read(self.request.user, id=kwargs.get("book_id"))
-
         context.update(
             {
-                "book": book,
+                "book": self.book,
                 "is_new": self.request.GET.get("is_new", False),
                 "languages": Language.objects.all(),
             }
@@ -96,12 +109,7 @@ class EditBookModalPartial(TemplateView):  # type: ignore
 
     def post(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
         """Update book details."""
-        context = self.get_context_data(**kwargs)
-        if "status" in context:  # Book not found or permission denied
-            return TemplateResponse(request, self.template_name, context, status=context["status"])
-
         try:
-            book = context["book"]
             # Validate required fields
             title = request.POST.get("title")
             author_name = request.POST.get("author")
@@ -115,12 +123,13 @@ class EditBookModalPartial(TemplateView):  # type: ignore
                 raise ValueError("Language is required")
 
             # Update book details
-            book.title = title
+            assert self.book is not None
+            self.book.title = title
             author, _ = Author.objects.get_or_create(name=author_name)
-            book.author = author
+            self.book.author = author
             language = Language.objects.get(google_code=language_code)
-            book.language = language
-            book.save()
+            self.book.language = language
+            self.book.save()
 
             # Return success response that closes modal and refreshes book list
             return HttpResponse("""
@@ -133,27 +142,28 @@ class EditBookModalPartial(TemplateView):  # type: ignore
             """)
 
         except ValueError as e:
-            context["error_message"] = str(e)
-            return TemplateResponse(request, self.template_name, context)
-        except Exception as e:  # pylint: disable=broad-except
+            return TemplateResponse(
+                request,
+                self.template_name,
+                {**self.get_context_data(**kwargs), "error_message": str(e)},
+            )
+        except Exception as e:
             logger.error("Error updating book: %s", e, exc_info=True)
-            context["error_message"] = f"An error occurred while saving the book: {str(e)}"
-            return TemplateResponse(request, self.template_name, context)
+            raise ValueError("An error occurred while saving the book") from e
 
-    def delete(self, request: HttpRequest, book_id: int) -> JsonResponse:
+    def delete(self, request: HttpRequest, *args: Any, **kwargs: Any) -> JsonResponse:
         """Delete a book."""
         try:
-            book = Book.objects.get(id=book_id)
-            if book.owner and (book.owner != request.user and not request.user.is_superuser):
-                return JsonResponse(
-                    {"error": "You don't have permission to delete this book"}, status=403
-                )
-            book.delete()
+            assert self.book is not None
+            if self.book.owner and (
+                self.book.owner != request.user and not request.user.is_superuser
+            ):
+                raise PermissionDenied("You don't have permission to delete this book")
+            self.book.delete()
             return JsonResponse({"success": "Book deleted successfully"})
-        except Book.DoesNotExist:
-            return JsonResponse({"error": "Book not found"}, status=404)
-        except Exception as e:  # pylint: disable=broad-except
-            return JsonResponse({"error": str(e)}, status=500)
+        except Exception as e:
+            logger.error("Error deleting book: %s", e, exc_info=True)
+            raise ValueError("An error occurred while deleting the book") from e
 
 
 @smart_login_required

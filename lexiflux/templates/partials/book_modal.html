@@ -57,10 +57,7 @@
 
           <div class="mb-3">
             <label for="bookLanguage" class="form-label">Language</label>
-            <select class="form-select {% if error_message and not book.language %}is-invalid{% endif %}"
-                    id="bookLanguage"
-                    name="language"
-                    required>
+            <select class="form-select" id="bookLanguage" name="language" required>
               {% for lang in languages %}
               <option value="{{ lang.google_code }}"
                       {% if lang.google_code == book.language.google_code %}selected{% endif %}>
