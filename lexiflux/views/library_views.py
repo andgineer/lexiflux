@@ -18,22 +18,6 @@ logger = logging.getLogger(__name__)
 class BookDetailView(View):  # type: ignore
     """View for book details."""
 
-    def get(self, request: HttpRequest, book_id: int) -> JsonResponse:
-        """Get book details."""
-        try:
-            book = Book.objects.get(id=book_id)
-            return JsonResponse(
-                {
-                    "id": book.id,
-                    "title": book.title,
-                    "author": book.author.name,
-                    "language": book.language.google_code,
-                    "code": book.code,
-                }
-            )
-        except Book.DoesNotExist:
-            return JsonResponse({"error": "Book not found"}, status=404)
-
     def put(self, request: HttpRequest, book_id: int) -> JsonResponse:
         """Update book details."""
         try:
@@ -76,18 +60,3 @@ class BookDetailView(View):  # type: ignore
             return JsonResponse({"error": str(e)}, status=500)
 
         return JsonResponse({"error": "Invalid request method"}, status=405)
-
-    def delete(self, request: HttpRequest, book_id: int) -> JsonResponse:
-        """Delete a book."""
-        try:
-            book = Book.objects.get(id=book_id)
-            if book.owner and (book.owner != request.user and not request.user.is_superuser):
-                return JsonResponse(
-                    {"error": "You don't have permission to delete this book"}, status=403
-                )
-            book.delete()
-            return JsonResponse({"success": "Book deleted successfully"})
-        except Book.DoesNotExist:
-            return JsonResponse({"error": "Book not found"}, status=404)
-        except Exception as e:  # pylint: disable=broad-except
-            return JsonResponse({"error": str(e)}, status=500)

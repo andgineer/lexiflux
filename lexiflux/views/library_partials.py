@@ -8,7 +8,7 @@ from django.core.files.uploadedfile import TemporaryUploadedFile
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.db.models import Q
 from django.http import HttpResponse, HttpRequest, JsonResponse
-from django.shortcuts import get_object_or_404, render
+from django.shortcuts import render
 from django.template.response import TemplateResponse
 from django.utils.decorators import method_decorator
 from django.views.decorators.http import require_GET, require_POST
@@ -26,13 +26,6 @@ from lexiflux.decorators import smart_login_required
 logger = logging.getLogger(__name__)
 
 AUTHOR_SUGGESTION_PAGE_SIZE = 15
-
-
-@smart_login_required
-@require_GET  # type: ignore
-def library_page(request: HttpRequest) -> HttpResponse:
-    """Render the main library page."""
-    return render(request, "library.html")
 
 
 @smart_login_required
@@ -79,8 +72,6 @@ def books_list(request: HttpRequest) -> HttpResponse:
         book.formatted_last_read = book.format_last_read(request.user)
         book.last_position_percent = book.reading_loc(request.user).last_position_percent
 
-    print("@" * 20, books_page)
-
     return render(request, "partials/books_list.html", {"books": books_page})
 
 
@@ -92,8 +83,7 @@ class EditBookModalPartial(TemplateView):  # type: ignore
 
     def get_context_data(self, **kwargs: Any) -> Dict[str, Any]:
         context = super().get_context_data(**kwargs)
-        book_id = self.kwargs.get("book_id")
-        book = get_object_or_404(Book, id=book_id)
+        book = Book.get_if_can_be_read(self.request.user, id=kwargs.get("book_id"))
 
         context.update(
             {
@@ -106,10 +96,12 @@ class EditBookModalPartial(TemplateView):  # type: ignore
 
     def post(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
         """Update book details."""
-        book = Book.get_if_can_be_read(request.user, id=kwargs["book_id"])
         context = self.get_context_data(**kwargs)
+        if "status" in context:  # Book not found or permission denied
+            return TemplateResponse(request, self.template_name, context, status=context["status"])
 
         try:
+            book = context["book"]
             # Validate required fields
             title = request.POST.get("title")
             author_name = request.POST.get("author")
@@ -142,9 +134,6 @@ class EditBookModalPartial(TemplateView):  # type: ignore
 
         except ValueError as e:
             context["error_message"] = str(e)
-            return TemplateResponse(request, self.template_name, context)
-        except Language.DoesNotExist:
-            context["error_message"] = "Invalid language selection"
             return TemplateResponse(request, self.template_name, context)
         except Exception as e:  # pylint: disable=broad-except
             logger.error("Error updating book: %s", e, exc_info=True)
@@ -268,3 +257,10 @@ def search_authors(request: HttpRequest) -> HttpResponse:
     return render(
         request, "partials/author_suggestions.html", {"authors": authors, "has_more": has_more}
     )
+
+
+@smart_login_required
+@require_GET  # type: ignore
+def library_page(request: HttpRequest) -> HttpResponse:
+    """Render the main library page."""
+    return render(request, "library.html")

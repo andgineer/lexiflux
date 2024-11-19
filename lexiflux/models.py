@@ -8,9 +8,8 @@ from typing import TypeAlias, Tuple, List, Any, Dict, Optional
 
 from django.conf import settings
 from django.db import models, transaction
-from django.shortcuts import get_object_or_404
 from django.utils import timezone
-from django.core.exceptions import ValidationError, PermissionDenied
+from django.core.exceptions import ValidationError, PermissionDenied, ObjectDoesNotExist
 from django.contrib.auth.models import AbstractUser
 from django.utils.translation import gettext_lazy as _
 from django.db.models import Q
@@ -260,9 +259,12 @@ class Book(models.Model):  # type: ignore
             Http404: If book not found
             PermissionDenied: If user can't read the book
         """
-        book = get_object_or_404(cls, **kwargs)
-        book.ensure_can_be_read_by(user)
-        return book  # type: ignore
+        try:
+            book = cls.objects.get(**kwargs)
+            book.ensure_can_be_read_by(user)
+            return book  # type: ignore
+        except cls.DoesNotExist as e:
+            raise ObjectDoesNotExist(f"Book ({kwargs}) not found") from e
 
     def save(self, *args: Any, **kwargs: Any) -> None:
         if self.pk:  # Checks if the object already exists in the database

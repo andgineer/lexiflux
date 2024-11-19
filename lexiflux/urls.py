@@ -6,6 +6,7 @@ from django.contrib import admin
 
 import lexiflux.views.language_preferences_views
 import lexiflux.views.lexical_views
+import lexiflux.views.library_partials
 import lexiflux.views.library_views
 import lexiflux.views.reader_views
 import lexiflux.views.ai_settings_views
@@ -21,6 +22,8 @@ urlpatterns = [
     path("accounts/logout/", LogoutView.as_view(next_page="login"), name="logout"),
     path("accounts/signup/", SignUpView.as_view(), name="signup"),
     path("accounts/", include("django.contrib.auth.urls")),
+    # library
+    path("library", lexiflux.views.library_partials.library_page, name="library"),
     # reader
     path("", lexiflux.views.reader_views.redirect_to_reader, name="redirect_to_reader"),
     path("reader", lexiflux.views.reader_views.reader, name="reader"),
@@ -78,13 +81,6 @@ urlpatterns = [
         "api/update-article-order/",
         lexiflux.views.language_preferences_views.update_article_order,
         name="update_article_order",
-    ),
-    # library
-    path("library", lexiflux.views.library_partials.library_page, name="library"),
-    path(
-        "api/books/<int:book_id>/",
-        lexiflux.views.library_views.BookDetailView.as_view(),
-        name="book_detail",
     ),
     # ai settings
     path("ai-settings/", lexiflux.views.ai_settings_views.ai_settings, name="ai-settings"),

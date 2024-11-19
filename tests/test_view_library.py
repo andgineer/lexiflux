@@ -195,30 +195,45 @@ class TestImportBook:
 class TestBookDetailView:
     def test_get_book_details_not_found(self, client, approved_user):
         client.force_login(approved_user)
-        response = client.get(reverse('book_detail', kwargs={'book_id': 999}))
+        response = client.get(reverse('edit_book_modal', kwargs={'book_id': 999}))
         assert response.status_code == 404
-        assert json.loads(response.content)['error'] == 'Book not found'
 
     def test_get_book_details_success(self, client, approved_user, book):
         client.force_login(approved_user)
-        response = client.get(reverse('book_detail', kwargs={'book_id': book.id}))
+        response = client.get(reverse('edit_book_modal', kwargs={'book_id': book.id}))
         assert response.status_code == 200
-        data = json.loads(response.content)
-        assert data['id'] == book.id
-        assert data['title'] == book.title
-        assert data['author'] == book.author.name
-        assert data['language'] == book.language.google_code
-        assert data['code'] == book.code
+        assert 'editBookModal' in str(response.content)
+        # Check that the book details are in the HTML
+        content = str(response.content)
+        assert book.title in content
+        assert book.author.name in content
+        assert book.language.google_code in content
+        assert book.code in content
 
     def test_update_book_not_found(self, client, approved_user):
         client.force_login(approved_user)
-        response = client.put(
-            reverse('book_detail', kwargs={'book_id': 999}),
-            data=json.dumps({'title': 'New Title'}),
-            content_type='application/json'
+        response = client.post(
+            reverse('edit_book_modal', kwargs={'book_id': 999}),
+            data={
+                'title': 'New Title',
+                'author': 'New Author',
+                'language': 'en'
+            }
         )
         assert response.status_code == 404
-        assert json.loads(response.content)['error'] == 'Book not found'
+
+    def test_update_book_validation_error(self, client, approved_user, book):
+        client.force_login(approved_user)
+        response = client.post(
+            reverse('edit_book_modal', kwargs={'book_id': book.id}),
+            data={
+                'title': '',  # Empty title should trigger validation error
+                'author': 'New Author',
+                'language': book.language.google_code
+            }
+        )
+        assert response.status_code == 200
+        assert 'Title is required' in str(response.content)
 
     def test_update_book_success(self, client, approved_user, book, language):
         client.force_login(approved_user)
@@ -228,17 +243,13 @@ class TestBookDetailView:
             'language': language.google_code
         }
 
-        response = client.put(
-            reverse('book_detail', kwargs={'book_id': book.id}),
-            data=json.dumps(new_data),
-            content_type='application/json'
+        response = client.post(
+            reverse('edit_book_modal', kwargs={'book_id': book.id}),
+            data=new_data
         )
 
         assert response.status_code == 200
-        data = json.loads(response.content)
-        assert data['title'] == 'Updated Title'
-        assert data['author'] == 'New Author'
-        assert data['language'] == language.google_code
+        assert 'htmx.trigger(\'#booksList\', \'refresh\')' in str(response.content)
 
         # Verify database was updated
         book.refresh_from_db()
@@ -248,9 +259,10 @@ class TestBookDetailView:
 
     def test_delete_book_not_found(self, client, approved_user):
         client.force_login(approved_user)
-        response = client.delete(reverse('book_detail', kwargs={'book_id': 999}))
+        response = client.delete(reverse('edit_book_modal', kwargs={'book_id': 999}))
         assert response.status_code == 404
-        assert json.loads(response.content)['error'] == 'Book not found'
+        data = json.loads(response.content)
+        assert data['error'] == 'Book not found'
 
     def test_delete_book_unauthorized(self, client, book):
         # Create and login as another user who doesn't own the book
@@ -261,9 +273,10 @@ class TestBookDetailView:
         )
         client.force_login(other_user)
 
-        response = client.delete(reverse('book_detail', kwargs={'book_id': book.id}))
+        response = client.delete(reverse('edit_book_modal', kwargs={'book_id': book.id}))
         assert response.status_code == 403
-        assert json.loads(response.content)['error'] == "You don't have permission to delete this book"
+        data = json.loads(response.content)
+        assert data['error'] == "You don't have permission to delete this book"
 
         # Verify book still exists
         book.refresh_from_db()
@@ -271,12 +284,50 @@ class TestBookDetailView:
 
     def test_delete_book_success(self, client, approved_user, book):
         client.force_login(approved_user)
-        response = client.delete(reverse('book_detail', kwargs={'book_id': book.id}))
+        response = client.delete(reverse('edit_book_modal', kwargs={'book_id': book.id}))
         assert response.status_code == 200
-        assert json.loads(response.content)['success'] == 'Book deleted successfully'
+        data = json.loads(response.content)
+        assert data['success'] == 'Book deleted successfully'
 
         # Verify book was deleted
         assert not book._meta.model.objects.filter(id=book.id).exists()
+
+    @pytest.fixture
+    def book_with_owner(self, book, approved_user):
+        book.owner = approved_user
+        book.save()
+        return book
+
+    def test_update_book_unauthorized(self, client, book_with_owner):
+        other_user = get_user_model().objects.create_user(
+            'otheruser',
+            'other@example.com',
+            'password123'
+        )
+        client.force_login(other_user)
+
+        response = client.post(
+            reverse('edit_book_modal', kwargs={'book_id': book_with_owner.id}),
+            data={
+                'title': 'Updated Title',
+                'author': 'New Author',
+                'language': book_with_owner.language.google_code
+            }
+        )
+        assert response.status_code == 403
+
+    def test_update_book_invalid_language(self, client, approved_user, book):
+        client.force_login(approved_user)
+        response = client.post(
+            reverse('edit_book_modal', kwargs={'book_id': book.id}),
+            data={
+                'title': 'Updated Title',
+                'author': 'New Author',
+                'language': 'invalid_code'
+            }
+        )
+        assert response.status_code == 200
+        assert 'Invalid language selection' in str(response.content)
 
 
 @allure.epic('Pages endpoints')
