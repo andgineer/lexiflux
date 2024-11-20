@@ -45,9 +45,23 @@
 </div>
 
 <script>
-    htmx.on("htmx:responseError", function(evt) {
+    htmx.on("htmx:error", function(evt) {
         var errorModal = new bootstrap.Modal(document.getElementById('errorModal'));
-        document.querySelector('#errorModal .error-message').textContent = evt.detail.xhr.response;
+        const xhr = evt.detail.errorInfo?.xhr;
+
+        // Network error - xhr exists but response is empty
+        if (!xhr?.response) {
+            document.querySelector('#errorModal .error-message').textContent = "No answer from server";
+        }
+        // We have xhr with response
+        else {
+            try {
+                var response = JSON.parse(xhr.response);
+                document.querySelector('#errorModal .error-message').textContent = response.error;
+            } catch {
+                document.querySelector('#errorModal .error-message').textContent = xhr.response;
+            }
+        }
         errorModal.show();
     });
 </script>
