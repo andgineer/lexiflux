@@ -134,8 +134,6 @@ class EditBookModalPartial(TemplateView):  # type: ignore
             # Return success response that closes modal and refreshes book list
             return HttpResponse("""
                 <script>
-                    document.body.classList.remove('modal-open');
-                    document.body.style.removeProperty('padding-right');
                     document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
                     htmx.trigger('#booksList', 'refresh');
                 </script>
@@ -219,8 +217,6 @@ def import_book(request: HttpRequest) -> HttpResponse:
         }
         return HttpResponse(f"""
             <script>
-                document.body.classList.remove('modal-open');
-                document.body.style.removeProperty('padding-right');
                 document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
                 htmx.trigger('body', 'show-edit-modal');
             </script>

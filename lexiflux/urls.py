@@ -7,7 +7,6 @@ from django.contrib import admin
 import lexiflux.views.language_preferences_views
 import lexiflux.views.lexical_views
 import lexiflux.views.library_partials
-import lexiflux.views.library_views
 import lexiflux.views.reader_views
 import lexiflux.views.ai_settings_views
 import lexiflux.views.words_export
