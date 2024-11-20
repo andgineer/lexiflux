@@ -147,7 +147,7 @@ class EditBookModalPartial(TemplateView):  # type: ignore
             )
         except Exception as e:
             logger.error("Error updating book: %s", e, exc_info=True)
-            raise ValueError("An error occurred while saving the book") from e
+            raise ValueError(f"An error occurred while saving the book: {e}") from e
 
     def delete(self, request: HttpRequest, *args: Any, **kwargs: Any) -> JsonResponse:
         """Delete a book."""

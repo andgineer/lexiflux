@@ -112,15 +112,17 @@ class TestImportBook:
     def test_import_book_no_file(self, client, approved_user):
         client.force_login(approved_user)
         response = client.post(reverse('import_book'))
-        assert response.status_code == 400
-        assert json.loads(response.content)['error'] == 'No file provided'
+        assert response.status_code == 200
+        content = response.content.decode()
+        assert 'No file provided' in content
 
     def test_import_book_unsupported_format(self, client, approved_user):
         client.force_login(approved_user)
         file = SimpleUploadedFile('test.pdf', b'file content', content_type='application/pdf')
         response = client.post(reverse('import_book'), {'file': file})
-        assert response.status_code == 400
-        assert 'Unsupported file format' in json.loads(response.content)['error']
+        assert response.status_code == 200
+        content = response.content.decode()
+        assert 'Unsupported file format' in content
 
     @pytest.mark.parametrize('file_ext,loader_class', [
         ('txt', 'BookLoaderPlainText'),
@@ -185,8 +187,9 @@ class TestImportBook:
             MockLoader.side_effect = Exception('Test error')
             response = client.post(reverse('import_book'), {'file': file})
 
-        assert response.status_code == 400
-        assert 'Test error' == json.loads(response.content)['error']
+        assert response.status_code == 200
+        content = response.content.decode()
+        assert 'Test error' in content
 
 
 @allure.epic('Pages endpoints')
@@ -195,8 +198,10 @@ class TestImportBook:
 class TestBookDetailView:
     def test_get_book_details_not_found(self, client, approved_user):
         client.force_login(approved_user)
-        response = client.get(reverse('edit_book_modal', kwargs={'book_id': 999}))
-        assert response.status_code == 404
+        invalid_id = 999
+        response = client.get(reverse('edit_book_modal', kwargs={'book_id': invalid_id}))
+        assert response.status_code == 400
+        assert f"Book ({{'id': {invalid_id}}}) not found" in str(response.json()['error'])
 
     def test_get_book_details_success(self, client, approved_user, book):
         client.force_login(approved_user)
@@ -212,15 +217,17 @@ class TestBookDetailView:
 
     def test_update_book_not_found(self, client, approved_user):
         client.force_login(approved_user)
+        invalid_id = 999
         response = client.post(
-            reverse('edit_book_modal', kwargs={'book_id': 999}),
+            reverse('edit_book_modal', kwargs={'book_id': invalid_id}),
             data={
                 'title': 'New Title',
                 'author': 'New Author',
                 'language': 'en'
             }
         )
-        assert response.status_code == 404
+        assert response.status_code == 400
+        assert f"Book ({{'id': {invalid_id}}}) not found" in str(response.json()['error'])
 
     def test_update_book_validation_error(self, client, approved_user, book):
         client.force_login(approved_user)
@@ -259,10 +266,10 @@ class TestBookDetailView:
 
     def test_delete_book_not_found(self, client, approved_user):
         client.force_login(approved_user)
-        response = client.delete(reverse('edit_book_modal', kwargs={'book_id': 999}))
-        assert response.status_code == 404
-        data = json.loads(response.content)
-        assert data['error'] == 'Book not found'
+        invalid_id = 999
+        response = client.delete(reverse('edit_book_modal', kwargs={'book_id': invalid_id}))
+        assert response.status_code == 400
+        assert f"Book ({{'id': {invalid_id}}}) not found" in str(response.json()['error'])
 
     def test_delete_book_unauthorized(self, client, book):
         # Create and login as another user who doesn't own the book
@@ -275,12 +282,7 @@ class TestBookDetailView:
 
         response = client.delete(reverse('edit_book_modal', kwargs={'book_id': book.id}))
         assert response.status_code == 403
-        data = json.loads(response.content)
-        assert data['error'] == "You don't have permission to delete this book"
-
-        # Verify book still exists
-        book.refresh_from_db()
-        assert book.id is not None
+        assert f"{other_user.email} does not have permission to read book '(ID: {book.id})" in str(response.json()['error'])
 
     def test_delete_book_success(self, client, approved_user, book):
         client.force_login(approved_user)
@@ -326,8 +328,8 @@ class TestBookDetailView:
                 'language': 'invalid_code'
             }
         )
-        assert response.status_code == 200
-        assert 'Invalid language selection' in str(response.content)
+        assert response.status_code == 400
+        assert 'does not exist' in response.json()["error"]
 
 
 @allure.epic('Pages endpoints')

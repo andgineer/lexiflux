@@ -4,7 +4,7 @@ import logging
 from typing import Any
 
 from django.contrib.auth import authenticate, login
-from django.core.exceptions import PermissionDenied
+from django.core.exceptions import PermissionDenied, ObjectDoesNotExist
 from django.http import JsonResponse, HttpResponseNotAllowed
 
 from lexiflux.lexiflux_settings import settings
@@ -70,7 +70,7 @@ class ExceptionJSONResponseMiddleware:
                 {"error": error_message or "Permission denied", "details": exception_args},
                 status=403,
             )
-        if isinstance(exception, ValueError):
+        if isinstance(exception, (ValueError, ObjectDoesNotExist)):
             return JsonResponse(
                 {"error": error_message or "Bad request", "details": exception_args}, status=400
             )
