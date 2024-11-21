@@ -6,13 +6,13 @@ from django.contrib import admin
 
 import lexiflux.views.language_preferences_views
 import lexiflux.views.lexical_views
-import lexiflux.views.library_partials
+import lexiflux.views.library_views
 import lexiflux.views.reader_views
 import lexiflux.views.ai_settings_views
 import lexiflux.views.words_export
 from lexiflux.views.auth_views import SignUpView, CustomLoginView
 from lexiflux import settings
-from lexiflux.views.library_partials import EditBookModalPartial
+from lexiflux.views.library_views import EditBookModalPartial
 
 urlpatterns = [
     # admin
@@ -22,7 +22,7 @@ urlpatterns = [
     path("accounts/signup/", SignUpView.as_view(), name="signup"),
     path("accounts/", include("django.contrib.auth.urls")),
     # library
-    path("library", lexiflux.views.library_partials.library_page, name="library"),
+    path("library", lexiflux.views.library_views.library_page, name="library"),
     # reader
     path("", lexiflux.views.reader_views.redirect_to_reader, name="redirect_to_reader"),
     path("reader", lexiflux.views.reader_views.reader, name="reader"),
@@ -101,17 +101,17 @@ urlpatterns = [
 
 # library partials
 urlpatterns += [
-    path("library/books/", lexiflux.views.library_partials.books_list, name="books_list"),
-    path("library/import/", lexiflux.views.library_partials.import_modal, name="import_modal"),
+    path("library/books/", lexiflux.views.library_views.books_list, name="books_list"),
+    path("library/import/", lexiflux.views.library_views.import_modal, name="import_modal"),
     path(
         "modals/edit-book/<int:book_id>/", EditBookModalPartial.as_view(), name="edit_book_modal"
     ),
     path(
         "api/search-authors/",
-        lexiflux.views.library_partials.search_authors,
+        lexiflux.views.library_views.search_authors,
         name="search_authors",
     ),
-    path("api/import-book/", lexiflux.views.library_partials.import_book, name="import_book"),
+    path("api/import-book/", lexiflux.views.library_views.import_book, name="import_book"),
 ]
 
 if settings.DEBUGGER_TOOLBAR:

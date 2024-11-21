@@ -1,69 +1,41 @@
-{% extends 'base.html' %}
+{% extends 'base_htmx.html' %}
 {% load static %}
 
 {% block content %}
-<div class="d-flex flex-column vh-100">
-    <nav class="navbar navbar-expand-lg navbar-light bg-light">
-        <div class="container-fluid">
-            {% include 'hamburger.html' with current_page='library' %}
-            <div class="mx-3 text-truncate container-fluid">
-                Library
+    {{ block.super }}
+    <div class="d-flex flex-column vh-100">
+        <nav class="navbar navbar-expand-lg navbar-light bg-light">
+            <div class="container-fluid">
+                {% include 'hamburger.html' with current_page='library' %}
+                <div class="mx-3 text-truncate container-fluid">
+                    Library
+                </div>
             </div>
-        </div>
-    </nav>
+        </nav>
 
-    <div class="container-fluid flex-grow-1">
-        <div class="row justify-content-center">
-            <div class="card shadow col-md-10">
-                <div class="card-body">
-                    <h2 class="text-center my-4">Your Books</h2>
+        <div class="container-fluid flex-grow-1">
+            <div class="row justify-content-center">
+                <div class="card shadow col-md-10">
+                    <div class="card-body">
+                        <h2 class="text-center my-4">Your Books</h2>
 
-                    <div class="d-flex justify-content-end mb-3">
-                        <button class="btn btn-primary"
-                                hx-get="{% url 'import_modal' %}"
-                                hx-target="#modalContainer"
-                        >
-                            Import Books
-                        </button>
-                    </div>
+                        <div class="d-flex justify-content-end mb-3">
+                            <button class="btn btn-primary"
+                                    hx-get="{% url 'import_modal' %}"
+                                    hx-target="#modalContainer"
+                            >
+                                Import Books
+                            </button>
+                        </div>
 
-                    <div id="booksList"
-                         hx-get="{% url 'books_list' %}"
-                         hx-trigger="load, refresh from:body">
-                        <!-- Books list will be loaded here -->
+                        <div id="booksList"
+                             hx-get="{% url 'books_list' %}"
+                             hx-trigger="load, refresh from:body">
+                            <!-- Books list will be loaded here -->
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-
-    <!-- Modal Container -->
-    <div id="modalContainer"></div>
-
-    <!-- Error Modal -->
-    {% include "partials/error_modal.html" %}
-</div>
-
-<script>
-    htmx.on("htmx:error", function(evt) {
-        var errorModal = new bootstrap.Modal(document.getElementById('errorModal'));
-        const xhr = evt.detail.errorInfo?.xhr;
-
-        // Network error - xhr exists but response is empty
-        if (!xhr?.response) {
-            document.querySelector('#errorModal .error-message').textContent = "No answer from server";
-        }
-        // We have xhr with response
-        else {
-            try {
-                var response = JSON.parse(xhr.response);
-                document.querySelector('#errorModal .error-message').textContent = response.error;
-            } catch {
-                document.querySelector('#errorModal .error-message').textContent = xhr.response;
-            }
-        }
-        errorModal.show();
-    });
-</script>
 {% endblock %}
-

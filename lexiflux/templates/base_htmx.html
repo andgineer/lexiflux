@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block head %}
+    {{ block.super }}
+
+    <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+    <meta name="htmx-config" content='{"globalViewTransitions": true}'>
+{% endblock %}
+
+{% block body_attributes %}
+    {{ block.super }}
+
+    hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+{% endblock %}
+
+{% block content %}
+    {{ block.super }}
+
+    <div id="modalContainer"></div>
+
+    {% include "partials/error_modal.html" %}
+
+    <script>
+        htmx.on("htmx:error", function(evt) {
+            var errorModal = new bootstrap.Modal(document.getElementById('errorModal'));
+            const xhr = evt.detail.errorInfo?.xhr;
+
+            // Network error - xhr exists but response is empty
+            if (!xhr?.response) {
+                document.querySelector('#errorModal .error-message').textContent = "No answer from server";
+            }
+            // We have xhr with response
+            else {
+                try {
+                    var response = JSON.parse(xhr.response);
+                    document.querySelector('#errorModal .error-message').textContent = response.error;
+                } catch {
+                    document.querySelector('#errorModal .error-message').textContent = xhr.response;
+                }
+            }
+            errorModal.show();
+        });
+    </script>
+{% endblock %}

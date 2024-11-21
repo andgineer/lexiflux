@@ -1,0 +1,122 @@
+.translation-span {
+  vertical-align: baseline;
+  display: inline-block;
+  max-width: 100%;
+}
+
+.translation-text {
+  color: #2C5282 !important; /* Dark blue, complementing the light blue background */
+  font-size: 0.875em;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+.original-text {
+  background-color: #E6F3FF; /* Light blue */
+  border: 1px solid #B8E2FF; /* Slightly darker blue for border */
+  border-radius: 4px; /* Rounded corners */
+  padding: 4px 6px; /* Some padding for better appearance */
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  white-space: normal;
+  overflow-x: visible;
+}
+
+#lexical-panel {
+    max-height: 30vh;
+    overflow-y: auto;
+}
+
+@media (min-width: 768px) {
+    .flex-md-row {
+        flex-direction: row !important;
+    }
+
+    #lexical-panel {
+        max-height: none;
+        height: 100%;
+    }
+}
+
+#lexical-panel.collapse:not(.show) {
+    display: none !important;
+}
+
+#lexical-panel-button[aria-expanded="true"] #lexical-panel-icon::before {
+    content: "\F18E";
+}
+
+#lexical-panel-button[aria-expanded="false"] #lexical-panel-icon::before {
+    content: "\F18F";
+}
+.language-selection-card {
+    border: 2px solid #007bff;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 123, 255, 0.1);
+    transition: all 0.3s ease;
+}
+
+.language-selection-card:hover {
+    box-shadow: 0 6px 8px rgba(0, 123, 255, 0.2);
+}
+
+.language-selection-card .card-header {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #e9ecef;
+    padding: 0.75rem 1.25rem;
+}
+
+.language-selection-card .card-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #495057;
+}
+
+.language-select-wrapper {
+    position: relative;
+    display: inline-block;
+    width: 100%;
+    max-width: 300px;
+}
+
+.language-flag {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 1.2em;
+    pointer-events: none;
+    z-index: 1;
+}
+
+#languageSelect {
+    width: 100%;
+    padding: 10px 30px 10px 40px;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='black' width='18px' height='18px'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    transition: all 0.3s ease;
+}
+
+#languageSelect:focus {
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+    border-color: #80bdff;
+}
+
+.card-body {
+    padding: 1.25rem;
+}
+
+input::placeholder {
+    color: #6c757d;
+    opacity: 1;
+}
+
+input:focus::placeholder {
+    color: transparent;
+}

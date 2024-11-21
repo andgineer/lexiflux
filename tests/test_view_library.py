@@ -9,7 +9,7 @@ from django.urls import reverse
 from pytest_django.asserts import assertTemplateUsed
 
 from lexiflux.models import Book, Author, Language
-from lexiflux.views.library_partials import AUTHOR_SUGGESTION_PAGE_SIZE
+from lexiflux.views.library_views import AUTHOR_SUGGESTION_PAGE_SIZE
 
 
 @allure.epic('Pages endpoints')
@@ -139,7 +139,7 @@ class TestImportBook:
             content_type=f'text/{file_ext}'
         )
 
-        with patch(f'lexiflux.views.library_partials.{loader_class}') as MockLoader:
+        with patch(f'lexiflux.views.library_views.{loader_class}') as MockLoader:
             mock_processor = MagicMock()
             mock_processor.create.return_value = book
             MockLoader.return_value = mock_processor
@@ -161,7 +161,7 @@ class TestImportBook:
         mock_temp_file.name = 'test.txt'
         mock_temp_file.temporary_file_path.return_value = '/tmp/test.txt'
 
-        with patch('lexiflux.views.library_partials.BookLoaderPlainText') as MockLoader:
+        with patch('lexiflux.views.library_views.BookLoaderPlainText') as MockLoader:
             mock_processor = MagicMock()
             mock_processor.create.return_value = book
             MockLoader.return_value = mock_processor
@@ -183,7 +183,7 @@ class TestImportBook:
         client.force_login(approved_user)
         file = SimpleUploadedFile('test.txt', b'file content', content_type='text/plain')
 
-        with patch('lexiflux.views.library_partials.BookLoaderPlainText') as MockLoader:
+        with patch('lexiflux.views.library_views.BookLoaderPlainText') as MockLoader:
             MockLoader.side_effect = Exception('Test error')
             response = client.post(reverse('import_book'), {'file': file})
 

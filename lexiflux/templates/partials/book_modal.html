@@ -74,16 +74,16 @@
                   {% if not is_new %}
                     data-bs-toggle="modal"
                     data-bs-target="#deleteConfirmModal"
-                                    {% else %}
-                  hx-delete="{% url 'edit_book_modal' book.id %}"
-                  hx-target="body"
-                  hx-swap="none"
-                  hx-on::after-request="
-                    if(event.detail.successful) {
-                      bootstrap.Modal.getInstance(document.getElementById('editBookModal')).hide();
-                      htmx.trigger('#booksList', 'refresh')
-                    }
-                  "
+                  {% else %}
+                    hx-delete="{% url 'edit_book_modal' book.id %}"
+                    hx-target="body"
+                    hx-swap="none"
+                    hx-on::after-request="
+                      if(event.detail.successful) {
+                        bootstrap.Modal.getInstance(document.getElementById('editBookModal')).hide();
+                        htmx.trigger('#booksList', 'refresh')
+                      }
+                    "
                   {% endif %}
           >
             <i class="bi bi-trash"></i>
@@ -104,22 +104,26 @@
 
 <!-- Delete Confirmation Modal -->
 <div class="modal fade" id="deleteConfirmModal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered modal-sm">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title">Delete Book</h5>
+  <div class="modal-dialog modal-dialog-centered modal-sm" style="max-width: 300px">
+    <div class="modal-content" style="background-color: rgb(255, 245, 235)">
+      <div class="modal-header border-0 pb-0">
+        <h5 class="modal-title text-warning">
+            <i class="bi bi-exclamation-triangle me-2"></i>Delete Book
+        </h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
-      <div class="modal-body">
-        <p>Are you sure you want to delete "{{ book.title }} ({{ book.code }})"?</p>
-        <p class="text-muted small mb-0">This action cannot be undone.</p>
+      <div class="modal-body pt-2">
+          <div class="alert alert-warning bg-transparent border-0 mb-0 p-0">
+            <p>Are you sure you want to delete "{{ book.title }} ({{ book.code }})"?</p>
+            <p class="text-muted small mb-0">This action cannot be undone.</p>
+          </div>
       </div>
-      <div class="modal-footer">
+      <div class="modal-footer border-0">
         {% if not is_new %}
         <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
         {% endif %}
         <button type="button"
-                class="btn btn-danger"
+                class="btn btn-warning"
                 hx-delete="{% url 'edit_book_modal' book.id %}"
                 hx-target="body"
                 hx-swap="none"

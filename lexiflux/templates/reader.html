@@ -1,5 +1,14 @@
 {% extends "base.html" %}
 {% load static %}
+
+{% block head %}
+    {{ block.super }}
+
+    <style>
+        {% include "reader.css" %}
+    </style>
+{% endblock %}
+
 {% block content %}
     <div id="reader-settings-data"
          data-font-family="{% if settings.font_family is not None %}{{ settings.font_family }}{% endif %}"
