@@ -246,7 +246,7 @@ def search_authors(request: HttpRequest) -> HttpResponse:
 
     # If the query contains spaces (more than one word), search for the entire string
     if " " in query:
-        authors = Author.objects.filter(name__icontains=query)[:101]
+        authors = Author.objects.filter(name__icontains=query)[: AUTHOR_SUGGESTION_PAGE_SIZE + 1]
     else:
         # For single words, search for the word at the start of any word in the name
         # including words separated by hyphens and periods
@@ -255,7 +255,7 @@ def search_authors(request: HttpRequest) -> HttpResponse:
             | Q(name__icontains=f" {query}")  # Space before query
             | Q(name__icontains=f"-{query}")  # Hyphen before query
             | Q(name__icontains=f".{query}")  # Period before query
-        )[:101]
+        )[: AUTHOR_SUGGESTION_PAGE_SIZE + 1]
 
     has_more = len(authors) > AUTHOR_SUGGESTION_PAGE_SIZE
     authors = authors[:AUTHOR_SUGGESTION_PAGE_SIZE]  # Trim if there are more
