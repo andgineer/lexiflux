@@ -340,7 +340,7 @@ class TestSearchAuthors:
         client.force_login(approved_user)
         response = client.get(reverse('search_authors'), {'author': ''})
         assert response.status_code == 200
-        assert response.content == b""
+        assert b"No matching authors found" in response.content
 
     def test_search_authors_single_word(self, client, approved_user, author):
         # Use the existing author fixture and create one additional author
@@ -352,7 +352,7 @@ class TestSearchAuthors:
         assert response.status_code == 200
         print(response.content)
         assert author.name in response.content.decode()
-        assert response.content.count(b"<li") == 1
+        assert response.content.count(b"list-group-item-action") == 1
 
     def test_search_authors_pagination(self, client, approved_user, author):
         # Create additional authors with similar names to test pagination
@@ -364,7 +364,7 @@ class TestSearchAuthors:
         response = client.get(reverse('search_authors'), {'author': base_name})
 
         assert response.status_code == 200
-        assert response.content.count(b"<li") == AUTHOR_SUGGESTION_PAGE_SIZE + 1  # +1 for the "And more..." link
+        assert response.content.count(b"list-group-item-action") == AUTHOR_SUGGESTION_PAGE_SIZE
         assert "And more..." in response.content.decode()
 
     def test_search_authors_special_characters(self, client, approved_user, author):
