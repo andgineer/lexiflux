@@ -23,8 +23,20 @@
 
     <script>
         htmx.on("htmx:error", function(evt) {
+            console.log("Error event:", evt.detail);
+
+            const errorInfo = evt.detail.errorInfo;
+
+            // Handle network errors and HTTP error statuses >= 400
+            const isNetworkError = ["htmx:sendError", "htmx:timeout"].includes(errorInfo.error);
+            const isServerError = errorInfo.xhr && errorInfo.xhr.status >= 400;
+
+            if (!isNetworkError && !isServerError) {
+                return;
+            }
+
             var errorModal = new bootstrap.Modal(document.getElementById('errorModal'));
-            const xhr = evt.detail.errorInfo?.xhr;
+            const xhr = errorInfo.xhr;
 
             // Network error - xhr exists but response is empty
             if (!xhr?.response) {

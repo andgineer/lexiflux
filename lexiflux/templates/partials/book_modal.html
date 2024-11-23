@@ -39,21 +39,24 @@
                    required>
           </div>
 
-          <div class="mb-3">
-            <label for="bookAuthor" class="form-label">Author</label>
-            <input type="text"
-                   class="form-control {% if error_message and not book.author.name %}is-invalid{% endif %}"
-                   id="bookAuthor"
-                   name="author"
-                   value="{{ book.author.name }}"
-                   hx-get="{% url 'search_authors' %}"
-                   hx-trigger="keyup changed delay:300ms"
-                   hx-target="#authorSuggestions"
-                   required>
-            <ul id="authorSuggestions" class="list-group mt-2">
-              <!-- Author suggestions will be populated here -->
-            </ul>
-          </div>
+<div class="mb-3">
+    <label for="bookAuthor" class="form-label">Author</label>
+    <input type="text"
+           class="form-control {% if error_message and not book.author.name %}is-invalid{% endif %}"
+           id="bookAuthor"
+           name="author"
+           value="{{ book.author.name }}"
+           hx-get="{% url 'search_authors' %}"
+           hx-trigger="input delay:300ms"
+           hx-target="next .author-suggestions .suggestions-content"
+           hx-swap="innerHTML"
+           required>
+    <div class="author-suggestions list-group mt-2">
+        <div class="suggestions-content">
+            <!-- Author suggestions will be populated here -->
+        </div>
+    </div>
+</div>
 
           <div class="mb-3">
             <label for="bookLanguage" class="form-label">Language</label>

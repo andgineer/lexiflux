@@ -1,12 +1,14 @@
 {% if authors %}
   {% for author in authors %}
-  <li class="list-group-item list-group-item-action"
-      role="button"
-      onclick="document.getElementById('bookAuthor').value = this.textContent.trim(); document.getElementById('authorSuggestions').innerHTML = '';">
+  <button type="button"
+          class="list-group-item list-group-item-action"
+          onclick="document.getElementById('bookAuthor').value = '{{ author.name|escapejs }}'">
     {{ author.name }}
-  </li>
+  </button>
   {% endfor %}
   {% if has_more %}
-  <li class="list-group-item">And more...</li>
+  <div class="list-group-item">And more...</div>
   {% endif %}
+{% else %}
+  <div class="list-group-item text-muted">No matching authors found</div>
 {% endif %}

@@ -241,15 +241,17 @@ def import_book(request: HttpRequest) -> HttpResponse:
 def search_authors(request: HttpRequest) -> HttpResponse:
     """Search authors based on input string in `author`."""
     query = request.GET.get("author", "").strip()
-    if not query:
-        return HttpResponse("")  # Return empty response if no query
 
-    # If the query contains spaces (more than one word), search for the entire string
+    # Always render the template, just with empty authors list if no query
+    if not query:
+        return render(
+            request, "partials/author_suggestions.html", {"authors": [], "has_more": False}
+        )
+
+    # Rest of the function remains the same...
     if " " in query:
         authors = Author.objects.filter(name__icontains=query)[: AUTHOR_SUGGESTION_PAGE_SIZE + 1]
     else:
-        # For single words, search for the word at the start of any word in the name
-        # including words separated by hyphens and periods
         authors = Author.objects.filter(
             Q(name__istartswith=query)  # Starts with the query
             | Q(name__icontains=f" {query}")  # Space before query
