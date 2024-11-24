@@ -53,5 +53,20 @@
             }
             errorModal.show();
         });
+
+        htmx.on("htmx:afterRequest", function(evt) {
+            // For Book Edit modal form or Delete button remove backdrop and refresh books list
+            if (evt.target.matches('#editBookModal form, #deleteConfirmModal button[hx-delete]') && evt.detail.successful) {
+                // Clean up modal and backdrop
+                document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
+                document.body.classList.remove('modal-open');
+
+                // Refresh books list if it exists
+                const booksList = document.getElementById('booksList');
+                if (booksList) {
+                    htmx.trigger(booksList, 'refresh');
+                }
+            }
+        });
     </script>
 {% endblock %}

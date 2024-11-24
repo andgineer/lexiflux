@@ -131,13 +131,7 @@ class EditBookModalPartial(TemplateView):  # type: ignore
             self.book.language = language
             self.book.save()
 
-            # Return success response that closes modal and refreshes book list
-            return HttpResponse("""
-                <script>
-                    document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
-                    htmx.trigger('#booksList', 'refresh');
-                </script>
-            """)
+            return HttpResponse()
 
         except ValueError as e:
             return TemplateResponse(

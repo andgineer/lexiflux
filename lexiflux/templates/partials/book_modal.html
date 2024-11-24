@@ -81,12 +81,8 @@
                     hx-delete="{% url 'edit_book_modal' book.id %}"
                     hx-target="body"
                     hx-swap="none"
-                    hx-on::after-request="
-                      if(event.detail.successful) {
-                        bootstrap.Modal.getInstance(document.getElementById('editBookModal')).hide();
-                        htmx.trigger('#booksList', 'refresh')
-                      }
-                    "
+                    data-bs-dismiss="modal"
+                    hx-on::after-request="remove #editBookModal"
                   {% endif %}
           >
             <i class="bi bi-trash"></i>
@@ -132,11 +128,13 @@
                 hx-swap="none"
                 data-bs-dismiss="modal"
                 hx-on::after-request="
-                  if(event.detail.successful) {
-                    bootstrap.Modal.getInstance(document.getElementById('editBookModal')).hide();
-                    htmx.trigger('#booksList', 'refresh')
+                  const editModal = document.getElementById('editBookModal');
+                  if (editModal) {
+                      const bsModal = bootstrap.Modal.getInstance(editModal);
+                      if (bsModal) bsModal.hide();
+                      editModal.remove();
                   }
-                "
+"
         >
           Delete
         </button>
