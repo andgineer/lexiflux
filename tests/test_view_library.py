@@ -256,7 +256,7 @@ class TestBookDetailView:
         )
 
         assert response.status_code == 200
-        assert 'htmx.trigger(\'#booksList\', \'refresh\')' in str(response.content)
+        assert response.content == b""
 
         # Verify database was updated
         book.refresh_from_db()
