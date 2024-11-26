@@ -7,7 +7,7 @@
       <div class="modal-header">
         <div>
           <h5 class="modal-title" id="editBookModalLabel">
-            {% if is_new %}Imported Book{% else %}Edit Book{% endif %}
+            {% if require_delete_confirmation %} Edit Book {% else %} Imported Book {% endif %}
           </h5>
           {% if book.code %}
           <div class="text-muted small">
@@ -73,9 +73,10 @@
         </div>
 
         <div class="modal-footer justify-content-between">
+          {% if show_delete_button %}
           <button type="button"
                   class="btn btn-outline-danger"
-                  {% if not is_new %}
+                  {% if require_delete_confirmation %}
                     data-bs-toggle="modal"
                     data-bs-target="#deleteConfirmModal"
                   {% else %}
@@ -87,8 +88,9 @@
           >
             <i class="bi bi-trash"></i>
           </button>
+          {% endif %}
           <div>
-            {% if not is_new %}
+            {% if require_delete_confirmation %}
             <button type="button" class="btn btn-outline-secondary me-2" data-bs-dismiss="modal">Close</button>
             {% endif %}
             <button type="submit" class="btn btn-primary" data-bs-dismiss="modal">
@@ -118,7 +120,7 @@
           </div>
       </div>
       <div class="modal-footer border-0">
-        {% if not is_new %}
+        {% if require_delete_confirmation %}
         <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
         {% endif %}
         <button type="button"

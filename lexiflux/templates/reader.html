@@ -53,6 +53,7 @@
                   <button
                     class="btn btn-outline-secondary ms-2"
                     hx-get="{% url 'edit_book_modal' book_id=book.id %}"
+                    hx-vals='{"show_delete_button": false}'
                     hx-target="#modalContainer"
                     title="Edit Book"
                   >

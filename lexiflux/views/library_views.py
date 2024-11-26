@@ -98,10 +98,15 @@ class EditBookModalPartial(TemplateView):  # type: ignore
     def get_context_data(self, **kwargs: Any) -> Dict[str, Any]:
         """Get context data for the template."""
         context = super().get_context_data(**kwargs)
+        require_delete_confirmation = (
+            self.request.GET.get("require_delete_confirmation", "true").lower() != "false"
+        )
+        show_delete_button = self.request.GET.get("show_delete_button", "true").lower() != "false"
         context.update(
             {
                 "book": self.book,
-                "is_new": self.request.GET.get("is_new", False),
+                "require_delete_confirmation": require_delete_confirmation,
+                "show_delete_button": show_delete_button,
                 "languages": Language.objects.all(),
             }
         )
@@ -207,7 +212,8 @@ def import_book(request: HttpRequest) -> HttpResponse:
         context = {
             "book": book,
             "languages": Language.objects.all(),
-            "is_new": True,
+            "require_delete_confirmation": False,
+            "show_delete_button": True,
         }
         return HttpResponse(f"""
             <script>

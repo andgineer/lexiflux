@@ -39,4 +39,17 @@
             </div>
         </div>
     </div>
+
+    <script>
+        htmx.on("htmx:afterRequest", function(evt) {
+            // For Book Edit modal submit and on Delete button refresh books list if exists
+            if (evt.target.matches('#editBookModal form, #deleteConfirmModal button[hx-delete]') && evt.detail.successful) {
+                // Refresh books list if it exists
+                const booksList = document.getElementById('booksList');
+                if (booksList) {
+                    htmx.trigger(booksList, 'refresh');
+                }
+            }
+        });
+    </script>
 {% endblock %}
