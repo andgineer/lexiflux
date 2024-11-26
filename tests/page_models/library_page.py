@@ -32,9 +32,17 @@ class LibraryPage(BasePage):
             self.wait_for_modal()
 
     def wait_for_modal(self):
-        return WebDriverWait(self.browser, 10).until(
+        # Wait for modal to appear
+        modal = WebDriverWait(self.browser, 10).until(
             EC.visibility_of_element_located((By.ID, "editBookModal"))
         )
+        # Wait for modal animation to complete
+        WebDriverWait(self.browser, 10).until(
+            EC.presence_of_element_located((By.CSS_SELECTOR, ".modal.show"))
+        )
+        # Additional small delay to ensure modal is fully rendered
+        self.browser.implicitly_wait(0.5)
+        return modal
 
     def get_edit_dialog_info(self):
         title_input = self.wait_for_element((By.ID, "bookTitle"))
@@ -44,20 +52,23 @@ class LibraryPage(BasePage):
     def edit_book_title(self, new_title):
         title_input = self.wait_for_element((By.ID, "bookTitle"))
         title_input.clear()
+        self.browser.implicitly_wait(0.2)
         title_input.send_keys(new_title)
+        self.browser.implicitly_wait(0.2)
 
     def edit_book_author(self, new_author):
         author_input = self.wait_for_element((By.ID, "bookAuthor"))
         author_input.clear()
+        self.browser.implicitly_wait(0.2)
         author_input.send_keys(new_author)
+        self.browser.implicitly_wait(0.2)
 
     def save_book_changes(self):
         save_button = self.wait_for_clickable((By.CSS_SELECTOR, "#editBookModal .btn-primary"))
         save_button.click()
+
+        # Wait for HTMX request to complete
         WebDriverWait(self.browser, 10).until(
-            EC.invisibility_of_element_located((By.ID, "editBookModal"))
+            lambda driver: driver.execute_script("return !htmx.requesting")
         )
-        # Wait for the modal backdrop to disappear
-        WebDriverWait(self.browser, 10).until(
-            EC.invisibility_of_element_located((By.CLASS_NAME, "modal-backdrop"))
-        )
+        self.browser.implicitly_wait(0.2)
