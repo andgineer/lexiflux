@@ -32,23 +32,23 @@ function sendTranslationRequest(selectedRange: Range | null = null): void {
     return;
   }
 
-  // Get affected spans and extended word IDs
-  const spansToRemove = spanManager.getAffectedSpans(initialWordIds);
+  // Get extended word IDs
   const extendedWordIds = Array.from(spanManager.getExtendedWordIds(initialWordIds)).sort((a, b) => a - b);
 
-  // Remove old spans
-  spansToRemove.forEach(spanId => {
-    const span = document.getElementById(`translation-word-${spanId}`);
-    if (span) {
-      hideTranslation(span as HTMLElement);
-    }
-  });
-
-  currentSelection.wordIds = extendedWordIds;
-
+  // Only handle translation spans if there's a new selection
   if (selectedRange) {
+    const spansToRemove = spanManager.getAffectedSpans(initialWordIds);
+    spansToRemove.forEach(spanId => {
+      const span = document.getElementById(`translation-word-${spanId}`);
+      if (span) {
+        hideTranslation(span as HTMLElement);
+      }
+    });
+
     handleInTextTranslation(selectedRange, extendedWordIds);
   }
+
+  currentSelection.wordIds = extendedWordIds;
 
   if (activePanelId) {
     const lexicalArticle = lexicalArticleNumFromId(activePanelId);
@@ -521,8 +521,12 @@ function showSpinnerInLexicalPanel(articleId: string): void {
 }
 
 function lexicalPanelSwitched(tabId: string): void {
+  // Only send translation request if we have word IDs but haven't updated this panel yet
   if (currentSelection.wordIds !== null) {
-    sendTranslationRequest(null);
+    const lexicalArticle = lexicalArticleNumFromId(tabId);
+    if (lexicalArticle && !currentSelection.updatedPanels.has(lexicalArticle)) {
+      sendTranslationRequest(null);
+    }
   }
 }
 
