@@ -3,12 +3,13 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from tests.page_models.base_page import BasePage
+from .selenium_utils import retry_on_stale_element
 
 
 class LibraryPage(BasePage):
     @allure.step("Navigate to library page")
     def goto(self):
-        self.browser.goto('/library')  # Adjust the URL as needed
+        self.browser.goto('/library')
         self.wait_for_page_load()
 
     def wait_for_page_load(self):
@@ -17,6 +18,7 @@ class LibraryPage(BasePage):
     def get_page_title(self):
         return self.browser.find_element(By.TAG_NAME, "h2").text
 
+    @retry_on_stale_element()
     def get_first_book_info(self):
         books = self.browser.find_elements(By.CSS_SELECTOR, "table tbody tr")
         if books:
@@ -25,6 +27,7 @@ class LibraryPage(BasePage):
             return title.strip(), author.strip()
         return None, None
 
+    @retry_on_stale_element()
     def open_edit_modal_for_first_book(self):
         edit_buttons = self.browser.find_elements(By.CSS_SELECTOR, "table tbody tr .btn-outline-secondary")
         if edit_buttons:
@@ -44,24 +47,25 @@ class LibraryPage(BasePage):
         self.browser.implicitly_wait(0.5)
         return modal
 
+    @retry_on_stale_element()
     def get_edit_dialog_info(self):
         title_input = self.wait_for_element((By.ID, "bookTitle"))
         author_input = self.wait_for_element((By.ID, "bookAuthor"))
         return title_input.get_attribute("value"), author_input.get_attribute("value")
 
+    @retry_on_stale_element()
     def edit_book_title(self, new_title):
         title_input = self.wait_for_element((By.ID, "bookTitle"))
         title_input.clear()
         self.browser.implicitly_wait(0.2)
         title_input.send_keys(new_title)
-        self.browser.implicitly_wait(0.2)
 
+    @retry_on_stale_element()
     def edit_book_author(self, new_author):
         author_input = self.wait_for_element((By.ID, "bookAuthor"))
         author_input.clear()
         self.browser.implicitly_wait(0.2)
         author_input.send_keys(new_author)
-        self.browser.implicitly_wait(0.2)
 
     def save_book_changes(self):
         save_button = self.wait_for_clickable((By.CSS_SELECTOR, "#editBookModal .btn-primary"))
@@ -71,4 +75,8 @@ class LibraryPage(BasePage):
         WebDriverWait(self.browser, 10).until(
             lambda driver: driver.execute_script("return !htmx.requesting")
         )
-        self.browser.implicitly_wait(0.2)
+
+        # Wait for table to be updated
+        WebDriverWait(self.browser, 10).until(
+            EC.presence_of_element_located((By.CSS_SELECTOR, "table tbody tr"))
+        )
