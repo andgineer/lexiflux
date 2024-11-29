@@ -132,27 +132,7 @@ async function goToPage(pageNum: number, topWord: number): Promise<void> {
     await viewport.jump(pageNum, topWord);
 }
 
-function clearSearchResults(): void {
-    const searchResultsContainer = document.getElementById('searchResults');
-    if (searchResultsContainer) {
-        searchResultsContainer.innerHTML = '';
-    }
-    const searchInput = document.getElementById('searchInput') as HTMLInputElement;
-    if (searchInput) {
-        searchInput.value = '';
-    }
-}
 
-function handleSearchButtonClick(event: Event): void {
-    event.preventDefault();
-    showModal('searchModal');
-    clearSearchResults();
-    const searchInput = document.getElementById('searchInput') as HTMLInputElement;
-    if (searchInput) {
-        searchInput.value = '';
-        searchInput.focus();
-    }
-}
 
 function handleGoToPageButtonClick(event: Event): void {
     event.preventDefault();
@@ -172,15 +152,6 @@ function handleModalSubmit(modalId: string, inputId: string, action: (value: str
     }
 }
 
-function handleSearchModalSubmit(): void {
-    const searchInput = document.getElementById('searchInput') as HTMLInputElement;
-    if (searchInput) {
-        const searchTerm = searchInput.value.trim();
-        if (searchTerm) {
-            viewport.handleSearch(searchTerm);
-        }
-    }
-}
 function reInitDom(): void {
     log('reInitDom called');
     let prevButton = document.getElementById('prev-button');
@@ -248,12 +219,6 @@ function reInitDom(): void {
         });
     }
 
-    let searchButton = document.getElementById('search-button');
-    if (searchButton) {
-        searchButton.removeEventListener('click', handleSearchButtonClick);
-        searchButton.addEventListener('click', handleSearchButtonClick);
-    }
-
     let goToPageButton = document.getElementById('page-number');
     if (goToPageButton) {
         goToPageButton.removeEventListener('click', handleGoToPageButtonClick);
@@ -269,12 +234,6 @@ function reInitDom(): void {
             }
         });
     });
-
-    const searchSubmit = document.getElementById('searchSubmit');
-    if (searchSubmit) {
-        searchSubmit.removeEventListener('click', handleSearchModalSubmit);
-        searchSubmit.addEventListener('click', handleSearchModalSubmit);
-    }
 
     const goToPageSubmit = document.getElementById('goToPageSubmit');
     if (goToPageSubmit) {

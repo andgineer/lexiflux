@@ -2,12 +2,6 @@ import { log, getElement, closeModal } from './utils';
 import { clearLexicalPanel } from './translate';
 import { spanManager } from './TranslationSpanManager';
 
-interface SearchResult {
-    pageNumber: number;
-    wordIndex: number;
-    context: string;
-}
-
 export class Viewport {
     static pageBookScrollerId = 'book-page-scroller';
     static wordsContainerId = 'words-container';
@@ -15,9 +9,7 @@ export class Viewport {
     static totalPagesId = 'total-pages';
     static progressBarId = 'progress-bar';
     static pageNumberId = 'page-number';
-    static searchButtonId = 'search-button';
     static goToPageModalId = 'goToPageModal';
-    static searchModalId = 'searchModal';
     static maxPageNumberId = 'maxPageNumber';
     static emptySpaceId = 'empty-space';
 
@@ -33,9 +25,7 @@ export class Viewport {
     progressBar: HTMLElement;
     pageNumberElement: HTMLElement;
     totalPagesElement: HTMLElement;
-    searchButton: HTMLElement;
     goToPageModal: HTMLElement;
-    searchModal: HTMLElement;
     emptySpace: HTMLElement;
 
     topWord: number = 0; // the first visible word index
@@ -52,10 +42,8 @@ export class Viewport {
         this.progressBar = getElement(Viewport.progressBarId);
         this.pageNumberElement = getElement(Viewport.pageNumberId);
         this.totalPagesElement = getElement(Viewport.totalPagesId);
-        this.searchButton = getElement(Viewport.searchButtonId);
 
         this.goToPageModal = getElement(Viewport.goToPageModalId);
-        this.searchModal = getElement(Viewport.searchModalId);
 
         this.emptySpace = getElement(Viewport.emptySpaceId);
 
@@ -484,68 +472,6 @@ private updateReadingProgress(): void {
     private getCsrfToken(): string {
         const csrfCookie = document.cookie.split(';').find(cookie => cookie.trim().startsWith('csrftoken='));
         return csrfCookie ? csrfCookie.split('=')[1] : '';
-    }
-
-
-    public async handleSearch(searchTerm: string): Promise<void> {
-        try {
-            const response = await fetch('/search/', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': this.getCsrfToken(),
-                },
-                body: JSON.stringify({
-                    'book-code': viewport.bookCode,
-                    'search-term': searchTerm
-                })
-            });
-
-            if (!response.ok) {
-                throw new Error('Search request failed');
-            }
-
-            const results: SearchResult[] = await response.json();
-            this.displaySearchResults(results);
-        } catch (error) {
-            console.error('Error during search:', error);
-            alert('An error occurred while searching. Please try again.');
-        }
-    }
-
-    private displaySearchResults(results: SearchResult[]): void {
-        const searchResultsContainer = document.getElementById('searchResults');
-        if (!searchResultsContainer) return;
-
-        searchResultsContainer.innerHTML = '';
-
-        if (results.length === 0) {
-            searchResultsContainer.innerHTML = '<p class="text-muted">No results found.</p>';
-            return;
-        }
-
-        const resultsList = document.createElement('ul');
-        resultsList.className = 'list-group';
-
-        results.forEach((result, index) => {
-            const listItem = document.createElement('li');
-            listItem.className = 'list-group-item list-group-item-action';
-            listItem.innerHTML = `
-                <div class="d-flex w-100 justify-content-between">
-                    <h6 class="mb-1">Page ${result.pageNumber}</h6>
-                </div>
-                <p class="mb-1">${result.context}</p>
-            `;
-            listItem.addEventListener('click', () => this.goToSearchResult(result.pageNumber, result.wordIndex));
-            resultsList.appendChild(listItem);
-        });
-
-        searchResultsContainer.appendChild(resultsList);
-    }
-
-    private goToSearchResult(pageNumber: number, wordIndex: number): void {
-        this.jump(pageNumber, wordIndex);
-        closeModal('searchModal');
     }
 
 }  // Viewport

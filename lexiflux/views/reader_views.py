@@ -26,6 +26,7 @@ from lexiflux.models import (
     Language,
 )
 
+MAX_SEARCH_RESULTS = 10
 
 log = logging.getLogger()
 
@@ -366,24 +367,30 @@ def link_click(request: HttpRequest) -> HttpResponse:
 
 @smart_login_required
 @require_POST  # type: ignore
-def search(request: HttpRequest) -> HttpResponse:
-    """Search for a term in the book."""
+def search(request: HttpRequest) -> HttpResponse:  # pylint: disable=too-many-locals
+    """Search for a term in the book and return HTMX-compatible response."""
     try:
-        data = json.loads(request.body)
-        book_code = data.get("book-code")
-        search_term = data.get("search-term")
+        book_code = request.POST.get("book-code")
+        search_term = request.POST.get("searchInput")
 
         if not book_code or not search_term:
-            return JsonResponse({"error": "Missing book code or search term"}, status=400)
+            raise ValueError("Expected book-code and search-term")
 
         book = get_object_or_404(Book, code=book_code)
         book.ensure_can_be_read_by(request.user)
 
-        # Perform the search
-        pages = BookPage.objects.filter(book=book, content__icontains=search_term)
-        results = []
+        pages = BookPage.objects.filter(book=book, content__icontains=search_term).only(
+            "number", "content", "word_slices"
+        )[: MAX_SEARCH_RESULTS + 1]
 
-        for page_to_search in pages:
+        log.info(pages.query)
+
+        # Convert to list to avoid multiple DB queries
+        pages_list = list(pages)
+        has_more = len(pages_list) > MAX_SEARCH_RESULTS
+
+        results = []
+        for page_to_search in pages_list[:MAX_SEARCH_RESULTS]:
             # Find all occurrences of the search term in the page content
             start_indices = [
                 m.start()
@@ -396,7 +403,6 @@ def search(request: HttpRequest) -> HttpResponse:
                 context_end = min(len(page_to_search.content), start_index + len(search_term) + 30)
                 context = page_to_search.content[context_start:context_end]
 
-                # Find the word index
                 word_index = sum(1 for w in page_to_search.words if w[0] < start_index)
 
                 results.append(
@@ -407,14 +413,55 @@ def search(request: HttpRequest) -> HttpResponse:
                     }
                 )
 
-        # Limit to 10 results
-        results = results[:10]
+                if len(results) >= MAX_SEARCH_RESULTS:
+                    has_more = True
+                    break
 
-        return JsonResponse(results, safe=False)
-    except json.JSONDecodeError:
-        return JsonResponse({"error": "Invalid JSON"}, status=400)
+            if len(results) >= MAX_SEARCH_RESULTS:
+                has_more = True
+                break
+
+        if not results:
+            return HttpResponse('<p class="text-muted">No results found.</p>')
+
+        html = [
+            """
+            <table class="table table-hover table-striped">
+                <thead>
+                    <tr>
+                        <th>Page</th>
+                        <th>Context</th>
+                    </tr>
+                </thead>
+                <tbody>
+        """
+        ]
+
+        for result in results[:MAX_SEARCH_RESULTS]:
+            html.append(f"""
+                <tr style="cursor: pointer;" 
+                    onclick="goToPage({result['pageNumber']}, {result['wordIndex']});
+                            bootstrap.Modal.getInstance(document.getElementById('searchModal')).hide();">
+                    <td>{result['pageNumber']}</td>
+                    <td>{result['context']}</td>
+                </tr>
+            """)
+
+        html.append("</tbody></table>")
+
+        if has_more:
+            html.append("""
+                <div class="mt-2 text-center">
+                    <p class="text-muted">More results available...</p>
+                </div>
+            """)
+
+        return HttpResponse("".join(html))
+
+    except json.JSONDecodeError as e:
+        raise ValueError("Invalid JSON") from e
     except Exception as e:  # pylint: disable=broad-except
-        return JsonResponse({"error": str(e)}, status=500)
+        raise ValueError(f"error: {str(e)}") from e
 
 
 def get_reader_settings_fields() -> List[str]:

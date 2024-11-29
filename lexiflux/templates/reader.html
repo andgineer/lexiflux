@@ -29,47 +29,52 @@
           </button>
           <div class="collapse navbar-collapse" id="navbarContent">
             <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-              <li class="nav-item">
+                <li class="nav-item">
                 <button id="back-button" class="btn btn-primary" type="button" title="Back" {% if is_first_jump %}disabled{% endif %}>
                   <i class="bi bi-chevron-left"></i>
                 </button>
-              </li>
-              <li class="nav-item">
+                </li>
+                <li class="nav-item">
                 <button id="forward-button" class="btn btn-primary ms-2" type="button" title="Forward" {% if is_last_jump %}disabled{% endif %}>
                   <i class="bi bi-chevron-right"></i>
                 </button>
-              </li>
-              <li class="nav-item dropdown">
-                <button class="btn btn-outline-secondary dropdown-toggle ms-2 d-flex align-items-center" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-expanded="false" title="Table of Contents">
-                  <span class="me-2">{{ book.title }}</span>
-                </button>
+                </li>
+                <li class="nav-item dropdown">
+                    <button class="btn btn-outline-secondary dropdown-toggle ms-2 d-flex align-items-center" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-expanded="false" title="Table of Contents">
+                        <span class="me-2">{{ book.title }}</span>
+                    </button>
                 <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton" style="max-height: 70vh; overflow-y: auto;">
                   {% for toc_item in book.toc %}
                     <li><a class="dropdown-item" href="#" onclick="jump({{ toc_item.1 }}, {{ toc_item.2 }})">{{ toc_item.0 }}</a></li>
                   {% endfor %}
                 </ul>
-              </li>
-              <li class="nav-item" x-data>
-                  <button
-                    class="btn btn-outline-secondary ms-2"
-                    hx-get="{% url 'edit_book_modal' book_id=book.id %}"
-                    hx-vals='{"show_delete_button": false}'
-                    hx-target="#modalContainer"
-                    title="Edit Book"
-                  >
-                    <i class="bi bi-pencil"></i>
-                  </button>
-              </li>
-              <li class="nav-item">
-                  <button id="search-button" class="btn btn-outline-secondary ms-2" type="button" title="Search">
-                    <i class="bi bi-search me-1"></i>Search
-                  </button>
-              </li>
-              <li class="nav-item">
-                  <button id="font-settings-button" class="btn btn-outline-secondary ms-2" type="button" title="Font Settings">
-                      <i class="bi bi-type"></i>
-                  </button>
-              </li>
+                </li>
+                <li class="nav-item" x-data>
+                    <button
+                            class="btn btn-outline-secondary ms-2"
+                            hx-get="{% url 'edit_book_modal' book_id=book.id %}"
+                            hx-vals='{"show_delete_button": false}'
+                            hx-target="#modalContainer"
+                            title="Edit Book"
+                            >
+                        <i class="bi bi-pencil"></i>
+                    </button>
+                </li>
+                <li class="nav-item">
+                    <button id="search-button"
+                            class="btn btn-outline-secondary ms-2"
+                            data-bs-toggle="modal"
+                            data-bs-target="#searchModal"
+                            type="button"
+                            title="Search">
+                        <i class="bi bi-search me-1"></i>Search
+                    </button>
+                </li>
+                <li class="nav-item">
+                    <button id="font-settings-button" class="btn btn-outline-secondary ms-2" type="button" title="Font Settings">
+                        <i class="bi bi-type"></i>
+                    </button>
+                </li>
             </ul>
             <button id="lexical-panel-button" class="btn btn-primary" type="button"
                     data-bs-toggle="collapse" data-bs-target="#lexical-panel"
@@ -194,26 +199,7 @@
       </div>
     </div>
 
-    <!-- Search Modal -->
-    <div id="searchModal" class="modal fade" aria-hidden="true" aria-labelledby="searchModalLabel" role="dialog">
-      <div class="modal-dialog" role="document">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 id="searchModalLabel" class="modal-title">Search</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-          </div>
-          <div class="modal-body">
-            <div class="mb-3">
-                <input type="text" id="searchInput" class="form-control" placeholder="Enter search term">
-            </div>
-            <div id="searchResults" class="mt-3"></div>
-          </div>
-          <div class="modal-footer">
-            <button type="button" id="searchSubmit" class="btn btn-primary">Search</button>
-          </div>
-        </div>
-      </div>
-    </div>
+    {% include 'partials/search_modal.html' %}
 
     <!-- Reader Settings Modal -->
     <div id="fontSettingsModal" class="modal fade" aria-hidden="true" aria-labelledby="fontSettingsModalLabel" role="dialog">

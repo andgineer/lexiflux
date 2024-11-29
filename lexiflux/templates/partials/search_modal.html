@@ -1,0 +1,37 @@
+<div id="searchModal" class="modal fade" aria-hidden="true" aria-labelledby="searchModalLabel" role="dialog">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 id="searchModalLabel" class="modal-title">Search</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form>
+          <input type="hidden" name="book-code" value="{{ book.code }}"/>
+          <div class="mb-3">
+              <input type="text"
+                     id="searchInput"
+                     name="searchInput"
+                     class="form-control"
+                     placeholder="Enter search term"
+                     hx-post="{% url 'search' %}"
+                     hx-trigger="keyup changed delay:500ms, search"
+                     hx-target="#searchResults"/>
+          </div>
+          <div id="searchResults" class="mt-3">
+            <!-- Search results will be loaded here -->
+          </div>
+          <div class="modal-footer">
+            <button type="button"
+                    class="btn btn-primary"
+                    hx-post="{% url 'search' %}"
+                    hx-trigger="click"
+                    hx-target="#searchResults">
+              Search
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
