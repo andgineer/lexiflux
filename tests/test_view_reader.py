@@ -459,24 +459,26 @@ def test_search_functionality(client, approved_user, book):
     # Create test pages with known content
     book.pages.all().delete()  # Clear existing pages
     test_content = "This is test content with searchable words"
-    book.pages.create(number=1, content=test_content)
+
+    # Create page with word_slices
+    page = book.pages.create(
+        number=1,
+        content=test_content,
+        word_slices=[(0, 4), (5, 7), (8, 12), (13, 20), (21, 25), (26, 36), (37, 42)]  # Approximate word positions
+    )
 
     search_data = {
         'book-code': book.code,
-        'search-term': 'test'
+        'searchInput': 'test'
     }
 
-    response = client.post(
-        reverse('search'),
-        data=json.dumps(search_data),
-        content_type='application/json'
-    )
+    response = client.post(reverse('search'), data=search_data)
 
     assert response.status_code == 200
-    results = response.json()
-    assert len(results) > 0
-    assert results[0]['pageNumber'] == 1
-    assert 'test' in results[0]['context'].lower()
+    content = response.content.decode()
+    assert '<td>1</td>' in content  # Check for page number cell
+    assert 'test' in content.lower()  # Check for search term
+    assert 'table' in content  # Check for table structure
 
 
 @allure.epic('Pages endpoints')
