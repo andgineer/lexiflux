@@ -12,7 +12,8 @@ from django.views.decorators.http import require_POST
 from lexiflux.decorators import smart_login_required
 from lexiflux.models import Book, BookPage, normalize_for_search
 
-MAX_SEARCH_RESULTS = 10
+MAX_SEARCH_RESULTS = 100
+CONTEXT_WORDS_AROUND_MATCH = 5
 
 
 def strip_html(text: str) -> str:
@@ -103,9 +104,8 @@ def find_matches_in_page(  # pylint: disable=too-many-locals
         )
 
         if is_match:
-            # Get context (5 words before and after)
-            start = max(0, i - 5)
-            end = min(len(words), i + 6)
+            start = max(0, i - CONTEXT_WORDS_AROUND_MATCH)
+            end = min(len(words), i + CONTEXT_WORDS_AROUND_MATCH + 1)
             context = " ".join(words[start:end])
             target_word = words[i]
 
