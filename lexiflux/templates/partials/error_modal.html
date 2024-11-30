@@ -1,3 +1,14 @@
+<style>
+  /* Make error modal appear above other modals */
+  #errorModal {
+      z-index: 1080 !important; /* Higher than Bootstrap's default 1055 */
+  }
+  /* Ensure error modal content is also above other modals */
+  #errorModal .modal-dialog {
+      z-index: 1081 !important;
+  }
+</style>
+
 <div id="errorModal" class="modal" tabindex="-1" data-bs-backdrop="false">
   <div class="modal-dialog modal-dialog-centered" style="max-width: 300px">
     <div class="modal-content" style="background-color: rgb(255, 235, 235)">

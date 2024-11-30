@@ -10,6 +10,7 @@ import lexiflux.views.library_views
 import lexiflux.views.reader_views
 import lexiflux.views.ai_settings_views
 import lexiflux.views.words_export
+import lexiflux.views.search_view
 from lexiflux.views.auth_views import SignUpView, CustomLoginView
 from lexiflux import settings
 from lexiflux.views.library_views import EditBookModalPartial
@@ -38,7 +39,7 @@ urlpatterns = [
     path("link_click", lexiflux.views.reader_views.link_click, name="link_click"),
     path("page", lexiflux.views.reader_views.page, name="page"),
     path("location", lexiflux.views.reader_views.location, name="location"),
-    path("search/", lexiflux.views.reader_views.search, name="search"),
+    path("search/", lexiflux.views.search_view.search, name="search"),
     path("translate", lexiflux.views.lexical_views.translate, name="translate"),
     # lexical
     path(

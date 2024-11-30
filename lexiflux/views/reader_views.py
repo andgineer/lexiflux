@@ -1,9 +1,7 @@
 """Views for the reader page."""
 
-import json
 import logging
 import os
-import re
 from typing import List
 from urllib.parse import unquote
 
@@ -363,105 +361,6 @@ def link_click(request: HttpRequest) -> HttpResponse:
     reading_loc.jump(new_page_number, new_word)
 
     return JsonResponse({"success": True, "page_number": new_page_number, "word": new_word})
-
-
-@smart_login_required
-@require_POST  # type: ignore
-def search(request: HttpRequest) -> HttpResponse:  # pylint: disable=too-many-locals
-    """Search for a term in the book and return HTMX-compatible response."""
-    try:
-        book_code = request.POST.get("book-code")
-        search_term = request.POST.get("searchInput")
-
-        if not book_code or not search_term:
-            raise ValueError("Expected book-code and search-term")
-
-        book = get_object_or_404(Book, code=book_code)
-        book.ensure_can_be_read_by(request.user)
-
-        pages = BookPage.objects.filter(book=book, content__icontains=search_term).only(
-            "number", "content", "word_slices"
-        )[: MAX_SEARCH_RESULTS + 1]
-
-        log.info(pages.query)
-
-        # Convert to list to avoid multiple DB queries
-        pages_list = list(pages)
-        has_more = len(pages_list) > MAX_SEARCH_RESULTS
-
-        results = []
-        for page_to_search in pages_list[:MAX_SEARCH_RESULTS]:
-            # Find all occurrences of the search term in the page content
-            start_indices = [
-                m.start()
-                for m in re.finditer(re.escape(search_term), page_to_search.content, re.IGNORECASE)
-            ]
-
-            for start_index in start_indices:
-                # Get the context around the search term
-                context_start = max(0, start_index - 30)
-                context_end = min(len(page_to_search.content), start_index + len(search_term) + 30)
-                context = page_to_search.content[context_start:context_end]
-
-                word_index = sum(1 for w in page_to_search.words if w[0] < start_index)
-
-                results.append(
-                    {
-                        "pageNumber": page_to_search.number,
-                        "wordIndex": word_index,
-                        "context": context,
-                    }
-                )
-
-                if len(results) >= MAX_SEARCH_RESULTS:
-                    has_more = True
-                    break
-
-            if len(results) >= MAX_SEARCH_RESULTS:
-                has_more = True
-                break
-
-        if not results:
-            return HttpResponse('<p class="text-muted">No results found.</p>')
-
-        html = [
-            """
-            <table class="table table-hover table-striped">
-                <thead>
-                    <tr>
-                        <th>Page</th>
-                        <th>Context</th>
-                    </tr>
-                </thead>
-                <tbody>
-        """
-        ]
-
-        for result in results[:MAX_SEARCH_RESULTS]:
-            html.append(f"""
-                <tr style="cursor: pointer;" 
-                    onclick="goToPage({result['pageNumber']}, {result['wordIndex']});
-                            bootstrap.Modal.getInstance(document.getElementById('searchModal')).hide();">
-                    <td>{result['pageNumber']}</td>
-                    <td>{result['context']}</td>
-                </tr>
-            """)
-
-        html.append("</tbody></table>")
-
-        if has_more:
-            html.append("""
-                <div class="mt-2 text-center">
-                    <p class="text-muted">More results available...</p>
-                </div>
-            """)
-
-        return HttpResponse("".join(html))
-
-    except json.JSONDecodeError as e:
-        raise ValueError("Invalid JSON") from e
-    except Exception as e:  # pylint: disable=broad-except
-        raise ValueError(f"error: {str(e)}") from e
 
 
 def get_reader_settings_fields() -> List[str]:

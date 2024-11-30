@@ -6,6 +6,7 @@ from datetime import timedelta
 from html import unescape
 from typing import TypeAlias, Tuple, List, Any, Dict, Optional
 
+from bs4 import BeautifulSoup
 from django.conf import settings
 from django.db import models, transaction
 from django.utils import timezone
@@ -20,6 +21,7 @@ from lexiflux.language.sentence_extractor import break_into_sentences
 from lexiflux.language.word_extractor import parse_words
 from lexiflux.language_preferences_default import create_default_language_preferences
 
+
 BOOK_CODE_LENGTH = 100
 SUPPORTED_CHAT_MODELS = {
     "ChatOpenAI": ["api_key", "temperature"],
@@ -33,6 +35,14 @@ Toc: TypeAlias = List[TocEntry]
 
 
 log = logging.getLogger()
+
+
+def normalize_for_search(text: str) -> str:
+    """Remove diacritics, HTML tags and convert to lowercase."""
+    # First remove HTML tags
+    soup = BeautifulSoup(text, "html.parser")
+    text_only = soup.get_text()
+    return unidecode(text_only).lower()
 
 
 class LexicalArticleType(models.TextChoices):  # type: ignore  # pylint: disable=too-many-ancestors
@@ -302,6 +312,7 @@ class BookPage(models.Model):  # type: ignore
 
     number = models.PositiveIntegerField()
     content = models.TextField()
+    normalized_content = models.TextField(blank=True)
     book = models.ForeignKey("Book", related_name="pages", on_delete=models.CASCADE)
     word_slices = models.JSONField(  # access with property `words`
         null=True, blank=True, help_text="List of tuples with start and end index for each word."
@@ -314,6 +325,13 @@ class BookPage(models.Model):  # type: ignore
     class Meta:
         ordering = ["number"]
         unique_together = ("book", "number")
+        indexes = [
+            models.Index(fields=["book", "number"]),
+            # Index for SQLite searching
+            models.Index(
+                fields=["book", "normalized_content"], name="book_normalized_content_idx"
+            ),
+        ]
 
     def __str__(self) -> str:
         return f"Page {self.number} of {self.book.title}"
@@ -335,6 +353,8 @@ class BookPage(models.Model):  # type: ignore
         """Override the save method to clear cache of word indices."""
         self._words_cache = None
         self._word_sentence_mapping_cache = None
+        if self.content:
+            self.normalized_content = normalize_for_search(self.content)
         self.full_clean()
         super().save(*args, **kwargs)
 
