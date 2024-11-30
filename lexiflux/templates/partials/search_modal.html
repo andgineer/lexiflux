@@ -21,8 +21,22 @@
                      placeholder="Enter search term"
                      autofocus
                      hx-post="{% url 'search' %}"
-                     hx-trigger="keyup[target.value.length >= 3] changed delay:500ms, search"
-                     hx-target="#searchResults"/>
+                     hx-trigger="keyup[this.value.length >= 3] changed delay:500ms"
+                     hx-target="#searchResults"
+                     hx-include="#whole-words"/>
+          </div>
+          <div class="form-check mb-3">
+              <input type="checkbox" 
+                     class="form-check-input" 
+                     id="whole-words" 
+                     name="whole-words"
+                     hx-post="{% url 'search' %}"
+                     hx-trigger="change delay:50ms"
+                     hx-target="#searchResults"
+                     hx-include="#searchInput"/>
+              <label class="form-check-label" for="whole-words">
+                  Match whole words only
+              </label>
           </div>
           <div id="searchResults" class="mt-3">
             <!-- Search results will be loaded here -->

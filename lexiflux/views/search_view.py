@@ -84,7 +84,9 @@ def create_highlighted_context(context: str, term_start: int, term_length: int) 
     )
 
 
-def find_matches_in_page(page: BookPage, search_term: str, max_results: int) -> List[SearchResult]:
+def find_matches_in_page(  # pylint: disable=too-many-locals
+    page: BookPage, search_term: str, whole_words: bool, max_results: int
+) -> List[SearchResult]:
     """Find all matches of search_term in the page."""
     results = []
     content = strip_html(page.content)
@@ -95,7 +97,12 @@ def find_matches_in_page(page: BookPage, search_term: str, max_results: int) -> 
 
     i = 0
     while i < len(words):
-        if normalize_for_search(words[i]).find(search_term_norm) != -1:
+        word_norm = normalize_for_search(words[i])
+        is_match = (
+            (word_norm == search_term_norm) if whole_words else (search_term_norm in word_norm)
+        )
+
+        if is_match:
             # Get context (5 words before and after)
             start = max(0, i - 5)
             end = min(len(words), i + 6)
@@ -164,9 +171,13 @@ def search(request: HttpRequest) -> HttpResponse:
     """Search for a term in the book."""
     book_code = request.POST.get("book-code")
     search_term = request.POST.get("searchInput", "").strip()
+    whole_words = request.POST.get("whole-words") == "on"
 
-    if not book_code or not search_term:
-        raise ValueError("Expected book-code and search-term")
+    if not book_code:
+        raise ValueError("Expected book-code")
+
+    if len(search_term) < 3:
+        return HttpResponse(render_results_table([], False))
 
     book = get_object_or_404(Book, code=book_code)
     book.ensure_can_be_read_by(request.user)
@@ -176,7 +187,9 @@ def search(request: HttpRequest) -> HttpResponse:
 
     results: List[SearchResult] = []
     for page in pages[:MAX_SEARCH_RESULTS]:
-        page_results = find_matches_in_page(page, search_term, MAX_SEARCH_RESULTS - len(results))
+        page_results = find_matches_in_page(
+            page, search_term, whole_words, MAX_SEARCH_RESULTS - len(results)
+        )
         results.extend(page_results)
         if len(results) >= MAX_SEARCH_RESULTS:
             has_more = True
