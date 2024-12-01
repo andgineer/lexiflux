@@ -257,13 +257,6 @@ function reInitDom(): void {
     initializeReaderEventListeners();
 }
 
-// Close modal when clicking outside of it
-window.onclick = function(event: MouseEvent) {
-    if (event.target instanceof Element && event.target.classList.contains('modal')) {
-        closeModal(event.target.id);
-    }
-}
-
 document.addEventListener('DOMContentLoaded', () => {
     const topWord = parseInt(document.body.getAttribute('data-top-word') || '0');
     viewport.loadPage(viewport.pageNumber, topWord).then(() => {
