@@ -14,6 +14,7 @@
       <div class="modal-body">
         <form>
           <input type="hidden" name="book-code" value="{{ book.code }}"/>
+          <input type="hidden" name="current_page" value="{{ page.number }}"/>
           <div class="mb-3">
               <input type="text"
                      id="searchInput"
@@ -24,7 +25,7 @@
                      hx-post="{% url 'search' %}"
                      hx-trigger="keyup[this.value.length >= 3] changed delay:500ms"
                      hx-target="#search-results-body"
-                     hx-include="#whole-words"/>
+                     hx-include="#whole-words,#from-current"/>
           </div>
           <div class="form-check mb-3">
               <input type="checkbox"
@@ -34,9 +35,22 @@
                      hx-post="{% url 'search' %}"
                      hx-trigger="change delay:50ms"
                      hx-target="#search-results-body"
-                     hx-include="#searchInput"/>
+                     hx-include="#searchInput,#from-current"/>
               <label class="form-check-label" for="whole-words">
                   Match whole words only
+              </label>
+          </div>
+          <div class="form-check">
+              <input type="checkbox"
+                     class="form-check-input"
+                     id="from-current"
+                     name="from-current"
+                     hx-post="{% url 'search' %}"
+                     hx-trigger="change delay:50ms"
+                     hx-target="#search-results-body"
+                     hx-include="#searchInput,#whole-words"/>
+              <label class="form-check-label" for="from-current">
+                  Search from current page ({{ page.number }})
               </label>
           </div>
           <div id="search-results" style="max-height: 70vh; overflow-y: auto;">

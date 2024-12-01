@@ -124,7 +124,10 @@ def find_matches_in_page(  # pylint: disable=too-many-locals
 
 
 def render_results_table(
-    results: List[SearchResult], next_page: int | None, search_url: str
+    results: List[SearchResult],
+    next_page: int | None,
+    search_url: str,
+    start_page: int,  # pylint: disable=unused-argument
 ) -> str:
     """Render search results as HTML table."""
     if not results:
@@ -170,16 +173,23 @@ def search(request: HttpRequest) -> HttpResponse:
     book_code = request.POST.get("book-code")
     search_term = request.POST.get("searchInput", "").strip()
     whole_words = request.POST.get("whole-words") == "on"
+    from_current = request.POST.get("from-current") == "on"
     start_page = int(request.POST.get("start_page", "1"))
 
     if not book_code:
         raise ValueError("Expected book-code")
 
     if len(search_term) < 3:
-        return HttpResponse(render_results_table([], None, request.path))
+        return HttpResponse(render_results_table([], None, request.path, start_page))
 
     book = get_object_or_404(Book, code=book_code)
     book.ensure_can_be_read_by(request.user)
+
+    # If this is the initial search and "from current" is checked,
+    # use the current page as starting point
+    if start_page == 1 and from_current:
+        current_page = int(request.POST.get("current_page", "1"))
+        start_page = current_page
 
     pages = get_searchable_pages(book, search_term, start_page, MAX_SEARCH_RESULTS + 1)
     page_list = list(pages)
@@ -193,4 +203,4 @@ def search(request: HttpRequest) -> HttpResponse:
     if len(page_list) > MAX_SEARCH_RESULTS:
         next_page = page_list[MAX_SEARCH_RESULTS].number
 
-    return HttpResponse(render_results_table(results, next_page, request.path))
+    return HttpResponse(render_results_table(results, next_page, request.path, start_page))
