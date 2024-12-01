@@ -131,7 +131,7 @@ def render_results_table(
 ) -> str:
     """Render search results as HTML table."""
     if not results:
-        return '<p class="text-muted">No results found.</p>'
+        return '<tr><td colspan="2"><p class="text-muted">No results found.</p></td></tr>'
 
     rows = "\n".join(
         f"""
