@@ -12,7 +12,7 @@ from django.views.decorators.http import require_POST
 from lexiflux.decorators import smart_login_required
 from lexiflux.models import Book, BookPage, normalize_for_search
 
-MAX_SEARCH_RESULTS = 100
+MAX_SEARCH_RESULTS = 20
 CONTEXT_WORDS_AROUND_MATCH = 5
 
 
@@ -30,12 +30,14 @@ class SearchResult:
     context: str
 
 
-def get_searchable_pages(book: Book, search_term: str, limit: int) -> List[BookPage]:
-    """Get pages that contain the search term."""
+def get_searchable_pages(
+    book: Book, search_term: str, start_page: int, limit: int
+) -> List[BookPage]:
+    """Get pages that contain the search term, starting from given page number."""
     normalized_term = normalize_for_search(search_term)
     return BookPage.objects.filter(  # type: ignore
-        book=book, normalized_content__icontains=normalized_term
-    ).only("number", "content")[:limit]
+        book=book, normalized_content__icontains=normalized_term, number__gte=start_page
+    ).order_by("number")[:limit]
 
 
 def find_word_boundary(text: str, pos: int, direction: int) -> int:
@@ -86,7 +88,7 @@ def create_highlighted_context(context: str, term_start: int, term_length: int) 
 
 
 def find_matches_in_page(  # pylint: disable=too-many-locals
-    page: BookPage, search_term: str, whole_words: bool, max_results: int
+    page: BookPage, search_term: str, whole_words: bool
 ) -> List[SearchResult]:
     """Find all matches of search_term in the page."""
     results = []
@@ -116,15 +118,14 @@ def find_matches_in_page(  # pylint: disable=too-many-locals
 
             results.append(SearchResult(page_number=page.number, context=highlighted_context))
 
-            if len(results) >= max_results:
-                break
-
         i += 1
 
     return results
 
 
-def render_results_table(results: List[SearchResult], has_more: bool) -> str:
+def render_results_table(
+    results: List[SearchResult], next_page: int | None, search_url: str
+) -> str:
     """Render search results as HTML table."""
     if not results:
         return '<p class="text-muted">No results found.</p>'
@@ -141,28 +142,25 @@ def render_results_table(results: List[SearchResult], has_more: bool) -> str:
         for result in results
     )
 
-    table = f"""
-        <table class="table table-hover table-striped">
-            <thead>
-                <tr>
-                    <th>Page</th>
-                    <th>Context</th>
-                </tr>
-            </thead>
-            <tbody>
-                {rows}
-            </tbody>
-        </table>
-    """
+    response = rows
 
-    if has_more:
-        table += """
-            <div class="mt-2 text-center">
-                <p class="text-muted">More results available...</p>
-            </div>
+    if next_page:
+        response += f"""
+            <tr id="spinner-row-{next_page}"
+                hx-post="{search_url}"
+                hx-trigger="intersect once"
+                hx-swap="outerHTML"
+                hx-include="form"
+                hx-vals='{{"start_page": "{next_page}"}}'>
+                <td colspan="2" class="text-center py-3">
+                    <div class="spinner-border spinner-border-sm text-secondary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </td>
+            </tr>
         """
 
-    return table
+    return response
 
 
 @smart_login_required
@@ -172,27 +170,27 @@ def search(request: HttpRequest) -> HttpResponse:
     book_code = request.POST.get("book-code")
     search_term = request.POST.get("searchInput", "").strip()
     whole_words = request.POST.get("whole-words") == "on"
+    start_page = int(request.POST.get("start_page", "1"))
 
     if not book_code:
         raise ValueError("Expected book-code")
 
     if len(search_term) < 3:
-        return HttpResponse(render_results_table([], False))
+        return HttpResponse(render_results_table([], None, request.path))
 
     book = get_object_or_404(Book, code=book_code)
     book.ensure_can_be_read_by(request.user)
 
-    pages = get_searchable_pages(book, search_term, MAX_SEARCH_RESULTS + 1)
-    has_more = len(pages) > MAX_SEARCH_RESULTS
+    pages = get_searchable_pages(book, search_term, start_page, MAX_SEARCH_RESULTS + 1)
+    page_list = list(pages)
 
     results: List[SearchResult] = []
-    for page in pages[:MAX_SEARCH_RESULTS]:
-        page_results = find_matches_in_page(
-            page, search_term, whole_words, MAX_SEARCH_RESULTS - len(results)
-        )
+    for page in page_list[:MAX_SEARCH_RESULTS]:
+        page_results = find_matches_in_page(page, search_term, whole_words)
         results.extend(page_results)
-        if len(results) >= MAX_SEARCH_RESULTS:
-            has_more = True
-            break
 
-    return HttpResponse(render_results_table(results, has_more))
+    next_page = None
+    if len(page_list) > MAX_SEARCH_RESULTS:
+        next_page = page_list[MAX_SEARCH_RESULTS].number
+
+    return HttpResponse(render_results_table(results, next_page, request.path))

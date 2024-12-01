@@ -10,7 +10,7 @@
         <h5 id="searchModalLabel" class="modal-title">Search</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
-      <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
+      <div class="modal-body">
         <form>
           <input type="hidden" name="book-code" value="{{ book.code }}"/>
           <div class="mb-3">
@@ -22,7 +22,7 @@
                      autofocus
                      hx-post="{% url 'search' %}"
                      hx-trigger="keyup[this.value.length >= 3] changed delay:500ms"
-                     hx-target="#searchResults"
+                     hx-target="#search-results-body"
                      hx-include="#whole-words"/>
           </div>
           <div class="form-check mb-3">
@@ -32,14 +32,24 @@
                      name="whole-words"
                      hx-post="{% url 'search' %}"
                      hx-trigger="change delay:50ms"
-                     hx-target="#searchResults"
+                     hx-target="#search-results-body"
                      hx-include="#searchInput"/>
               <label class="form-check-label" for="whole-words">
                   Match whole words only
               </label>
           </div>
-          <div id="searchResults" class="mt-3">
-            <!-- Search results will be loaded here -->
+          <div id="search-results" style="max-height: 70vh; overflow-y: auto;">
+              <table class="table table-striped table-hover">
+                <thead>
+                  <tr>
+                    <th style="width: 80px">Page</th>
+                    <th>Context</th>
+                  </tr>
+                </thead>
+                <tbody id="search-results-body">
+                  <!-- Results will be loaded here -->
+                </tbody>
+              </table>
           </div>
         </form>
       </div>
