@@ -1,5 +1,6 @@
 """View for searching for a term in a book."""
 
+import logging
 import re
 from typing import List
 from dataclasses import dataclass
@@ -12,8 +13,12 @@ from django.views.decorators.http import require_POST
 from lexiflux.decorators import smart_login_required
 from lexiflux.models import Book, BookPage, normalize_for_search
 
+
+logger = logging.getLogger(__name__)
+
 MAX_SEARCH_RESULTS = 20
 CONTEXT_WORDS_AROUND_MATCH = 5
+MIN_CHARS_TO_SEARCH = 3
 
 
 def strip_html(text: str) -> str:
@@ -179,7 +184,7 @@ def search(request: HttpRequest) -> HttpResponse:
     if not book_code:
         raise ValueError("Expected book-code")
 
-    if len(search_term) < 3:
+    if len(search_term) < MIN_CHARS_TO_SEARCH:
         return HttpResponse(render_results_table([], None, request.path, start_page))
 
     book = get_object_or_404(Book, code=book_code)

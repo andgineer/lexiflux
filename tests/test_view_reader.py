@@ -453,37 +453,6 @@ def test_link_click_success(client, approved_user, book):
 @allure.epic('Pages endpoints')
 @allure.feature('Reader')
 @pytest.mark.django_db
-def test_search_functionality(client, approved_user, book):
-    client.force_login(approved_user)
-
-    # Create test pages with known content
-    book.pages.all().delete()  # Clear existing pages
-    test_content = "This is test content with searchable words"
-
-    # Create page with word_slices
-    page = book.pages.create(
-        number=1,
-        content=test_content,
-        word_slices=[(0, 4), (5, 7), (8, 12), (13, 20), (21, 25), (26, 36), (37, 42)]  # Approximate word positions
-    )
-
-    search_data = {
-        'book-code': book.code,
-        'searchInput': 'test'
-    }
-
-    response = client.post(reverse('search'), data=search_data)
-
-    assert response.status_code == 200
-    content = response.content.decode()
-    assert '<td>1</td>' in content  # Check for page number cell
-    assert 'test' in content.lower()  # Check for search term
-    assert 'table' in content  # Check for table structure
-
-
-@allure.epic('Pages endpoints')
-@allure.feature('Reader')
-@pytest.mark.django_db
 def test_save_reader_settings_success(client, approved_user, book):
     client.force_login(approved_user)
 

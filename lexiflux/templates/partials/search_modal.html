@@ -20,7 +20,7 @@
                      id="searchInput"
                      name="searchInput"
                      class="form-control"
-                     placeholder="Enter text to search"
+                     placeholder="Enter at least 3 characters to search"
                      autofocus
                      hx-post="{% url 'search' %}"
                      hx-trigger="keyup[this.value.length >= 3] changed delay:500ms"
@@ -68,7 +68,7 @@
                       </tr>
                     </thead>
                     <tbody id="search-results-body">
-                      <tr><td colspan="2"><p class="text-muted">Enter text to search.</p></td></tr>
+                      <tr><td colspan="2"><p class="text-muted">Enter at least 3 characters to search.</p></td></tr>
                       <!-- Results will be loaded here -->
                     </tbody>
                   </table>
