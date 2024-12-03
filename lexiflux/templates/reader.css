@@ -120,3 +120,9 @@ input::placeholder {
 input:focus::placeholder {
     color: transparent;
 }
+
+#words-container {
+    padding: 1rem 2rem;  /* 1rem top/bottom, 2rem left/right */
+    margin: 0 auto;      /* Center the container */
+    max-width: 800px;    /* Limit maximum width for better readability */
+}
