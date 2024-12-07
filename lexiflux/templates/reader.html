@@ -17,9 +17,11 @@
          data-font-size="{% if settings.font_size is not None %}{{ settings.font_size }}{% endif %}"
          style="display: none;">
     </div>
+
     <div id="reader" class="d-flex flex-column vh-100 overflow-hidden">
 
-      <nav id="top-navbar" class="navbar navbar-expand-sm navbar-light bg-light">
+      <!-- Top navbar -->
+      <nav id="top-navbar" class="navbar navbar-expand-md navbar-light bg-light">
         <div class="container-fluid">
           <div class="me-2">
             {% include 'hamburger.html' with current_page='reader' %}
@@ -28,66 +30,66 @@
              <span class="navbar-toggler-icon"></span>
           </button>
           <div class="collapse navbar-collapse" id="navbarContent">
-            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                <li class="nav-item">
-                <button id="back-button" class="btn btn-primary" type="button" title="Back" {% if is_first_jump %}disabled{% endif %}>
+            <div class="navbar-nav me-auto d-flex flex-row flex-wrap">
+                <button id="back-button" class="nav-item btn btn-primary" type="button" title="Back" {% if is_first_jump %}disabled{% endif %}>
                   <i class="bi bi-chevron-left"></i>
                 </button>
-                </li>
-                <li class="nav-item">
-                <button id="forward-button" class="btn btn-primary ms-2" type="button" title="Forward" {% if is_last_jump %}disabled{% endif %}>
+                <button id="forward-button" class="nav-item btn btn-primary ms-2" type="button" title="Forward" {% if is_last_jump %}disabled{% endif %}>
                   <i class="bi bi-chevron-right"></i>
                 </button>
-                </li>
-                <li class="nav-item dropdown">
+                <div class="nav-item dropdown">
                     <button class="btn btn-outline-secondary dropdown-toggle ms-2 d-flex align-items-center" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-expanded="false" title="Table of Contents">
                         <span class="me-2">{{ book.title }}</span>
                     </button>
-                <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton" style="max-height: 70vh; overflow-y: auto;">
-                  {% for toc_item in book.toc %}
-                    <li><a class="dropdown-item" href="#" onclick="jump({{ toc_item.1 }}, {{ toc_item.2 }})">{{ toc_item.0 }}</a></li>
-                  {% endfor %}
-                </ul>
-                </li>
-                <li class="nav-item" x-data>
-                    <button
-                            class="btn btn-outline-secondary ms-2"
-                            hx-get="{% url 'edit_book_modal' book_id=book.id %}"
-                            hx-vals='{"show_delete_button": false}'
-                            hx-target="#modalContainer"
-                            title="Edit Book"
-                            >
-                        <i class="bi bi-pencil"></i>
-                    </button>
-                </li>
-                <li class="nav-item">
-                    <button id="search-button"
-                            class="btn btn-outline-secondary ms-2"
-                            data-bs-toggle="modal"
-                            data-bs-target="#searchModal"
-                            type="button"
-                            title="Search">
-                        <i class="bi bi-search me-1"></i>Search
-                    </button>
-                </li>
-                <li class="nav-item">
-                    <button id="font-settings-button" class="btn btn-outline-secondary ms-2" type="button" title="Font Settings">
-                        <i class="bi bi-type"></i>
-                    </button>
-                </li>
-            </ul>
-            <button id="lexical-panel-button" class="btn btn-primary" type="button"
-                    data-bs-toggle="collapse" data-bs-target="#lexical-panel"
-                    aria-expanded="false" aria-controls="lexical-panel"
-                    title="Lexical Sidebar">
-                <i id="lexical-panel-icon" class="bi bi-chevron-double-left"></i>
-            </button>
+                    <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton" style="max-height: 70vh; overflow-y: auto;">
+                        {% for toc_item in book.toc %}
+                            <li><a class="dropdown-item" href="#" onclick="jump({{ toc_item.1 }}, {{ toc_item.2 }})">{{ toc_item.0 }}</a></li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                <button
+                        class="nav-item btn btn-outline-secondary ms-2"
+                        hx-get="{% url 'edit_book_modal' book_id=book.id %}"
+                        hx-vals='{"show_delete_button": false}'
+                        hx-target="#modalContainer"
+                        title="Edit Book"
+                        >
+                    <i class="bi bi-pencil"></i>
+                </button>
+                <button id="search-button"
+                        class="nav-item btn btn-outline-secondary ms-2 text-nowrap"
+                        data-bs-toggle="modal"
+                        data-bs-target="#searchModal"
+                        type="button"
+                        title="Search">
+                    <i class="bi bi-search me-1"></i>Search
+                </button>
+                <button id="font-settings-button"
+                        class="nav-item btn btn-outline-secondary ms-2"
+                        type="button"
+                        title="Font Settings">
+                    <i class="bi bi-type"></i>
+                </button>
+            </div> <!-- End of left aligned buttons -->
+            <div class="navbar-nav d-flex flex-row flex-wrap">
+                <button id="lexical-panel-button" class="nav-item btn btn-primary ms-2" type="button"
+                        data-bs-toggle="collapse" data-bs-target="#lexical-panel"
+                        aria-expanded="false" aria-controls="lexical-panel"
+                        title="Lexical Sidebar">
+                  <i id="lexical-panel-icon" class="bi bi-chevron-double-left"></i>
+                </button>
+            </div>
           </div>
         </div>
       </nav>
 
-        <div class="flex-grow-1 d-flex flex-column flex-md-row overflow-hidden">
-            <div id="book-page-scroller" class="flex-grow-1 overflow-hidden h-100">
+      <!-- Main content area -->
+      <div class="flex-grow-1 d-flex flex-row overflow-hidden">
+
+        <!-- Left side with scroller and bottom navbar -->
+        <div class="flex-grow-1 d-flex flex-column">
+            <!-- Scroller container -->
+            <div id="book-page-scroller" class="flex-grow-1 overflow-auto">
                 <div id="words-container"
                      {% if settings.font_family is not None %}style="font-family: {{ settings.font_family }}; font-size: {{ settings.font_size }}"{% endif %}>
                     {{ pageHtml|safe }}
@@ -95,87 +97,91 @@
                 <div id="empty-space"></div>
             </div>
 
-            <div id="lexical-panel" class="collapse d-md-block col-md-6 col-lg-4 order-1 order-md-2 h-md-100">
-                <div class="card h-100 d-flex flex-column">
-                    <div class="card-header">
-                        <ul class="nav nav-tabs card-header-tabs" id="lexicalPanelTabs" role="tablist">
-                            {% for article in lexical_articles %}
-                            <li class="nav-item" role="presentation">
-                                <button class="nav-link {% if forloop.first %}active{% endif %}"
-                                        id="lexical-tab-{{ forloop.counter }}"
-                                        data-bs-toggle="tab"
-                                        data-bs-target="#lexical-article-{{ forloop.counter }}"
-                                        type="button" role="tab"
-                                        aria-controls="lexical-article-{{ forloop.counter }}"
-                                        aria-selected="{% if forloop.first %}true{% else %}false{% endif %}">
-                                    {{ article.title }}
-                                </button>
-                            </li>
-                            {% endfor %}
-                        </ul>
+            <!-- Bottom navbar -->
+            <nav class="navbar navbar-expand-sm navbar-light bg-light navbar-fixed-bottom">
+                <div class="container-fluid px-0">
+                    <div class="ms-2">
+                        <button class="btn btn-primary" id="prev-button" data-bs-toggle="tooltip" data-bs-placement="top" title="Up">
+                            <i class="bi bi-caret-left-fill"></i>
+                        </button>
                     </div>
-                    <div class="tab-content card-body flex-grow-1 overflow-auto" id="lexicalPanelContent">
-                        {% for article in lexical_articles %}
-                        <div class="tab-pane fade {% if forloop.first %}show active{% endif %}"
-                             id="lexical-article-{{ forloop.counter }}"
-                             role="tabpanel"
-                             aria-labelledby="lexical-tab-{{ forloop.counter }}">
-                            <div id="lexical-content-{{ forloop.counter }}" class="lexical-content">
-                                <div class="spinner-border text-primary" role="status">
-                                    <span class="visually-hidden">Loading...</span>
-                                </div>
-                            </div>
-                            <iframe id="lexical-frame-{{ forloop.counter }}" src="" style="width:100%; height:100%; border:none;"></iframe>
+                    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#reading-progress" aria-controls="reading-progress" aria-expanded="false" aria-label="Toggle">
+                        <span class="navbar-toggler-icon"></span>
+                    </button>
+                    <div id="reading-progress" class="collapse navbar-collapse justify-content-center">
+                        <div class="col-4">
+                            <ul class="navbar-nav d-flex align-items-center mb-0 w-100">
+                                <li class="nav-item">
+                                    <button id="page-number" class="btn btn-outline-primary btn-sm d-flex align-items-center me-2" title="Go to page">
+                                        <span class="page-number-text fw-bold me-1">{{ page.number }}</span>
+                                        <i class="bi bi-arrow-up-right-circle"></i>
+                                    </button>
+                                </li>
+                                <li class="nav-item flex-grow-1">
+                                    <div class="progress w-100">
+                                        <div id="progress-bar" class="progress-bar bg-info"
+                                             role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                                    </div>
+                                </li>
+                                <li class="nav-item text-nowrap">
+                                    <span id="total-pages" class="ms-2">/ {{ book.pages.count }}</span>
+                                </li>
+                            </ul>
                         </div>
-                        {% endfor %}
                     </div>
-                    <div id="sidebarFooter" class="card-footer">
-                      <a href="{% url 'language-preferences' %}" id="sidebar-settings-button" class="btn btn-light w-100">
-                        <i class="bi bi-gear-fill me-2"></i>SideBar Settings
-                      </a>
+                    <div class="me-2">
+                        <button class="btn btn-primary" id="next-button" data-bs-toggle="tooltip" data-bs-placement="top" title="Down">
+                            <i class="bi bi-caret-right-fill"></i>
+                        </button>
                     </div>
                 </div>
-            </div>
-        </div>
+            </nav>
+        </div>  <!-- End of Left side -->
 
-        <nav class="navbar navbar-expand-sm navbar-light bg-light navbar-fixed-bottom">
-            <div class="container-fluid px-0">
-                <div class="ms-2">
-                    <button class="btn btn-primary" id="prev-button" data-bs-toggle="tooltip" data-bs-placement="top" title="Up">
-                        <i class="bi bi-caret-left-fill"></i>
-                    </button>
+        <!-- Right side with collapsable Sidebar -->
+        <div id="lexical-panel" class="collapse d-md-block col-md-6 col-lg-4 order-1 order-md-2 h-md-100">
+            <div class="card h-100 d-flex flex-column">
+                <div class="card-header">
+                    <ul class="nav nav-tabs card-header-tabs" id="lexicalPanelTabs" role="tablist">
+                        {% for article in lexical_articles %}
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link {% if forloop.first %}active{% endif %}"
+                                    id="lexical-tab-{{ forloop.counter }}"
+                                    data-bs-toggle="tab"
+                                    data-bs-target="#lexical-article-{{ forloop.counter }}"
+                                    type="button" role="tab"
+                                    aria-controls="lexical-article-{{ forloop.counter }}"
+                                    aria-selected="{% if forloop.first %}true{% else %}false{% endif %}">
+                                {{ article.title }}
+                            </button>
+                        </li>
+                        {% endfor %}
+                    </ul>
                 </div>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#reading-progress" aria-controls="reading-progress" aria-expanded="false" aria-label="Toggle">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-                <div id="reading-progress" class="collapse navbar-collapse justify-content-center">
-                    <div class="col-4">
-                        <ul class="navbar-nav d-flex align-items-center mb-0 w-100">
-                            <li class="nav-item">
-                                <button id="page-number" class="btn btn-outline-primary btn-sm d-flex align-items-center me-2" title="Go to page">
-                                    <span class="page-number-text fw-bold me-1">{{ page.number }}</span>
-                                    <i class="bi bi-arrow-up-right-circle"></i>
-                                </button>
-                            </li>
-                            <li class="nav-item flex-grow-1">
-                                <div class="progress w-100">
-                                    <div id="progress-bar" class="progress-bar bg-info"
-                                         role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
-                                </div>
-                            </li>
-                            <li class="nav-item text-nowrap">
-                                <span id="total-pages" class="ms-2">/ {{ book.pages.count }}</span>
-                            </li>
-                        </ul>
+                <div class="tab-content card-body flex-grow-1 overflow-auto" id="lexicalPanelContent">
+                    {% for article in lexical_articles %}
+                    <div class="tab-pane fade {% if forloop.first %}show active{% endif %}"
+                         id="lexical-article-{{ forloop.counter }}"
+                         role="tabpanel"
+                         aria-labelledby="lexical-tab-{{ forloop.counter }}">
+                        <div id="lexical-content-{{ forloop.counter }}" class="lexical-content">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                        </div>
+                        <iframe id="lexical-frame-{{ forloop.counter }}" src="" style="width:100%; height:100%; border:none;"></iframe>
                     </div>
+                    {% endfor %}
                 </div>
-                <div class="me-2">
-                    <button class="btn btn-primary" id="next-button" data-bs-toggle="tooltip" data-bs-placement="top" title="Down">
-                        <i class="bi bi-caret-right-fill"></i>
-                    </button>
+                <div id="sidebarFooter" class="card-footer">
+                  <a href="{% url 'language-preferences' %}" id="sidebar-settings-button" class="btn btn-light w-100">
+                    <i class="bi bi-gear-fill me-2"></i>SideBar Settings
+                  </a>
                 </div>
             </div>
-        </nav>
+        </div>  <!-- End of Right side -->
+      </div>  <!-- End of Main content area -->
+
     </div>
 
     <!-- Go to Page Modal -->

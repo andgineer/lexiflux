@@ -295,6 +295,7 @@ function createTranslationSpanWithSpinner(range: Range): HTMLSpanElement {
     selection.addRange(newRange);
   }
 
+  viewport.adjustTopTranslationSpans();
   return translationSpan;
 }
 

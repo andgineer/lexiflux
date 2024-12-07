@@ -64,8 +64,6 @@ function handleWordContainerClick(event: MouseEvent): void {
 }
 
 function handleMouseUpEvent(event: MouseEvent): void {
-  log('Mouse up event triggered.');
-
   // Check if the click was on a translation span
   const clickedElement = event.target as HTMLElement;
   const translationSpan = clickedElement.closest('.translation-span');
@@ -184,11 +182,14 @@ function reInitDom(): void {
         gearButton.addEventListener('click', handleSideBarSettingsButtonClick);
     }
 
+    let scroller = document.getElementById('book-page-scroller');
+    if (scroller) {
+        scroller.removeEventListener('mouseup', handleMouseUpEvent);
+        scroller.addEventListener('mouseup', handleMouseUpEvent);
+    }
+
     const wordsContainer = viewport.getWordsContainer();
     if (wordsContainer) {
-        wordsContainer.removeEventListener('mouseup', handleMouseUpEvent);
-        wordsContainer.addEventListener('mouseup', handleMouseUpEvent);
-
         wordsContainer.removeEventListener('click', handleWordContainerClick);
         wordsContainer.addEventListener('click', handleWordContainerClick);
 

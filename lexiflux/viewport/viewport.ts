@@ -113,7 +113,14 @@ export class Viewport {
     public getWordTop(wordId: number = 0): number {
         // find wordId top coordinate
         const word = this.word(wordId);
-        return word ? word.getBoundingClientRect().top - this.wordsContainerTopMargin : 0;
+        if (!word) {
+          return 0;
+        }
+        // Get position relative to viewport
+        const rect = word.getBoundingClientRect();
+        // Add current scroll position to get position within scrollable container
+        return rect.top + this.bookPageScroller.scrollTop - this.wordsContainerTopMargin;
+
     }  // getWordTop
 
     public loadPage(pageNumber: number, topWord: number | undefined): Promise<void> {
@@ -178,7 +185,7 @@ export class Viewport {
         }
         const containerBottom = this.bookPageScroller.getBoundingClientRect().bottom;
         const containerTop = this.wordsContainerTopMargin;
-        log('Searching for visible word between', low, high, 'container rect:', containerTop, containerBottom);
+        // log('Searching for visible word between', low, high, 'container rect:', containerTop, containerBottom);
 
         while (low < high) {
             let mid = Math.floor((low + high) / 2);
@@ -190,7 +197,7 @@ export class Viewport {
             let rect = word.getBoundingClientRect();
             totalHeight.value += rect.height;
             wordCount.value++;
-            log('low:', low, 'high:', high, 'mid:', mid, 'rect:', rect.top, rect.bottom);
+            // log('low:', low, 'high:', high, 'mid:', mid, 'rect:', rect.top, rect.bottom);
 
             if ((rect.top >= containerTop) && (rect.bottom <= containerBottom)) {
                 return mid;
@@ -201,7 +208,7 @@ export class Viewport {
                 high = mid;
             }
         }
-        log('return low:', low);
+        // log('return low:', low);
         return low;
     }  // binarySearchVisibleWord
 
@@ -216,11 +223,11 @@ export class Viewport {
         let totalHeight = {value: 0};  // accumulate statistics to
         let wordCount = {value: 0};    // calculate average line height
         let high = this.binarySearchVisibleWord(0, this.totalWords, totalHeight, wordCount);
-        log('found high bound:', high);
+        // log('found high bound:', high);
         let low = 0;
         const containerHeight = this.getWordsContainerHeight();
         const containerTop = this.wordsContainerTopMargin;
-        log('container:', containerTop, containerHeight);
+        // log('container:', containerTop, containerHeight);
 
         // look for first visible word using binary search
         while (low < high) {
@@ -233,7 +240,7 @@ export class Viewport {
             let rect = word.getBoundingClientRect();
             totalHeight.value += rect.height;
             wordCount.value++;
-            log('low:', low, 'high:', high, 'mid:', mid, 'top:', rect.top);
+            // log('low:', low, 'high:', high, 'mid:', mid, 'top:', rect.top);
 
             if (rect.top < containerTop) {
                 low = mid + 1;
@@ -246,7 +253,7 @@ export class Viewport {
         if (wordCount.value > 0) {
             this.lineHeight = totalHeight.value / wordCount.value;
         }
-        log('return low:', low);
+        // log('return low:', low);
         return low;
     }  // getFirstVisibleWord
 
@@ -276,42 +283,91 @@ export class Viewport {
             .catch(error => console.error('Error:', error));
     }  // reportReadingLocation
 
-private updateReadingProgress(): void {
-    // Ensure totalPages is a valid number
-    if (isNaN(this.totalPages) || this.totalPages <= 0) {
-        console.error('Invalid total pages:', this.totalPages);
-        return;
+    private updateReadingProgress(): void {
+        // Ensure totalPages is a valid number
+        if (isNaN(this.totalPages) || this.totalPages <= 0) {
+            console.error('Invalid total pages:', this.totalPages);
+            return;
+        }
+
+        const rawProgress = (this.pageNumber / this.totalPages) * 100;
+        const progress = Math.round(Math.max(1, Math.min(rawProgress, 100)));
+
+        // Update progress bar
+        if (this.progressBar) {
+            this.progressBar.setAttribute('aria-valuenow', progress.toString());
+            this.progressBar.style.width = progress + '%';
+        } else {
+            console.error('Progress bar element not found'); // Debug log
+        }
+
+        // Update page number text
+        this.pageNumberElement.textContent = this.pageNumber.toString();
+
+        // Update total pages
+        if (this.totalPagesElement) {
+            this.totalPagesElement.textContent = `/ ${this.totalPages}`;
+        } else {
+            console.error('Total pages element not found');
+        }
+
+        // Update max page number in modal
+        const maxPageNumberElement = getElement(Viewport.maxPageNumberId);
+        if (maxPageNumberElement) {
+            maxPageNumberElement.textContent = this.totalPages.toString();
+        } else {
+            console.error('Max page number element not found');
+        }
     }
 
-    const rawProgress = (this.pageNumber / this.totalPages) * 100;
-    const progress = Math.round(Math.max(1, Math.min(rawProgress, 100)));
+    private adjustTopWord(): void {
+        // Shift top visible work exactly to the top of the viewport
+        const firstVisibleWord = this.getFirstVisibleWord();
+        if (firstVisibleWord > 0) {
+            // check if prev word is partially visible
+            const prevWord = this.word(firstVisibleWord - 1);
+            if (prevWord) {
+                const prevRect = prevWord.getBoundingClientRect();
+                if (prevRect.bottom > this.wordsContainerTopMargin) {
+                    log('Prev word is partially visible:', prevRect.top, prevRect.bottom, 'top:', this.wordsContainerTopMargin);
+                    log('Adjusting topWord:', firstVisibleWord, 'scrollTop:', this.bookPageScroller.scrollTop, 'WordTop:', this.getWordTop(firstVisibleWord));
+                    this.bookPageScroller.scrollTop = this.getWordTop(firstVisibleWord);
+                    log('Adjusted scrollTop:', this.bookPageScroller.scrollTop);
+                }
+            }
+        }
+        this.adjustTopTranslationSpans()
+    }  // adjustTopWord
 
-    // Update progress bar
-    if (this.progressBar) {
-        this.progressBar.setAttribute('aria-valuenow', progress.toString());
-        this.progressBar.style.width = progress + '%';
-    } else {
-        console.error('Progress bar element not found'); // Debug log
+    public adjustTopTranslationSpans(): void {
+        const translationSpans = document.querySelectorAll('.translation-span');
+        let minScrollTop: number | null = null;
+
+        const visibleTop = this.wordsContainerTopMargin;
+
+        translationSpans.forEach((span) => {
+            const spanRect = span.getBoundingClientRect();
+
+            // Check if span is partially visible at top
+            if (spanRect.bottom > visibleTop &&
+                spanRect.top < visibleTop) {
+                // Calculate required scroll adjustment to make this span fully visible
+                const requiredScrollTop = this.bookPageScroller.scrollTop - (visibleTop - spanRect.top);
+
+                if (minScrollTop === null || requiredScrollTop < minScrollTop) {
+                    minScrollTop = requiredScrollTop;
+                }
+            }
+        });
+
+        // Adjust scroll position if needed
+        if (minScrollTop !== null) {
+            log('Adjusting scroll position for translation spans:',
+                'current:', this.bookPageScroller.scrollTop,
+                'new:', minScrollTop);
+            this.bookPageScroller.scrollTop = minScrollTop;
+        }
     }
-
-    // Update page number text
-    this.pageNumberElement.textContent = this.pageNumber.toString();
-
-    // Update total pages
-    if (this.totalPagesElement) {
-        this.totalPagesElement.textContent = `/ ${this.totalPages}`;
-    } else {
-        console.error('Total pages element not found');
-    }
-
-    // Update max page number in modal
-    const maxPageNumberElement = getElement(Viewport.maxPageNumberId);
-    if (maxPageNumberElement) {
-        maxPageNumberElement.textContent = this.totalPages.toString();
-    } else {
-        console.error('Max page number element not found');
-    }
-}
 
     public async scrollUp(): Promise<void> {
         // Scroll one viewport up
@@ -327,6 +383,7 @@ private updateReadingProgress(): void {
             log('***** scrollTop:', this.bookPageScroller.scrollTop, 'clientHeight-lineHeight:', this.bookPageScroller.clientHeight - this.lineHeight);
             this.bookPageScroller.scrollTop -= this.bookPageScroller.clientHeight - this.lineHeight;
         }
+        this.adjustTopWord();
         this.reportReadingLocation();
     }  // scrollUp
 
@@ -341,7 +398,11 @@ private updateReadingProgress(): void {
             await this.loadPage(this.pageNumber + 1, 0);
         } else {
             // Scroll down by viewport height minus line height
+            log('FirstVisibleWord:', this.getFirstVisibleWord(), 'scrollTop:', this.bookPageScroller.scrollTop);
             this.bookPageScroller.scrollTop += this.bookPageScroller.clientHeight - this.lineHeight;
+            log('FirstVisibleWord:', this.getFirstVisibleWord(), 'scrollTop:', this.bookPageScroller.scrollTop);
+            log('***** scrollTop:', this.bookPageScroller.scrollTop, 'clientHeight-lineHeight:', this.bookPageScroller.clientHeight - this.lineHeight);
+            this.adjustTopWord();
         }
         this.reportReadingLocation();
     }  // scrollDown
