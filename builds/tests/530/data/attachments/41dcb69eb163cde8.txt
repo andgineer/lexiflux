@@ -1,0 +1,4 @@
+2024-11-29 14:49:59,329 INFO conftest Test finished
+2024-11-29 14:49:59,330 INFO conftest Test started
+2024-11-29 14:49:59,716 INFO words_export Words exported for English: 1 words
+2024-11-29 14:49:59,717 INFO words_export Words exported for English: 1 words using ankiConnect

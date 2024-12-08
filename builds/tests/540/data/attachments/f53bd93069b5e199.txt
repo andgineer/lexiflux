@@ -1,0 +1,2 @@
+WARNING  root:detect_language_detectlanguage.py:18 DETECTLANGUAGE_API_KEY not set. Please get your API Key at https://detectlanguage.com/documentation and set it to env var DETECTLANGUAGE_API_KEY
+ERROR    root:detect_language_detectlanguage.py:39 Failed to detect language: you need to get an API_KEY for this to work. Get one for free here: https://detectlanguage.com/documentation

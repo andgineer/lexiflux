@@ -1,0 +1,1 @@
+INFO     root:reader_views.py:386 SELECT "lexiflux_bookpage"."id", "lexiflux_bookpage"."number", "lexiflux_bookpage"."content", "lexiflux_bookpage"."word_slices" FROM "lexiflux_bookpage" WHERE ("lexiflux_bookpage"."book_id" = 19 AND "lexiflux_bookpage"."content" LIKE %test% ESCAPE '\') ORDER BY "lexiflux_bookpage"."number" ASC LIMIT 11

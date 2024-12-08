@@ -1,0 +1,28 @@
+2024-11-29 09:04:58,093 INFO conftest Test finished
+2024-11-29 09:04:58,094 INFO conftest Test started
+2024-11-29 09:04:58,484 ERROR middleware Exception: error: Expected book-code and search-term
+Traceback (most recent call last):
+  File "/home/runner/work/lexiflux/lexiflux/lexiflux/views/reader_views.py", line 377, in search
+    raise ValueError("Expected book-code and search-term")
+ValueError: Expected book-code and search-term
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/runner/work/lexiflux/lexiflux/.venv/lib/python3.12/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/work/lexiflux/lexiflux/lexiflux/decorators.py", line 29, in wrapper
+    return login_required(view_func)(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/work/lexiflux/lexiflux/.venv/lib/python3.12/site-packages/django/contrib/auth/decorators.py", line 60, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/work/lexiflux/lexiflux/.venv/lib/python3.12/site-packages/django/views/decorators/http.py", line 64, in inner
+    return func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/work/lexiflux/lexiflux/lexiflux/views/reader_views.py", line 464, in search
+    raise ValueError(f"error: {str(e)}") from e
+ValueError: error: Expected book-code and search-term
+2024-11-29 09:04:58,485 WARNING log Bad Request: /search/
+2024-11-29 09:04:58,485 WARNING log Bad Request: /search/

@@ -1,0 +1,5 @@
+2024-11-28 05:17:31,886 INFO conftest Test finished
+2024-11-28 05:17:31,888 INFO conftest Test started
+2024-11-28 05:17:34,764 INFO reader_views Opening book some-book-code at page 1 for user testuser
+2024-11-28 05:17:34,783 INFO reader_views Jump status: book some-book-code, is_first_jump True, is_last_jump True
+2024-11-28 05:17:35,169 INFO lexical_views Selected text: page

@@ -1,0 +1,4 @@
+2024-11-29 09:04:35,257 INFO conftest Test finished
+2024-11-29 09:04:35,259 INFO conftest Test started
+2024-11-29 09:04:35,649 WARNING log Bad Request: /api/save-inline-translation/
+2024-11-29 09:04:35,649 WARNING log Bad Request: /api/save-inline-translation/

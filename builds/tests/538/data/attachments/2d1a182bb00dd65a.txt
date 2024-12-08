@@ -1,0 +1,1 @@
+INFO     root:reader_views.py:349 Link clicked: #chapter1, page_info: {'page': 2, 'word': 5}

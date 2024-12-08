@@ -1,0 +1,3 @@
+INFO     root:reader_views.py:257 Location changed: book some-book-code, page 1, top word 10
+INFO     root:models.py:809 Reading location updated for some-book-code: 1(1):10/0.0
+[{'page_number': 1, 'word': 10}]/0

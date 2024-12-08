@@ -1,0 +1,3 @@
+2024-11-29 14:49:54,560 INFO conftest Test finished
+2024-11-29 14:49:54,561 INFO conftest Test started
+2024-11-29 14:49:54,951 INFO reader_views SELECT "lexiflux_bookpage"."id", "lexiflux_bookpage"."number", "lexiflux_bookpage"."content", "lexiflux_bookpage"."word_slices" FROM "lexiflux_bookpage" WHERE ("lexiflux_bookpage"."book_id" = 19 AND "lexiflux_bookpage"."content" LIKE %test% ESCAPE '\') ORDER BY "lexiflux_bookpage"."number" ASC LIMIT 11

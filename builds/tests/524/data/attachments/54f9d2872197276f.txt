@@ -1,0 +1,3 @@
+2024-11-26 13:33:18,029 INFO conftest Test finished
+2024-11-26 13:33:18,030 INFO conftest Test started
+2024-11-26 13:33:18,430 INFO llm {'book_code': 'some-book-code', 'book_page_number': 1, 'term_word_ids': (4, 5), 'text_language': 'en', 'user_language': 'fr', 'article_name': 'Explain', 'text': 'Word1 word2. Word3 word4. [FRAGMENT][HIGHLIGHT]Word5 word6[/HIGHLIGHT] word7[/FRAGMENT]. Word8 word9. Word10 word11 word12', 'detected_language': 'en'}

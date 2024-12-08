@@ -1,0 +1,4 @@
+2024-11-26 13:33:57,636 INFO conftest Test finished
+2024-11-26 13:33:57,638 INFO conftest Test started
+2024-11-26 13:33:58,022 WARNING log Bad Request: /location
+2024-11-26 13:33:58,022 WARNING log Bad Request: /location

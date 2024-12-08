@@ -1,0 +1,6 @@
+2024-12-02 06:58:38,908 INFO conftest Test finished
+2024-12-02 06:58:38,909 INFO conftest Test started
+2024-12-02 06:58:40,268 INFO words_export For language en last export datetime: None
+2024-12-02 06:58:40,935 INFO words_export Words exported for English: 1 words
+2024-12-02 06:58:40,936 INFO words_export Words exported for English: 1 words using ankiConnect
+2024-12-02 06:58:40,946 INFO words_export For language en last export datetime: 2024-12-02 06:58:40.935751+00:00

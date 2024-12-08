@@ -1,0 +1,1 @@
+INFO     lexiflux.language.llm:lexical_views.py:141 Selected text: of page 1

@@ -1,0 +1,6 @@
+2024-11-28 05:19:02,980 INFO conftest Test finished
+2024-11-28 05:19:02,982 INFO conftest Test started
+2024-11-28 05:19:03,364 WARNING log Method Not Allowed (GET): /api/import-book/
+2024-11-28 05:19:03,364 WARNING log Method Not Allowed (GET): /api/import-book/
+2024-11-28 05:19:03,364 WARNING log Method Not Allowed: /api/import-book/
+2024-11-28 05:19:03,364 WARNING log Method Not Allowed: /api/import-book/

@@ -1,0 +1,6 @@
+2024-11-29 14:49:26,101 INFO conftest Test finished
+2024-11-29 14:49:26,102 INFO conftest Test started
+2024-11-29 14:49:26,476 WARNING log Method Not Allowed (PUT): /api/ai-settings/
+2024-11-29 14:49:26,476 WARNING log Method Not Allowed (PUT): /api/ai-settings/
+2024-11-29 14:49:26,477 WARNING log Method Not Allowed: /api/ai-settings/
+2024-11-29 14:49:26,477 WARNING log Method Not Allowed: /api/ai-settings/
