@@ -1,3 +1,0 @@
-2024-11-25 05:18:45,635 INFO conftest Test finished
-2024-11-25 05:18:45,637 INFO conftest Test started
-2024-11-25 05:18:46,965 INFO words_export No translations found for the user
