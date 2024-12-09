@@ -46,7 +46,7 @@ jobs:
           uv pip install ghp-import -r requirements.dev.txt --python=${{ env.PRIMARY_PYTHON_VERSION }}
       - run: ./scripts/build-docs.sh
       - run: |
-          ghp-import --no-jekyll --push --force site
+          ghp-import --no-jekyll --push --force site --cname=lexiflux.sorokin.engineer
 
       - name: Restore Allure test reports folder
         uses: peaceiris/actions-gh-pages@v3
