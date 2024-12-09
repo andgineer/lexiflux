@@ -37,7 +37,7 @@
 | lexiflux/lexiflux\_settings.py                        |       51 |       14 |     73% |23-30, 35-39, 60-66, 88-89, 104 |
 | lexiflux/middleware.py                                |       36 |        5 |     86% |24-28, 66-67, 77 |
 | lexiflux/models.py                                    |      471 |       42 |     91% |113, 145, 176, 192-193, 290, 296, 307, 337, 373-376, 391, 442, 481, 483, 492-497, 551-553, 556, 563, 587, 589-590, 592-593, 596, 640, 754, 764, 788, 866, 877, 903, 940 |
-| lexiflux/settings.py                                  |       37 |        4 |     89% |   198-202 |
+| lexiflux/settings.py                                  |       38 |        4 |     89% |   201-205 |
 | lexiflux/signals.py                                   |       14 |       14 |      0% |      3-24 |
 | lexiflux/tests.py                                     |        0 |        0 |    100% |           |
 | lexiflux/urls.py                                      |       18 |        2 |     89% |   119-121 |
@@ -51,7 +51,7 @@
 | lexiflux/views/search\_view.py                        |      103 |       25 |     76% |50-52, 59-80, 85-86, 185, 196-197 |
 | lexiflux/views/words\_export.py                       |      143 |       28 |     80% |66-71, 106-111, 146, 170-178, 191, 240, 271, 294-300 |
 | lexiflux/wsgi.py                                      |        4 |        4 |      0% |      9-15 |
-|                                             **TOTAL** | **3026** |  **359** | **88%** |           |
+|                                             **TOTAL** | **3027** |  **359** | **88%** |           |
 
 
 ## Setup coverage badge
