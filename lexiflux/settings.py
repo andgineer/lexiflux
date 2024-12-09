@@ -36,6 +36,9 @@ ALLOWED_HOSTS: List[str] = [
     "host.docker.internal",
     "lexiflux.ai",
 ]
+# allows reuse external dictionary window
+SECURE_CROSS_ORIGIN_OPENER_POLICY = "same-origin-allow-popups"
+
 SITE_ID = 1
 APPEND_SLASH = False
 LOGIN_URL = "login"

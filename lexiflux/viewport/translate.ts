@@ -454,12 +454,12 @@ function updateLexicalPanel(data: TranslationResponse, activePanelId: string): v
     if (data.window) {
       // Hide spinner and show button
       contentDiv.innerHTML = `
-        <button id="openWindowButton-${articleId}" class="btn btn-primary btn-sm">Open in new window</button>
+        <button id="openWindowButton-${articleId}" class="btn btn-primary btn-sm">Open in separate window</button>
       `;
       const openWindowButton = document.getElementById(`openWindowButton-${articleId}`);
       openWindowButton?.removeEventListener('click', () => handleOpenLexicalWindow(url, windowKey, windowFeatures));
       openWindowButton?.addEventListener('click', () => handleOpenLexicalWindow(url, windowKey, windowFeatures));
-//       openWindowButton?.click();
+      openWindowButton?.click();
     } else {
       // Load URL in iframe
       contentDiv.innerHTML = ''; // Hide spinner
@@ -481,21 +481,26 @@ function updateLexicalPanel(data: TranslationResponse, activePanelId: string): v
   currentSelection.updatedPanels.add(articleId);
 }
 
+function openDictionaryWindow(url: string, windowKey: string, windowFeatures: string): Window | null {
+  const newWindow = window.open(url, windowKey, windowFeatures);
+  dictionaryWindows[windowKey] = newWindow;
+  return newWindow;
+}
+
 function handleOpenLexicalWindow(url: string, windowKey: string, windowFeatures: string): void {
   let dictionaryWindow = dictionaryWindows[windowKey];
-  console.log('dictionaryWindow:', dictionaryWindow);
-
-  if (dictionaryWindow && !dictionaryWindow.closed) {
-    console.log('dictionaryWindow exists');
-    dictionaryWindow.location.href = url;
+  if (!dictionaryWindow || dictionaryWindow.closed) {
+    // The window is closed or does not exist, open a new one
+    dictionaryWindow = openDictionaryWindow(url, windowKey, windowFeatures);
   } else {
-    dictionaryWindow = window.open(url, windowKey, windowFeatures);
-    dictionaryWindows[windowKey] = dictionaryWindow;
-    console.log('dictionaryWindow created:', dictionaryWindow);
-  }
-  if (dictionaryWindow) {
-    console.log('dictionaryWindow focus');
-    dictionaryWindow.focus();
+    // The window is already open. Just change its URL and bring it into focus.
+    try {
+      dictionaryWindow.location.href = url;
+      dictionaryWindow.focus();
+    } catch (error) {
+      // If changing the URL or focusing triggers an error, re-open the window.
+      openDictionaryWindow(url, windowKey, windowFeatures);
+    }
   }
 }
 
