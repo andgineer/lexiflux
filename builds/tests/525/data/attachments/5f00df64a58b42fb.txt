@@ -1,4 +1,0 @@
-INFO     lexiflux.views.words_export:words_export.py:162 For language en last export datetime: None
-INFO     lexiflux.views.words_export:words_export.py:225 Words exported for English: 1 words
-INFO     lexiflux.views.words_export:words_export.py:252 Words exported for English: 1 words using ankiConnect
-INFO     lexiflux.views.words_export:words_export.py:162 For language en last export datetime: 2024-11-26 17:39:13.559583+00:00

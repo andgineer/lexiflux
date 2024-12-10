@@ -1,4 +1,0 @@
-2024-11-26 17:39:48,026 INFO conftest Test finished
-2024-11-26 17:39:48,028 INFO conftest Test started
-2024-11-26 17:39:48,426 WARNING log Bad Request: /api/update-article-order/
-2024-11-26 17:39:48,426 WARNING log Bad Request: /api/update-article-order/
