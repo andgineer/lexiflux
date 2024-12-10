@@ -1,0 +1,3 @@
+INFO     root:reader_views.py:150 Opening book some-book-code at page 1 for user testuser
+INFO     root:reader_views.py:168 Jump status: book some-book-code, is_first_jump True, is_last_jump True
+INFO     lexiflux.language.llm:lexical_views.py:141 Selected text: page

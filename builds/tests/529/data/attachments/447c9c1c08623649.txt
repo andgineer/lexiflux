@@ -1,0 +1,5 @@
+2024-11-29 09:04:51,636 INFO conftest Test finished
+2024-11-29 09:04:51,637 INFO conftest Test started
+2024-11-29 09:04:52,020 INFO reader_views Location changed: book some-book-code, page 1, top word 10
+2024-11-29 09:04:52,025 INFO models Reading location updated for some-book-code: 1(1):10/0.0
+[{'page_number': 1, 'word': 10}]/0

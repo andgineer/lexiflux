@@ -1,0 +1,5 @@
+2024-11-30 14:59:05,217 INFO conftest Test finished
+2024-11-30 14:59:05,218 INFO conftest Test started
+2024-11-30 14:59:05,633 INFO reader_views Jump status: book some-book-code, is_first_jump False, is_last_jump False
+2024-11-30 14:59:05,638 INFO reader_views Jump status: book some-book-code, is_first_jump True, is_last_jump False
+2024-11-30 14:59:05,643 INFO reader_views Jump status: book some-book-code, is_first_jump False, is_last_jump True

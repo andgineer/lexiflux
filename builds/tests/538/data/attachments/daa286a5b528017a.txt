@@ -1,0 +1,4 @@
+2024-12-02 06:59:14,259 INFO conftest Test finished
+2024-12-02 06:59:14,261 INFO conftest Test started
+2024-12-02 06:59:14,638 WARNING log Bad Request: /api/ai-settings/
+2024-12-02 06:59:14,638 WARNING log Bad Request: /api/ai-settings/
