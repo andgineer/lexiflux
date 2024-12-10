@@ -1,6 +1,6 @@
 # yaml-language-server: $schema=https://squidfunk.github.io/mkdocs-material/schema.json
 site_name: lexiflux
-site_url: https://andgineer.github.io/lexiflux
+site_url: https://lexiflux.sorokin.engineer/
 site_author: Andrey Sorokin
 
 # Repository

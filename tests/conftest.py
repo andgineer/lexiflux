@@ -456,3 +456,8 @@ def user_with_translations(approved_user, book, language, translation_history):
     approved_user.default_language_preferences = language_preferences
     approved_user.save()
     return approved_user
+
+
+@pytest.fixture
+def book_epub_loader(db_init):
+    return BookLoaderEpub("tests/resources/genius.epub")

@@ -16,7 +16,7 @@ Instantly translate and understand foreign texts as you read, building your voca
 ## Quick start
 There is ready to use [Docker image](https://hub.docker.com/r/andgineer/lexiflux) with Lexiflux.
 
-How to start and use it you can find in [Lexiflux documentation](https://andgineer.github.io/lexiflux/).
+How to start and use it you can find in [Lexiflux documentation](https://lexiflux.sorokin.engineer).
 
 ## Developers
 ### Build from sources

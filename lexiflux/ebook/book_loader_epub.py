@@ -20,7 +20,7 @@ log = logging.getLogger()
 MAX_ITEM_SIZE = 6000
 TARGET_PAGE_SIZE = 3000
 
-PAGES_NUM_TO_DEBUG = 10  # number of page for detailed tracing
+PAGES_NUM_TO_DEBUG = 3  # number of page for detailed tracing
 
 
 class BookLoaderEpub(BookLoaderBase):
@@ -71,14 +71,19 @@ class BookLoaderEpub(BookLoaderBase):
         """
         self.epub = epub.read_epub(self.file_path)
 
-        self.heading_hrefs = href_hierarchy(
-            {  # reverse href/title in flatten epub headings
-                value: key
-                for heading in flatten_list(extract_headings(self.epub.toc))
-                for key, value in heading.items()
-            }
-        )
-        log.debug("Extracted epub headings: %s", self.heading_hrefs)
+        self.heading_hrefs = {}
+        if self.epub.toc:
+            self.heading_hrefs = href_hierarchy(
+                {  # reverse href/title in flatten epub headings
+                    value: key
+                    for heading in flatten_list(extract_headings(self.epub.toc))
+                    for key, value in heading.items()
+                }
+            )
+            log.debug("Extracted epub headings: %s", self.heading_hrefs)
+        if not self.heading_hrefs:
+            log.warning("No TOC found in EPUB. Generating TOC from spine.")
+            self.heading_hrefs = self.generate_toc_from_spine()
 
         meta = {
             MetadataField.TITLE: (
@@ -157,6 +162,64 @@ class BookLoaderEpub(BookLoaderBase):
                     # Handle the case where the anchor is for the start of the file
                     page_num = self.anchor_map[file_name]["page"]
                     self.toc.append((title, page_num, 0))
+
+    def generate_toc_from_spine(self) -> Dict[str, Dict[str, str]]:
+        """Generate TOC from the EPUB spine when no TOC is present."""
+        result: Dict[str, Dict[str, str]] = defaultdict(dict)
+        for spine_id in self.epub.spine:
+            item: epub.EpubItem = self.epub.get_item_with_id(spine_id[0])
+            log.debug(f"Spine item: {item.get_name()}")
+            if item.get_type() == ITEM_DOCUMENT:
+                # Extract title from the document's metadata or content
+                print("#" * 80, item.get_name())
+                title = self.extract_title(item) or os.path.splitext(item.get_name())[0]
+                file_name = item.file_name
+                result[file_name]["#"] = title
+        log.debug("Generated TOC from spine: %s", result)
+        return result
+
+    def extract_title(self, item: epub.EpubItem) -> Optional[str]:
+        """Extract the title from the EPUB item."""
+        try:
+            soup = BeautifulSoup(item.get_body_content().decode("utf-8"), "html.parser")
+
+            # Prioritize standard <title> tag in the <head>
+            title_tag = soup.find("title")
+            if title_tag and title_tag.get_text(strip=True):
+                log.debug(
+                    "Extracted title from <title> tag in item %s: %s",
+                    item.get_id(),
+                    title_tag.get_text(separator=" ", strip=True),
+                )
+                return title_tag.get_text(separator=" ", strip=True)  # type: ignore
+
+            # Search for common heading tags in the body
+            for heading in ["h1", "h2", "h3", "h4", "h5", "h6"]:
+                heading_tag = soup.find(heading)
+                if heading_tag and heading_tag.get_text(strip=True):
+                    log.debug(
+                        "Extracted title from <%s> tag in item %s: %s",
+                        heading,
+                        item.get_id(),
+                        heading_tag.get_text(separator=" ", strip=True),
+                    )
+                    return heading_tag.get_text(separator=" ", strip=True)  # type: ignore
+
+            # Check for other common patterns that might indicate a title
+            potential_titles = soup.find_all(attrs={"class": re.compile(r"title", re.IGNORECASE)})
+            for tag in potential_titles:
+                if tag.get_text(strip=True):
+                    log.debug(
+                        "Extracted title from class 'title' in item %s: %s",
+                        item.get_id(),
+                        tag.get_text(separator=" ", strip=True),
+                    )
+                    return tag.get_text(separator=" ", strip=True)  # type: ignore
+
+            log.warning("No title found for item %s", item.get_id())
+        except Exception as e:  # pylint: disable=broad-except
+            log.error("Error extracting title from item %s: %s", item.get_id(), e)
+        return None
 
     def _process_anchors(self, item: epub.EpubItem, current_page: int, content: str) -> None:
         """Process anchors for a page."""

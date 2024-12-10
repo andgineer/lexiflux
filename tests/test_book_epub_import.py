@@ -327,14 +327,178 @@ def test_process_toc(book_epub):
         ("Chapter 2", 3, 0)
     ]
 
-@pytest.fixture
-def small_page_size(monkeypatch):
-    """Temporarily set TARGET_PAGE_SIZE to a small value for testing."""
-    monkeypatch.setattr('lexiflux.ebook.book_loader_epub.TARGET_PAGE_SIZE', 300)
-    return 300
 
-@pytest.fixture
-def tiny_page_size(monkeypatch):
-    """Set an extremely small page size to test sentence splitting behavior."""
-    monkeypatch.setattr('lexiflux.ebook.book_loader_epub.TARGET_PAGE_SIZE', 50)
-    return 50
+@allure.epic('Book import')
+@allure.feature('EPUB: Title extraction')
+def test_extract_title_with_headers(book_epub_loader):
+    content = """
+    <html>
+        <head><title>Main Title</title></head>
+        <body>
+            <h1>Main Header</h1>
+            <h2>Subheader</h2>
+            <div class="title">
+                <p>Author Name</p>
+                <p>Book Title</p>
+            </div>
+        </body>
+    </html>
+    """
+    mock_item = MagicMock(get_body_content=lambda: content.encode('utf-8'))
+
+    loader = book_epub_loader
+    extracted_title = loader.extract_title(mock_item)
+    assert extracted_title == "Main Title", "The title should be extracted from the <title> tag in <head>"
+
+
+@allure.epic('Book import')
+@allure.feature('EPUB: Title extraction')
+def test_extract_title_with_div_class_title(book_epub_loader):
+    content = """
+    <html>
+        <body>
+            <div class="title">
+                <p>Author Name</p>
+                <p>Book Title</p>
+            </div>
+        </body>
+    </html>
+    """
+    mock_item = MagicMock(get_body_content=lambda: content.encode('utf-8'))
+
+    loader = book_epub_loader
+    extracted_title = loader.extract_title(mock_item)
+    assert extracted_title == "Author Name Book Title", "The title should be concatenated from nested <p> tags in <div class='title'>"
+
+
+@allure.epic('Book import')
+@allure.feature('EPUB: Title extraction')
+def test_extract_title_with_headers_and_no_div(book_epub_loader):
+    content = """
+    <html>
+        <body>
+            <h1>Main Header</h1>
+            <h2>Subheader</h2>
+        </body>
+    </html>
+    """
+    mock_item = MagicMock(get_body_content=lambda: content.encode('utf-8'))
+
+    loader = book_epub_loader
+    extracted_title = loader.extract_title(mock_item)
+    assert extracted_title == "Main Header", "The title should be extracted from the first <h1> tag"
+
+
+@allure.epic('Book import')
+@allure.feature('EPUB: Title extraction')
+def test_extract_title_no_title_or_headers(book_epub_loader):
+    content = """
+    <html>
+        <body>
+            <p>Some random content</p>
+        </body>
+    </html>
+    """
+    mock_item = MagicMock(get_body_content=lambda: content.encode('utf-8'))
+
+    loader = book_epub_loader
+    extracted_title = loader.extract_title(mock_item)
+    assert extracted_title is None, "No title should be extracted when no suitable tags are found"
+
+
+@allure.epic('Book import')
+@allure.feature('EPUB: Title extraction')
+def test_extract_title_handles_malformed_html(book_epub_loader):
+    content = """
+    <html>
+        <head><title>  Main Title   </title></head>
+        <body>
+                <p>   Author Name  </p>
+                <p>   Book Title  </p>
+    """  # Missing closing tags
+    mock_item = MagicMock(get_body_content=lambda: content.encode('utf-8'))
+
+    loader = book_epub_loader
+    extracted_title = loader.extract_title(mock_item)
+    assert extracted_title == "Main Title", "The title should still be extracted from the <title> tag despite malformed HTML"
+
+
+@allure.epic('Book import')
+@allure.feature('EPUB: TOC extraction')
+def test_generate_toc_fallback_to_spine_item_name(book_epub_loader):
+    # Mock EPUB item without valid title in the body
+    content_no_title = """
+    <html>
+        <body>
+            <p>Some random content without a proper title</p>
+        </body>
+    </html>
+    """
+    mock_item = MagicMock(
+        get_body_content=lambda: content_no_title.encode('utf-8'),
+        get_name=lambda: "chapter1.xhtml",  # Mock the get_name() method
+        file_name="chapter1.xhtml",  # Mock the file_name attribute
+        get_type=lambda: ITEM_DOCUMENT,  # Ensure the item is treated as a document
+    )
+
+    mock_epub = MagicMock()
+    mock_epub.spine = [('item_1', None)]  # Simulate one item in the spine
+    mock_epub.get_item_with_id.return_value = mock_item
+
+    # Patch the loader to use the mocked EPUB
+    with patch('lexiflux.ebook.book_loader_epub.epub.read_epub', return_value=mock_epub):
+        loader = book_epub_loader
+        loader.epub = mock_epub  # Assign the mocked EPUB
+
+        # Generate the TOC from the spine
+        generated_toc = loader.generate_toc_from_spine()
+
+        # Expected TOC should use the spine item's name without extension
+        expected_toc = {
+            "chapter1.xhtml": {"#": "chapter1"}
+        }
+
+        assert generated_toc == expected_toc, (
+            f"Expected TOC {expected_toc}, but got {generated_toc}."
+        )
+
+
+@allure.epic('Book import')
+@allure.feature('EPUB: TOC extraction')
+def test_generate_toc_from_spine_when_toc_is_empty(book_epub_loader):
+    # Mock an EPUB object with an empty TOC and a spine
+    mock_epub = MagicMock()
+    mock_epub.toc = []  # Empty TOC
+    mock_epub.spine = [('item_1', None), ('item_2', None)]
+
+    mock_items = {
+        'item_1': MagicMock(
+            get_name=lambda: "chapter1.xhtml",
+            get_type=lambda: ITEM_DOCUMENT,
+            file_name="chapter1.xhtml",
+            get_body_content=lambda: "<h1>Chapter 1</h1>".encode('utf-8')
+        ),
+        'item_2': MagicMock(
+            get_name=lambda: "chapter2.xhtml",
+            get_type=lambda: ITEM_DOCUMENT,
+            file_name="chapter2.xhtml",
+            get_body_content=lambda: "<h1>Chapter 2</h1>".encode('utf-8')
+        ),
+    }
+    mock_epub.get_item_with_id.side_effect = lambda x: mock_items[x]
+
+    # Patch the BookLoaderEpub object to use the mocked EPUB
+    with patch('lexiflux.ebook.book_loader_epub.epub.read_epub', return_value=mock_epub):
+        loader = book_epub_loader
+        loader.epub = mock_epub  # Simulate loading the mocked EPUB
+
+        # Trigger the TOC generation
+        generated_toc = loader.generate_toc_from_spine()
+
+        # Validate the output
+        expected_toc = {
+            "chapter1.xhtml": {"#": "Chapter 1"},
+            "chapter2.xhtml": {"#": "Chapter 2"},
+        }
+
+        assert generated_toc == expected_toc, "TOC should be generated from spine when TOC is empty"
