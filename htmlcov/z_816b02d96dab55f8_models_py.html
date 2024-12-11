@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-    <title>Coverage for lexiflux/models.py: 91%</title>
+    <title>Coverage for lexiflux/models.py: 90%</title>
     <link rel="icon" sizes="32x32" href="favicon_32_cb_58284776.png">
     <link rel="stylesheet" href="style_cb_8e611ae1.css" type="text/css">
     <script src="coverage_html_cb_6fb7b396.js" defer></script>
@@ -12,7 +12,7 @@
     <div class="content">
         <h1>
             <span class="text">Coverage for </span><b>lexiflux/models.py</b>:
-            <span class="pc_cov">91%</span>
+            <span class="pc_cov">90%</span>
         </h1>
         <aside id="help_panel_wrapper">
             <input id="help_panel_state" type="checkbox">
@@ -55,8 +55,8 @@
         </aside>
         <h2>
             <span class="text">471 statements &nbsp;</span>
-            <button type="button" class="run button_toggle_run" value="run" data-shortcut="r" title="Toggle lines run">429<span class="text"> run</span></button>
-            <button type="button" class="mis show_mis button_toggle_mis" value="mis" data-shortcut="m" title="Toggle lines missing">42<span class="text"> missing</span></button>
+            <button type="button" class="run button_toggle_run" value="run" data-shortcut="r" title="Toggle lines run">426<span class="text"> run</span></button>
+            <button type="button" class="mis show_mis button_toggle_mis" value="mis" data-shortcut="m" title="Toggle lines missing">45<span class="text"> missing</span></button>
             <button type="button" class="exc show_exc button_toggle_exc" value="exc" data-shortcut="x" title="Toggle lines excluded">0<span class="text"> excluded</span></button>
         </h2>
         <p class="text">
@@ -65,7 +65,7 @@
             <a id="nextFileLink" class="nav" href="z_816b02d96dab55f8_settings_py.html">&#xbb; next</a>
             &nbsp; &nbsp; &nbsp;
             <a class="nav" href="https://coverage.readthedocs.io/en/7.6.4">coverage.py v7.6.4</a>,
-            created at 2024-12-10 05:16 +0000
+            created at 2024-12-11 05:21 +0000
         </p>
         <aside class="hidden">
             <button type="button" class="button_next_chunk" data-shortcut="j"></button>
@@ -744,11 +744,11 @@
     <p class="run"><span class="n"><a id="t662" href="#t662">662</a></span><span class="t">        <span class="nam">default</span> <span class="op">=</span> <span class="nam">user</span><span class="op">.</span><span class="nam">default_language_preferences</span>&nbsp;</span><span class="r"></span></p>
     <p class="run"><span class="n"><a id="t663" href="#t663">663</a></span><span class="t">        <span class="key">if</span> <span class="nam">default</span> <span class="key">is</span> <span class="key">None</span><span class="op">:</span>&nbsp;</span><span class="r"></span></p>
     <p class="pln"><span class="n"><a id="t664" href="#t664">664</a></span><span class="t">            <span class="com"># Use the first existing record or create a new default</span>&nbsp;</span><span class="r"></span></p>
-    <p class="run"><span class="n"><a id="t665" href="#t665">665</a></span><span class="t">            <span class="nam">default</span> <span class="op">=</span> <span class="nam">cls</span><span class="op">.</span><span class="nam">objects</span><span class="op">.</span><span class="nam">filter</span><span class="op">(</span><span class="nam">user</span><span class="op">=</span><span class="nam">user</span><span class="op">)</span><span class="op">.</span><span class="nam">first</span><span class="op">(</span><span class="op">)</span> <span class="key">or</span> <span class="nam">create_default_language_preferences</span><span class="op">(</span>&nbsp;</span><span class="r"></span></p>
+    <p class="mis show_mis"><span class="n"><a id="t665" href="#t665">665</a></span><span class="t">            <span class="nam">default</span> <span class="op">=</span> <span class="nam">cls</span><span class="op">.</span><span class="nam">objects</span><span class="op">.</span><span class="nam">filter</span><span class="op">(</span><span class="nam">user</span><span class="op">=</span><span class="nam">user</span><span class="op">)</span><span class="op">.</span><span class="nam">first</span><span class="op">(</span><span class="op">)</span> <span class="key">or</span> <span class="nam">create_default_language_preferences</span><span class="op">(</span>&nbsp;</span><span class="r"></span></p>
     <p class="pln"><span class="n"><a id="t666" href="#t666">666</a></span><span class="t">                <span class="nam">user</span>&nbsp;</span><span class="r"></span></p>
     <p class="pln"><span class="n"><a id="t667" href="#t667">667</a></span><span class="t">            <span class="op">)</span>&nbsp;</span><span class="r"></span></p>
-    <p class="run"><span class="n"><a id="t668" href="#t668">668</a></span><span class="t">            <span class="nam">user</span><span class="op">.</span><span class="nam">default_language_preferences</span> <span class="op">=</span> <span class="nam">default</span>&nbsp;</span><span class="r"></span></p>
-    <p class="run"><span class="n"><a id="t669" href="#t669">669</a></span><span class="t">            <span class="nam">user</span><span class="op">.</span><span class="nam">save</span><span class="op">(</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
+    <p class="mis show_mis"><span class="n"><a id="t668" href="#t668">668</a></span><span class="t">            <span class="nam">user</span><span class="op">.</span><span class="nam">default_language_preferences</span> <span class="op">=</span> <span class="nam">default</span>&nbsp;</span><span class="r"></span></p>
+    <p class="mis show_mis"><span class="n"><a id="t669" href="#t669">669</a></span><span class="t">            <span class="nam">user</span><span class="op">.</span><span class="nam">save</span><span class="op">(</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
     <p class="pln"><span class="n"><a id="t670" href="#t670">670</a></span><span class="t">&nbsp;</span><span class="r"></span></p>
     <p class="run"><span class="n"><a id="t671" href="#t671">671</a></span><span class="t">        <span class="nam">preferences</span><span class="op">,</span> <span class="nam">created</span> <span class="op">=</span> <span class="nam">cls</span><span class="op">.</span><span class="nam">objects</span><span class="op">.</span><span class="nam">get_or_create</span><span class="op">(</span>&nbsp;</span><span class="r"></span></p>
     <p class="pln"><span class="n"><a id="t672" href="#t672">672</a></span><span class="t">            <span class="nam">user</span><span class="op">=</span><span class="nam">user</span><span class="op">,</span>&nbsp;</span><span class="r"></span></p>
@@ -1041,7 +1041,7 @@
             <a class="nav" href="z_816b02d96dab55f8_settings_py.html">&#xbb; next</a>
             &nbsp; &nbsp; &nbsp;
             <a class="nav" href="https://coverage.readthedocs.io/en/7.6.4">coverage.py v7.6.4</a>,
-            created at 2024-12-10 05:16 +0000
+            created at 2024-12-11 05:21 +0000
         </p>
     </div>
 </footer>
