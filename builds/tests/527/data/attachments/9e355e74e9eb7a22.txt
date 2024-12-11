@@ -1,1 +1,0 @@
-WARNING  django.request:log.py:248 Bad Request: /api/ai-settings/

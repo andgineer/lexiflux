@@ -1,3 +1,0 @@
-2024-11-28 05:27:13,586 INFO conftest Test finished
-2024-11-28 05:27:13,588 INFO conftest Test started
-2024-11-28 05:27:16,480 INFO words_export For language en last export datetime: None

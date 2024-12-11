@@ -1,3 +1,0 @@
-INFO     lexiflux.views.words_export:words_export.py:162 For language en last export datetime: None
-INFO     lexiflux.views.words_export:words_export.py:252 Words exported for English: 1 words using csvFile
-INFO     lexiflux.views.words_export:words_export.py:162 For language en last export datetime: 2024-11-28 05:27:30.241742+00:00

@@ -1,3 +1,0 @@
-2024-11-28 05:28:50,240 INFO conftest Test finished
-2024-11-28 05:28:50,241 INFO conftest Test started
-2024-11-28 05:28:50,245 ERROR detect_language_detectlanguage Failed to detect language: you need to get an API_KEY for this to work. Get one for free here: https://detectlanguage.com/documentation

@@ -1,7 +1,0 @@
-2024-11-28 05:28:22,185 INFO conftest Test finished
-2024-11-28 05:28:22,186 INFO conftest Test started
-2024-11-28 05:28:22,565 ERROR library_views Error importing book: Unsupported file format for test.pdf
-Traceback (most recent call last):
-  File "/home/runner/work/lexiflux/lexiflux/lexiflux/views/library_views.py", line 193, in import_book
-    raise ValueError(f"Unsupported file format for {file.name}")
-ValueError: Unsupported file format for test.pdf
