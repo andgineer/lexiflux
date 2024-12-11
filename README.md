@@ -12,7 +12,6 @@
 | lexiflux/anki/csv\_file.py                            |       20 |        0 |    100% |           |
 | lexiflux/api.py                                       |       24 |        3 |     88% |     37-39 |
 | lexiflux/apps.py                                      |       13 |        0 |    100% |           |
-| lexiflux/asgi.py                                      |        4 |        4 |      0% |     10-16 |
 | lexiflux/backends.py                                  |       15 |        2 |     87% |     27-28 |
 | lexiflux/decorators.py                                |       18 |        0 |    100% |           |
 | lexiflux/ebook/book\_loader\_base.py                  |      105 |        9 |     91% |58, 77, 84-85, 109-110, 146, 153, 194 |
@@ -50,8 +49,7 @@
 | lexiflux/views/reader\_views.py                       |      229 |       27 |     88% |68-70, 116, 131, 200, 206, 211-213, 253, 276, 293, 308, 322, 352, 368, 422, 431, 437-444 |
 | lexiflux/views/search\_view.py                        |      103 |       25 |     76% |50-52, 59-80, 85-86, 185, 196-197 |
 | lexiflux/views/words\_export.py                       |      143 |       28 |     80% |66-71, 106-111, 146, 170-178, 191, 240, 271, 294-300 |
-| lexiflux/wsgi.py                                      |        4 |        4 |      0% |     10-16 |
-|                                             **TOTAL** | **3076** |  **353** | **89%** |           |
+|                                             **TOTAL** | **3068** |  **345** | **89%** |           |
 
 
 ## Setup coverage badge
