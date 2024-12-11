@@ -67,5 +67,5 @@ To get available scripts:
 * [Allure report](https://andgineer.github.io/lexiflux/builds/tests/)
 
 ### Coverage report
-* [Codecov](https://app.codecov.io/gh/andgineer/lexiflux/tree/main/src%2Fgarmin_daily)
+
 * [Coveralls](https://coveralls.io/github/andgineer/lexiflux)
