@@ -16,3 +16,4 @@ omit =
     */.vscode/*
     */.pytest_cache/*
     */migrations/*
+    */*sgi.py
