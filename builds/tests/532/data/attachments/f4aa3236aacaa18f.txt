@@ -1,0 +1,7 @@
+2024-11-30 14:35:13,775 INFO conftest Test finished
+2024-11-30 14:35:13,777 INFO conftest Test started
+2024-11-30 14:35:14,160 ERROR library_views Error importing book: No file provided
+Traceback (most recent call last):
+  File "/home/runner/work/lexiflux/lexiflux/lexiflux/views/library_views.py", line 180, in import_book
+    raise ValueError("No file provided")
+ValueError: No file provided

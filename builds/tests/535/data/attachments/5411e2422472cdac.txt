@@ -1,0 +1,3 @@
+2024-12-01 06:01:06,575 INFO conftest Test finished
+2024-12-01 06:01:06,577 INFO conftest Test started
+2024-12-01 06:01:06,963 INFO reader_views Rendering page 5 of book some-book-code
