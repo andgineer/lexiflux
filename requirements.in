@@ -1,5 +1,7 @@
 # because use functools.lru_cache for methods
 # python_version>=3.8
+# fasttext 0.9.3 is not compatible with numpy 2
+numpy==1.26.4
 django
 django-allauth
 deep-translator

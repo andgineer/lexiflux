@@ -71,7 +71,7 @@ beautifulsoup4==4.12.3
     #   nbconvert
 bleach==6.2.0
     # via nbconvert
-blis==1.0.2
+blis==0.7.11
     # via
     #   -r requirements.txt
     #   thinc
@@ -158,7 +158,7 @@ dataclasses-json==0.6.7
     # via
     #   -r requirements.txt
     #   langchain-community
-debugpy==1.8.10
+debugpy==1.8.9
     # via ipykernel
 decorator==5.1.1
     # via ipython
@@ -246,11 +246,11 @@ google-api-core==2.24.0
     #   google-ai-generativelanguage
     #   google-api-python-client
     #   google-generativeai
-google-api-python-client==2.154.0
+google-api-python-client==2.155.0
     # via
     #   -r requirements.txt
     #   google-generativeai
-google-auth==2.36.0
+google-auth==2.37.0
     # via
     #   -r requirements.txt
     #   google-ai-generativelanguage
@@ -444,7 +444,7 @@ langcodes==3.5.0
     # via
     #   -r requirements.txt
     #   spacy
-langsmith==0.2.2
+langsmith==0.2.3
     # via
     #   -r requirements.txt
     #   langchain
@@ -573,7 +573,7 @@ notebook==6.5.4
     # via -r requirements.dev.in
 notebook-shim==0.2.4
     # via nbclassic
-numpy==2.0.2
+numpy==1.26.4
     # via
     #   -r requirements.txt
     #   blis
@@ -893,7 +893,7 @@ soupsieve==2.6
     # via
     #   -r requirements.txt
     #   beautifulsoup4
-spacy==3.8.2
+spacy==3.7.5
     # via -r requirements.txt
 spacy-legacy==3.0.12
     # via
@@ -933,7 +933,7 @@ terminado==0.18.1
     #   jupyter-server
     #   jupyter-server-terminals
     #   notebook
-thinc==8.3.2
+thinc==8.2.5
     # via
     #   -r requirements.txt
     #   spacy
