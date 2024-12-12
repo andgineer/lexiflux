@@ -10,6 +10,7 @@ env:
   PRIMARY_PLATFORM: 'ubuntu-latest'
   PYTEST_CMD: >-
     python -m pytest 
+    -n auto
     --junitxml=pytest.xml 
     --cov-report=term-missing:skip-covered 
     --cov=lexiflux
@@ -121,29 +122,7 @@ jobs:
         publish_dir: ${{ steps.allure-report.outputs.reports-site }}
         destination_dir: ${{ steps.allure-report.outputs.reports-site-path }}
 
-    - name: Coverage comment
-      id: coverage_comment
-      if: always()
-      uses: py-cov-action/python-coverage-comment-action@v3
-      with:
-        GITHUB_TOKEN: ${{ github.token }}
-        MINIMUM_GREEN: 85
-        MINIMUM_ORANGE: 70
-
-    - name: Store Pull Request comment to be posted
-      uses: actions/upload-artifact@v3
-      if: steps.coverage_comment.outputs.COMMENT_FILE_WRITTEN == 'true'
-      with:
-        name: python-coverage-comment-action
-        path: python-coverage-comment-action.txt
-
     - name: Upload coverage data to coveralls.io
       if: always()
       uses: coverallsapp/github-action@v2
 
-    - name: Upload Coverage to Codecov
-      if: always()
-      uses: codecov/codecov-action@v4.0.1
-      with:
-        fail_ci_if_error: true
-        token: ${{ secrets.CODECOV_TOKEN }}
