@@ -1,5 +1,0 @@
-2024-11-30 14:34:28,328 INFO conftest Test finished
-2024-11-30 14:34:28,329 INFO conftest Test started
-2024-11-30 14:34:29,703 INFO words_export For language en last export datetime: None
-2024-11-30 14:34:30,353 INFO words_export Words exported for English: 1 words using csvFile
-2024-11-30 14:34:30,366 INFO words_export For language en last export datetime: 2024-11-30 14:34:30.352100+00:00

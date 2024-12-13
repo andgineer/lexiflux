@@ -1,4 +1,0 @@
-2024-11-30 14:35:26,287 INFO conftest Test finished
-2024-11-30 14:35:26,288 INFO conftest Test started
-2024-11-30 14:35:26,683 INFO reader_views Opening book some-book-code at page 1 for user testuser
-2024-11-30 14:35:26,699 INFO reader_views Jump status: book some-book-code, is_first_jump True, is_last_jump True

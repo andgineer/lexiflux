@@ -1,0 +1,4 @@
+2024-12-13 06:43:54,346 INFO conftest Test finished
+2024-12-13 06:43:54,347 INFO conftest Test started
+2024-12-13 06:43:54,611 INFO signals Successfully created language preferences for user testuser (ID: 1)
+2024-12-13 06:43:54,634 INFO reader_views Link clicked: #chapter1, page_info: {'page': 2, 'word': 5}

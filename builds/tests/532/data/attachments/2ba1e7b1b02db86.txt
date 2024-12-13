@@ -1,2 +1,0 @@
-2024-11-30 14:32:12,678 INFO conftest Test finished
-2024-11-30 14:32:12,680 INFO conftest Test started
