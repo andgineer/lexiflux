@@ -1,0 +1,5 @@
+2024-12-11 05:20:35,884 INFO conftest Test finished
+2024-12-11 05:20:35,886 INFO conftest Test started
+2024-12-11 05:20:36,263 INFO signals Successfully created language preferences for user testuser (ID: 34)
+2024-12-11 05:20:36,273 WARNING log Bad Request: /api/ai-settings/
+2024-12-11 05:20:36,273 WARNING log Bad Request: /api/ai-settings/

@@ -1,0 +1,4 @@
+2024-12-07 16:42:42,961 INFO conftest Test finished
+2024-12-07 16:42:42,963 INFO conftest Test started
+2024-12-07 16:42:43,344 WARNING log Bad Request: /jump
+2024-12-07 16:42:43,344 WARNING log Bad Request: /jump

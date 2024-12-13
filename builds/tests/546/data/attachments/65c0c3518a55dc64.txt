@@ -1,0 +1,17 @@
+2024-12-11 05:21:12,839 INFO conftest Test finished
+2024-12-11 05:21:12,840 INFO conftest Test started
+2024-12-11 05:21:13,221 INFO signals Successfully created language preferences for user testuser (ID: 34)
+2024-12-11 05:21:13,245 ERROR words_export Error exporting words: Failed to connect to AnkiConnect
+Traceback (most recent call last):
+  File "/home/runner/work/lexiflux/lexiflux/lexiflux/views/words_export.py", line 224, in export_words
+    words_exported = export_words_to_anki_connect(language, terms, deck_name)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.12.7/x64/lib/python3.12/unittest/mock.py", line 1139, in __call__
+    return self._mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.12.7/x64/lib/python3.12/unittest/mock.py", line 1143, in _mock_call
+    return self._execute_mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.12.7/x64/lib/python3.12/unittest/mock.py", line 1198, in _execute_mock_call
+    raise effect
+ValueError: Failed to connect to AnkiConnect

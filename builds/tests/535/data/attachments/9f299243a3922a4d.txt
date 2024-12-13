@@ -1,0 +1,20 @@
+2024-12-01 06:01:13,596 INFO conftest Test finished
+2024-12-01 06:01:13,597 INFO conftest Test started
+2024-12-01 06:01:14,225 ERROR middleware Exception: another@example.com does not have permission to read book '(ID: 19)
+Traceback (most recent call last):
+  File "/home/runner/work/lexiflux/lexiflux/.venv/lib/python3.12/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/work/lexiflux/lexiflux/lexiflux/decorators.py", line 29, in wrapper
+    return login_required(view_func)(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/work/lexiflux/lexiflux/.venv/lib/python3.12/site-packages/django/contrib/auth/decorators.py", line 60, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/work/lexiflux/lexiflux/lexiflux/views/reader_views.py", line 141, in reader
+    book.ensure_can_be_read_by(request.user)
+  File "/home/runner/work/lexiflux/lexiflux/lexiflux/models.py", line 257, in ensure_can_be_read_by
+    raise PermissionDenied(
+django.core.exceptions.PermissionDenied: another@example.com does not have permission to read book '(ID: 19)
+2024-12-01 06:01:14,225 WARNING log Forbidden: /reader
+2024-12-01 06:01:14,225 WARNING log Forbidden: /reader

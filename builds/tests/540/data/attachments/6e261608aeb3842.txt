@@ -1,0 +1,2 @@
+2024-12-04 05:15:03,543 INFO conftest Test started
+2024-12-04 05:15:06,088 INFO anki_connect result {'result': [1, 2, 3, 4, 5, 6]}

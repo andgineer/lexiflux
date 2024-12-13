@@ -1,0 +1,3 @@
+2024-12-01 06:18:50,069 INFO conftest Test finished
+2024-12-01 06:18:50,070 INFO conftest Test started
+2024-12-01 06:18:50,496 INFO words_export Words exported for English: 1 words using ankiFile

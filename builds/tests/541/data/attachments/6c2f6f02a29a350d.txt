@@ -1,0 +1,4 @@
+2024-12-07 16:42:57,838 INFO conftest Test finished
+2024-12-07 16:42:57,839 INFO conftest Test started
+2024-12-07 16:42:57,843 WARNING detect_language_detectlanguage DETECTLANGUAGE_API_KEY not set. Please get your API Key at https://detectlanguage.com/documentation and set it to env var DETECTLANGUAGE_API_KEY
+2024-12-07 16:42:57,843 ERROR detect_language_detectlanguage Failed to detect language: you need to get an API_KEY for this to work. Get one for free here: https://detectlanguage.com/documentation

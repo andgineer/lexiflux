@@ -1,0 +1,3 @@
+2024-12-12 05:26:28,710 INFO conftest Test finished
+2024-12-12 05:26:28,712 INFO conftest Test started
+2024-12-12 05:26:28,979 INFO signals Successfully created language preferences for user testuser (ID: 1)

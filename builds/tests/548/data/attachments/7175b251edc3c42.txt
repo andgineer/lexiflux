@@ -1,0 +1,4 @@
+2024-12-12 05:07:32,920 INFO conftest Test finished
+2024-12-12 05:07:32,924 INFO conftest Test started
+2024-12-12 05:07:33,567 INFO signals Successfully created language preferences for user testuser (ID: 19)
+2024-12-12 05:07:34,235 INFO words_export No translations found for the user
