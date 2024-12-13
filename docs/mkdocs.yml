@@ -63,10 +63,10 @@ theme:
 extra:
   alternate:
     - name: English
-      link: /lexiflux/
+      link: /
       lang: en
     - name: Русский
-      link: /lexiflux/ru/
+      link: /ru/
       lang: ru
 
 nav:

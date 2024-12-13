@@ -33,7 +33,7 @@ MAX_SENTENCE_LENGTH = 100
 class TranslateGetParams(ViewGetParamsModel):
     """GET params for the /translate."""
 
-    word_ids: str = Field(default=None)
+    word_ids: str | None = Field(default=None)
     book_code: str = Field(..., min_length=1)
     book_page_number: int = Field(..., ge=1)
     lexical_article: str = Field(
@@ -132,6 +132,7 @@ def translate(request: HttpRequest, params: TranslateGetParams) -> HttpResponse:
         request.user, book.language
     )
 
+    assert params.word_ids is not None
     term_word_ids = [int(id) for id in params.word_ids.split(".")]
     term_text = extract_content_from_html(
         book_page.content[
