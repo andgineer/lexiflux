@@ -8,6 +8,6 @@
 
 <br clear="left"/>
 
-![Стругацкие](images/ponedeljak-pocinje-u-subotu.jpg)
+<img src="images/ponedeljak_ru.png" width="100%" alt="Lexiflux">
 
 Хотите начать прямо сейчас? Ознакомьтесь с руководством [Быстрый старт](quickstart.md).

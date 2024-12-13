@@ -8,6 +8,6 @@ Instantly translate and understand foreign texts as you read, building your voca
 
 <br clear="left"/>
 
-![Monday](images/ponedeljak-pocinje-u-subotu.jpg)
+<img src="images/ponedeljak.png" width="100%" alt="Lexiflux">
 
 Eager to get started? Check out the [Quick start](quickstart.md) guide.

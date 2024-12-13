@@ -10,3 +10,5 @@ bundle.js
 node_modules/
 .mypy_cache/
 allure-results/
+docs/src/ru/images/
+

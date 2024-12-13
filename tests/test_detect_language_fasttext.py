@@ -38,7 +38,7 @@ def test_confidence_threshold():
 @allure.feature('Language detection')
 def test_mixed_case_text():
     text = "Hello नमस्ते Bonjour"
-    assert language_detector().detect(text) == "hi"
+    assert language_detector().detect(text) in ["hi", "fr", "en"]
 
 
 

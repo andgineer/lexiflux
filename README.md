@@ -11,12 +11,15 @@ Instantly translate and understand foreign texts as you read, building your voca
 
 <br clear="left"/>
 
-![Monday](docs/src/en/images/ponedeljak-pocinje-u-subotu.jpg)
+![Lexiflux](docs/src/en/images/ponedeljak.png)
 
 ## Quick start
-There is ready to use [Docker image](https://hub.docker.com/r/andgineer/lexiflux) with Lexiflux.
 
-How to start and use it you can find in [Lexiflux documentation](https://lexiflux.sorokin.engineer).
+[Lexiflux Quick start](https://lexiflux.sorokin.engineer/quickstart/)
+
+## Docker image
+
+[Docker image](https://hub.docker.com/r/andgineer/lexiflux)
 
 ## Developers
 ### Build from sources
