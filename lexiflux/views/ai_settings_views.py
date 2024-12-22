@@ -15,6 +15,7 @@ CHAT_MODEL_CAPTIONS = {
     "ChatOpenAI": "OpenAI (ChatGPT)",
     "ChatMistralAI": "Mistral AI",
     "ChatAnthropic": "Anthropic (Claude)",
+    "ChatGoogle": "Google (Gemini)",
     "Ollama": "Ollama",
 }
 

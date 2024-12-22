@@ -37,3 +37,18 @@ mistral-medium:
   title: Mistral Medium
   model: ChatMistralAI
   suffix: 🌪️
+
+gemini-1.5-flash:
+  title: Gemini 1.5 Flash
+  model: ChatGoogle
+  suffix: 🌀1.5f
+
+gemini-2.0-flash-exp:
+  title: Gemini 2.0 Flash
+  model: ChatGoogle
+  suffix: 🌀2.0f
+
+gemini-1.5-pro:
+  title: Gemini 1.5 Pro
+  model: ChatGoogle
+  suffix: 🌀1.5p

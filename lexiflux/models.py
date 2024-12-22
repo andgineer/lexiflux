@@ -27,6 +27,7 @@ SUPPORTED_CHAT_MODELS = {
     "ChatOpenAI": ["api_key", "temperature"],
     "ChatMistralAI": ["api_key", "temperature"],
     "ChatAnthropic": ["api_key", "temperature"],
+    "ChatGoogle": ["api_key", "temperature"],
     "Ollama": ["temperature"],
 }
 

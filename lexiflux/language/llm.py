@@ -15,6 +15,7 @@ from langchain_openai import ChatOpenAI
 from langchain_mistralai import ChatMistralAI
 from langchain_anthropic import ChatAnthropic
 from langchain_community.llms import Ollama  # pylint: disable=no-name-in-module
+from langchain_google_genai import ChatGoogleGenerativeAI
 
 from langchain.schema import BaseOutputParser
 
@@ -36,6 +37,7 @@ AI_MODEL_API_KEY_ENV_VAR = {
     "ChatOpenAI": "OPENAI_API_KEY",
     "ChatAnthropic": "ANTHROPIC_API_KEY",
     "ChatMistralAI": "MISTRAL_API_KEY",
+    "ChatGoogle": "GOOGLE_API_KEY",
 }
 
 
@@ -417,11 +419,12 @@ class Llm:  # pylint: disable=too-few-public-methods
                         api_key=model_settings.get(AIModelSettings.API_KEY),  # type: ignore
                         **common_params,  # type: ignore
                     )
-                # elif model_class == "ChatGoogleGenerativeAI":
-                #     self._model_cache[model_key] = ChatGoogleGenerativeAI(
-                #         model=model_name,
-                #         temperature=0.5,
-                #     )
+                elif model_class == "ChatGoogle":
+                    self._model_cache[model_key] = ChatGoogleGenerativeAI(  # type: ignore
+                        model=model_name,
+                        google_api_key=model_settings.get(AIModelSettings.API_KEY),
+                        temperature=common_params["temperature"],
+                    )
                 elif model_class == "ChatMistralAI":
                     self._model_cache[model_key] = ChatMistralAI(
                         api_key=model_settings.get(AIModelSettings.API_KEY),

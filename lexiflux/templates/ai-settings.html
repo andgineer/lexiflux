@@ -70,6 +70,11 @@
                                                 <a href="https://www.anthropic.com" target="_blank" class="text-decoration-none">anthropic.com</a>
                                                 and follow their instructions to get access.
                                             </span>
+                                            <span v-else-if="config.chat_model === 'ChatGoogle'">
+                                                To get an API key for Google Gemini, visit
+                                                <a href="https://ai.google.dev/gemini-api/docs/api-key" target="_blank" class="text-decoration-none">ai.google.dev</a>
+                                                and follow the instructions to create your API key.
+                                            </span>
                                             <span v-else>
                                                 Please refer to the provider's documentation to obtain an API key.
                                             </span>
