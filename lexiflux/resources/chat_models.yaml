@@ -1,22 +1,17 @@
-gpt-3.5-turbo-0125:
-  title: GPT-3.5 Turbo
-  model: ChatOpenAI
-  suffix: 🔗 3.5°
-
 gpt-4o-mini:
   title: OpenAI GPT-4o mini
   model: ChatOpenAI
-  suffix: 🔗 4o-mini°
+  suffix: 🔗 4o°
 
 gpt-4o:
-  title: OpenAI GPT-4 Turbo
+  title: OpenAI GPT-4o
   model: ChatOpenAI
-  suffix: 🔗 4o⁺
+  suffix: 🔗 4o
 
 o1-mini-2024-09-12:
   title: OpenAI o1 mini
   model: ChatOpenAI
-  suffix: 🔗 o1-mini°
+  suffix: 🔗 o1°
 
 claude-3-5-sonnet-20241022:
   title: Claude 3.5 Sonnet
@@ -26,12 +21,12 @@ claude-3-5-sonnet-20241022:
 claude-3-5-haiku-20241022:
   title: Claude 3.5 Haiku
   model: ChatAnthropic
-  suffix: 💡3.5haiku
+  suffix: 💡3.5°
 
 claude-3-haiku-20240307:
   title: Claude 3 Haiku
   model: ChatAnthropic
-  suffix: 💡3haiku
+  suffix: 💡3°
 
 llama3.2:
   title: LLAMA 3.2
