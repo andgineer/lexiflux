@@ -47,6 +47,16 @@
                             >
                                 <div class="mt-4">
                                     <h3 class="mb-3">${ config.chat_model }</h3>
+                                    <div v-if="config.chat_model === 'ChatOpenAI'" class="mb-3">
+                                        <a href="https://openai.com/api/pricing/">OpenAI API pricing</a>
+                                    </div>
+                                    <div v-if="config.chat_model === 'ChatAnthropic'" class="mb-3">
+                                        <a href="https://docs.anthropic.com/en/docs/about-claude/models#model-comparison-table">Anthropic API pricing</a>
+                                    </div>
+                                    <div v-if="config.chat_model === 'ChatGoogle'" class="mb-3">
+                                        <a href="https://ai.google.dev/pricing#1_5flash">Google Gemini API pricing</a>,
+                                        <a href="https://ai.google.dev/gemini-api/docs">Google Gemini Models</a>
+                                    </div>
                                     <div v-for="(value, key) in config.settings" :key="key" class="mb-3">
                                         <label :for="'setting-' + config.chat_model + '-' + key" class="form-label fw-semibold">${ key }</label>
                                         <div v-if="key === 'temperature'" class="text-muted small mb-2">

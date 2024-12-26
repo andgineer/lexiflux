@@ -2,10 +2,10 @@
 
 import logging
 import os
-import traceback
 from functools import lru_cache
 from typing import Any, Dict, List, Tuple
 
+import openai
 import yaml
 from django.conf import settings
 from langchain_core.prompts import ChatPromptTemplate
@@ -59,11 +59,36 @@ class AIModelSettings:  # pylint: disable=too-few-public-methods
 class AIModelError(Exception):
     """Error in AI model."""
 
-    def __init__(self, model_name: str, model_class: str, error_message: str):
+    def __init__(self, model_name: str, model_class: str, exception: Exception) -> None:
+        error_message = str(exception)
+        self.show_api_key_info = True
+        if isinstance(exception, openai.APIError):
+            exc_dict = exception.body
+            if isinstance(exc_dict, dict) and "message" in exc_dict:
+                error_message = exc_dict["message"]
+                if "does not support" in error_message and "with this model" in error_message:
+                    if model_name.startswith("o1-"):
+                        error_message = (
+                            "<br>To use o1 models you should be on Tier 2 or higher "
+                            '(<a href="https://platform.openai.com/docs/guides/'
+                            'rate-limits#usage-tiers">Tiers doc</a>).<br><br>'
+                        )
+                    else:
+                        error_message = (
+                            f"The model `{model_name}` is not supported in you account."
+                        )
+                    self.show_api_key_info = False
+
         self.model_name = model_name
         self.model_class = model_class
         self.error_message = error_message
-        super().__init__(f"Error initializing {model_class} model '{model_name}': {error_message}")
+        logger.error(
+            f"{self.error_message}, model: {model_name}, class: {model_class}, "
+            f"show_api_key_info: {self.show_api_key_info}"
+        )
+        super().__init__(
+            f"AI class `{model_class}` error for model `{model_name}`: {error_message}"
+        )
 
 
 def find_nth_occurrence(substring: str, string: str, occurrence: int) -> int:
@@ -197,7 +222,7 @@ class Llm:  # pylint: disable=too-few-public-methods
             )
         except Exception as e:
             raise AIModelError(
-                params["model"], self.chat_models[params["model"]]["model"], str(e)
+                params["model"], self.chat_models[params["model"]]["model"], e
             ) from e
 
     @lru_cache(maxsize=1000)
@@ -433,9 +458,7 @@ class Llm:  # pylint: disable=too-few-public-methods
                 else:
                     raise ValueError(f"Unsupported model class: {model_class}")
             except Exception as e:
-                print(traceback.format_exc())
-                raise AIModelError(model_name, model_class, str(e)) from e
-
+                raise AIModelError(model_name, model_class, e) from e
         return self._model_cache[model_key]
 
     def hashable_dict(self, d: Dict[str, Any]) -> Tuple[Tuple[str, Any], ...]:

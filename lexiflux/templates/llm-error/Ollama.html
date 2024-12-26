@@ -1,6 +1,6 @@
 <div class="alert alert-warning" role="alert">
     <h4 class="alert-heading">Ollama Setup Required</h4>
-    <p>Error encountered: {{ error_message }}</p>
+    <p>Error encountered for model {{ model_name }}: {{ error_message|safe }}</p>
     <p>Ollama models should be preinstalled in Lexiflux distribution. Please check your installation.</p>
     <p>For general information about Ollama, visit the <a href="https://github.com/jmorganca/ollama" target="_blank">Ollama GitHub repository</a>.</p>
 </div>

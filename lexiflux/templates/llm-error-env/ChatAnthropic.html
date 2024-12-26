@@ -1,6 +1,6 @@
 <div class="alert alert-warning" role="alert">
     <h4 class="alert-heading">Anthropic API Configuration Required</h4>
-    <p>Error encountered: {{ error_message }}</p>
+    <p>Error encountered for model {{ model_name }}: {{ error_message|safe }}</p>
     <p>To use Anthropic models, you need to set up your API key:</p>
     <ol>
         <li>Sign up for an account at <a href="https://www.anthropic.com" target="_blank">Anthropic</a></li>

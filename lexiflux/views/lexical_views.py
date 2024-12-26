@@ -98,6 +98,8 @@ def get_lexical_article(  # pylint: disable=too-many-positional-arguments,too-ma
     except AIModelError as e:
         error_template_folder = get_llm_errors_folder()
         try:
+            if not e.show_api_key_info:
+                raise TemplateDoesNotExist("fallback to general error template") from e
             error_message = render_to_string(
                 f"{error_template_folder}/{e.model_class}.html",
                 {"model_name": e.model_name, "error_message": e.error_message},

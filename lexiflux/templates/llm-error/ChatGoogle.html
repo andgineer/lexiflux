@@ -1,6 +1,6 @@
 <div class="alert alert-warning" role="alert">
     <h4 class="alert-heading">Google Gemini API Configuration Required</h4>
-    <p>Error encountered: {{ error_message }}</p>
+    <p>Error encountered for model {{ model_name }}: {{ error_message|safe }}</p>
     <p>To use Google Gemini models, you need to set up your API key:</p>
     <ol>
         <li>Sign up for an account at <a href="https://ai.google.dev/gemini-api/docs/api-key" target="_blank">Gemini API key</a></li>
