@@ -555,4 +555,4 @@ class TestErrorHandling:
         assert error.model_name == "gpt-4o"
         assert error.model_class == "ChatOpenAI"
         assert error.error_message == "API error"
-        assert str(error) == "Error initializing ChatOpenAI model 'gpt-4o': API error"
+        assert str(error) == "AI class `ChatOpenAI` error for model `gpt-4o`: API error"

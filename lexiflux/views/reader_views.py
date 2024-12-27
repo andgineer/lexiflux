@@ -163,6 +163,15 @@ def reader(request: HttpRequest) -> HttpResponse:
     lexical_articles = language_preferences.get_lexical_articles()
 
     reading_location = ReadingLoc.get_or_create_reading_loc(user=request.user, book=book)
+
+    # update so it will be the last accessed location even if the user won't change the page
+    ReadingLoc.update_reading_location(
+        user=request.user,
+        book_id=book.id,
+        page_number=page_number,
+        top_word_id=reading_location.word,
+    )
+
     is_first_jump = reading_location.current_jump <= 0
     is_last_jump = reading_location.current_jump == len(reading_location.jump_history) - 1
     log.info(
@@ -182,7 +191,7 @@ def reader(request: HttpRequest) -> HttpResponse:
             "book": book_page.book,
             "page": book_page,
             "lexical_articles": lexical_articles,
-            "top_word": reading_location.word if reading_location else 0,
+            "top_word": reading_location.word,
             "is_first_jump": is_first_jump,
             "is_last_jump": is_last_jump,
             "settings": reader_settings,
