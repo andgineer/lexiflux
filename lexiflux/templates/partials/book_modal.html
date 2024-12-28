@@ -38,6 +38,11 @@
                    name="title"
                    value="{{ book.title }}"
                    required>
+             <button type="button"
+                     class="btn btn-link mt-0 ps-0 text-decoration-none"
+                     onclick="searchGoodreadsTitle()">
+               <i class="bi bi-search"></i> Search on Goodreads
+             </button>
           </div>
 
           <div class="mb-3">
@@ -52,11 +57,16 @@
                      hx-target="next .author-suggestions .suggestions-content"
                      hx-swap="innerHTML"
                      required>
-              <div class="author-suggestions list-group mt-2">
+              <div class="author-suggestions list-group mt-2" style="min-height: 0">
                   <div class="suggestions-content">
                       <!-- Author suggestions will be populated here -->
                   </div>
               </div>
+               <button type="button"
+                       class="btn btn-link mt-0 ps-0 text-decoration-none"
+                       onclick="searchGoodreadsAuthor()">
+                 <i class="bi bi-search"></i> Search on Goodreads
+               </button>
           </div>
 
           <div class="mb-3">
@@ -139,4 +149,18 @@
 
 <script>
   new bootstrap.Modal(document.getElementById('editBookModal')).show();
+
+  function searchGoodreadsTitle() {
+    const title = document.getElementById('bookTitle').value || '';
+    const url = `https://www.goodreads.com/search?q=${title.trim()}`;
+
+    window.open(url, '_blank');
+  }
+
+  function searchGoodreadsAuthor() {
+    const author = document.getElementById('bookAuthor').value || '';
+    const url = `https://www.goodreads.com/search?q=${author.trim()}`;
+
+    window.open(url, '_blank');
+  }
 </script>
