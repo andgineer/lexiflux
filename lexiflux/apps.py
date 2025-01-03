@@ -1,9 +1,13 @@
 """Lexiflux app config."""
 
+import logging
 from typing import Any
 
 from django.apps import AppConfig
 from lexiflux import __version__
+
+
+logger = logging.getLogger()
 
 
 class LexifluxConfig(AppConfig):  # type: ignore
@@ -14,13 +18,17 @@ class LexifluxConfig(AppConfig):  # type: ignore
 
     def ready(self) -> None:
         """Run when the app is ready."""
-        from django.db.models.signals import post_migrate  # pylint: disable=import-outside-toplevel
+        from django.db.backends.signals import connection_created  # pylint: disable=import-outside-toplevel
 
-        post_migrate.connect(self.post_migrate_callback, sender=self)
-        print(f"Lexiflux {__version__} is ready.")
+        connection_created.connect(self.on_db_connection, dispatch_uid="validate")
 
-    def post_migrate_callback(self, sender: Any, **kwargs: Any) -> None:  # pylint: disable=unused-argument
-        """Callback for post_migrate signal."""
+    def on_db_connection(self, sender: Any, connection: Any, **kwargs: Any) -> None:  # pylint: disable=unused-argument
+        """Run when the database connection is created."""
         from lexiflux.lexiflux_settings import settings  # pylint: disable=import-outside-toplevel
 
-        settings.lexiflux.validate()
+        try:
+            settings.lexiflux.validate()
+        except ValueError as e:
+            logger.error(f"\n\nLexiflux fail to start:\n{e}")
+            raise SystemExit(1) from e
+        logger.info(f"Lexiflux {__version__} is ready.")

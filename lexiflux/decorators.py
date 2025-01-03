@@ -1,5 +1,6 @@
 """Custom decorators for LexiFlux."""
 
+import logging
 from functools import wraps
 from typing import Callable, Any
 from django.http import HttpRequest, HttpResponse
@@ -10,16 +11,22 @@ from django.contrib.auth.models import AnonymousUser
 from lexiflux.lexiflux_settings import settings
 
 
+logger = logging.getLogger(__name__)
+
+
 def get_default_user() -> Any:
     """Get the default user."""
-    user, _ = get_user_model().objects.get_or_create(
+    user, created = get_user_model().objects.get_or_create(
         username=settings.lexiflux.default_user_name,
         defaults={
             "email": settings.lexiflux.default_user_email,
             "is_approved": True,
             "premium": True,
+            "password": settings.lexiflux.default_user_password,
         },
     )
+    if created:
+        logger.info("Created default user: %s", user.email)
     return user
 
 

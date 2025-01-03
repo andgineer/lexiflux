@@ -1,5 +1,6 @@
 """Settings for Lexiflux."""
 
+import logging
 import contextlib
 from dataclasses import dataclass
 import os
@@ -9,6 +10,9 @@ import requests
 from django.conf import settings as django_settings
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist
+
+
+logger = logging.getLogger()
 
 SKIP_AUTH_ENV = "LEXIFLUX_SKIP_AUTH"
 UI_SETTINGS_ONLY_ENV = "LEXIFLUX_UI_SETTINGS_ONLY"
@@ -56,13 +60,14 @@ class EnvironmentVars:
     def from_environment(cls) -> "EnvironmentVars":
         """Create an instance from environment variables."""
         skip_auth = os.environ.get(SKIP_AUTH_ENV, "").lower() == "true"
+        if is_running_in_cloud():
+            skip_auth = False
+
+            warnings.warn(
+                "(!) Authentication is NOT skipped - cloud environment detected.",
+                RuntimeWarning,
+            )
         if skip_auth:
-            if is_running_in_cloud():
-                skip_auth = False
-                warnings.warn(
-                    "(!) Authentication is NOT skipped - cloud environment detected.",
-                    RuntimeWarning,
-                )
             warnings.warn(
                 "(!) Authentication is being skipped (`LEXIFLUX_SKIP_AUTH` set to True) "
                 "but this is not recommended in a cloud environment.",

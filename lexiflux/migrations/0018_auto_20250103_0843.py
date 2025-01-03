@@ -2,6 +2,7 @@
 
 from django.db import migrations, models
 from lexiflux.lexiflux_settings import settings
+from django.contrib.auth.hashers import make_password
 
 
 def update_default_user(apps, schema_editor):
@@ -12,7 +13,8 @@ def update_default_user(apps, schema_editor):
     User.objects.filter(username=default_username).update(
         is_approved=True,
         premium=True,
-        email=settings.lexiflux.default_user_email
+        email=settings.lexiflux.default_user_email,
+        password=make_password(settings.lexiflux.default_user_password)
     )
 
 
