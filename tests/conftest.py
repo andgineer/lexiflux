@@ -13,6 +13,7 @@ from lexiflux.language.google_languages import populate_languages
 # strange that DJANGO_SETTINGS_MODULE can be set in pytest.ini
 os.environ["DJANGO_LIVE_TEST_SERVER_ADDRESS"] = "0.0.0.0"
 os.environ["LEXIFLUX_SKIP_AUTH"] = "false"
+os.environ["LEXIFLUX_ENV_NAME"] = "test"
 
 import itertools
 import socket

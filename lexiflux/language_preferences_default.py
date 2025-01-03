@@ -5,7 +5,7 @@ from django.apps import apps
 
 
 DEFAULT_LEXICAL_ARTICLES = [
-    {"type": "Explain", "title": "Explain 🔗 4o-mini°", "parameters": {"model": "gpt-4o-mini"}},
+    {"type": "Explain", "title": "Explain 🔗 4o°", "parameters": {"model": "gpt-4o-mini"}},
     {
         "type": "Explain",
         "title": "Explain 💡3.5",
