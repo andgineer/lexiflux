@@ -12,7 +12,15 @@ from lexiflux.lexiflux_settings import settings
 
 def get_default_user() -> Any:
     """Get the default user."""
-    return get_user_model().objects.get_or_create(username=settings.lexiflux.default_user_name)[0]
+    user, _ = get_user_model().objects.get_or_create(
+        username=settings.lexiflux.default_user_name,
+        defaults={
+            "email": settings.lexiflux.default_user_email,
+            "is_approved": True,
+            "premium": True,
+        },
+    )
+    return user
 
 
 def smart_login_required(

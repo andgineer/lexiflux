@@ -171,7 +171,6 @@ class BookLoaderEpub(BookLoaderBase):
             log.debug(f"Spine item: {item.get_name()}")
             if item.get_type() == ITEM_DOCUMENT:
                 # Extract title from the document's metadata or content
-                print("#" * 80, item.get_name())
                 title = self.extract_title(item) or os.path.splitext(item.get_name())[0]
                 file_name = item.file_name
                 result[file_name]["#"] = title

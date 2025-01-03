@@ -76,6 +76,7 @@ class CustomUser(AbstractUser):  # type: ignore
 
     email = models.EmailField(unique=True, blank=False)
     is_approved = models.BooleanField(default=False)
+    premium = models.BooleanField(default=False)
 
     default_language_preferences = models.ForeignKey(
         "lexiflux.LanguagePreferences",

@@ -2,13 +2,18 @@
 
 import argparse
 import logging
+import os
 from typing import Any, Type
 
+from django.contrib.auth import get_user_model
 from django.core.management.base import BaseCommand, CommandError
 
 from lexiflux.ebook.book_loader_base import BookLoaderBase
+from lexiflux.lexiflux_settings import settings
 from lexiflux.models import Language
 from lexiflux.utils import validate_log_level
+
+USER_EMAIL_ENV = "LEXIFLUX_USER_EMAIL"
 
 
 def change_log_level(log_level: int, db_log_level: int) -> None:
@@ -33,6 +38,13 @@ class ImportBookBaseCommand(BaseCommand):  # type: ignore
     def add_arguments(self, parser: argparse.ArgumentParser) -> None:
         parser.add_argument("file_path", type=str, help="Path to the file to import")
         parser.add_argument(
+            "-e",
+            "--email",
+            type=str,
+            help="Email of the book owner (if not provided, will try to auto-detect)",
+            default=None,
+        )
+        parser.add_argument(
             "-l",
             "--loglevel",
             type=str,
@@ -48,11 +60,10 @@ class ImportBookBaseCommand(BaseCommand):  # type: ignore
             default="INFO",
         )
         parser.add_argument(
-            "--owner",
-            type=str,
-            help="""Owner's email for the book (optional).
- See "list-users" command for a list of users""",
-            default=None,
+            "--public",
+            action="store_true",
+            help="""The book is public and can be read by anyone.""",
+            default=False,
         )
         parser.add_argument(
             "--language",
@@ -63,11 +74,31 @@ class ImportBookBaseCommand(BaseCommand):  # type: ignore
             default=None,
         )
 
+    def get_user_email(self) -> str:
+        """
+        Get the email of the system user running the command.
+        Raise exception if no user found.
+        """
+        User = get_user_model()  # pylint: disable=invalid-name
+        user_email = os.environ.get(USER_EMAIL_ENV, settings.lexiflux.default_user_email)
+
+        try:
+            user = User.objects.get(email=user_email)
+            self.stdout.write(f"Auto-detected user email: {user_email}")
+            return user.email  # type: ignore
+        except User.DoesNotExist as e:
+            raise CommandError(
+                "Could not auto-detect user to set non public book owner. "
+                "Please provide it using --email option, "
+                f"or set `{USER_EMAIL_ENV}` environment variable."
+            ) from e
+
     def handle(self, *args: Any, **options: Any) -> None:
         file_path = options["file_path"]
         log_level = validate_log_level(options["loglevel"])
         db_log_level = validate_log_level(options["db_loglevel"])
-        owner_email = options["owner"]
+        public = options["public"]
+        email = options["email"]
         forced_language = options["language"]
         if forced_language:
             languages = Language.objects.filter(name__istartswith=forced_language)
@@ -87,6 +118,7 @@ class ImportBookBaseCommand(BaseCommand):  # type: ignore
                 raise CommandError(f"Language '--language={forced_language}' not found")
             forced_language = languages.first().name
 
+        owner_email = None if public else email or self.get_user_email()
         change_log_level(log_level, db_log_level)
 
         try:

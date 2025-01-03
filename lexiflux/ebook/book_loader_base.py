@@ -57,7 +57,7 @@ class BookLoaderBase:
         """
         raise NotImplementedError
 
-    def create(self, owner_email: str, forced_language: Optional[str] = None) -> Book:
+    def create(self, owner_email: str | None, forced_language: Optional[str] = None) -> Book:
         """Create the book instance."""
         title = self.meta[MetadataField.TITLE]
         author_name = self.meta[MetadataField.AUTHOR]
