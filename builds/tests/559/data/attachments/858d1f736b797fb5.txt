@@ -1,0 +1,5 @@
+2024-12-27 05:26:13,888 INFO conftest Test finished
+2024-12-27 05:26:13,890 INFO conftest Test started
+2024-12-27 05:26:14,171 INFO signals Successfully created language preferences for user testuser (ID: 1)
+2024-12-27 05:26:14,192 WARNING log Bad Request: /api/update-article-order/
+2024-12-27 05:26:14,192 WARNING log Bad Request: /api/update-article-order/

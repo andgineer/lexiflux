@@ -1,0 +1,3 @@
+2025-01-03 11:13:05,415 INFO conftest Test finished
+2025-01-03 11:13:05,417 INFO conftest Test started
+2025-01-03 11:13:05,430 ERROR llm Lexical article 'InvalidArticle' not found., model: gpt-4o, class: ChatOpenAI, show_api_key_info: True

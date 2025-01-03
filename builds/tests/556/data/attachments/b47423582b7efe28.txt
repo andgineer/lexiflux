@@ -1,0 +1,17 @@
+2024-12-26 05:20:06,115 INFO conftest Test finished
+2024-12-26 05:20:06,117 INFO conftest Test started
+2024-12-26 05:20:06,503 INFO signals Successfully created language preferences for user testuser (ID: 1)
+2024-12-26 05:20:06,523 ERROR library_views Error importing book: Test error
+Traceback (most recent call last):
+  File "/home/runner/work/lexiflux/lexiflux/lexiflux/views/library_views.py", line 206, in import_book
+    book_processor = book_class(fs.path(filename), original_filename=original_filename)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.12.8/x64/lib/python3.12/unittest/mock.py", line 1139, in __call__
+    return self._mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.12.8/x64/lib/python3.12/unittest/mock.py", line 1143, in _mock_call
+    return self._execute_mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.12.8/x64/lib/python3.12/unittest/mock.py", line 1198, in _execute_mock_call
+    raise effect
+Exception: Test error

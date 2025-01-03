@@ -1,0 +1,3 @@
+2024-12-22 10:14:28,529 INFO conftest Test started
+2024-12-22 10:14:31,021 INFO signals Successfully created language preferences for user testuser (ID: 1)
+2024-12-22 10:14:31,049 INFO anki_connect result {'result': [1, 2, 3, 4, 5, 6]}

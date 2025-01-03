@@ -1,0 +1,5 @@
+2024-12-23 05:11:54,391 INFO conftest Test finished
+2024-12-23 05:11:54,393 INFO conftest Test started
+2024-12-23 05:11:54,805 INFO signals Successfully created language preferences for user testuser (ID: 1)
+2024-12-23 05:11:54,828 INFO models Reading location updated for some-book-code: 5(5):10/100.0
+[{'page_number': 2, 'word': 30}, {'page_number': 5, 'word': 10}]/1

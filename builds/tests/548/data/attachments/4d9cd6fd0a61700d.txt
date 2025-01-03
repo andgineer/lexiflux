@@ -1,0 +1,4 @@
+2024-12-12 05:07:06,047 INFO conftest Test finished
+2024-12-12 05:07:06,049 INFO conftest Test started
+2024-12-12 05:07:06,413 INFO nltk_tokenizer Downloaded NLTK data: punkt
+2024-12-12 05:07:06,414 WARNING nltk_tokenizer NLTK punkt tokenizer not available for en. Using default.

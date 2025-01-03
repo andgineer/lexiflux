@@ -1,0 +1,4 @@
+2024-12-27 05:14:34,960 INFO conftest Test finished
+2024-12-27 05:14:34,962 INFO conftest Test started
+2024-12-27 05:14:35,246 INFO signals Successfully created language preferences for user testuser (ID: 1)
+2024-12-27 05:14:35,277 INFO llm {'book_code': 'some-book-code', 'book_page_number': 1, 'term_word_ids': (4, 5), 'text_language': 'en', 'user_language': 'fr', 'article_name': 'Sentence', 'text': 'Word1 word2. Word3 word4. [FRAGMENT][HIGHLIGHT]Word5 word6[/HIGHLIGHT] word7[/FRAGMENT]. Word8 word9. Word10 word11 word12', 'detected_language': 'en'}

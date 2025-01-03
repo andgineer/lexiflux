@@ -1,0 +1,29 @@
+2024-12-28 09:30:38,848 INFO conftest Test finished
+2024-12-28 09:30:38,850 INFO conftest Test started
+2024-12-28 09:30:39,206 INFO signals Successfully created language preferences for user testuser (ID: 1)
+2024-12-28 09:30:39,566 INFO signals Successfully created language preferences for user another_user (ID: 2)
+2024-12-28 09:30:39,575 INFO reader_views Location changed: book some-book-code, page 1, top word 10
+2024-12-28 09:30:39,577 ERROR middleware Exception: email does not have permission to read book '(ID: 1)
+Traceback (most recent call last):
+  File "/home/runner/work/lexiflux/lexiflux/.venv/lib/python3.12/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/work/lexiflux/lexiflux/lexiflux/decorators.py", line 29, in wrapper
+    return login_required(view_func)(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/work/lexiflux/lexiflux/.venv/lib/python3.12/site-packages/django/contrib/auth/decorators.py", line 60, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/work/lexiflux/lexiflux/.venv/lib/python3.12/site-packages/django/views/decorators/http.py", line 64, in inner
+    return func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/work/lexiflux/lexiflux/lexiflux/views/reader_views.py", line 267, in location
+    book = Book.get_if_can_be_read(request.user, code=book_code)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/work/lexiflux/lexiflux/lexiflux/models.py", line 275, in get_if_can_be_read
+    book.ensure_can_be_read_by(user)
+  File "/home/runner/work/lexiflux/lexiflux/lexiflux/models.py", line 258, in ensure_can_be_read_by
+    raise PermissionDenied(
+django.core.exceptions.PermissionDenied: email does not have permission to read book '(ID: 1)
+2024-12-28 09:30:39,578 WARNING log Forbidden: /location
+2024-12-28 09:30:39,578 WARNING log Forbidden: /location

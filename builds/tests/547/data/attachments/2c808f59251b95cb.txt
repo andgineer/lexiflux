@@ -1,0 +1,7 @@
+2024-12-11 05:33:59,513 INFO conftest Test finished
+2024-12-11 05:33:59,515 INFO conftest Test started
+2024-12-11 05:33:59,894 INFO signals Successfully created language preferences for user testuser (ID: 34)
+2024-12-11 05:33:59,905 WARNING log Method Not Allowed (GET): /api/import-book/
+2024-12-11 05:33:59,905 WARNING log Method Not Allowed (GET): /api/import-book/
+2024-12-11 05:33:59,905 WARNING log Method Not Allowed: /api/import-book/
+2024-12-11 05:33:59,905 WARNING log Method Not Allowed: /api/import-book/

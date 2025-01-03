@@ -1,0 +1,6 @@
+2024-12-13 05:30:42,437 INFO conftest Test finished
+2024-12-13 05:30:42,440 INFO conftest Test started
+2024-12-13 05:30:43,171 INFO signals Successfully created language preferences for user testuser (ID: 18)
+2024-12-13 05:30:43,899 INFO reader_views Opening book some-book-code at page 1 for user testuser
+2024-12-13 05:30:43,910 INFO reader_views Jump status: book some-book-code, is_first_jump True, is_last_jump True
+2024-12-13 05:30:44,654 INFO lexical_views Selected text: page

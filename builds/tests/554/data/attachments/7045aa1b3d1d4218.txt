@@ -1,0 +1,4 @@
+2024-12-22 10:15:18,694 INFO conftest Test finished
+2024-12-22 10:15:18,696 INFO conftest Test started
+2024-12-22 10:15:19,048 INFO signals Successfully created language preferences for user testuser (ID: 1)
+2024-12-22 10:15:19,071 INFO reader_views Rendering page 1 of book some-book-code

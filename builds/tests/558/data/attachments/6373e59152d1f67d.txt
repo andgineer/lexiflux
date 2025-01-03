@@ -1,0 +1,7 @@
+2024-12-27 05:14:46,626 INFO conftest Test finished
+2024-12-27 05:14:46,627 INFO conftest Test started
+2024-12-27 05:14:46,907 INFO signals Successfully created language preferences for user testuser (ID: 1)
+2024-12-27 05:14:46,918 WARNING log Method Not Allowed (PUT): /api/ai-settings/
+2024-12-27 05:14:46,918 WARNING log Method Not Allowed (PUT): /api/ai-settings/
+2024-12-27 05:14:46,918 WARNING log Method Not Allowed: /api/ai-settings/
+2024-12-27 05:14:46,918 WARNING log Method Not Allowed: /api/ai-settings/

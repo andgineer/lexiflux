@@ -1,0 +1,5 @@
+2024-12-13 05:18:24,677 INFO conftest Test finished
+2024-12-13 05:18:24,679 INFO conftest Test started
+2024-12-13 05:18:24,941 INFO signals Successfully created language preferences for user testuser (ID: 1)
+2024-12-13 05:18:24,962 WARNING log Bad Request: /api/save-inline-translation/
+2024-12-13 05:18:24,962 WARNING log Bad Request: /api/save-inline-translation/

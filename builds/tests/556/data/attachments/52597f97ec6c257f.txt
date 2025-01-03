@@ -1,0 +1,4 @@
+2024-12-26 05:19:46,009 INFO conftest Test finished
+2024-12-26 05:19:46,011 INFO conftest Test started
+2024-12-26 05:19:46,294 INFO signals Successfully created language preferences for user testuser (ID: 1)
+2024-12-26 05:19:46,318 ERROR llm 'book_code', model: gpt-4o, class: ChatOpenAI, show_api_key_info: True

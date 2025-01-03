@@ -1,0 +1,8 @@
+2024-12-27 05:26:17,432 INFO conftest Test finished
+2024-12-27 05:26:17,433 INFO conftest Test started
+2024-12-27 05:26:17,760 INFO signals Successfully created language preferences for user testuser (ID: 1)
+2024-12-27 05:26:17,770 ERROR library_views Error importing book: Unsupported file format for test.pdf
+Traceback (most recent call last):
+  File "/home/runner/work/lexiflux/lexiflux/lexiflux/views/library_views.py", line 193, in import_book
+    raise ValueError(f"Unsupported file format for {file.name}")
+ValueError: Unsupported file format for test.pdf

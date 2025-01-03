@@ -1,0 +1,5 @@
+2024-12-27 05:26:32,292 INFO conftest Test finished
+2024-12-27 05:26:32,293 INFO conftest Test started
+2024-12-27 05:26:32,573 INFO signals Successfully created language preferences for user testuser (ID: 1)
+2024-12-27 05:26:32,583 WARNING log Bad Request: /jump
+2024-12-27 05:26:32,583 WARNING log Bad Request: /jump
