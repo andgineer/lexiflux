@@ -1,2 +1,0 @@
-INFO     lexiflux.views.words_export:words_export.py:225 Words exported for English: 1 words
-INFO     lexiflux.views.words_export:words_export.py:252 Words exported for English: 1 words using ankiConnect

@@ -1,2 +1,0 @@
-INFO     root:models.py:809 Reading location updated for some-book-code: 5(5):10/100.0
-[{'page_number': 2, 'word': 30}, {'page_number': 5, 'word': 10}]/1

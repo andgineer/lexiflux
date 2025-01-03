@@ -1,0 +1,4 @@
+2025-01-03 12:11:44,239 INFO conftest Test started
+2025-01-03 12:11:44,430 INFO apps Lexiflux 1.20.4 is ready.
+2025-01-03 12:11:47,017 INFO signals Successfully created language preferences for user testuser (ID: 1)
+2025-01-03 12:11:47,037 INFO anki_connect result {'result': [1, 2, 3, 4, 5, 6]}

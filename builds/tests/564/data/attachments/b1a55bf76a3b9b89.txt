@@ -1,0 +1,3 @@
+2025-01-03 12:12:56,954 INFO conftest Test finished
+2025-01-03 12:12:56,956 INFO conftest Test started
+2025-01-03 12:12:56,960 ERROR llm API error, model: gpt-4o, class: ChatOpenAI, show_api_key_info: True

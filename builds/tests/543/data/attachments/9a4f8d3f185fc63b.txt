@@ -1,3 +1,0 @@
-2024-12-09 05:18:50,277 INFO conftest Test finished
-2024-12-09 05:18:50,278 INFO conftest Test started
-2024-12-09 05:18:50,669 INFO reader_views Link clicked: #chapter1, page_info: {'page': 2, 'word': 5}

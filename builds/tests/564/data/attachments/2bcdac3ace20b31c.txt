@@ -1,0 +1,4 @@
+2025-01-03 12:11:47,365 INFO conftest Test finished
+2025-01-03 12:11:47,367 INFO conftest Test started
+2025-01-03 12:11:47,381 INFO signals Successfully created language preferences for user lexiflux (ID: 1)
+2025-01-03 12:11:47,381 INFO decorators Created default user: lexiflux@example.com

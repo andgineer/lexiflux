@@ -1,0 +1,4 @@
+2025-01-03 12:12:52,176 INFO conftest Test finished
+2025-01-03 12:12:52,177 INFO conftest Test started
+2025-01-03 12:12:52,542 INFO signals Successfully created language preferences for user testuser (ID: 1)
+2025-01-03 12:12:52,601 INFO words_export Words exported for English: 1 words using ankiFile

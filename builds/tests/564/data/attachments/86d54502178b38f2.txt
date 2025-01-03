@@ -1,0 +1,6 @@
+2025-01-03 12:12:41,567 INFO conftest Test finished
+2025-01-03 12:12:41,568 INFO conftest Test started
+2025-01-03 12:12:41,917 INFO signals Successfully created language preferences for user testuser (ID: 1)
+2025-01-03 12:12:41,940 INFO reader_views Jump status: book some-book-code, is_first_jump False, is_last_jump False
+2025-01-03 12:12:41,945 INFO reader_views Jump status: book some-book-code, is_first_jump True, is_last_jump False
+2025-01-03 12:12:41,950 INFO reader_views Jump status: book some-book-code, is_first_jump False, is_last_jump True
