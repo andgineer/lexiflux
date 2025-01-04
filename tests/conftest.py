@@ -202,22 +202,6 @@ def django_server(live_server: LiveServer) -> DjangoLiveServer:
     )
 
 
-def pytest_runtest_logstart(nodeid, location):
-    """ signal the start of running a single test item.
-
-    This hook will be called **before** :func:`pytest_runtest_setup`, :func:`pytest_runtest_call` and
-    :func:`pytest_runtest_teardown` hooks.
-
-    :param str nodeid: full id of the item
-    :param location: a triple of ``(filename, linenum, testname)``
-    """
-    log.info('Test started')
-
-
-def pytest_runtest_logfinish(nodeid, location):
-    log.info('Test finished')
-
-
 @pytest.hookimpl(tryfirst=True, hookwrapper=True)
 def pytest_runtest_makereport(item, call):
     outcome = yield
