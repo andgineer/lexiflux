@@ -23,7 +23,7 @@ from lexiflux.language.detect_language_fasttext import language_detector
 ])
 def test_detect_language(text, expected_lang):
     detected_lang = language_detector().detect(text)
-    assert detected_lang == expected_lang, f"Expected {expected_lang}, but got {detected_lang} for text: '{text}'"
+    assert detected_lang == expected_lang, f"Expected {expected_lang}, but got {detected_lang} for text: '{text}'. {language_detector().detect_all(text)}"
 
 
 @allure.epic('Book import')
