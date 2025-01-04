@@ -44,23 +44,36 @@ class FastTextDetectLanguage:
         fasttext_model_path = fasttext_data_dir / "lid.176.bin"
         os.makedirs(os.path.dirname(fasttext_model_path), exist_ok=True)
 
-        if not fasttext_model_path.exists():
+        if not (model := self.read_model_file(fasttext_model_path)):
+            logger.info(
+                f"Downloading fastText language identification model from {FASTTEXT_MODEL_URL}"
+            )
             response = requests.get(FASTTEXT_MODEL_URL, stream=True, timeout=10)
             response.raise_for_status()
             with fasttext_model_path.open("wb") as file:
                 for chunk in response.iter_content(chunk_size=8192):
                     file.write(chunk)
+            model = fasttext.load_model(str(fasttext_model_path))
 
         file_size = f"{fasttext_model_path.stat().st_size:,}"
         md5_hash = hashlib.md5(fasttext_model_path.read_bytes()).hexdigest()
         hash_groups = " ".join(md5_hash[i : i + 4] for i in range(0, 32, 4))
         logger.info(f"{fasttext_model_path}: {file_size} bytes, md5: {hash_groups}")
 
-        model = fasttext.load_model(str(fasttext_model_path))
-        labels = model.get_labels()
-        if all("__label__" not in label for label in labels):
-            raise ValueError(f"Model does not appear to be a language detection model: {labels}")
         return model
+
+    def read_model_file(self, path: Path) -> Any:
+        """Check if the model file exists and has correct size."""
+        valid = path.stat().st_size > 100 * 1024 * 1024 if path.exists() else False
+        if valid:
+            try:
+                model = fasttext.load_model(str(path))
+                labels = model.get_labels()
+                if any("__label__" in label for label in labels):
+                    return model
+            except Exception as exc:  # pylint: disable=broad-except
+                logger.error(f"Error loading fastText model: {exc}")
+        return None
 
 
 @lru_cache(maxsize=1)
