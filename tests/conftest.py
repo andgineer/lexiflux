@@ -211,7 +211,6 @@ def pytest_runtest_makereport(item, call):
             if 'browser' in item.fixturenames:  # assume this is fixture with webdriver
                 web_driver = item.funcargs['browser']
             else:
-                print('Fail to take screen-shot: no `browser` fixture')
                 return
             allure.attach(
                 web_driver.get_screenshot_as_png(),
