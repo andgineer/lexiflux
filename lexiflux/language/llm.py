@@ -179,6 +179,9 @@ class Llm:  # pylint: disable=too-few-public-methods
             "Explain": lambda model: (
                 RunnablePassthrough() | self._prompt_templates["Explain"] | model | text_parser
             ),
+            "Origin": lambda model: (
+                RunnablePassthrough() | self._prompt_templates["Origin"] | model | text_parser
+            ),
             "Sentence": lambda model: (
                 RunnablePassthrough.assign(text=lambda x: _extract_sentence(x["text"]))
                 | self._prompt_templates["Sentence"]

@@ -53,6 +53,7 @@ class LexicalArticleType(models.TextChoices):  # type: ignore  # pylint: disable
     TRANSLATE = "Translate", _("Translate")
     SENTENCE = "Sentence", _("Sentence")
     EXPLAIN = "Explain", _("Explain")
+    ORIGIN = "Origin", _("Origin")
     LEXICAL = "Lexical", _("Lexical")
     AI = "AI", _("AI")
     DICTIONARY = "Dictionary", _("Dictionary")
@@ -63,6 +64,7 @@ LEXICAL_ARTICLE_PARAMETERS = {
     "Translate": ["model"],
     "Sentence": ["model"],
     "Explain": ["model"],
+    "Origin": ["model"],
     "Examples": ["model"],
     "Lexical": ["model"],
     "Dictionary": ["dictionary"],

@@ -5,21 +5,16 @@ from django.apps import apps
 
 
 DEFAULT_LEXICAL_ARTICLES = [
-    {"type": "Explain", "title": "Explain 🔗 4o°", "parameters": {"model": "gpt-4o-mini"}},
-    {
-        "type": "Explain",
-        "title": "Explain 💡3.5",
-        "parameters": {"model": "claude-3-5-sonnet-20241022"},
-    },
-    {"type": "Explain", "title": "Explain 🦙3.2", "parameters": {"model": "llama3.2"}},
+    {"type": "Explain", "title": "Explain", "parameters": {"model": "gpt-4o-mini"}},
+    {"type": "Origin", "title": "Origin", "parameters": {"model": "gpt-4o-mini"}},
     {
         "type": "Lexical",
-        "title": "Lexical 💡3.5°",
+        "title": "Lexical",
         "parameters": {"model": "claude-3-5-haiku-20241022"},
     },
     {
         "type": "Sentence",
-        "title": "Sentence 🔗 4o°",
+        "title": "Sentence",
         "parameters": {"model": "gpt-4o-mini"},
     },
     {

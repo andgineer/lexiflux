@@ -284,7 +284,9 @@ class TestArticleGeneration:
         ("Translate", "Translate.txt"),
         ("Lexical", "Lexical.txt"),
         ("Explain", "Explain.txt"),
+        ("Origin", "Origin.txt"),
         ("Sentence", "Sentence.txt"),
+        ("Origin", "Origin.txt"),
     ])
     def test_generate_article_cached_with_different_articles(self, request, mock_book_page, llm_instance,
                                                              approved_user, article_name, expected_prompt_file):

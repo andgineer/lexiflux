@@ -12,7 +12,7 @@ different settings for different languages.
 
 ## Lexical Articles Types
 
-### AI Powered (Translate, Lexical, Explain, Sentence)
+### AI Powered (Translate, Lexical, Origin, Explain, Sentence)
 They use predefined prompts to generate articles.
 You can select AI model (ChatGPT, Claude etc) to run them.
 
