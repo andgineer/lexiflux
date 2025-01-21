@@ -7,6 +7,7 @@ COPY *.js* /lexiflux/
 COPY lexiflux/viewport /lexiflux/lexiflux/viewport
 RUN npm install && npm run build
 
+# ====================
 FROM python:3.12
 
 ENV LEXIFLUX_UI_SETTINGS_ONLY=true

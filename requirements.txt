@@ -10,9 +10,9 @@ aiosignal==1.3.2
     # via aiohttp
 annotated-types==0.7.0
     # via pydantic
-anthropic==0.42.0
+anthropic==0.43.1
     # via langchain-anthropic
-anyio==4.7.0
+anyio==4.8.0
     # via
     #   anthropic
     #   httpx
@@ -27,7 +27,7 @@ beautifulsoup4==4.12.3
     # via
     #   -r requirements.in
     #   deep-translator
-blis==1.1.0
+blis==0.7.11
     # via thinc
 cached-property==2.0.1
     # via genanki
@@ -63,7 +63,7 @@ confection==0.1.5
     #   weasel
 cryptography==44.0.0
     # via pyopenssl
-cymem==2.0.10
+cymem==2.0.11
     # via
     #   preshed
     #   spacy
@@ -78,7 +78,7 @@ distro==1.9.0
     # via
     #   anthropic
     #   openai
-django==5.1.4
+django==5.1.5
     # via
     #   -r requirements.in
     #   django-allauth
@@ -107,14 +107,14 @@ fsspec==2024.12.0
     # via huggingface-hub
 genanki==0.13.1
     # via -r requirements.in
-google-ai-generativelanguage==0.6.10
+google-ai-generativelanguage==0.6.15
     # via google-generativeai
 google-api-core==2.24.0
     # via
     #   google-ai-generativelanguage
     #   google-api-python-client
     #   google-generativeai
-google-api-python-client==2.157.0
+google-api-python-client==2.159.0
     # via google-generativeai
 google-auth==2.37.0
     # via
@@ -125,7 +125,7 @@ google-auth==2.37.0
     #   google-generativeai
 google-auth-httplib2==0.2.0
     # via google-api-python-client
-google-generativeai==0.8.3
+google-generativeai==0.8.4
     # via langchain-google-genai
 googleapis-common-protos==1.66.0
     # via
@@ -163,7 +163,7 @@ httpx-sse==0.4.0
     # via
     #   langchain-community
     #   langchain-mistralai
-huggingface-hub==0.27.0
+huggingface-hub==0.27.1
     # via tokenizers
 hyperframe==6.0.1
     # via h2
@@ -185,15 +185,15 @@ jsonpatch==1.33
     # via langchain-core
 jsonpointer==3.0.0
     # via jsonpatch
-langchain==0.3.14
+langchain==0.3.15
     # via
     #   -r requirements.in
     #   langchain-community
-langchain-anthropic==0.3.1
+langchain-anthropic==0.3.3
     # via -r requirements.in
-langchain-community==0.3.14
+langchain-community==0.3.15
     # via -r requirements.in
-langchain-core==0.3.29
+langchain-core==0.3.31
     # via
     #   -r requirements.in
     #   langchain
@@ -203,17 +203,17 @@ langchain-core==0.3.29
     #   langchain-mistralai
     #   langchain-openai
     #   langchain-text-splitters
-langchain-google-genai==2.0.7
+langchain-google-genai==2.0.9
     # via -r requirements.in
 langchain-mistralai==0.2.4
     # via -r requirements.in
-langchain-openai==0.2.14
+langchain-openai==0.3.1
     # via -r requirements.in
-langchain-text-splitters==0.3.4
+langchain-text-splitters==0.3.5
     # via langchain
 langcodes==3.5.0
     # via spacy
-langsmith==0.2.10
+langsmith==0.2.11
     # via
     #   langchain
     #   langchain-community
@@ -230,7 +230,7 @@ markupsafe==3.0.2
     # via
     #   jinja2
     #   werkzeug
-marshmallow==3.23.3
+marshmallow==3.25.1
     # via dataclasses-json
 mdurl==0.1.2
     # via markdown-it-py
@@ -238,7 +238,7 @@ multidict==6.1.0
     # via
     #   aiohttp
     #   yarl
-murmurhash==1.0.11
+murmurhash==1.0.12
     # via
     #   preshed
     #   spacy
@@ -256,13 +256,13 @@ numpy==1.26.4
     #   langchain-community
     #   spacy
     #   thinc
-ollama==0.4.5
+ollama==0.4.6
     # via -r requirements.in
-openai==1.59.3
+openai==1.59.9
     # via
     #   -r requirements.in
     #   langchain-openai
-orjson==3.10.13
+orjson==3.10.15
     # via langsmith
 packaging==24.2
     # via
@@ -284,7 +284,7 @@ proto-plus==1.25.0
     # via
     #   google-ai-generativelanguage
     #   google-api-core
-protobuf==5.29.2
+protobuf==5.29.3
     # via
     #   google-ai-generativelanguage
     #   google-api-core
@@ -304,7 +304,7 @@ pybind11==2.13.6
     # via fasttext
 pycparser==2.22
     # via cffi
-pydantic==2.10.4
+pydantic==2.10.5
     # via
     #   -r requirements.in
     #   anthropic
@@ -326,11 +326,11 @@ pydantic-core==2.27.2
     # via pydantic
 pydantic-settings==2.7.1
     # via langchain-community
-pygments==2.18.0
+pygments==2.19.1
     # via rich
 pyjwt==2.10.1
     # via -r requirements.in
-pyopenssl==24.3.0
+pyopenssl==25.0.0
     # via -r requirements.in
 pyparsing==3.2.1
     # via httplib2
@@ -365,7 +365,7 @@ rich==13.9.4
     # via typer
 rsa==4.9
     # via google-auth
-setuptools==75.6.0
+setuptools==75.8.0
     # via
     #   fasttext
     #   marisa-trie
@@ -387,19 +387,19 @@ sniffio==1.3.1
     #   openai
 soupsieve==2.6
     # via beautifulsoup4
-spacy==3.8.3
+spacy==3.7.5
     # via -r requirements.in
 spacy-legacy==3.0.12
     # via spacy
 spacy-loggers==1.0.5
     # via spacy
-sqlalchemy==2.0.36
+sqlalchemy==2.0.37
     # via
     #   langchain
     #   langchain-community
 sqlparse==0.5.3
     # via django
-srsly==2.5.0
+srsly==2.5.1
     # via
     #   confection
     #   spacy
@@ -410,7 +410,7 @@ tenacity==9.0.0
     #   langchain
     #   langchain-community
     #   langchain-core
-thinc==8.3.3
+thinc==8.2.5
     # via spacy
 tiktoken==0.8.0
     # via langchain-openai
@@ -439,6 +439,7 @@ typing-extensions==4.12.2
     #   openai
     #   pydantic
     #   pydantic-core
+    #   pyopenssl
     #   sqlalchemy
     #   typer
     #   typing-inspect
@@ -459,7 +460,7 @@ weasel==0.4.1
     # via spacy
 werkzeug==3.1.3
     # via -r requirements.in
-wrapt==1.17.0
+wrapt==1.17.2
     # via smart-open
 yarl==1.18.3
     # via aiohttp
