@@ -220,7 +220,7 @@ def import_book(request: HttpRequest) -> HttpResponse:
                 document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
                 htmx.trigger('body', 'show-edit-modal');
             </script>
-            {render(request, "partials/book_modal.html", context).content.decode('utf-8')}
+            {render(request, "partials/book_modal.html", context).content.decode("utf-8")}
         """)
 
     except Exception as e:  # pylint: disable=broad-except

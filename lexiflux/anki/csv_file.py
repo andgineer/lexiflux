@@ -14,7 +14,7 @@ def export_words_to_csv_file(
     language: Language, terms: List[TranslationHistory]
 ) -> tuple[ContentFile, str]:
     """Export words to a CSV file."""
-    filename = f"lexiflux_{language.google_code}_" f"{timezone.now().strftime('%Y%m%d%H%M%S')}.csv"
+    filename = f"lexiflux_{language.google_code}_{timezone.now().strftime('%Y%m%d%H%M%S')}.csv"
 
     output = io.StringIO()
     writer = csv.writer(output)

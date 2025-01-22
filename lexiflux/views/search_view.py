@@ -86,9 +86,9 @@ def create_highlighted_context(context: str, term_start: int, term_length: int) 
     return (
         f"{context[:term_start]}"
         f'<span class="bg-warning">'
-        f"{context[term_start:term_start + term_length]}"
+        f"{context[term_start : term_start + term_length]}"
         f"</span>"
-        f"{context[term_start + term_length:]}"
+        f"{context[term_start + term_length :]}"
     )
 
 

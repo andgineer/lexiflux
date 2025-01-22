@@ -259,7 +259,7 @@ class Book(models.Model):  # type: ignore
         if not self.can_be_read_by(user):
             user_identifier = user.email if not user.is_anonymous else "Anonymous user"
             raise PermissionDenied(
-                f"{user_identifier} does not have permission to read book " f"'(ID: {self.id})"
+                f"{user_identifier} does not have permission to read book '(ID: {self.id})"
             )
 
     @classmethod

@@ -48,9 +48,7 @@ def export_words_to_anki_file(  # pylint: disable=too-many-locals
             deck.add_note(note)
 
     package = genanki.Package(deck)
-    filename = (
-        f"lexiflux_{language.google_code}_" f"{timezone.now().strftime('%Y%m%d%H%M%S')}.apkg"
-    )
+    filename = f"lexiflux_{language.google_code}_{timezone.now().strftime('%Y%m%d%H%M%S')}.apkg"
 
     file_buffer = io.BytesIO()
     package.write_to_file(file_buffer)
