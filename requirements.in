@@ -29,6 +29,6 @@ psutil
 pyjwt
 unidecode
 genanki
-# blis ARM build error workaround
+# pin spaCy for blis ARM build error workaround
 spacy<3.8.0
 googletrans
