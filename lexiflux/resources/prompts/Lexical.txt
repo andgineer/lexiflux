@@ -1,15 +1,15 @@
-Below given a text in
-{detected_language} language.
+Write a lexical article in {user_language} for the word(s) in {text_language} that appear in the text below,
+marked with [HIGHLIGHT][/HIGHLIGHT]. The article should analyze and describe the {text_language} word itself,
+not its translation.
 
-Write {text_language} - {user_language} lexical article for the word(s)
-marked with [HIGHLIGHT][/HIGHLIGHT].
+The article should include:
+- All meanings and their usage contexts
+- Grammar attributes (part of speech, gender, number, etc.)
+- Declension/conjugation tables where applicable
+- Usage examples in {text_language} with {user_language} translations
+- Collocations and idiomatic expressions
 
-The article should be in {user_language}.
-The article includes different meanings, grammar attributes of them - part of the speech,
-genre, number, countability and other.
-
-Article should be in compact nice style like in good dictionaries.
-Include declination table, examples of usage and other information you expect to see in
-a good dictionary like Oxford Dictionary.
+Format: HTML without block markers
+Style: Concise dictionary entry format (Oxford Dictionary style)
 
 Critical instructions: Give the result in HTML formatting, without any block marks.

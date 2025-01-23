@@ -10,7 +10,7 @@ DEFAULT_LEXICAL_ARTICLES = [
     {
         "type": "Lexical",
         "title": "Lexical",
-        "parameters": {"model": "claude-3-5-haiku-20241022"},
+        "parameters": {"model": "gpt-4o-mini"},
     },
     {
         "type": "Sentence",
