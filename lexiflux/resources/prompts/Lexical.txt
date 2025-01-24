@@ -1,6 +1,10 @@
 Write a lexical article in {user_language} for the word(s) in {text_language} that appear in the text below,
-marked with [HIGHLIGHT][/HIGHLIGHT]. The article should analyze and describe the {text_language} word itself,
+marked with [HIGHLIGHT][/HIGHLIGHT].
+
+The article should analyze and describe the {text_language} word itself,
 not its translation.
+
+The article itself should be in {user_language} and should be written for a general audience.
 
 The article should include:
 - All meanings and their usage contexts

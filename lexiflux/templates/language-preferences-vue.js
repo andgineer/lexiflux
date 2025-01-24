@@ -249,7 +249,7 @@ Add to each translation to {user_language} language.
                 if (!('window' in this.form.parameters)) {
                     this.form.parameters.window = true;
                 }
-            } else if (['Translate', 'Sentence', 'Explain', 'Examples', 'Lexical'].includes(this.form.type)) {
+            } else if (['Translate', 'Sentence', 'Explain', 'Origin', 'Examples', 'Lexical'].includes(this.form.type)) {
                 if (!this.form.parameters || !this.form.parameters.model) {
                     this.form.parameters = this.form.parameters || {};
                     this.form.parameters.model = this.aiModels.length > 0 ? this.aiModels[0].key : '';
