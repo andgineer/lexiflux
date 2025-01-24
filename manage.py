@@ -3,6 +3,8 @@
 import os
 import sys
 
+os.environ["LEXIFLUX_SKIP_AUTH"] = "true"
+
 
 def main():
     """Run administrative tasks."""
