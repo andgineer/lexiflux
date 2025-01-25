@@ -271,4 +271,6 @@ def search_authors(request: HttpRequest) -> HttpResponse:
 @require_GET  # type: ignore
 def library_page(request: HttpRequest) -> HttpResponse:
     """Render the main library page."""
-    return render(request, "library.html")
+    if not request.user.language:
+        return TemplateResponse(request, "library.html", {"show_user_modal": True})
+    return TemplateResponse(request, "library.html")

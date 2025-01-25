@@ -14,6 +14,7 @@ import lexiflux.views.search_view
 from lexiflux.views.auth_views import SignUpView, CustomLoginView
 from lexiflux import settings
 from lexiflux.views.library_views import EditBookModalPartial
+from lexiflux.views.user_modal import user_modal
 
 urlpatterns = [
     # admin
@@ -98,6 +99,8 @@ urlpatterns = [
     ),
     path("api/export-words/", lexiflux.views.words_export.export_words, name="export_words"),
     path("api/word-count/", lexiflux.views.words_export.word_count, name="word_count"),
+    # user settings
+    path("api/user/", user_modal, name="user-modal"),
 ]
 
 # library partials

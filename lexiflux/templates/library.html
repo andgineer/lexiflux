@@ -20,11 +20,16 @@
                     <div class="card-body">
                         <h2 class="text-center my-4">Your Books</h2>
 
-                        <div class="d-flex justify-content-end mb-3">
+                        <div class="d-flex justify-content-end gap-2 mb-3">
+                            <button class="btn btn-outline-secondary"
+                                    hx-get="{% url 'user-modal' %}"
+                                    hx-target="#modalContainer">
+                                <i class="bi bi-gear me-1"></i>
+                                User Settings
+                            </button>
                             <button class="btn btn-primary"
                                     hx-get="{% url 'import_modal' %}"
-                                    hx-target="#modalContainer"
-                            >
+                                    hx-target="#modalContainer">
                                 Import Books
                             </button>
                         </div>
@@ -39,6 +44,13 @@
             </div>
         </div>
     </div>
+
+    {% if show_user_modal %}
+    <div hx-get="{% url 'user-modal' %}"
+         hx-trigger="load"
+         hx-target="#modalContainer">
+    </div>
+    {% endif %}
 
     <script>
         htmx.on("htmx:afterRequest", function(evt) {

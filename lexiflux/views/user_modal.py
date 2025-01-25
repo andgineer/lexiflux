@@ -1,0 +1,33 @@
+"""User modal view."""
+
+from django.http import HttpResponse, HttpRequest
+from django.template.response import TemplateResponse
+from django.db import transaction
+from django.views.decorators.http import require_http_methods
+
+from lexiflux.decorators import smart_login_required
+from lexiflux.models import Language, LanguagePreferences
+
+
+@smart_login_required
+@require_http_methods(["GET", "POST"])  # type: ignore
+def user_modal(request: HttpRequest) -> HttpResponse:
+    """User modal view."""
+    if request.method == "POST":
+        language_id = request.POST.get("language")
+        update_all = request.POST.get("update_all_preferences") == "on"
+
+        if language_id:
+            with transaction.atomic():
+                request.user.language = Language.objects.get(google_code=language_id)
+                request.user.save()
+
+                if update_all or not request.user.language:
+                    LanguagePreferences.objects.filter(user=request.user).update(
+                        user_language=request.user.language
+                    )
+            return HttpResponse(headers={"HX-Refresh": "true"})
+        return HttpResponse(status=400)
+
+    context = {"languages": Language.objects.all().order_by("name")}
+    return TemplateResponse(request, "partials/user_modal.html", context)
