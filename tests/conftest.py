@@ -368,8 +368,9 @@ def user(db_init):
 
 
 @pytest.fixture
-def approved_user(user):
+def approved_user(user, language):
     user.is_approved = True
+    user.language = language
     user.save()
     return user
 
