@@ -70,38 +70,40 @@ class WebDriverAugmented(RemoteWebDriver):
         """
         login_url = self.host + reverse('login')
         self.get(login_url)
-
-        # Wait for form elements to be present and interactable
-        username_input = WebDriverWait(self, 10).until(
-            EC.presence_of_element_located((By.NAME, 'username'))
-        )
-        password_input = WebDriverWait(self, 10).until(
-            EC.presence_of_element_located((By.NAME, 'password'))
+    
+        WebDriverWait(self, 10).until(
+            lambda d: d.execute_script('return document.readyState') == 'complete'
         )
     
-        # Clear fields before sending keys
-        username_input.clear()
-        password_input.clear()
-        
-        # Send keys with explicit waits between actions
-        username_input.send_keys(user.username)
-        time.sleep(0.5)  # Small delay between fields
-        password_input.send_keys(password)
-        time.sleep(0.5)  # Small delay before submit
-        
-        # Use explicit wait for button to be clickable
-        submit_button = WebDriverWait(self, 10).until(
-            EC.element_to_be_clickable((By.CSS_SELECTOR, 'button[type="submit"]'))
-        )
-        submit_button.click()
-
-        if wait_view:
-            after_login_url = urllib.parse.urljoin(self.host, wait_view)
-            WebDriverWait(self, wait_seconds).until(
-                EC.url_to_be(after_login_url),
-                message=f"Expected to be redirected to the {after_login_url} after login but stuck at {self.current_url}.",
+        try:
+            username_input = WebDriverWait(self, 10).until(
+                EC.element_to_be_clickable((By.NAME, 'username'))
             )
-
+            username_input.clear()
+            username_input.send_keys(user.username)
+            
+            password_input = WebDriverWait(self, 10).until(
+                EC.element_to_be_clickable((By.NAME, 'password'))
+            )
+            password_input.clear()
+            password_input.send_keys(password)
+    
+            submit_button = WebDriverWait(self, 10).until(
+                EC.element_to_be_clickable((By.CSS_SELECTOR, 'button[type="submit"]'))
+            )
+            submit_button.click()
+    
+            if wait_view:
+                after_login_url = urllib.parse.urljoin(self.host, wait_view)
+                WebDriverWait(self, wait_seconds).until(
+                    EC.url_to_be(after_login_url),
+                    message=f"Expected to be redirected to the {after_login_url} after login but stuck at {self.current_url}.",
+                )
+        except Exception as e:
+            print(f"Login failed: {str(e)}")
+            self.take_screenshot("login_failure")
+            raise   
+        
     def goto(self, page: str):
         """
         Open the page (see class Page).
