@@ -15,7 +15,11 @@ def user_modal(request: HttpRequest) -> HttpResponse:
     """User modal view."""
     if request.method == "POST":
         language_id = request.POST.get("language")
-        update_all = request.POST.get("update_all_preferences") == "on"
+        # when the checkbox is disable it's not included in the POST data, thus the hack:
+        # we know that is user has no language set, we should update all preferences
+        update_all = (
+            request.POST.get("update_all_preferences") == "on" or request.user.language is None
+        )
 
         if language_id:
             with transaction.atomic():

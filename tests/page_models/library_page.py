@@ -80,3 +80,32 @@ class LibraryPage(BasePage):
         WebDriverWait(self.browser, 10).until(
             EC.presence_of_element_located((By.CSS_SELECTOR, "table tbody tr"))
         )
+
+    def is_user_modal_visible(self):
+        return WebDriverWait(self.browser, 10).until(
+            EC.visibility_of_element_located((By.ID, "userModal"))
+        ).is_displayed()
+
+    def get_user_modal_text(self):
+        return self.wait_for_element((By.CLASS_NAME, "modal-body")).text
+
+    @retry_on_stale_element()
+    def select_language(self, language_code):
+        select = self.wait_for_element((By.ID, "language"))
+        select.find_element(By.CSS_SELECTOR, f"option[value='{language_code}']").click()
+
+    def save_language_settings(self):
+        save_button = self.wait_for_clickable(
+            (By.CSS_SELECTOR, "#userModal .modal-footer .btn-primary")
+        )
+        save_button.click()
+
+        # Wait for HTMX request to complete
+        WebDriverWait(self.browser, 10).until(
+            lambda driver: driver.execute_script("return !htmx.requesting")
+        )
+
+        # Wait for modal to disappear
+        WebDriverWait(self.browser, 10).until(
+            EC.invisibility_of_element_located((By.ID, "userModal"))
+        )
