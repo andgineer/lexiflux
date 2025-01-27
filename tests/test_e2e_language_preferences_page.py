@@ -3,6 +3,8 @@ import allure
 from django.urls import reverse
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+
+from lexiflux.models import Language, LanguagePreferences
 from tests.conftest import USER_PASSWORD
 from tests.page_models.language_preferences_page import LanguagePreferencesPage
 
@@ -73,3 +75,30 @@ def test_e2e_language_preferences_page_inline_translation(browser, approved_user
         assert "Dictionary:" in inline_translation_info
 
     browser.take_screenshot("Final")
+
+
+@allure.epic('End-to-end (selenium)')
+@allure.feature('Language Preferences Page')
+@allure.story('Global Preferences')
+@pytest.mark.docker
+@pytest.mark.selenium
+@pytest.mark.django_db
+def test_e2e_language_preferences_global_settings(browser, approved_user):
+    # Create second language preference to make initial state non-global
+    spanish = Language.objects.get(google_code='es')
+    LanguagePreferences.get_or_create_language_preferences(approved_user, spanish)
+
+    with allure.step("Login and navigate to language preferences"):
+        browser.login(approved_user, USER_PASSWORD)
+        page = LanguagePreferencesPage(browser)
+        page.goto()
+        browser.take_screenshot("Initial state")
+
+    with allure.step("Verify initial non-global state"):
+        assert approved_user.language_preferences.count() > 1, "Should have multiple language preferences"
+
+    with allure.step("Enable global preferences"):
+        page.set_global_preferences()
+
+    with allure.step("Verify language preferences became global"):
+        assert approved_user.language_preferences.count() == 1, "Should have only one language preference"

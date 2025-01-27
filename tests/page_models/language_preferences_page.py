@@ -133,3 +133,7 @@ class LanguagePreferencesPage(BasePage):
             return len(model_select.options) > 1 and len(dictionary_select.options) > 1
         except NoSuchElementException:
             return False
+
+    def set_global_preferences(self):
+        self.wait_for_clickable((By.ID, "setGlobalPreferencesBtn")).click()
+        self.wait_for_clickable((By.ID, "setGlobalPreferencesBtn"))

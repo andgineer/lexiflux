@@ -408,3 +408,20 @@ def update_article_order(request: HttpRequest) -> JsonResponse:
         return JsonResponse({"status": "success"})
     except Exception as e:  # pylint: disable=broad-except
         return JsonResponse({"status": "error", "message": str(e)}, status=400)
+
+
+@smart_login_required
+@require_http_methods(["POST"])  # type: ignore
+def set_global_preferences(request: HttpRequest) -> JsonResponse:
+    """HTMX to Set the global preferences for the user."""
+    try:
+        data = json.loads(request.body)
+        language_id = data.get("language_id")
+        language = get_object_or_404(Language, google_code=language_id)
+        request.user.language_preferences.exclude(language=language).delete()
+        logger.info(f"Set global preferences for user {request.user.username} to {language.name}")
+
+        return JsonResponse({"status": "success"})
+    except Exception as e:  # pylint: disable=broad-except
+        logger.exception("Error in set_global_preferences")
+        return JsonResponse({"status": "error", "message": str(e)}, status=500)

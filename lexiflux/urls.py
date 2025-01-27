@@ -83,6 +83,11 @@ urlpatterns = [
         lexiflux.views.language_preferences_views.update_article_order,
         name="update_article_order",
     ),
+    path(
+        "api/set-global-language-preferences/",
+        lexiflux.views.language_preferences_views.set_global_preferences,
+        name="set-global-language-preferences",
+    ),
     # ai settings
     path("ai-settings/", lexiflux.views.ai_settings_views.ai_settings, name="ai-settings"),
     path(

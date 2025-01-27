@@ -20,7 +20,7 @@
                         <h5 class="card-title mb-0">Editing preferences for:</h5>
                     </div>
                     <div class="card-body">
-                        <div class="language-select-wrapper">
+                        <div class="language-select-wrapper mb-3">
                             <span class="language-flag">[[ getSelectedLanguageFlag() ]]</span>
                             <select id="languageSelect" v-model="currentLanguageId" @change="changeLanguage" class="form-select">
                                 <optgroup v-for="group in groupedLanguages" :label="group.label">
@@ -30,6 +30,22 @@
                                 </optgroup>
                             </select>
                         </div>
+                        <button
+                           class="btn btn-sm"
+                           @click="setGlobalPreferences"
+                           id="setGlobalPreferencesBtn"
+                           :class="{
+                              'btn-outline-danger border-2': !buttonAnimating,
+                              'btn-danger border-0 shadow-lg bounce': buttonAnimating
+                           }">
+                           <span :class="{'d-none': buttonAnimating}">Use these preferences for all languages</span>
+                           <span :class="{'d-none': !buttonAnimating}">
+                               <i class="bi bi-check2-circle me-2"></i>Apply to all languages
+                           </span>
+                        </button>
+                        <small class="text-muted d-block mt-1">
+                            This will override and clear existing preferences for all other languages.
+                        </small>
                     </div>
                 </div>
             </div>
@@ -161,6 +177,16 @@
 
 </div>
 
+<style>
+.bounce {
+   animation: bounce-scale 0.5s ease;
+}
+
+@keyframes bounce-scale {
+   0%, 100% { transform: scale(1); }
+   50% { transform: scale(1.15); }
+}
+</style>
 <script> {% include 'language-preferences-vue.js' %} </script>
 
 {% endblock %}

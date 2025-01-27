@@ -53,6 +53,7 @@ new Vue({
             userLanguageId: null,
             inlineTranslation: {},
             errorMessage: '',
+            buttonAnimating: false,
             deleteArticleId: null,
             deleteArticleTitle: '',
             deleteErrorMessage: '',
@@ -138,6 +139,36 @@ Add to each translation to {user_language} language.
                 this.errorMessage = 'Failed to update language preferences. Please try again.';
             });
         },
+       setGlobalPreferences() {
+           this.buttonAnimating = true;
+           return fetch('{% url "set-global-language-preferences" %}', {
+               method: 'POST',
+               headers: {
+                   'Content-Type': 'application/json',
+                   'X-CSRFToken': '{{ csrf_token }}'
+               },
+               body: JSON.stringify({
+                   language_id: this.currentLanguageId
+               }),
+               credentials: 'include'
+           })
+           .then(response => response.json())
+           .then(data => {
+               if (data.status === 'success') {
+                   return new Promise(resolve => {
+                       setTimeout(() => {
+                           this.updateLanguagePreferences();
+                           resolve();
+                       }, 500); // Animation will be visible for at least 500ms
+                   });
+               }
+           })
+           .finally(() => {
+               setTimeout(() => {
+                   this.buttonAnimating = false;
+               }, 500);
+           });
+       },
         changeLanguage() {
             this.updateLanguagePreferences();
         },
