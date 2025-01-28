@@ -3,6 +3,7 @@ import allure
 from django.urls import reverse
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.common.by import By
 
 from lexiflux.models import Language, LanguagePreferences
 from tests.conftest import USER_PASSWORD
@@ -97,8 +98,18 @@ def test_e2e_language_preferences_global_settings(browser, approved_user):
     with allure.step("Verify initial non-global state"):
         assert approved_user.language_preferences.count() > 1, "Should have multiple language preferences"
 
-    with allure.step("Enable global preferences"):
+    with allure.step("Open global preferences confirmation modal"):
         page.set_global_preferences()
+        modal = WebDriverWait(browser, 10).until(
+            EC.visibility_of_element_located((By.ID, "globalPreferencesConfirmModal"))
+        )
+        assert "Apply to all languages" in modal.text
+
+        apply_button = modal.find_element(By.XPATH, ".//button[contains(text(), 'Apply to all')]")
+        apply_button.click()
+        WebDriverWait(browser, 10).until(
+            EC.invisibility_of_element_located((By.ID, "globalPreferencesConfirmModal"))
+        )
 
     with allure.step("Verify language preferences became global"):
         assert approved_user.language_preferences.count() == 1, "Should have only one language preference"

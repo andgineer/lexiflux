@@ -1,0 +1,24 @@
+<div class="modal fade" id="globalPreferencesConfirmModal" tabindex="-1" aria-labelledby="globalPreferencesConfirmModalLabel" aria-hidden="true" ref="globalPreferencesConfirmModal">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="globalPreferencesConfirmModalLabel">Apply to all languages?</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>This will:</p>
+                <ul>
+                    <li>Remove all language-specific choices</li>
+                    <li>Use current setup for all languages</li>
+                </ul>
+                <p class="text-danger">This cannot be undone.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" @click="setGlobalPreferences">
+                    Apply to all
+                </button>
+            </div>
+        </div>
+    </div>
+</div>

@@ -135,5 +135,9 @@ class LanguagePreferencesPage(BasePage):
             return False
 
     def set_global_preferences(self):
+        """Click the global preferences button and wait for the confirmation modal"""
         self.wait_for_clickable((By.ID, "setGlobalPreferencesBtn")).click()
-        self.wait_for_clickable((By.ID, "setGlobalPreferencesBtn"))
+        modal = WebDriverWait(self.browser, 10).until(
+            EC.visibility_of_element_located((By.ID, "globalPreferencesConfirmModal"))
+        )
+        return modal
