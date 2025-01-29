@@ -88,18 +88,18 @@ def test_e2e_library_page_edit_book(browser, approved_user, book, language):
 @pytest.mark.selenium
 @pytest.mark.django_db
 def test_e2e_library_page_language_selection(browser, approved_user):
-    with allure.step("Login"):
-        browser.login(approved_user, USER_PASSWORD)
-        
     with allure.step("Setup: Remove user language"):
         approved_user.language = None
         approved_user.save()
         serbian = Language.objects.get(google_code="sr")
         assert approved_user.language_preferences.first().user_language.google_code != serbian.google_code
 
-    with allure.step("Navigate to library page and Wait for user modal"):
+    with allure.step("Login"):
+        browser.login(approved_user, USER_PASSWORD)
+        # after login redirect to library if no books
+        
+    with allure.step("Wait for user modal on library page"):
         page = LibraryPage(browser)
-        page.goto()
         browser.take_screenshot("Initial Library Page")
         assert page.is_user_modal_visible()
         assert "Welcome to LexiFlux!" in page.get_user_modal_text()
