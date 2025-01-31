@@ -100,6 +100,7 @@ def test_e2e_library_page_language_selection(browser, approved_user):
         
     with allure.step("Wait for user modal on library page"):
         page = LibraryPage(browser)
+        page.goto()
         browser.take_screenshot("Initial Library Page")
         assert page.is_user_modal_visible()
         assert "Welcome to LexiFlux!" in page.get_user_modal_text()
