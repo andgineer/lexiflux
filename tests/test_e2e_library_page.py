@@ -87,18 +87,26 @@ def test_e2e_library_page_edit_book(browser, approved_user, book, language):
 @pytest.mark.docker
 @pytest.mark.selenium
 @pytest.mark.django_db
-def test_e2e_library_page_language_selection(browser, approved_user):
-    with allure.step("Setup: Remove user language"):
-        approved_user.language = None
-        approved_user.save()
+def test_e2e_library_page_language_selection(browser, approved_user, language):
+    approved_user.language = language
+    approved_user.save()
+    
+    with allure.step("Verify user language preferences was set to default"):
         serbian = Language.objects.get(google_code="sr")
         assert approved_user.language_preferences.first().user_language.google_code != serbian.google_code
 
-    with allure.step("Login"):
+    with allure.step("Login and navigate to library page"):
         browser.login(approved_user, USER_PASSWORD)
-        # after login redirect to library if no books
+        page = LibraryPage(browser)
+        page.goto()
+        browser.take_screenshot("Initial Library Page")
         
-    with allure.step("Wait for user modal on library page"):
+    with allure.step("Setup: Remove user language"):
+        approved_user.language = None
+        approved_user.save()
+        approved_user.refresh_from_db()    
+        
+    with allure.step("Wait for user language selection modal on library page"):
         page = LibraryPage(browser)
         page.goto()
         browser.take_screenshot("Initial Library Page")
