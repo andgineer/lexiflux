@@ -30,6 +30,11 @@ Add `OLLAMA_LOAD_MODEL=llama3.2` or whatever model you want to the `docker run` 
 
 Please note it will download about 2Gb Ollama AI model and require about 4G RAM for the Docker container to run.
 
+## Stopping Lexiflux Docker Container
+To stop the container you can use
+
+    docker stop lexiflux
+
 ## Updates
 To update you can use
 
