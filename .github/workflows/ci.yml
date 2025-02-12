@@ -45,7 +45,7 @@ jobs:
         python-version: ${{ matrix.python-version }}
 
     - name: Install uv environment
-      uses: andgineer/uv-venv@v1
+      uses: andgineer/uv-venv@v3
     - name: Install dependencies
       run: uv pip install -r requirements.dev.txt
 
@@ -68,7 +68,7 @@ jobs:
         python-version: ${{ env.PRIMARY_PYTHON_VERSION }}
 
     - name: Install uv environment
-      uses: andgineer/uv-venv@v1
+      uses: andgineer/uv-venv@v3
     - name: Install dependencies
       run: uv pip install -r requirements.dev.txt
 
@@ -105,7 +105,7 @@ jobs:
         path: gh-pages-dir
 
     - name: Generate Allure test report
-      uses: andgineer/allure-report@v3.3
+      uses: andgineer/allure-report@v3.5
       id: allure-report
       if: always()
       with:

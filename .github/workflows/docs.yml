@@ -40,7 +40,7 @@ jobs:
 
 
       - name: Install uv environment
-        uses: andgineer/uv-venv@v1
+        uses: andgineer/uv-venv@v3
 
       - run: |
           uv pip install ghp-import -r requirements.dev.txt --python=${{ env.PRIMARY_PYTHON_VERSION }}
