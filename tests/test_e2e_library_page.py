@@ -92,10 +92,10 @@ def test_e2e_library_page_language_selection(browser, approved_user, language):
     approved_user.save()
     approved_user.refresh_from_db()
 
-    with allure.step("Login and navigate to library page"):
+    page = LibraryPage(browser)
+
+    with allure.step("Login and auto-redirect to library page"):
         browser.login(approved_user, USER_PASSWORD)
-        page = LibraryPage(browser)
-        page.goto()
         browser.take_screenshot("Initial Library Page")
         
     with allure.step("Wait for user language selection modal on library page"):
@@ -103,15 +103,15 @@ def test_e2e_library_page_language_selection(browser, approved_user, language):
         assert "Welcome to LexiFlux!" in page.get_user_modal_text()
 
     with allure.step("Select language and save"):
-        serbian = Language.objects.get(google_code="sr")
-        page.select_language(serbian.google_code)
+        spanish = Language.objects.get(google_code="es")
+        page.select_language(spanish.google_code)
         page.save_language_settings()
         browser.take_screenshot("After Language Selection")
 
     with allure.step("Verify language was saved in database"):
         approved_user.refresh_from_db()
-        assert approved_user.language == serbian
+        assert approved_user.language == spanish
 
         for pref in approved_user.language_preferences.all():
             pref.refresh_from_db()
-            assert pref.user_language == serbian
+            assert pref.user_language == spanish
