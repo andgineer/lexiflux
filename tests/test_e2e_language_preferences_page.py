@@ -38,9 +38,9 @@ def test_e2e_library_page_upapproved_user_cannot_access(browser, user):
 @pytest.mark.docker
 @pytest.mark.selenium
 @pytest.mark.django_db
-def test_e2e_language_preferences_page_inline_translation(browser, approved_user):
+def test_e2e_language_preferences_page_inline_translation(browser, user_preferences):
     with allure.step("Login and navigate to language preferences"):
-        browser.login(approved_user, USER_PASSWORD)
+        browser.login(user_preferences, USER_PASSWORD)
         page = LanguagePreferencesPage(browser)
         page.goto()
         # assert page.wait_for_options(), "Failed to load models/dictionaries options after multiple attempts"
@@ -84,19 +84,19 @@ def test_e2e_language_preferences_page_inline_translation(browser, approved_user
 @pytest.mark.docker
 @pytest.mark.selenium
 @pytest.mark.django_db
-def test_e2e_language_preferences_global_settings(browser, approved_user):
+def test_e2e_language_preferences_global_settings(browser, user_preferences):
     # Create second language preference to make initial state non-global
     spanish = Language.objects.get(google_code='es')
-    LanguagePreferences.get_or_create_language_preferences(approved_user, spanish)
+    LanguagePreferences.get_or_create_language_preferences(user_preferences, spanish)
 
     with allure.step("Login and navigate to language preferences"):
-        browser.login(approved_user, USER_PASSWORD)
+        browser.login(user_preferences, USER_PASSWORD)
         page = LanguagePreferencesPage(browser)
         page.goto()
         browser.take_screenshot("Initial state")
 
     with allure.step("Verify initial non-global state"):
-        assert approved_user.language_preferences.count() > 1, "Should have multiple language preferences"
+        assert user_preferences.language_preferences.count() > 1, "Should have multiple language preferences"
 
     with allure.step("Open global preferences confirmation modal"):
         page.set_global_preferences()
@@ -112,4 +112,4 @@ def test_e2e_language_preferences_global_settings(browser, approved_user):
         )
 
     with allure.step("Verify language preferences became global"):
-        assert approved_user.language_preferences.count() == 1, "Should have only one language preference"
+        assert user_preferences.language_preferences.count() == 1, "Should have only one language preference"

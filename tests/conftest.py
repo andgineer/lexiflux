@@ -376,6 +376,15 @@ def approved_user(user, language):
 
 
 @pytest.fixture
+def user_preferences(language):
+    user = get_user_model().objects.create_user(username='testuser2', password=USER_PASSWORD)
+    user.is_approved = True
+    user.language = language
+    user.save()
+    return user
+
+
+@pytest.fixture
 def author(db_init):
     return Author.objects.create(name="Lewis Carroll")
 
