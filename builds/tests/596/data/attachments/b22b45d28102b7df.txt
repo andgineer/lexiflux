@@ -1,0 +1,3 @@
+2025-01-30 16:33:34,386 INFO apps Lexiflux 1.21.2 is ready.
+2025-01-30 16:33:37,155 INFO signals Successfully created language preferences for user testuser (ID: 1)
+2025-01-30 16:33:37,183 INFO anki_connect result {'result': [1, 2, 3, 4, 5, 6]}

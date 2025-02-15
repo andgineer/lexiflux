@@ -1,0 +1,2 @@
+2025-02-15 08:35:54,147 INFO signals Successfully created language preferences for user testuser2 (ID: 4)
+2025-02-15 08:36:08,975 INFO language_preferences_views Error checking translation from serbian to english with GoogleTranslator: test --> No translation was found using the current translator. Try another translator?

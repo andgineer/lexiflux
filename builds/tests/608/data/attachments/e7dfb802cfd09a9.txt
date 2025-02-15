@@ -1,0 +1,1 @@
+2025-02-15 08:36:20,652 INFO signals Successfully created language preferences for user testuser (ID: 1)

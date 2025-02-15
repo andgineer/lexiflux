@@ -1,0 +1,2 @@
+INFO     root:apps.py:34 Lexiflux 1.21.3 is ready.
+INFO     lexiflux.signals:signals.py:56 Successfully created language preferences for user testuser (ID: 1)

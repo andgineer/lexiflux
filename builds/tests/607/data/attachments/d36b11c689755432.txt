@@ -1,0 +1,2 @@
+INFO     lexiflux.signals:signals.py:56 Successfully created language preferences for user testuser2 (ID: 4)
+INFO     root:language_preferences_views.py:204 Error checking translation from serbian to english with GoogleTranslator: test --> No translation was found using the current translator. Try another translator?

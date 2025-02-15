@@ -1,0 +1,2 @@
+INFO     lexiflux.signals:signals.py:56 Successfully created language preferences for user testuser2 (ID: 9)
+INFO     root:language_preferences_views.py:422 Set global preferences for user testuser2 to Serbian

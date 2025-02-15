@@ -1,0 +1,2 @@
+SEVERE: http://10.1.0.154:49787/api/user/ - Failed to load resource: the server responded with a status of 500 (Internal Server Error)
+SEVERE: https://unpkg.com/htmx.org@1.9.12 0:26875 "Response Status Error Code 500 from /api/user/"

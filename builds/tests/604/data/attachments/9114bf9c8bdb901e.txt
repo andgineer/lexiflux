@@ -1,0 +1,2 @@
+2025-02-14 18:04:18,225 INFO signals Successfully created language preferences for user testuser (ID: 8)
+2025-02-14 18:04:19,910 INFO language_preferences_views Set global preferences for user testuser to Serbian

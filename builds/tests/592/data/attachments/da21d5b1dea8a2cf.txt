@@ -1,0 +1,4 @@
+2025-01-29 05:22:14,862 INFO signals Successfully created language preferences for user testuser (ID: 35)
+2025-01-29 05:22:15,987 INFO words_export For language en last export datetime: None
+2025-01-29 05:22:16,275 INFO words_export Words exported for English: 1 words using csvFile
+2025-01-29 05:22:16,284 INFO words_export For language en last export datetime: 2025-01-29 05:22:16.275099+00:00

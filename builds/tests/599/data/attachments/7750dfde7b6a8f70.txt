@@ -1,0 +1,2 @@
+2025-02-01 05:30:25,594 INFO signals Successfully created language preferences for user testuser (ID: 1)
+2025-02-01 05:30:25,625 INFO reader_views Link clicked: #chapter1, page_info: {'page': 2, 'word': 5}

@@ -1,0 +1,4 @@
+2025-01-31 05:20:55,629 INFO signals Successfully created language preferences for user testuser (ID: 1)
+2025-01-31 05:20:55,649 INFO reader_views Location changed: book some-book-code, page 1, top word 10
+2025-01-31 05:20:55,654 INFO models Reading location updated for some-book-code: 1(1):10/0.0
+[{'page_number': 1, 'word': 10}]/0

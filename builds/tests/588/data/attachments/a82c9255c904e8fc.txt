@@ -1,0 +1,2 @@
+INFO     lexiflux.signals:signals.py:56 Successfully created language preferences for user testuser (ID: 1)
+ERROR    lexiflux.language.llm:llm.py:85 'book_code', model: gpt-4o, class: ChatOpenAI, show_api_key_info: True

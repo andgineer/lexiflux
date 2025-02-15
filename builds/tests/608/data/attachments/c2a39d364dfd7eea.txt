@@ -1,0 +1,5 @@
+2025-02-15 08:38:30,949 INFO signals Successfully created language preferences for user testuser (ID: 38)
+2025-02-15 08:38:32,080 INFO words_export For language en last export datetime: None
+2025-02-15 08:38:32,369 INFO words_export Words exported for English: 1 words
+2025-02-15 08:38:32,370 INFO words_export Words exported for English: 1 words using ankiConnect
+2025-02-15 08:38:32,378 INFO words_export For language en last export datetime: 2025-02-15 08:38:32.369963+00:00
