@@ -1,3 +1,5 @@
+from unittest.mock import patch, Mock
+
 import pytest
 import allure
 from django.urls import reverse

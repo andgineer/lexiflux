@@ -177,15 +177,18 @@ def check_article_params(
     Return None if the parameters are valid, otherwise return a JsonResponse with an error message.
     """
     if article_type == "Dictionary":
-        if not parameters.get("dictionary"):
+        dictionary_name = parameters.get("dictionary")
+        if not dictionary_name:
             return JsonResponse(
                 {"status": "error", "message": "Please select a dictionary"}, status=400
             )
         try:
+            source_language = language_preferences.language.name.lower()
+            target_language = language_preferences.user_language.name.lower()
             get_translator(
-                parameters.get("dictionary"),
-                language_preferences.language.name.lower(),
-                language_preferences.user_language.name.lower(),
+                dictionary_name,
+                source_language,
+                target_language,
             ).translate("test")
         except LanguageNotSupportedException:
             return JsonResponse(
@@ -196,6 +199,11 @@ def check_article_params(
                     f"to {language_preferences.user_language.name}",
                 },
                 status=400,
+            )
+        except Exception as e:  # pylint: disable=broad-except
+            logger.info(
+                f"Error checking translation from {source_language} to {target_language} "
+                f"with {dictionary_name}: {str(e)}"
             )
     return None
 
