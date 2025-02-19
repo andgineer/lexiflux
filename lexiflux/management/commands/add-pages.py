@@ -1,4 +1,4 @@
-"""Django management command to add pages to a book."""  # pylint: disable=invalid-name
+"""Django management command to add pages to a book."""  # noqa: N806
 
 import argparse
 from typing import Any
@@ -6,7 +6,8 @@ from typing import Any
 from django.core.management.base import BaseCommand
 from django.db.models import Max
 from faker import Faker
-from lexiflux.models import BookPage, Book, Author, Language
+
+from lexiflux.models import Author, Book, BookPage, Language
 
 NUM_PAGES_TO_ADD = 100
 
@@ -24,17 +25,19 @@ class Command(BaseCommand):  # type: ignore
         """Add optional argument to specify the number of pages to add."""
         parser.add_argument("pages", nargs="?", type=int, default=NUM_PAGES_TO_ADD)
 
-    def handle(self, *args: Any, **options: Any) -> None:
+    def handle(self, *args: Any, **options: Any) -> None:  # noqa: ARG002
         num_pages_to_add = options["pages"]
         fake = Faker()
 
         # Ensure there is at least one author, language, and book
         author, _ = Author.objects.get_or_create(name=fake.name())
         language, _ = Language.objects.get_or_create(
-            google_code="en", defaults={"name": "English"}
+            google_code="en",
+            defaults={"name": "English"},
         )
         book, _ = Book.objects.get_or_create(
-            title=fake.sentence(), defaults={"author": author, "language": language}
+            title=fake.sentence(),
+            defaults={"author": author, "language": language},
         )
 
         # Get the biggest page number for the selected book or default to 0 if no pages exist
@@ -48,10 +51,12 @@ class Command(BaseCommand):  # type: ignore
         for i in range(num_pages_to_add):
             sentences = " ".join(fake.sentences(25))
             BookPage.objects.create(
-                book=book, number=highest_page_number + i + 1, content=sentences
+                book=book,
+                number=highest_page_number + i + 1,
+                content=sentences,
             )
 
         self.stdout.write(
             f"Added {num_pages_to_add} pages from {highest_page_number + 1} "
-            f"to {highest_page_number + num_pages_to_add}"
+            f"to {highest_page_number + num_pages_to_add}",
         )

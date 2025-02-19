@@ -1,14 +1,17 @@
 """Common utilities for Anki export operations."""
 
-from typing import List, Dict, Any
+from typing import Any
+
 from lexiflux.models import TranslationHistory
 
 NOTES_PER_TERM = 3
 
 
 def create_anki_notes_data(
-    term: TranslationHistory, model_name: str, deck_name: str
-) -> List[Dict[str, Any]]:
+    term: TranslationHistory,
+    model_name: str,
+    deck_name: str,
+) -> list[dict[str, Any]]:
     """Create Anki notes data for a given term."""
     context_parts = term.context.split(TranslationHistory.CONTEXT_MARK)
     sentence_start = context_parts[1]
@@ -42,7 +45,7 @@ def create_anki_notes_data(
     ]
 
 
-def get_anki_model_config(model_name: str) -> Dict[str, Any]:
+def get_anki_model_config(model_name: str) -> dict[str, Any]:
     """Get the configuration for the Anki model."""
     return {
         "modelName": model_name,
@@ -56,6 +59,6 @@ def get_anki_model_config(model_name: str) -> Dict[str, Any]:
                 "Name": "Card 1",
                 "Front": "{{Front}}",
                 "Back": "{{FrontSide}}<hr id='answer'>{{Back}}",
-            }
+            },
         ],
     }

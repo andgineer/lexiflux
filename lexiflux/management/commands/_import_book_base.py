@@ -3,7 +3,7 @@
 import argparse
 import logging
 import os
-from typing import Any, Type
+from typing import Any
 
 from django.contrib.auth import get_user_model
 from django.core.management.base import BaseCommand, CommandError
@@ -33,7 +33,7 @@ class ImportBookBaseCommand(BaseCommand):  # type: ignore
     """Base command for importing books from various file formats."""
 
     help = "Imports a book from a file"
-    book_class: Type[BookLoaderBase]
+    book_class: type[BookLoaderBase]
 
     def add_arguments(self, parser: argparse.ArgumentParser) -> None:
         parser.add_argument("file_path", type=str, help="Path to the file to import")
@@ -75,25 +75,25 @@ class ImportBookBaseCommand(BaseCommand):  # type: ignore
         )
 
     def get_user_email(self) -> str:
-        """
-        Get the email of the system user running the command.
+        """Get the email of the system user running the command.
         Raise exception if no user found.
         """
-        User = get_user_model()  # pylint: disable=invalid-name
+        User = get_user_model()  # noqa: N806
         user_email = os.environ.get(USER_EMAIL_ENV, settings.lexiflux.default_user_email)
 
         try:
             user = User.objects.get(email=user_email)
             self.stdout.write(f"Auto-detected user email: {user_email}")
-            return user.email  # type: ignore
         except User.DoesNotExist as e:
             raise CommandError(
                 "Could not auto-detect user to set non public book owner. "
                 "Please provide it using --email option, "
-                f"or set `{USER_EMAIL_ENV}` environment variable."
+                f"or set `{USER_EMAIL_ENV}` environment variable.",
             ) from e
+        else:
+            return user.email  # type: ignore
 
-    def handle(self, *args: Any, **options: Any) -> None:
+    def handle(self, *args: Any, **options: Any) -> None:  # noqa: ARG002
         file_path = options["file_path"]
         log_level = validate_log_level(options["loglevel"])
         db_log_level = validate_log_level(options["db_loglevel"])
@@ -106,12 +106,12 @@ class ImportBookBaseCommand(BaseCommand):  # type: ignore
             if languages.count() > 1:
                 self.stdout.write(
                     self.style.ERROR(
-                        f"More than one language found for '--language={forced_language}':"
-                    )
+                        f"More than one language found for '--language={forced_language}':",
+                    ),
                 )
                 for language in languages:
                     self.stdout.write(
-                        self.style.ERROR(f"  {language.name} ({language.google_code})")
+                        self.style.ERROR(f"  {language.name} ({language.google_code})"),
                     )
                 return
             if languages.count() == 0:
@@ -127,8 +127,8 @@ class ImportBookBaseCommand(BaseCommand):  # type: ignore
             self.stdout.write(
                 self.style.SUCCESS(
                     f'Successfully imported book "{book.title}" ({book.author}, '
-                    f'{book.language}) from "{file_path}", code: {book.code}'
-                )
+                    f'{book.language}) from "{file_path}", code: {book.code}',
+                ),
             )
         except Exception as e:
             raise CommandError(f"Error importing book from {file_path}: {e}") from e

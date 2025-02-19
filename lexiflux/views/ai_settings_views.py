@@ -3,12 +3,12 @@
 import json
 
 from django.core.exceptions import ValidationError
-from django.http import JsonResponse, HttpRequest, HttpResponse
-from django.views.decorators.http import require_http_methods
+from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import render
+from django.views.decorators.http import require_http_methods
 
 from lexiflux.decorators import smart_login_required
-from lexiflux.models import AIModelConfig, SUPPORTED_CHAT_MODELS
+from lexiflux.models import SUPPORTED_CHAT_MODELS, AIModelConfig
 
 # Define custom captions for chat models
 CHAT_MODEL_CAPTIONS = {
@@ -40,7 +40,7 @@ def ai_settings_api(request: HttpRequest) -> JsonResponse:
                     "chat_model": chat_model,
                     "caption": CHAT_MODEL_CAPTIONS.get(chat_model, chat_model),
                     "settings": config.settings,
-                }
+                },
             )
         return JsonResponse(configs, safe=False)
     if request.method == "POST":
@@ -51,7 +51,8 @@ def ai_settings_api(request: HttpRequest) -> JsonResponse:
                 chat_model = config_data["chat_model"]
                 if chat_model not in SUPPORTED_CHAT_MODELS:
                     return JsonResponse(
-                        {"error": f"Unsupported chat model: {chat_model}"}, status=400
+                        {"error": f"Unsupported chat model: {chat_model}"},
+                        status=400,
                     )
 
                 ai_model_settings = {
@@ -73,7 +74,7 @@ def ai_settings_api(request: HttpRequest) -> JsonResponse:
             if errors:
                 return JsonResponse({"errors": errors}, status=400)
             return JsonResponse({"status": "success"})
-        except Exception as e:  # pylint: disable=broad-except
+        except Exception as e:  # pylint: # noqa: BLE001
             return JsonResponse({"error": str(e)}, status=400)
 
     # This line should never be reached due to the @require_http_methods decorator,

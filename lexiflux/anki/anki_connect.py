@@ -1,15 +1,15 @@
 """AnkiConnect API for exporting words to Anki."""
 
+import ast
 import json
 import logging
-from typing import List, Optional, Dict, Any
-import ast
-import requests
+from typing import Any, Optional
 
+import requests
 import urllib3.connection
 
+from lexiflux.anki.anki_common import NOTES_PER_TERM, create_anki_notes_data, get_anki_model_config
 from lexiflux.models import Language, TranslationHistory
-from lexiflux.anki.anki_common import create_anki_notes_data, get_anki_model_config, NOTES_PER_TERM
 
 ANKI_CONNECT_TIMEOUT = 10
 
@@ -18,8 +18,10 @@ logger = logging.getLogger(__name__)
 ANKI_CONNECT_URL = "http://localhost:8765"
 
 
-def export_words_to_anki_connect(  # pylint: disable=unused-argument
-    language: Language, terms: List[TranslationHistory], deck_name: str
+def export_words_to_anki_connect(
+    language: Language,  # noqa: ARG001
+    terms: list[TranslationHistory],
+    deck_name: str,
 ) -> int:
     """Export words to Anki using AnkiConnect."""
     anki_connect_url = ANKI_CONNECT_URL
@@ -46,7 +48,7 @@ def export_words_to_anki_connect(  # pylint: disable=unused-argument
         raise ValueError(
             "Failed to connect to AnkiConnect. "
             'Is <a href="https://apps.ankiweb.net/">Anki</a> running '
-            'with <a href="https://ankiweb.net/shared/info/2055492159">AnkiConnect addon?</a>'
+            'with <a href="https://ankiweb.net/shared/info/2055492159">AnkiConnect addon?</a>',
         ) from e
 
 
@@ -66,7 +68,7 @@ def create_model(url: str, model_name: str) -> None:
     requests.post(url, json=payload, timeout=ANKI_CONNECT_TIMEOUT)
 
 
-def add_notes(url: str, notes: List[Dict[str, Any]]) -> Optional[int]:
+def add_notes(url: str, notes: list[dict[str, Any]]) -> Optional[int]:
     """Add notes to Anki, skipping duplicates and adding only new notes.
 
     Return None if all success.
@@ -97,17 +99,17 @@ def add_notes(url: str, notes: List[Dict[str, Any]]) -> Optional[int]:
         if "result" not in result:
             raise ValueError("Unexpected response format from AnkiConnect")
         assert len(result["result"]) == len(notes), "Mismatch between number of notes and response"
-        return None
-
     except json.JSONDecodeError as e:
         logger.error(f"Failed to parse AnkiConnect response: {str(e)}")
         raise ValueError("Received an invalid response from AnkiConnect") from e
     except Exception as e:
         logger.error(f"Unexpected error when adding notes to Anki: {str(e)}")
         raise
+    else:
+        return None
 
 
-def parse_error_message(error_message: str) -> List[str]:
+def parse_error_message(error_message: str) -> list[str]:
     """Parse the error message string into a list of error messages."""
     try:
         return ast.literal_eval(error_message)  # type: ignore

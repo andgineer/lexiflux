@@ -2,21 +2,22 @@
 
 import io
 import random
-from typing import List
 
 import genanki
 from django.core.files.base import ContentFile
 from django.utils import timezone
 
-from lexiflux.models import TranslationHistory, Language
 from lexiflux.anki.anki_common import create_anki_notes_data, get_anki_model_config
+from lexiflux.models import Language, TranslationHistory
 
 
 def export_words_to_anki_file(  # pylint: disable=too-many-locals
-    language: Language, terms: List[TranslationHistory], deck_name: str
+    language: Language,
+    terms: list[TranslationHistory],
+    deck_name: str,
 ) -> tuple[ContentFile, str]:
     """Export words to an Anki-compatible file."""
-    model_id = random.randrange(1 << 30, 1 << 31)
+    model_id = random.randrange(1 << 30, 1 << 31)  # noqa: S311
     model_config = get_anki_model_config("Lexiflux Translation Model")
 
     model = genanki.Model(
@@ -34,7 +35,7 @@ def export_words_to_anki_file(  # pylint: disable=too-many-locals
         css=model_config["css"],
     )
 
-    deck_id = random.randrange(1 << 30, 1 << 31)
+    deck_id = random.randrange(1 << 30, 1 << 31)  # noqa: S311
     deck = genanki.Deck(deck_id, deck_name)
 
     for term in terms:
