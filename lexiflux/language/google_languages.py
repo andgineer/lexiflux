@@ -1,17 +1,16 @@
 """Fill the database with languages from Google Translate."""
 
 import json
-from typing import Any, Optional, Dict, List
+from typing import Any, Optional
 
 from django.apps import apps as django_apps
-
 
 SPECIAL_LANGUAGE_CODE_MAPPING = {
     "zh-CN": "zh",  # Chinese (Simplified)
     "zh-TW": "zh",  # Chinese (Traditional)
 }
 
-LANGUAGE_GROUPS: Dict[str, List[str]] = {
+LANGUAGE_GROUPS: dict[str, list[str]] = {
     "Serbo-Croatian": ["Serbian", "Croatian", "Bosnian"],
     "Chinese": ["Chinese (Simplified)", "Chinese (Traditional)"],
     "Arabic": ["Arabic", "Egyptian Arabic"],
@@ -31,7 +30,7 @@ def populate_languages(apps: Optional[django_apps] = None, *args: Any) -> None: 
     if language_class.objects.exists():
         return  # Languages already populated, no need to do it again
 
-    with open("lexiflux/resources/google_translate_languages.json", "r", encoding="utf8") as file:
+    with open("lexiflux/resources/google_translate_languages.json", encoding="utf8") as file:
         data = json.load(file)
 
     # Iterate over the languages in the JSON file
@@ -42,13 +41,14 @@ def populate_languages(apps: Optional[django_apps] = None, *args: Any) -> None: 
 
         # Update or create the language in the database
         language_class.objects.update_or_create(
-            google_code=google_code, defaults={"epub_code": epub_code, "name": lang_name}
+            google_code=google_code,
+            defaults={"epub_code": epub_code, "name": lang_name},
         )
 
     populate_language_groups(apps, *args)
 
 
-def populate_language_groups(apps: Optional[django_apps] = None, *args: Any) -> None:  # pylint: disable=keyword-arg-before-vararg
+def populate_language_groups(apps: Optional[django_apps] = None, *args: Any) -> None:  # pylint: disable=keyword-arg-before-vararg  # noqa: ARG001
     """Load language groups."""
     get_model = django_apps.get_model if apps is None else apps.get_model
     try:
@@ -69,7 +69,7 @@ def populate_language_groups(apps: Optional[django_apps] = None, *args: Any) -> 
                     group.languages.add(language)
                 except language_class.DoesNotExist:
                     print(
-                        f"Warning: {lang_name} not found in the database for group {group_name}."
+                        f"Warning: {lang_name} not found in the database for group {group_name}.",
                     )
 
             group.save()

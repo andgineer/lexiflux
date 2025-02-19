@@ -1,6 +1,7 @@
 """Forms for the Lexiflux app."""
 
 from django.contrib.auth.forms import UserCreationForm
+
 from lexiflux.models import CustomUser
 
 

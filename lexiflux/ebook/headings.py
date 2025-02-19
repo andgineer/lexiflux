@@ -2,8 +2,7 @@
 
 import logging
 import re
-from typing import List, Optional, Tuple
-
+from typing import Optional
 
 log = logging.getLogger()
 
@@ -11,13 +10,13 @@ log = logging.getLogger()
 class HeadingDetector:
     """Detect headings."""
 
-    def get_headings(self, page_text: str, page_num: int) -> List[Tuple[str, int, int]]:
+    def get_headings(self, page_text: str, page_num: int) -> list[tuple[str, int, int]]:
         """Detect chapter headings in the text.
 
         Return headings as a list of tuples (heading, page, word).
         """
         patterns = self.prepare_heading_patterns()
-        headings: List[Tuple[str, int, int]] = []
+        headings: list[tuple[str, int, int]] = []
         for pattern in patterns:
             if match := pattern.search(page_text):
                 headings.append(
@@ -25,12 +24,12 @@ class HeadingDetector:
                         match.group().replace("<br/>", " ").strip(),
                         page_num,
                         self.get_word_num(page_text, match.start() + 1),
-                    )
+                    ),
                 )
                 break
         return headings
 
-    def prepare_heading_patterns(self) -> List[re.Pattern[str]]:  # pylint: disable=too-many-locals
+    def prepare_heading_patterns(self) -> list[re.Pattern[str]]:  # pylint: disable=too-many-locals
         """Prepare regex patterns for detecting chapter headings."""
         # Form 1: Chapter I, Chapter 1, Chapter the First, CHAPTER 1
         # Ways of enumerating chapters, e.g.
