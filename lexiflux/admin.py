@@ -1,6 +1,7 @@
 """Custom User Admin Configuration"""
 
 from django.contrib import admin
+
 from lexiflux.models import CustomUser
 
 

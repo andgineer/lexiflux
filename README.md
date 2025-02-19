@@ -5,7 +5,7 @@
 
 # Lexiflux
 
-Master languages faster with our AI-powered reading companion. 
+Master languages faster with our AI-powered reading companion.
 
 Instantly translate and understand foreign texts as you read, building your vocabulary and comprehension skills effortlessly.
 
@@ -27,7 +27,7 @@ Clone [the repo](https://github.com/andgineer/lexiflux).
 
 Install [uv](https://github.com/astral-sh/uv).
 
-Install [invoke](https://docs.pyinvoke.org/en/stable/) preferably with 
+Install [invoke](https://docs.pyinvoke.org/en/stable/) preferably with
 [`pipx`](https://pypa.github.io/pipx/):
 
     pipx install invoke

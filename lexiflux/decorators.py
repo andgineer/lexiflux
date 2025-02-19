@@ -2,14 +2,14 @@
 
 import logging
 from functools import wraps
-from typing import Callable, Any
-from django.http import HttpRequest, HttpResponse
-from django.contrib.auth.decorators import login_required
+from typing import Any, Callable
+
 from django.contrib.auth import get_user_model
+from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import AnonymousUser
+from django.http import HttpRequest, HttpResponse
 
 from lexiflux.lexiflux_settings import settings
-
 
 logger = logging.getLogger(__name__)
 

@@ -1,10 +1,10 @@
 """API utilities."""
 
-from functools import wraps
 import re
-from typing import Callable, Any, Type, Dict
+from functools import wraps
+from typing import Any, Callable
 
-from django.http import JsonResponse, HttpRequest
+from django.http import HttpRequest, JsonResponse
 from pydantic import BaseModel, ValidationError
 
 
@@ -23,7 +23,7 @@ class ViewGetParamsModel(BaseModel):  # pylint: disable=too-few-public-methods
         populate_by_name = True
 
 
-def get_params(schema: Type[BaseModel]) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
+def get_params(schema: type[BaseModel]) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
     """Decorator to validate GET params using Pydantic models."""
 
     def decorator(view_func: Callable[..., Any]) -> Callable[..., Any]:
@@ -31,7 +31,7 @@ def get_params(schema: Type[BaseModel]) -> Callable[[Callable[..., Any]], Callab
         def _wrapped_view(request: HttpRequest, *args: Any, **kwargs: Any) -> JsonResponse:
             try:
                 # Convert QueryDict to regular dict to use parse_obj, ensuring single values
-                data: Dict[str, Any] = {key: request.GET.get(key) for key in request.GET.keys()}
+                data: dict[str, Any] = {key: request.GET.get(key) for key in request.GET}
                 params = schema.parse_obj(data)
                 return view_func(request, params, *args, **kwargs)
             except ValidationError as e:

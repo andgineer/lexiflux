@@ -9,10 +9,10 @@ env:
   NODE_VERSION: '21.x'
   PRIMARY_PLATFORM: 'ubuntu-latest'
   PYTEST_CMD: >-
-    python -m pytest 
+    python -m pytest
     -n auto
-    --junitxml=pytest.xml 
-    --cov-report=term-missing:skip-covered 
+    --junitxml=pytest.xml
+    --cov-report=term-missing:skip-covered
     --cov=lexiflux
     tests/
 
@@ -125,4 +125,3 @@ jobs:
     - name: Upload coverage data to coveralls.io
       if: always()
       uses: coverallsapp/github-action@v2
-
