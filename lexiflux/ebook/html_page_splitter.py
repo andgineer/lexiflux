@@ -1,9 +1,11 @@
 """Split HTML content into pages of approximately equal length."""
 
-from dataclasses import dataclass
-from typing import Iterator, List, Any, Optional
 import re
-from bs4 import BeautifulSoup, Tag, NavigableString
+from collections.abc import Iterator
+from dataclasses import dataclass
+from typing import Any, Optional
+
+from bs4 import BeautifulSoup, NavigableString, Tag
 
 
 @dataclass
@@ -11,7 +13,7 @@ class SplitterContext:
     """Context for holding mutable state during HTML splitting."""
 
     size: int
-    chunk: List[str]
+    chunk: list[str]
 
     def clear_chunk(self) -> None:
         """Clear the current chunk and reset size."""
@@ -40,7 +42,7 @@ class HtmlPageSplitter:
         soup = BeautifulSoup(html, "html.parser")
         return bool(soup.get_text(strip=True) or soup.find("img"))
 
-    def _non_empty_chunk(self, current_chunk: List[str]) -> Optional[str]:
+    def _non_empty_chunk(self, current_chunk: list[str]) -> Optional[str]:
         """Return chunk content if non-empty, otherwise None."""
         if current_chunk:
             chunk = "".join(current_chunk)
@@ -49,7 +51,9 @@ class HtmlPageSplitter:
         return None
 
     def split_elements(
-        self, elements: List[Any], context: Optional[SplitterContext] = None
+        self,
+        elements: list[Any],
+        context: Optional[SplitterContext] = None,
     ) -> Iterator[str]:
         """Recursively split elements into chunks of appropriate size."""
         if context is None:
@@ -66,7 +70,7 @@ class HtmlPageSplitter:
                 yield from self._split_tag(context, element)
 
         # Yield any remaining content
-        if context.chunk:
+        if context.chunk:  # noqa: SIM102
             if chunk := self._non_empty_chunk(context.chunk):
                 yield chunk
 
@@ -141,7 +145,7 @@ class HtmlPageSplitter:
                 # Handle sentences larger than target size
                 if sentence_size > self.target_page_size:
                     words = complete_sentence.split()
-                    temp: List[str] = []
+                    temp: list[str] = []
                     temp_size = 0
 
                     for word in words:

@@ -1,7 +1,6 @@
-"""Django management command to import a book from a plain text file."""  # pylint: disable=invalid-name
+"""Django management command to import a book from a plain text file."""  # noqa: N806
 
 from lexiflux.ebook.book_loader_plain_text import BookLoaderPlainText
-
 from lexiflux.management.commands._import_book_base import ImportBookBaseCommand
 
 

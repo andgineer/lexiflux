@@ -1,7 +1,7 @@
-"""Django management command to import a book from an EPUB file."""  # pylint: disable=invalid-name
+"""Django management command to import a book from an EPUB file."""  # noqa: N806
 
-from lexiflux.management.commands._import_book_base import ImportBookBaseCommand
 from lexiflux.ebook.book_loader_epub import BookLoaderEpub
+from lexiflux.management.commands._import_book_base import ImportBookBaseCommand
 
 
 class Command(ImportBookBaseCommand):  # type: ignore

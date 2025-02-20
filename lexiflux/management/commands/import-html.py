@@ -1,7 +1,7 @@
-"""Django management command to import a book from an HTML file."""  # pylint: disable=invalid-name
+"""Django management command to import a book from an HTML file."""  # noqa: N806
 
-from lexiflux.management.commands._import_book_base import ImportBookBaseCommand
 from lexiflux.ebook.book_loader_html import BookLoaderHtml
+from lexiflux.management.commands._import_book_base import ImportBookBaseCommand
 
 
 class Command(ImportBookBaseCommand):  # type: ignore

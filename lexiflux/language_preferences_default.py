@@ -1,8 +1,8 @@
 """Create default language preferences"""
 
 from typing import Any
-from django.apps import apps
 
+from django.apps import apps
 
 DEFAULT_LEXICAL_ARTICLES = [
     {"type": "Explain", "title": "Explain", "parameters": {"model": "gpt-4o-mini"}},
@@ -31,16 +31,16 @@ DEFAULT_LEXICAL_ARTICLES = [
 def create_default_language_preferences(user: Any) -> Any:  # do not use models here
     """Create default language preferences for a user."""
     # Due to circular imports, we need to import the models from the apps
-    LanguagePreferences = apps.get_model("lexiflux", "LanguagePreferences")  # pylint: disable=invalid-name
-    LexicalArticle = apps.get_model("lexiflux", "LexicalArticle")  # pylint: disable=invalid-name
-    Language = apps.get_model("lexiflux", "Language")  # pylint: disable=invalid-name
+    LanguagePreferences = apps.get_model("lexiflux", "LanguagePreferences")  # noqa: N806
+    LexicalArticle = apps.get_model("lexiflux", "LexicalArticle")  # noqa: N806
+    Language = apps.get_model("lexiflux", "Language")  # noqa: N806
 
     try:
         english_language = Language.objects.get(google_code="en")
         serbian_language = Language.objects.get(google_code="sr")
     except Language.DoesNotExist as exc:
         raise ValueError(
-            "English and / or Serbian language not found in the Language table."
+            "English and / or Serbian language not found in the Language table.",
         ) from exc
 
     language_preferences = LanguagePreferences.objects.create(
