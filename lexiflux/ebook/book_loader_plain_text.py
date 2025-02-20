@@ -3,11 +3,13 @@
 import logging
 import random
 import re
-from typing import Any, Dict, Iterator, Tuple
+from collections.abc import Iterator
 from html import escape
+from typing import Any
 
 from chardet.universaldetector import UniversalDetector
-from lexiflux.ebook.book_loader_base import MetadataField, BookLoaderBase
+
+from lexiflux.ebook.book_loader_base import BookLoaderBase, MetadataField
 from lexiflux.ebook.headings import HeadingDetector
 from lexiflux.ebook.page_splitter import PageSplitter
 
@@ -24,14 +26,15 @@ class BookLoaderPlainText(BookLoaderBase):  # pylint: disable=too-many-instance-
     GUTENBERG_START_SIZE = 1024  # Minimum size of the Gutenberg preamble
     JUNK_TEXT_BEGIN_PERCENT = 5
     JUNK_TEXT_END_PERCENT = 5
-    assert JUNK_TEXT_END_PERCENT + JUNK_TEXT_BEGIN_PERCENT < 100
+    ONE_HUNDRED_PERCENT = 100
+    assert JUNK_TEXT_END_PERCENT + JUNK_TEXT_BEGIN_PERCENT < ONE_HUNDRED_PERCENT
     WORD_ESTIMATED_LENGTH = 30
     MIN_RANDOM_WORDS = 3
 
     book_start: int
     book_end: int
 
-    def detect_meta(self) -> Tuple[Dict[str, Any], int, int]:
+    def detect_meta(self) -> tuple[dict[str, Any], int, int]:
         """Try to detect book meta and text.
 
         Extract meta if it is present.
@@ -61,7 +64,7 @@ class BookLoaderPlainText(BookLoaderBase):  # pylint: disable=too-many-instance-
         log.debug("CharDet: %s", detector.result)
         encoding = detector.result["encoding"]
 
-        with open(file_path, "r", encoding=encoding) as f:
+        with open(file_path, encoding=encoding) as f:
             return f.read()
 
     def get_random_words(self, words_num: int = 15) -> str:
@@ -71,14 +74,14 @@ class BookLoaderPlainText(BookLoaderBase):  # pylint: disable=too-many-instance-
         end_index = (
             int(
                 self.book_start
-                + (self.book_end - self.book_start) * (100 - self.JUNK_TEXT_END_PERCENT) / 100
+                + (self.book_end - self.book_start) * (100 - self.JUNK_TEXT_END_PERCENT) / 100,
             )
             - expected_words_length
         )
         if end_index <= self.book_start:
             end_index = self.book_end
 
-        start = random.randint(start_index, max(start_index, end_index))
+        start = random.randint(start_index, max(start_index, end_index))  # noqa: S311
         log.debug("Random words start: %s, [%s, %s]", start, start_index, end_index)
         fragment = self.text[start : start + expected_words_length]
         # Skip the first word in case it's partially cut off
@@ -95,8 +98,7 @@ class BookLoaderPlainText(BookLoaderBase):  # pylint: disable=too-many-instance-
         text = self.fix_coding(text)
         text = re.sub(r"(\r?\n|\u2028|\u2029)", " <br/> ", text)
         text = re.sub(r"\r", "", text)
-        text = re.sub(r"[ \t]+", " ", text)
-        return text
+        return re.sub(r"[ \t]+", " ", text)
 
     def fix_coding(self, text: str) -> str:
         """Fix common coding issues in serbian books."""
@@ -125,7 +127,8 @@ class BookLoaderPlainText(BookLoaderBase):  # pylint: disable=too-many-instance-
 
             # shift end if found heading near the end
             if headings := heading_detector.get_headings(
-                page_splitter.text[start + page_splitter.PAGE_MIN_LENGTH : end] + "\n\n", page_num
+                page_splitter.text[start + page_splitter.PAGE_MIN_LENGTH : end] + "\n\n",
+                page_num,
             ):
                 end = (
                     start + page_splitter.PAGE_MIN_LENGTH + headings[0][1] - 1
@@ -153,7 +156,7 @@ class BookLoaderPlainText(BookLoaderBase):  # pylint: disable=too-many-instance-
                 return index
         return len(self.text)
 
-    def parse_gutenberg_header(self) -> Tuple[Dict[str, Any], int]:
+    def parse_gutenberg_header(self) -> tuple[dict[str, Any], int]:
         """For books from Project Gutenberg cut off licence and extract meta.
 
         Return meta, header_end.

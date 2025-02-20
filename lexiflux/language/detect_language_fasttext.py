@@ -2,14 +2,13 @@
 
 import hashlib
 import logging
+import os
 from functools import lru_cache
 from pathlib import Path
-import os
 from typing import Any
 
 import fasttext
 import requests
-
 
 logger = logging.getLogger(__name__)
 
@@ -46,7 +45,7 @@ class FastTextDetectLanguage:
 
         if not (model := self.read_model_file(fasttext_model_path)):
             logger.info(
-                f"Downloading fastText language identification model from {FASTTEXT_MODEL_URL}"
+                f"Downloading fastText language identification model from {FASTTEXT_MODEL_URL}",
             )
             response = requests.get(FASTTEXT_MODEL_URL, stream=True, timeout=10)
             response.raise_for_status()
@@ -56,7 +55,7 @@ class FastTextDetectLanguage:
             model = fasttext.load_model(str(fasttext_model_path))
 
         file_size = f"{fasttext_model_path.stat().st_size:,}"
-        md5_hash = hashlib.md5(fasttext_model_path.read_bytes()).hexdigest()
+        md5_hash = hashlib.md5(fasttext_model_path.read_bytes()).hexdigest()  # noqa: S324
         hash_groups = " ".join(md5_hash[i : i + 4] for i in range(0, 32, 4))
         logger.info(f"{fasttext_model_path}: {file_size} bytes, md5: {hash_groups}")
 
@@ -71,7 +70,7 @@ class FastTextDetectLanguage:
                 labels = model.get_labels()
                 if any("__label__" in label for label in labels):
                     return model
-            except Exception as exc:  # pylint: disable=broad-except
+            except Exception as exc:  # noqa: BLE001
                 logger.error(f"Error loading fastText model: {exc}")
         return None
 

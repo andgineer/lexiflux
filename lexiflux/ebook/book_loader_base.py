@@ -2,15 +2,14 @@
 
 import logging
 import os
-from typing import Any, Dict, Optional, Iterator, List, Union, IO, Tuple
 from collections import Counter
+from collections.abc import Iterator
+from typing import IO, Any, Optional, Union
 
 from django.core.management import CommandError
 
-from lexiflux.models import Book, Author, Language, BookPage, CustomUser
-from lexiflux.models import Toc
-
 from lexiflux.language.detect_language_fasttext import language_detector
+from lexiflux.models import Author, Book, BookPage, CustomUser, Language, Toc
 
 log = logging.getLogger()
 
@@ -29,12 +28,12 @@ class BookLoaderBase:
     """Base class for importing books from different formats."""
 
     toc: Toc = []
-    meta: Dict[str, Any]
+    meta: dict[str, Any]
 
     def __init__(
         self,
-        file_path: Union[str, IO[str]],  # pylint: disable=unused-argument
-        languages: Optional[List[str]] = None,
+        file_path: Union[str, IO[str]],
+        languages: Optional[list[str]] = None,
         original_filename: Optional[str] = None,
     ) -> None:
         """Initialize.
@@ -48,7 +47,7 @@ class BookLoaderBase:
         self.meta[MetadataField.TITLE], self.meta[MetadataField.AUTHOR] = self.get_title_author()
         self.meta[MetadataField.LANGUAGE] = self.get_language()
 
-    def detect_meta(self) -> Tuple[Dict[str, Any], int, int]:
+    def detect_meta(self) -> tuple[dict[str, Any], int, int]:
         """Try to detect book meta and text.
 
         Read the book and extract meta if it is present.
@@ -70,7 +69,7 @@ class BookLoaderBase:
                 users = CustomUser.objects.filter(email__istartswith=owner_email[:3])
                 raise CommandError(
                     f'Error importing book: Cannot set owner "{owner_email}" - no such user'
-                    + (f" (found: {', '.join(user.email for user in users)})" if users else "")
+                    + (f" (found: {', '.join(user.email for user in users)})" if users else ""),
                 )
 
         if forced_language:
@@ -97,7 +96,7 @@ class BookLoaderBase:
         return book_instance  # type: ignore
 
     @staticmethod
-    def guess_title_author(filename: str) -> Tuple[str, str]:
+    def guess_title_author(filename: str) -> tuple[str, str]:
         """Guess the title and author from the filename."""
         if not filename:
             return "", ""
@@ -109,7 +108,7 @@ class BookLoaderBase:
         title, author = name_without_extension.split(" - ", 1)
         return title.strip(), author.strip()
 
-    def get_title_author(self) -> Tuple[str, str]:
+    def get_title_author(self) -> tuple[str, str]:
         """Get title and author from meta or guess from filename."""
         title = self.meta.get(MetadataField.TITLE, "Unknown Title")
         author = self.meta.get(MetadataField.AUTHOR, "Unknown Author")
@@ -119,7 +118,7 @@ class BookLoaderBase:
                 os.path.basename(
                     self.file_path
                     if isinstance(self.file_path, str)
-                    else getattr(self.file_path, "name", "")
+                    else getattr(self.file_path, "name", ""),
                 )
             )
             guessed_title, guessed_author = self.guess_title_author(filename)
@@ -161,7 +160,8 @@ class BookLoaderBase:
 
         # If no clear majority, try additional random fragments
         attempts = 0
-        while attempts < 10:
+        max_attempts = 10
+        while attempts < max_attempts:
             lang_counter = Counter(map(self.get_language_group, languages))
             most_common_lang, most_common_count = lang_counter.most_common(1)[0]
 
@@ -184,7 +184,7 @@ class BookLoaderBase:
         # If the group consists of similar languages, find the most common individual language
         if most_common_lang.startswith("group:"):  # found lang group, should select just one lang
             result = Counter(
-                [lang for lang in languages if self.get_language_group(lang) == most_common_lang]
+                [lang for lang in languages if self.get_language_group(lang) == most_common_lang],
             ).most_common(1)[0][0]
         else:
             result = most_common_lang
@@ -195,9 +195,11 @@ class BookLoaderBase:
 
     def get_language(self) -> str:
         """Get language from meta or detect from the book text."""
-        if language_value := self.meta.get(MetadataField.LANGUAGE):
+        if language_value := self.meta.get(MetadataField.LANGUAGE):  # noqa: SIM102
             if language_name := Language.find(
-                name=language_value, google_code=language_value, epub_code=language_value
+                name=language_value,
+                google_code=language_value,
+                epub_code=language_value,
             ):
                 # Update the language to its name in case it was found by code
                 log.debug("Language '%s' found in meta.", language_name)

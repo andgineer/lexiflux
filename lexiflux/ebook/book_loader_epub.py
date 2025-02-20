@@ -5,15 +5,16 @@ import os
 import random
 import re
 from collections import defaultdict
-from typing import Any, Iterable, List, Optional, Tuple, Dict, Iterator
+from collections.abc import Iterable, Iterator
+from typing import Any, Optional
 
 from bs4 import BeautifulSoup
 from django.db import transaction
-from ebooklib import ITEM_DOCUMENT, epub, ITEM_IMAGE
+from ebooklib import ITEM_DOCUMENT, ITEM_IMAGE, epub
 
 from lexiflux.ebook.book_loader_base import BookLoaderBase, MetadataField
 from lexiflux.ebook.html_page_splitter import HtmlPageSplitter
-from lexiflux.models import BookImage, Book
+from lexiflux.models import Book, BookImage
 
 log = logging.getLogger()
 
@@ -28,7 +29,7 @@ class BookLoaderEpub(BookLoaderBase):
 
     book_start: int
     book_end: int
-    heading_hrefs: Dict[str, Dict[str, str]]
+    heading_hrefs: dict[str, dict[str, str]]
 
     WORD_ESTIMATED_LENGTH = 30
     MIN_RANDOM_WORDS = 3
@@ -39,7 +40,7 @@ class BookLoaderEpub(BookLoaderBase):
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         self.page_splitter = HtmlPageSplitter(target_page_size=TARGET_PAGE_SIZE)
         super().__init__(*args, **kwargs)
-        self.anchor_map: Dict[str, Dict[str, Any]] = {}
+        self.anchor_map: dict[str, dict[str, Any]] = {}
 
     @transaction.atomic  # type: ignore
     def create(self, owner_email: str, forced_language: Optional[str] = None) -> Book:
@@ -64,7 +65,7 @@ class BookLoaderEpub(BookLoaderBase):
                 )
         return book
 
-    def detect_meta(self) -> Tuple[Dict[str, Any], int, int]:
+    def detect_meta(self) -> tuple[dict[str, Any], int, int]:
         """Read the book and extract meta if it is present.
 
         Return: meta, start, end
@@ -78,7 +79,7 @@ class BookLoaderEpub(BookLoaderBase):
                     value: key
                     for heading in flatten_list(extract_headings(self.epub.toc))
                     for key, value in heading.items()
-                }
+                },
             )
             log.debug("Extracted epub headings: %s", self.heading_hrefs)
         if not self.heading_hrefs:
@@ -90,7 +91,7 @@ class BookLoaderEpub(BookLoaderBase):
                 self.epub.get_metadata("DC", "title")[0][0]
                 if self.epub.get_metadata("DC", "title")
                 else "Unknown Title"
-            )
+            ),
         }
         authors = self.epub.get_metadata("DC", "creator")
         meta[MetadataField.AUTHOR] = authors[0][0] if authors else "Unknown Author"
@@ -100,7 +101,7 @@ class BookLoaderEpub(BookLoaderBase):
         )
         return meta, 0, -1  # todo: detect start/finish of the book
 
-    def pages(self) -> Iterator[str]:  # pylint: disable=too-many-branches
+    def pages(self) -> Iterator[str]:  ## noqa: C901,PLR0912  # todo: refactor
         """Split a text into pages of approximately equal length."""
         self.toc = []
         page_num = 1
@@ -132,7 +133,7 @@ class BookLoaderEpub(BookLoaderBase):
                                 page_num += 1
                             else:
                                 log.warning(
-                                    f"Empty page generated for {item.file_name}, page {page_num}"
+                                    f"Empty page generated for {item.file_name}, page {page_num}",
                                 )
                         else:
                             log.warning(f"Empty sub-page skipped for {item.file_name}")
@@ -163,9 +164,9 @@ class BookLoaderEpub(BookLoaderBase):
                     page_num = self.anchor_map[file_name]["page"]
                     self.toc.append((title, page_num, 0))
 
-    def generate_toc_from_spine(self) -> Dict[str, Dict[str, str]]:
+    def generate_toc_from_spine(self) -> dict[str, dict[str, str]]:
         """Generate TOC from the EPUB spine when no TOC is present."""
-        result: Dict[str, Dict[str, str]] = defaultdict(dict)
+        result: dict[str, dict[str, str]] = defaultdict(dict)
         for spine_id in self.epub.spine:
             item: epub.EpubItem = self.epub.get_item_with_id(spine_id[0])
             log.debug(f"Spine item: {item.get_name()}")
@@ -216,7 +217,7 @@ class BookLoaderEpub(BookLoaderBase):
                     return tag.get_text(separator=" ", strip=True)  # type: ignore
 
             log.warning("No title found for item %s", item.get_id())
-        except Exception as e:  # pylint: disable=broad-except
+        except Exception as e:  # noqa: BLE001
             log.error("Error extracting title from item %s: %s", item.get_id(), e)
         return None
 
@@ -250,7 +251,7 @@ class BookLoaderEpub(BookLoaderBase):
 
         words = []
         for _ in range(self.MAX_RANDOM_WORDS_ATTEMPTS):
-            random_item = random.choice(document_items)
+            random_item = random.choice(document_items)  # noqa: S311
             content = random_item.get_body_content().decode("utf-8")
 
             # Clean the content
@@ -263,7 +264,7 @@ class BookLoaderEpub(BookLoaderBase):
                 fragment = cleaned_content
             else:
                 # For longer documents, select a random starting point
-                start = random.randint(0, len(cleaned_content) - expected_length)
+                start = random.randint(0, len(cleaned_content) - expected_length)  # noqa: S311
                 fragment = cleaned_content[start : start + expected_length]
 
             # Split into words, skipping the first word in case it's partial
@@ -280,18 +281,18 @@ class BookLoaderEpub(BookLoaderBase):
         return " ".join(words) if words else ""
 
 
-def extract_headings(epub_toc: List[Any]) -> List[Dict[str, Any]]:
+def extract_headings(epub_toc: list[Any]) -> list[dict[str, Any]]:
     """Extract headings from an EPUB.
 
     :param epub_toc: A toc from epub object.
     :return: A list of {"title": "href" | nested headings}.
     """
     log.debug("Extracting epub Headings from: %s", epub_toc)
-    result: List[Any] = []
+    result: list[Any] = []
 
     if isinstance(epub_toc, Iterable):
         for item_idx, item in enumerate(epub_toc):
-            if isinstance(item, tuple) and len(item) == 2:
+            if isinstance(item, tuple) and len(item) == 2:  # noqa: PLR2004
                 result.append({item[0].title: extract_headings(item[1])})
             elif isinstance(item, Iterable):
                 result.append(extract_headings(list(item)))
@@ -299,14 +300,16 @@ def extract_headings(epub_toc: List[Any]) -> List[Dict[str, Any]]:
                 result.append({item.title: item.href})
             elif isinstance(item, epub.Section):
                 result.append({item.title: extract_headings(epub_toc[item_idx + 1 :])})
-                item_idx += 1
+                item_idx += 1  # noqa: PLW2901
 
     return result
 
 
 def flatten_list(
-    data: List[Dict[str, Any]], parent_key: str = "", sep: str = "."
-) -> List[Dict[str, Any]]:
+    data: list[dict[str, Any]],
+    parent_key: str = "",
+    sep: str = ".",
+) -> list[dict[str, Any]]:
     """Flatten a list of dictionaries."""
     items = []
     for item in data:
@@ -319,12 +322,12 @@ def flatten_list(
     return items
 
 
-def href_hierarchy(input_dict: Dict[str, str]) -> Dict[str, Dict[str, str]]:
+def href_hierarchy(input_dict: dict[str, str]) -> dict[str, dict[str, str]]:
     """Convert a flat TOC hrefs to a hierarchy.
 
     result: {"epub item file name": {"": "title", "#anchor-inside-the-file": "sub_title" ...}, ...}
     """
-    result: Dict[str, Dict[str, str]] = defaultdict(dict)
+    result: dict[str, dict[str, str]] = defaultdict(dict)
     for key, value in input_dict.items():
         parts = key.split("#")
         page = parts[0]
@@ -333,13 +336,13 @@ def href_hierarchy(input_dict: Dict[str, str]) -> Dict[str, Dict[str, str]]:
     return result
 
 
-def clear_html(  # pylint: disable=too-many-positional-arguments,too-many-arguments
+def clear_html(  # noqa: PLR0913,C901
     input_html: str,
     tags_to_remove_with_content: Iterable[str] = ("head", "style", "script", "svg", "noscript"),
     tags_to_remove_keeping_content: Iterable[str] = ("body", "html"),
     tags_to_clear_attributes: Iterable[str] = ("p", "br"),
-    tag_to_partially_clear_attributes: Dict[str, List[str]] | None = None,
-    heading_classes: Dict[str, str] | None = None,
+    tag_to_partially_clear_attributes: dict[str, list[str]] | None = None,
+    heading_classes: dict[str, str] | None = None,
 ) -> str:
     """Clean HTML from tags and attributes and add classes to heading tags."""
     if tag_to_partially_clear_attributes is None:
@@ -385,6 +388,6 @@ def clear_html(  # pylint: disable=too-many-positional-arguments,too-many-argume
                 match["class"] = match.get("class", []) + classes.split()
 
         return str(soup)
-    except Exception as e:  # pylint: disable=broad-except
+    except Exception as e:  # noqa: BLE001
         log.error("Error cleaning HTML: %s", e)
         return input_html
