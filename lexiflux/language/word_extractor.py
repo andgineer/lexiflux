@@ -1,13 +1,12 @@
 """Extract words and HTML tags from HTML content."""
 
+import logging
 import re
 from enum import Enum
-from typing import List, Tuple
-import logging
+
 import nltk
+
 from lexiflux.language.nltk_tokenizer import ensure_nltk_data
-
-
 from lexiflux.language.parse_html_text_content import parse_html_content
 
 logging.basicConfig(level=logging.INFO)
@@ -21,7 +20,7 @@ class WordTokenizer(Enum):
     NAIVE = "naive"
 
 
-def naive_word_tokenize(text: str) -> List[str]:
+def naive_word_tokenize(text: str) -> list[str]:
     """A word tokenizer that splits on whitespace and punctuation."""
     return re.findall(r"\b\w+\b", text)
 
@@ -32,17 +31,20 @@ def is_punctuation(token: str) -> bool:
 
 
 def parse_words(
-    content: str, lang_code: str = "en", tokenizer: WordTokenizer = WordTokenizer.NAIVE
-) -> Tuple[List[Tuple[int, int]], List[Tuple[int, int]]]:
+    content: str,
+    lang_code: str = "en",
+    tokenizer: WordTokenizer = WordTokenizer.NAIVE,
+) -> tuple[list[tuple[int, int]], list[tuple[int, int]]]:
     """Extract words and HTML tags from HTML content."""
-
     cleaned_content, tag_positions, escaped_chars = parse_html_content(content)
 
     if tokenizer == WordTokenizer.NLTK:
         ensure_nltk_data(f"tokenizers/punkt/{lang_code}.pickle", "punkt")
         try:
             words = nltk.tokenize.word_tokenize(
-                cleaned_content, language=lang_code, preserve_line=True
+                cleaned_content,
+                language=lang_code,
+                preserve_line=True,
             )
         except LookupError:
             logger.warning(f"NLTK word tokenizer not available for {lang_code}. Using default.")
@@ -67,18 +69,21 @@ def parse_words(
 
     # Recalculate word positions for the original content
     original_word_positions = recalculate_positions(
-        word_slices_cleaned_content, tag_positions, escaped_chars, content
+        word_slices_cleaned_content,
+        tag_positions,
+        escaped_chars,
+        content,
     )
 
     return original_word_positions, tag_positions
 
 
 def recalculate_positions(  # pylint: disable=too-many-locals
-    word_positions: List[Tuple[int, int]],
-    tag_positions: List[Tuple[int, int]],
-    escaped_chars: List[Tuple[int, int, str]],
+    word_positions: list[tuple[int, int]],
+    tag_positions: list[tuple[int, int]],
+    escaped_chars: list[tuple[int, int, str]],
     content: str,
-) -> List[Tuple[int, int]]:
+) -> list[tuple[int, int]]:
     """Recalculate word positions for the original content."""
     original_word_positions = []
     tag_index = 0

@@ -3,25 +3,28 @@
 
 import json
 import logging
+from datetime import datetime
+from typing import cast
 
-from django.http import JsonResponse, HttpRequest, HttpResponse, FileResponse
-from django.utils.timezone import is_naive, make_aware
-from django.views.decorators.http import require_http_methods
+from django.db.models import Max
+from django.http import FileResponse, HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import render
 from django.utils import timezone
-from django.db.models import Max
+from django.utils.timezone import is_naive, make_aware
+from django.views.decorators.http import require_http_methods
 
+from lexiflux.anki.anki_connect import export_words_to_anki_connect
 from lexiflux.anki.anki_file import export_words_to_anki_file
 from lexiflux.anki.csv_file import export_words_to_csv_file
 from lexiflux.decorators import smart_login_required
 from lexiflux.models import (
+    CustomUser,
     Language,
     LanguageGroup,
+    LanguagePreferences,
     TranslationHistory,
     WordsExport,
-    LanguagePreferences,
 )
-from lexiflux.anki.anki_connect import export_words_to_anki_connect
 
 logger = logging.getLogger(__name__)
 
@@ -64,7 +67,8 @@ def words_export_page(request: HttpRequest) -> HttpResponse:  # pylint: disable=
     # add to languages all languages from the groups
     for group in language_groups:
         group_languages = LanguageGroup.objects.get(id=group["id"]).languages.values(
-            "google_code", "name"
+            "google_code",
+            "name",
         )
         for lang in group_languages:
             if lang not in languages:
@@ -73,7 +77,8 @@ def words_export_page(request: HttpRequest) -> HttpResponse:  # pylint: disable=
     # select last used language
     # but if it is not in translation history, use the first language from the history
     language_prefs = LanguagePreferences.get_or_create_language_preferences(
-        user, user.default_language_preferences.language
+        user,
+        user.default_language_preferences.language,
     )
     language_selection = next(
         (
@@ -104,7 +109,8 @@ def words_export_page(request: HttpRequest) -> HttpResponse:  # pylint: disable=
     # Check if the selected language is part of a language group
     for group in language_groups:
         group_languages = LanguageGroup.objects.get(id=group["id"]).languages.values_list(
-            "google_code", flat=True
+            "google_code",
+            flat=True,
         )
         if language_selection in group_languages:
             language_selection = group["id"]
@@ -134,47 +140,57 @@ def words_export_page(request: HttpRequest) -> HttpResponse:  # pylint: disable=
     return render(request, "words-export.html", context)
 
 
+def get_group_last_export(user: CustomUser, group_id: str) -> datetime | None:
+    """Get last export datetime for a language group."""
+    group = LanguageGroup.objects.get(id=group_id)
+    return WordsExport.objects.filter(
+        user=user,
+        language__in=group.languages.all(),
+    ).aggregate(Max("export_datetime"))["export_datetime__max"]
+
+
+def get_language_last_export(user: CustomUser, language_code: str) -> datetime | None:
+    """Get last export datetime for a single language."""
+    language = Language.objects.get(google_code=language_code)
+    export = (
+        WordsExport.objects.filter(user=user, language=language)
+        .order_by("-export_datetime")
+        .first()
+    )
+    return export.export_datetime if export else None
+
+
 @smart_login_required
 @require_http_methods(["GET"])  # type: ignore
-def last_export_datetime(request: HttpRequest) -> HttpResponse:  # pylint: disable=too-many-return-statements
+def last_export_datetime(request: HttpRequest) -> HttpResponse:
     """Get the last export datetime for a given language or language group."""
+    language_id = request.GET.get("language")
+    if not language_id:
+        return JsonResponse({"error": "Language parameter is required"}, status=400)
+
     try:
-        language_id = request.GET.get("language")
-        user = request.user
+        last_export = (
+            get_group_last_export(request.user, language_id)
+            if language_id.isdigit()
+            else get_language_last_export(request.user, language_id)
+        )
 
-        if not language_id:
-            return JsonResponse({"error": "Language parameter is required"}, status=400)
+        if not last_export:
+            last_export = timezone.datetime(timezone.now().year, 1, 1)
 
-        if language_id.isdigit():  # It's a language group
-            group = LanguageGroup.objects.get(id=language_id)
-            last_export = WordsExport.objects.filter(
-                user=user, language__in=group.languages.all()
-            ).aggregate(Max("export_datetime"))["export_datetime__max"]
-        else:  # It's a language
-            language = Language.objects.get(google_code=language_id)
-            last_export = (
-                WordsExport.objects.filter(user=user, language=language)
-                .order_by("-export_datetime")
-                .first()
-            )
-            last_export = last_export.export_datetime if last_export else None
+        # Cast to datetime since we know it can't be None at this point
+        last_export = cast(datetime, last_export)
 
         logger.info(f"For language {language_id} last export datetime: {last_export}")
 
-        if last_export:
-            return JsonResponse({"last_export_datetime": last_export.isoformat()})
-        # Return a default date if no export exists
-        default_date = timezone.datetime(timezone.now().year, 1, 1).isoformat()
-        return JsonResponse({"last_export_datetime": default_date})
+        return JsonResponse({"last_export_datetime": last_export.isoformat()})
 
-    except LanguageGroup.DoesNotExist:
-        return JsonResponse({"error": "Language group not found"}, status=404)
-    except Language.DoesNotExist:
+    except (LanguageGroup.DoesNotExist, Language.DoesNotExist):
         return JsonResponse({"error": "Language not found"}, status=404)
     except ValueError:
         return JsonResponse({"error": "Invalid language or language group ID"}, status=400)
-    except Exception as e:  # pylint: disable=broad-except
-        logger.error(f"Error in last_export_datetime: {str(e)}", exc_info=True)
+    except Exception as e:  # noqa: BLE001
+        logger.exception("Error in last_export_datetime")
         return JsonResponse({"error": f"An error occurred: {str(e)}"}, status=500)
 
 
@@ -196,12 +212,15 @@ def export_words(request: HttpRequest) -> HttpResponse:  # pylint: disable=too-m
             group = LanguageGroup.objects.get(id=int(language_id))
             languages = list(group.languages.all())
             terms = TranslationHistory.objects.filter(
-                user=user, source_language__in=group.languages.all(), last_lookup__gte=min_datetime
+                user=user,
+                source_language__in=group.languages.all(),
+                last_lookup__gte=min_datetime,
             )
             # select last used language if it's in the translation history,
             # else the first language from the group
             language_prefs = LanguagePreferences.get_or_create_language_preferences(
-                user, user.default_language_preferences.language
+                user,
+                user.default_language_preferences.language,
             )
             language = next(
                 (
@@ -215,7 +234,9 @@ def export_words(request: HttpRequest) -> HttpResponse:  # pylint: disable=too-m
             language = Language.objects.get(google_code=language_id)
             languages = [language]
             terms = TranslationHistory.objects.filter(
-                user=user, source_language=language, last_lookup__gte=min_datetime
+                user=user,
+                source_language=language,
+                last_lookup__gte=min_datetime,
             )
 
         words_exported = len(terms)
@@ -250,12 +271,13 @@ def export_words(request: HttpRequest) -> HttpResponse:  # pylint: disable=too-m
             )
 
         logger.info(
-            f"Words exported for {language.name}: {words_exported} words using {export_method}"
+            f"Words exported for {language.name}: {words_exported} words using {export_method}",
         )
-        return response
-    except Exception as e:  # pylint: disable=broad-except
-        logger.error(f"Error exporting words: {str(e)}", exc_info=True)
+    except Exception as e:  # noqa: BLE001
+        logger.exception("Error exporting words")
         return JsonResponse({"status": "error", "error": str(e)})
+    else:
+        return response
 
 
 @smart_login_required
@@ -269,7 +291,8 @@ def word_count(request: HttpRequest) -> HttpResponse:
 
         if not language_id or not min_datetime:
             return JsonResponse(
-                {"error": "Language and min_datetime parameters are required"}, status=400
+                {"error": "Language and min_datetime parameters are required"},
+                status=400,
             )
 
         min_datetime = timezone.datetime.fromisoformat(min_datetime)
@@ -286,7 +309,9 @@ def word_count(request: HttpRequest) -> HttpResponse:
         else:  # It's a language
             language = Language.objects.get(google_code=language_id)
             exported_words_count = TranslationHistory.objects.filter(
-                user=user, source_language=language, first_lookup__gte=min_datetime
+                user=user,
+                source_language=language,
+                first_lookup__gte=min_datetime,
             ).count()
 
         return JsonResponse({"word_count": exported_words_count})
@@ -295,6 +320,6 @@ def word_count(request: HttpRequest) -> HttpResponse:
         return JsonResponse({"error": "Language or language group not found"}, status=404)
     except ValueError:
         return JsonResponse({"error": "Invalid language ID or datetime format"}, status=400)
-    except Exception as e:  # pylint: disable=broad-except
-        logger.error(f"Error in word_count: {str(e)}", exc_info=True)
+    except Exception as e:  # noqa: BLE001
+        logger.exception("Error in word_count")
         return JsonResponse({"error": f"An error occurred: {str(e)}"}, status=500)
