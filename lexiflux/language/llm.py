@@ -3,32 +3,30 @@
 import logging
 import os
 from functools import lru_cache
-from typing import Any, Dict, List, Tuple
+from typing import Any
 
 import openai
 import yaml
 from django.conf import settings
-from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.runnables import RunnablePassthrough
-from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
-from langchain_openai import ChatOpenAI
-from langchain_mistralai import ChatMistralAI
+from langchain.schema import BaseOutputParser
 from langchain_anthropic import ChatAnthropic
 from langchain_community.llms import Ollama  # pylint: disable=no-name-in-module
+from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.runnables import RunnablePassthrough
 from langchain_google_genai import ChatGoogleGenerativeAI
-
-from langchain.schema import BaseOutputParser
+from langchain_mistralai import ChatMistralAI
+from langchain_openai import ChatOpenAI
 
 from lexiflux.language.parse_html_text_content import extract_content_from_html
 from lexiflux.language.sentence_extractor_llm import (
-    SENTENCE_START_MARK,
     SENTENCE_END_MARK,
-    WORD_START_MARK,
+    SENTENCE_START_MARK,
     WORD_END_MARK,
+    WORD_START_MARK,
 )
 from lexiflux.language.word_extractor import parse_words
-from lexiflux.models import BookPage, Book, AIModelConfig, CustomUser
-
+from lexiflux.models import AIModelConfig, Book, BookPage, CustomUser
 
 logger = logging.getLogger(__name__)
 
@@ -74,9 +72,7 @@ class AIModelError(Exception):
                             'rate-limits#usage-tiers">Tiers doc</a>).<br><br>'
                         )
                     else:
-                        error_message = (
-                            f"The model `{model_name}` is not supported in you account."
-                        )
+                        error_message = f"The model `{model_name}` is not supported in you account."
                     self.show_api_key_info = False
 
         self.model_name = model_name
@@ -84,10 +80,10 @@ class AIModelError(Exception):
         self.error_message = error_message
         logger.error(
             f"{self.error_message}, model: {model_name}, class: {model_class}, "
-            f"show_api_key_info: {self.show_api_key_info}"
+            f"show_api_key_info: {self.show_api_key_info}",
         )
         super().__init__(
-            f"AI class `{model_class}` error for model `{model_name}`: {error_message}"
+            f"AI class `{model_class}` error for model `{model_name}`: {error_message}",
         )
 
 
@@ -143,27 +139,27 @@ class TextOutputParser(BaseOutputParser[str]):
 class Llm:  # pylint: disable=too-few-public-methods
     """AI lexical articles."""
 
-    ChatMessages = List[SystemMessage | HumanMessage | AIMessage]
-    _model_cache: Dict[str, Any]
+    ChatMessages = list[SystemMessage | HumanMessage | AIMessage]
+    _model_cache: dict[str, Any]
 
     def __init__(self) -> None:
         # os.environ["GOOGLE_API_KEY"] = os.getenv("GOOGLE_API_KEY")
         # os.environ["MISTRAL_API_KEY"] = os.getenv("MISTRAL_API_KEY")
-        self._prompt_templates: Dict[str, ChatPromptTemplate] = self._load_prompt_templates()
+        self._prompt_templates: dict[str, ChatPromptTemplate] = self._load_prompt_templates()
         self._article_pipelines_factory = self._create_article_pipelines_factory()
-        self._model_cache: Dict[str, Any] = {}
+        self._model_cache: dict[str, Any] = {}
         self.chat_models = self._load_chat_models()
 
-    def _load_chat_models(self) -> Dict[str, Dict[str, Any]]:
+    def _load_chat_models(self) -> dict[str, dict[str, Any]]:
         yaml_path = os.path.join(settings.BASE_DIR, "lexiflux", "resources", "chat_models.yaml")
-        with open(yaml_path, "r", encoding="utf-8") as file:
+        with open(yaml_path, encoding="utf-8") as file:
             return yaml.safe_load(file)  # type: ignore
 
-    def article_names(self) -> List[str]:
+    def article_names(self) -> list[str]:
         """Return a list of all available Lexical Article names."""
         return list(self._article_pipelines_factory.keys())
 
-    def _create_article_pipelines_factory(self) -> Dict[str, Any]:
+    def _create_article_pipelines_factory(self) -> dict[str, Any]:
         text_parser = TextOutputParser()
 
         return {
@@ -193,7 +189,7 @@ class Llm:  # pylint: disable=too-few-public-methods
                     messages=lambda x: [
                         SystemMessage(content=x["prompt"]),
                         HumanMessage(content=f"The text is: {x['text']}"),
-                    ]
+                    ],
                 )
                 | (lambda x: model.invoke(x["messages"]))
                 | text_parser
@@ -201,7 +197,10 @@ class Llm:  # pylint: disable=too-few-public-methods
         }
 
     def generate_article(
-        self, article_name: str, params: Dict[str, Any], data: Dict[str, Any]
+        self,
+        article_name: str,
+        params: dict[str, Any],
+        data: dict[str, Any],
     ) -> str:
         """Generate the article based on the data.
 
@@ -218,14 +217,19 @@ class Llm:  # pylint: disable=too-few-public-methods
 
         Returns:
             HTML formatted article.
+
         """
         try:
             return self._generate_article_cached(
-                article_name, self.hashable_dict(params), self.hashable_dict(data)
+                article_name,
+                self.hashable_dict(params),
+                self.hashable_dict(data),
             )
         except Exception as e:
             raise AIModelError(
-                params["model"], self.chat_models[params["model"]]["model"], e
+                params["model"],
+                self.chat_models[params["model"]]["model"],
+                e,
             ) from e
 
     @lru_cache(maxsize=1000)
@@ -257,7 +261,7 @@ class Llm:  # pylint: disable=too-few-public-methods
         logger.info(data)
         return pipeline.invoke(data)  # type: ignore
 
-    def _load_prompt_templates(self) -> Dict[str, ChatPromptTemplate]:
+    def _load_prompt_templates(self) -> dict[str, ChatPromptTemplate]:
         prompts = {}
         prompt_dir = os.path.join(settings.BASE_DIR, "lexiflux", "resources", "prompts")
 
@@ -266,11 +270,11 @@ class Llm:  # pylint: disable=too-few-public-methods
                 article_name = os.path.splitext(filename)[0]
                 file_path = os.path.join(prompt_dir, filename)
 
-                with open(file_path, "r", encoding="utf8") as file:
+                with open(file_path, encoding="utf8") as file:
                     prompt_text = file.read().strip()
 
                 prompts[article_name] = ChatPromptTemplate.from_messages(
-                    [("system", prompt_text), ("user", "The text is: {text}")]
+                    [("system", prompt_text), ("user", "The text is: {text}")],
                 )
 
         return prompts
@@ -281,7 +285,7 @@ class Llm:  # pylint: disable=too-few-public-methods
         term: str,
         term_occurence: int = 1,
         lang_code: str = "en",
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """In the text given detect word slices and term words.
 
         For debugging plain text without book page.
@@ -300,15 +304,14 @@ class Llm:  # pylint: disable=too-few-public-methods
             if start >= term_start and end <= term_end:
                 term_word_ids.append(i)
 
-        data = {
+        return {
             "word_slices": word_slices,
             "term_word_ids": term_word_ids,
         }
-        return data
 
     def mark_term_and_sentence(  # pylint: disable=too-many-locals
         self,
-        hashable_data: tuple[tuple[str, Any]],
+        hashable_data: tuple[tuple[str, Any], ...],
         context_words: int = 10,
     ) -> str:
         """Mark in the text the term and sentence(s) that contains it.
@@ -326,11 +329,12 @@ class Llm:  # pylint: disable=too-few-public-methods
             full sentences context with the term's sentence(s) marked
             with SENTENCE_START_MARK and SENTENCE_END_MARK
             and term marked with WORD_START_MARK and WORD_END_MARK
+
         """
         data = dict(hashable_data)
         book = Book.objects.get(code=data["book_code"])
         page = BookPage.objects.get(book=book, number=data["book_page_number"])
-        term_word_ids: List[int] = data["term_word_ids"]
+        term_word_ids: list[int] = data["term_word_ids"]
 
         text = page.content
         word_slices = page.words
@@ -387,27 +391,26 @@ class Llm:  # pylint: disable=too-few-public-methods
         )
 
         # Mark the term within the context
-        marked_text = (
+        return (
             f"{marked_text[:term_start]}{WORD_START_MARK}"
             f"{marked_text[term_start:term_end]}{WORD_END_MARK}"
             f"{marked_text[term_end:]}"
         )
-        return marked_text
 
-    def get_model_settings(self, user: CustomUser, model_class: str) -> Dict[str, Any]:
+    def get_model_settings(self, user: CustomUser, model_class: str) -> dict[str, Any]:
         """Get AI model settings for the given user and model"""
         ai_model_config = AIModelConfig.get_or_create_ai_model_config(user, model_class)
         settings_dict = ai_model_config.settings.copy()
 
-        if not settings_dict.get(AIModelSettings.API_KEY):
+        if not settings_dict.get(AIModelSettings.API_KEY):  # noqa: SIM102
             # If there's no API key in the database, try to get it from env vars
-            if env_var_name := AI_MODEL_API_KEY_ENV_VAR.get(model_class):
+            if env_var_name := AI_MODEL_API_KEY_ENV_VAR.get(model_class):  # noqa: SIM102
                 if api_key := getattr(settings, env_var_name, None):
                     settings_dict[AIModelSettings.API_KEY] = api_key
 
         return settings_dict  # type: ignore
 
-    def _get_or_create_model(self, params: Dict[str, Any]) -> Any:
+    def _get_or_create_model(self, params: dict[str, Any]) -> Any:
         """Get or create AI model instance.
 
         in params["user"] - CustomUser object
@@ -426,7 +429,7 @@ class Llm:  # pylint: disable=too-few-public-methods
                 model_settings = self.get_model_settings(user, model_class)
                 common_params = {
                     "temperature": safe_float(
-                        model_settings.get(AIModelSettings.TEMPERATURE, 0.5)
+                        model_settings.get(AIModelSettings.TEMPERATURE, 0.5),
                     ),
                 }
 
@@ -464,14 +467,13 @@ class Llm:  # pylint: disable=too-few-public-methods
                 raise AIModelError(model_name, model_class, e) from e
         return self._model_cache[model_key]
 
-    def hashable_dict(self, d: Dict[str, Any]) -> Tuple[Tuple[str, Any], ...]:
+    def hashable_dict(self, d: dict[str, Any]) -> tuple[tuple[str, Any], ...]:
         """Convert a dictionary to a hashable tuple."""
 
         def make_hashable(v: Any) -> Any:
             if isinstance(v, dict):
                 return self.hashable_dict(v)
-            if isinstance(v, list):
-                return tuple(make_hashable(i) for i in v)
-            return v  # __hash__ method of Django model objects uses id so it's fine
+            # __hash__ method of Django model objects uses id so it's fine
+            return tuple(make_hashable(i) for i in v) if isinstance(v, list) else v
 
         return tuple((k, make_hashable(v)) for k, v in sorted(d.items()))

@@ -1,10 +1,10 @@
-"""Management command to list users."""  # pylint: disable=invalid-name
+"""Management command to list users."""  # noqa: N806
 
 import argparse
 from typing import Any
 
-from django.core.management.base import BaseCommand
 from django.contrib.auth import get_user_model
+from django.core.management.base import BaseCommand
 from django.db.models import Count
 
 
@@ -29,7 +29,7 @@ class Command(BaseCommand):  # type: ignore
             help="Maximum number of users to display (default: 20)",
         )
 
-    def handle(self, *args: Any, **options: Any) -> None:
+    def handle(self, *args: Any, **options: Any) -> None:  # noqa: ARG002
         limit = options["limit"]
         email_filter = options["email"]
 
@@ -61,6 +61,6 @@ class Command(BaseCommand):  # type: ignore
             self.stdout.write(
                 self.style.SUCCESS(
                     f"Username: {user.username}, Email: {user.email}, "
-                    f"Number of Books Owned: {user.num_owned_books}"
-                )
+                    f"Number of Books Owned: {user.num_owned_books}",
+                ),
             )

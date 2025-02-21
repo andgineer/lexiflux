@@ -1,18 +1,18 @@
 """Settings for Lexiflux."""
 
-import logging
 import contextlib
-import sys
-from dataclasses import dataclass
+import logging
 import os
+import sys
 import warnings
+from dataclasses import dataclass
 from typing import Any
+
+import django.db.utils
 import requests
 from django.conf import settings as django_settings
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist
-import django.db.utils
-
 
 logger = logging.getLogger()
 
@@ -21,7 +21,7 @@ UI_SETTINGS_ONLY_ENV = "LEXIFLUX_UI_SETTINGS_ONLY"
 ENV_NAME_ENV = "LEXIFLUX_ENV_NAME"
 
 AUTOLOGIN_USER_NAME = "lexiflux"
-AUTOLOGIN_USER_PASSWORD = "lexiflux"
+AUTOLOGIN_USER_PASSWORD = "lexiflux"  # noqa: S105
 AUTOLOGIN_USER_EMAIL = "lexiflux@example.com"
 
 
@@ -41,7 +41,7 @@ def is_running_in_aws() -> bool:
     """Check if the code is running in AWS."""
     try:
         response = requests.get("http://169.254.169.254/latest/meta-data/", timeout=0.1)
-        return response.status_code == 200
+        return response.status_code == 200  # noqa: PLR2004
     except requests.exceptions.RequestException:
         return False
 
@@ -70,12 +70,14 @@ class EnvironmentVars:
             warnings.warn(
                 "(!) Authentication is NOT skipped - cloud environment detected.",
                 RuntimeWarning,
+                stacklevel=2,
             )
         if skip_auth:
             warnings.warn(
                 "(!) Authentication is being skipped (`LEXIFLUX_SKIP_AUTH` set to True) "
                 "but this is not recommended in a cloud environment.",
                 RuntimeWarning,
+                stacklevel=2,
             )
 
         return cls(
@@ -105,12 +107,10 @@ class EnvironmentVars:
                             "We are in multi-user environment but the auto-login user "
                             "with hard-coded password exists. "
                             "Please change the password for the user "
-                            f"`{AUTOLOGIN_USER_NAME}` or delete it."
+                            f"`{AUTOLOGIN_USER_NAME}` or delete it.",
                         )
         except django.db.utils.OperationalError as e:
-            if not (
-                "no such table: lexiflux_customuser" in str(e) and self.is_running_migration()
-            ):
+            if not ("no such table: lexiflux_customuser" in str(e) and self.is_running_migration()):
                 raise
 
 

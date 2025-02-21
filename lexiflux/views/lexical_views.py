@@ -1,31 +1,29 @@
 """Views for the translation and lexical sidebar."""
 
 import urllib.parse
-from typing import List, Dict, Any
+from typing import Any
 
+import django.utils.timezone
 from django.http import HttpRequest, HttpResponse, JsonResponse
-
 from django.template import TemplateDoesNotExist
 from django.template.loader import render_to_string
-import django.utils.timezone
-
 from pydantic import Field
 
-from lexiflux.lexiflux_settings import settings
-from lexiflux.decorators import smart_login_required
 from lexiflux.api import ViewGetParamsModel, get_params
-from lexiflux.language.parse_html_text_content import extract_content_from_html
+from lexiflux.decorators import smart_login_required
 from lexiflux.language.llm import (
-    Llm,
-    AIModelError,
-    SENTENCE_START_MARK,
     SENTENCE_END_MARK,
-    WORD_START_MARK,
+    SENTENCE_START_MARK,
     WORD_END_MARK,
+    WORD_START_MARK,
+    AIModelError,
+    Llm,
     logger,
 )
+from lexiflux.language.parse_html_text_content import extract_content_from_html
 from lexiflux.language.translation import get_translator
-from lexiflux.models import BookPage, LanguagePreferences, Book, CustomUser, TranslationHistory
+from lexiflux.lexiflux_settings import settings
+from lexiflux.models import Book, BookPage, CustomUser, LanguagePreferences, TranslationHistory
 
 MAX_SENTENCE_LENGTH = 100
 
@@ -48,15 +46,15 @@ def get_llm_errors_folder() -> str:
     return "llm-error" if settings.lexiflux.ui_settings_only else "llm-error-env"
 
 
-def get_lexical_article(  # pylint: disable=too-many-positional-arguments,too-many-arguments,too-many-locals
+def get_lexical_article(  # noqa: PLR0913
     article_name: str,
-    article_params: Dict[str, Any],
+    article_params: dict[str, Any],
     selected_text: str,
     book_page: BookPage,
-    term_word_ids: List[int],
+    term_word_ids: list[int],
     language_preferences: LanguagePreferences,
     user: CustomUser,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Get the lexical article.
 
     Return {"article": str, "error": bool} dictionary.
@@ -115,7 +113,7 @@ def get_lexical_article(  # pylint: disable=too-many-positional-arguments,too-ma
                 },
             )
         return {"article": error_message, "error": True}
-    except Exception as e:  # pylint: disable=broad-except
+    except Exception as e:  # noqa: BLE001
         return {"article": f"An error occurred: {e}", "error": True}
 
 
@@ -131,22 +129,23 @@ def translate(request: HttpRequest, params: TranslateGetParams) -> HttpResponse:
     book_page = BookPage.objects.get(book=book, number=params.book_page_number)
 
     language_preferences = LanguagePreferences.get_or_create_language_preferences(
-        request.user, book.language
+        request.user,
+        book.language,
     )
 
     assert params.word_ids is not None
-    term_word_ids = [int(id) for id in params.word_ids.split(".")]
+    term_word_ids = [int(_id) for _id in params.word_ids.split(".")]
     term_text = extract_content_from_html(
         book_page.content[
             book_page.words[term_word_ids[0]][0] : book_page.words[term_word_ids[-1]][1]
-        ]
+        ],
     )
     logger.info(f"Selected text: {term_text}")
 
     if term_text.strip() == "":
         return JsonResponse({"error": "Selected text is empty"}, status=400)
 
-    result: Dict[str, Any] = {}
+    result: dict[str, Any] = {}
 
     if int(params.lexical_article) == 0:
         article_type = language_preferences.inline_translation_type
@@ -160,7 +159,7 @@ def translate(request: HttpRequest, params: TranslateGetParams) -> HttpResponse:
                 term_word_ids,
                 language_preferences,
                 request.user,
-            )
+            ),
         )
         result["article"] = result["article"].split("<hr>")[0]
 
@@ -197,7 +196,7 @@ def translate(request: HttpRequest, params: TranslateGetParams) -> HttpResponse:
                     term_word_ids,
                     language_preferences,
                     request.user,
-                )
+                ),
             )
         else:
             return JsonResponse({"error": "Lexical article not found"}, status=404)
@@ -205,7 +204,9 @@ def translate(request: HttpRequest, params: TranslateGetParams) -> HttpResponse:
 
 
 def get_context_for_translation_history(
-    book: Book, book_page: BookPage, term_word_ids: List[int]
+    book: Book,
+    book_page: BookPage,
+    term_word_ids: list[int],
 ) -> str:
     """Get the context for the term to save in Translation History.
 
@@ -228,6 +229,4 @@ def get_context_for_translation_history(
     # Replace the marked words (including surrounding marks) with a single CONTEXT_MARK
     start_index = context.find(WORD_START_MARK)
     end_index = context.find(WORD_END_MARK, start_index) + len(WORD_END_MARK)
-    context = context[:start_index] + TranslationHistory.CONTEXT_MARK + context[end_index:]
-
-    return context  # type: ignore
+    return context[:start_index] + TranslationHistory.CONTEXT_MARK + context[end_index:]
