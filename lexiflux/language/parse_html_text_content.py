@@ -1,9 +1,8 @@
 """Get text from HTML page and detect tag positions."""
 
 import logging
-from html.parser import HTMLParser
 from html import unescape
-from typing import List, Tuple
+from html.parser import HTMLParser
 
 TAGS_EXCLUDED_CONTENT = {"script", "style", "svg"}
 VALID_TAGS = set(HTMLParser.CDATA_CONTENT_ELEMENTS) | {
@@ -53,14 +52,14 @@ class HTMLTextContentParser(HTMLParser):  # pylint: disable=too-many-instance-at
         self.reset()
         self.strict = False
         self.convert_charrefs = False  # Changed to False to handle entities manually
-        self.output: List[str] = []
-        self.tag_positions: List[Tuple[int, int]] = []
-        self.escaped_chars: List[Tuple[int, int, str]] = []  # (start, end, unescaped)
+        self.output: list[str] = []
+        self.tag_positions: list[tuple[int, int]] = []
+        self.escaped_chars: list[tuple[int, int, str]] = []  # (start, end, unescaped)
         self.excluded_content = False
         self.current_position = 0
         self.is_self_closing = False
 
-    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:  # noqa: ARG002
         tag_text = self.get_starttag_text()
         assert tag_text is not None
         start = self.current_position
@@ -106,12 +105,12 @@ class HTMLTextContentParser(HTMLParser):  # pylint: disable=too-many-instance-at
         unescaped = unescape(entity)
         self.output.append(unescaped)
         self.escaped_chars.append(
-            (self.current_position, self.current_position + len(entity), unescaped)
+            (self.current_position, self.current_position + len(entity), unescaped),
         )
         self.current_position += len(entity)
         logger.debug(
             f"EntityRef: {entity}, Unescaped: {unescaped} "
-            f"current_position: {self.current_position}"
+            f"current_position: {self.current_position}",
         )
 
     def handle_charref(self, name: str) -> None:
@@ -119,12 +118,12 @@ class HTMLTextContentParser(HTMLParser):  # pylint: disable=too-many-instance-at
         unescaped = unescape(char_ref)
         self.output.append(unescaped)
         self.escaped_chars.append(
-            (self.current_position, self.current_position + len(char_ref), unescaped)
+            (self.current_position, self.current_position + len(char_ref), unescaped),
         )
         self.current_position += len(char_ref)
         logger.debug(
             f"CharRef: {char_ref}, Unescaped: {unescaped} "
-            f"current_position: {self.current_position}"
+            f"current_position: {self.current_position}",
         )
 
     def handle_comment(self, data: str) -> None:
@@ -160,14 +159,14 @@ class HTMLTextContentParser(HTMLParser):  # pylint: disable=too-many-instance-at
         self.current_position = end
         logger.debug(f"UnknownDecl: {data} current_position: {self.current_position}")
 
-    def get_cleaned_data(self) -> Tuple[str, List[Tuple[int, int]], List[Tuple[int, int, str]]]:
+    def get_cleaned_data(self) -> tuple[str, list[tuple[int, int]], list[tuple[int, int, str]]]:
         """Return cleaned data, tag positions, and escaped character information."""
         return "".join(self.output), self.tag_positions, self.escaped_chars
 
 
 def parse_html_content(
     html_content: str,
-) -> Tuple[str, List[Tuple[int, int]], List[Tuple[int, int, str]]]:
+) -> tuple[str, list[tuple[int, int]], list[tuple[int, int, str]]]:
     """Parse HTML content and return plain text, tag slices, and escaped character information."""
     parser = HTMLTextContentParser()
     parser.feed(html_content)

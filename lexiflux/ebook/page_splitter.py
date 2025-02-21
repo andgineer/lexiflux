@@ -21,17 +21,20 @@ class PageSplitter:
     def set_page_target(self, target_length: int, error_tolerance: int) -> None:
         """Set book page target length and error tolerance."""
         assert 0 < error_tolerance < 1
-        self.PAGE_LENGTH_TARGET = target_length  # pylint: disable=invalid-name
-        self.PAGE_LENGTH_ERROR_TOLERANCE = error_tolerance  # pylint: disable=invalid-name
-        self.PAGE_MIN_LENGTH = int(  # pylint: disable=invalid-name
-            self.PAGE_LENGTH_TARGET * (1 - self.PAGE_LENGTH_ERROR_TOLERANCE)
+        self.PAGE_LENGTH_TARGET = target_length  # noqa: N806
+        self.PAGE_LENGTH_ERROR_TOLERANCE = error_tolerance  # noqa: N806
+        self.PAGE_MIN_LENGTH = int(  # pnoqa: N806
+            self.PAGE_LENGTH_TARGET * (1 - self.PAGE_LENGTH_ERROR_TOLERANCE),
         )
-        self.PAGE_MAX_LENGTH = int(  # pylint: disable=invalid-name
-            self.PAGE_LENGTH_TARGET * (1 + self.PAGE_LENGTH_ERROR_TOLERANCE)
+        self.PAGE_MAX_LENGTH = int(  # noqa: N806
+            self.PAGE_LENGTH_TARGET * (1 + self.PAGE_LENGTH_ERROR_TOLERANCE),
         )
 
     def find_nearest_page_end_match(
-        self, page_start_index: int, pattern: re.Pattern[str], return_start: bool = False
+        self,
+        page_start_index: int,
+        pattern: re.Pattern[str],
+        return_start: bool = False,
     ) -> Optional[int]:
         """Find the nearest regex match around expected end of page.
 
@@ -69,10 +72,11 @@ class PageSplitter:
 
         for pattern_idx, pattern in enumerate(patterns):
             if nearest_page_end := self.find_nearest_page_end_match(
-                page_start_index, pattern, return_start=pattern_idx < 2
+                page_start_index,
+                pattern,
+                return_start=pattern_idx < 2,  # noqa: PLR2004
             ):
-                nearest_page_end = self.handle_p_tag_split(page_start_index, nearest_page_end)
-                return nearest_page_end
+                return self.handle_p_tag_split(page_start_index, nearest_page_end)
 
         # If no suitable end found, return the maximum allowed length
         return min(page_start_index + self.end, page_start_index + self.PAGE_LENGTH_TARGET)

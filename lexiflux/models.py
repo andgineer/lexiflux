@@ -4,23 +4,22 @@ import logging
 import re
 from datetime import timedelta
 from html import unescape
-from typing import TypeAlias, Tuple, List, Any, Dict, Optional
+from typing import Any, Optional, TypeAlias
 
 from bs4 import BeautifulSoup
 from django.conf import settings
-from django.db import models, transaction
-from django.utils import timezone
-from django.core.exceptions import ValidationError, PermissionDenied, ObjectDoesNotExist
 from django.contrib.auth.models import AbstractUser
-from django.utils.translation import gettext_lazy as _
+from django.core.exceptions import ObjectDoesNotExist, PermissionDenied, ValidationError
+from django.db import models, transaction
 from django.db.models import Q
+from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
 from transliterate import get_available_language_codes, translit
 from unidecode import unidecode
 
 from lexiflux.language.sentence_extractor import break_into_sentences
 from lexiflux.language.word_extractor import parse_words
 from lexiflux.language_preferences_default import create_default_language_preferences
-
 
 BOOK_CODE_LENGTH = 100
 SUPPORTED_CHAT_MODELS = {
@@ -31,8 +30,8 @@ SUPPORTED_CHAT_MODELS = {
     "Ollama": ["temperature"],
 }
 
-TocEntry: TypeAlias = Tuple[str, int, int]  # <title>, <page num>, <word on the page num>
-Toc: TypeAlias = List[TocEntry]
+TocEntry: TypeAlias = tuple[str, int, int]  # <title>, <page num>, <word on the page num>
+Toc: TypeAlias = list[TocEntry]
 
 
 log = logging.getLogger()
@@ -113,7 +112,8 @@ class Language(models.Model):  # type: ignore
     """Model to store languages."""
 
     google_code = models.CharField(
-        max_length=10, primary_key=True
+        max_length=10,
+        primary_key=True,
     )  # Google Translate language code
     epub_code = models.CharField(max_length=10)  # EPUB (ISO-639) language code
 
@@ -170,7 +170,9 @@ class Book(models.Model):  # type: ignore
     code = models.CharField(max_length=BOOK_CODE_LENGTH, unique=True, db_index=True)
     public = models.BooleanField(default=False)
     shared_with = models.ManyToManyField(
-        settings.AUTH_USER_MODEL, blank=True, related_name="shared_books"
+        settings.AUTH_USER_MODEL,
+        blank=True,
+        related_name="shared_books",
     )
 
     title = models.CharField(max_length=200)
@@ -178,7 +180,9 @@ class Book(models.Model):  # type: ignore
     language = models.ForeignKey(Language, on_delete=models.SET_NULL, null=True)
     toc = models.JSONField(default=list, blank=True)
     anchor_map = models.JSONField(
-        default=dict, blank=True, help_text="Maps anchors to page numbers and EPUB items"
+        default=dict,
+        blank=True,
+        help_text="Maps anchors to page numbers and EPUB items",
     )
 
     @property
@@ -197,10 +201,8 @@ class Book(models.Model):  # type: ignore
                 # replace all non-word characters with a dash
                 # except space(word separator), dot we use to detect initials, also allow hyphen
                 book_code = re.sub(r"[^a-zA-Z0-9-. ]+", "", book_code).lower()
-                if book_code.replace("-", "").strip() == "":
-                    return ""
-                return book_code
-            except Exception:  # pylint: disable=broad-except
+                return "" if book_code.replace("-", "").strip() == "" else book_code
+            except Exception:  # noqa: BLE001
                 return unidecode(book_code)
 
         title_words = split_into_words(transliterate(self.title, self.language.google_code))
@@ -225,7 +227,7 @@ class Book(models.Model):  # type: ignore
 
         return unique_code
 
-    def format_last_read(self, user: CustomUser) -> str:  # pylint: disable=too-many-return-statements
+    def format_last_read(self, user: CustomUser) -> str:  # noqa: PLR0911
         """Format the last time the book was read by the user."""
         last_read = self.reading_loc(user).last_access
         if not last_read:
@@ -255,10 +257,7 @@ class Book(models.Model):  # type: ignore
     def can_be_read_by(self, user: CustomUser) -> bool:
         """Check if the user can see the book."""
         return (
-            user.is_superuser
-            or self.owner == user
-            or user in self.shared_with.all()
-            or self.public
+            user.is_superuser or self.owner == user or user in self.shared_with.all() or self.public
         )
 
     def ensure_can_be_read_by(self, user: CustomUser) -> None:
@@ -266,19 +265,19 @@ class Book(models.Model):  # type: ignore
         if not self.can_be_read_by(user):
             user_identifier = user.email if not user.is_anonymous else "Anonymous user"
             raise PermissionDenied(
-                f"{user_identifier} does not have permission to read book '(ID: {self.id})"
+                f"{user_identifier} does not have permission to read book '(ID: {self.id})",
             )
 
     @classmethod
     def get_if_can_be_read(cls, user: CustomUser, **kwargs: Any) -> "Book":
-        """
-        Get book if user can read it.
+        """Get book if user can read it.
 
         Expects fields to filter by (e.g., id=1, code='abc') in kwargs.
 
         Raises:
             Http404: If book not found
             PermissionDenied: If user can't read the book
+
         """
         try:
             book = cls.objects.get(**kwargs)
@@ -288,6 +287,10 @@ class Book(models.Model):  # type: ignore
             raise ObjectDoesNotExist(f"Book ({kwargs}) not found") from e
 
     def save(self, *args: Any, **kwargs: Any) -> None:
+        """Override the save method to generate a unique code if it doesn't have one yet.
+
+        Also ensure anchor_map is a dictionary.
+        """
         if self.pk:  # Checks if the object already exists in the database
             original = Book.objects.get(pk=self.pk)
             if original.code:  # Checks if the original object has a code
@@ -326,12 +329,14 @@ class BookPage(models.Model):  # type: ignore
     normalized_content = models.TextField(blank=True)
     book = models.ForeignKey("Book", related_name="pages", on_delete=models.CASCADE)
     word_slices = models.JSONField(  # access with property `words`
-        null=True, blank=True, help_text="List of tuples with start and end index for each word."
+        null=True,
+        blank=True,
+        help_text="List of tuples with start and end index for each word.",
     )
     word_to_sentence_map = models.JSONField(null=True, blank=True)
 
-    _word_sentence_mapping_cache: Optional[Dict[int, int]] = None
-    _words_cache: Optional[List[Tuple[int, int]]] = None
+    _word_sentence_mapping_cache: Optional[dict[int, int]] = None
+    _words_cache: Optional[list[tuple[int, int]]] = None
 
     class Meta:
         ordering = ["number"]
@@ -340,7 +345,8 @@ class BookPage(models.Model):  # type: ignore
             models.Index(fields=["book", "number"]),
             # Index for SQLite searching
             models.Index(
-                fields=["book", "normalized_content"], name="book_normalized_content_idx"
+                fields=["book", "normalized_content"],
+                name="book_normalized_content_idx",
             ),
         ]
 
@@ -349,16 +355,15 @@ class BookPage(models.Model):  # type: ignore
 
     def clean(self) -> None:
         super().clean()
-        if self.word_slices is not None:
-            if not isinstance(self.word_slices, list):
-                raise ValidationError({"word_slices": "Must be a list of tuples"})
-            # todo: fail in tests
-            # for item in self.word_slices:
-            #     if not (isinstance(item, list) and len(item) == 2
-            #     and all(isinstance(x, int) for x in item)):
-            #         raise ValidationError(
-            #         {"word_slices": "Each item must be a tuple of two integers"}
-            #         )
+        if self.word_slices is not None and not isinstance(self.word_slices, list):
+            raise ValidationError({"word_slices": "Must be a list of tuples"})
+        # todo: fail in tests
+        # for item in self.word_slices:
+        #     if not (isinstance(item, list) and len(item) == 2
+        #     and all(isinstance(x, int) for x in item)):
+        #         raise ValidationError(
+        #         {"word_slices": "Each item must be a tuple of two integers"}
+        #         )
 
     def save(self, *args: Any, **kwargs: Any) -> None:
         """Override the save method to clear cache of word indices."""
@@ -370,7 +375,7 @@ class BookPage(models.Model):  # type: ignore
         super().save(*args, **kwargs)
 
     @property
-    def words(self) -> List[Tuple[int, int]]:
+    def words(self) -> list[tuple[int, int]]:
         """Property to parse words from the content or retrieve from DB."""
         if self._words_cache is None:
             if self.word_slices is None:
@@ -394,8 +399,10 @@ class BookPage(models.Model):  # type: ignore
         self._words_cache = parsed_words
 
     def extract_words(
-        self, start_word_id: int, end_word_id: int
-    ) -> Tuple[str, List[Tuple[int, int]]]:
+        self,
+        start_word_id: int,
+        end_word_id: int,
+    ) -> tuple[str, list[tuple[int, int]]]:
         """Extract a fragment of text from start_word_id to end_word_id (inclusive)."""
         words = self.words
         if not words:
@@ -418,7 +425,7 @@ class BookPage(models.Model):  # type: ignore
         return text_fragment, adjusted_indices
 
     @property
-    def word_sentence_mapping(self) -> Dict[int, int]:
+    def word_sentence_mapping(self) -> dict[int, int]:
         """Property to parse word to sentence mapping from DB or cache."""
         if self._word_sentence_mapping_cache is None:
             if self.word_to_sentence_map is None:
@@ -432,7 +439,9 @@ class BookPage(models.Model):  # type: ignore
 
     def _detect_and_store_sentences(self) -> None:
         _, word_to_sentence = break_into_sentences(
-            self.content, self.words, lang_code=self.book.language.google_code
+            self.content,
+            self.words,
+            lang_code=self.book.language.google_code,
         )
         # Ensure all keys are strings
         self.word_to_sentence_map = {str(k): v for k, v in word_to_sentence.items()}
@@ -457,7 +466,9 @@ class ReaderSettings(models.Model):  # type: ignore
     """Font settings for books."""
 
     user = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="reader_settings"
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="reader_settings",
     )
     book = models.ForeignKey(
         "Book",
@@ -467,7 +478,8 @@ class ReaderSettings(models.Model):  # type: ignore
         help_text="If null, these are the user's default font settings",
     )
     font_family = models.CharField(
-        max_length=255, help_text="Font family name or system font stack"
+        max_length=255,
+        help_text="Font family name or system font stack",
     )
     font_size = models.CharField(max_length=10, help_text="Font size with units (e.g., '16px')")
     created_at = models.DateTimeField(auto_now_add=True)
@@ -482,7 +494,7 @@ class ReaderSettings(models.Model):  # type: ignore
         ]
 
     @classmethod
-    def get_settings(cls, user: CustomUser, book: Book) -> Dict[str, Optional[str]]:
+    def get_settings(cls, user: CustomUser, book: Book) -> dict[str, Optional[str]]:
         """Get reader settings for a user and book.
 
         Return the most recently saved settings.
@@ -498,7 +510,7 @@ class ReaderSettings(models.Model):  # type: ignore
         }
 
     @staticmethod
-    def _settings_to_dict(reader_settings: "ReaderSettings") -> Dict[str, Optional[str]]:
+    def _settings_to_dict(reader_settings: "ReaderSettings") -> dict[str, Optional[str]]:
         """Convert settings model to dictionary, excluding None values."""
         result = {}
         if reader_settings.font_family is not None:
@@ -511,7 +523,7 @@ class ReaderSettings(models.Model):  # type: ignore
     def save_settings(
         cls,
         user: CustomUser,
-        reader_settings: Dict[str, Optional[str]],
+        reader_settings: dict[str, Optional[str]],
         book: Book,
     ) -> None:
         """Save reader settings for a user and optionally a specific book."""
@@ -526,7 +538,9 @@ class AIModelConfig(models.Model):  # type: ignore
     """Model to store settings for AI models used in the application."""
 
     user = models.ForeignKey(
-        CustomUser, on_delete=models.CASCADE, related_name="ai_model_settings"
+        CustomUser,
+        on_delete=models.CASCADE,
+        related_name="ai_model_settings",
     )
     chat_model = models.CharField(max_length=100, help_text="LangChain Chat model class")
     settings = models.JSONField(
@@ -578,7 +592,9 @@ class LexicalArticle(models.Model):  # type: ignore
     """A lexical article."""
 
     language_preferences = models.ForeignKey(
-        "LanguagePreferences", on_delete=models.CASCADE, related_name="lexical_articles"
+        "LanguagePreferences",
+        on_delete=models.CASCADE,
+        related_name="lexical_articles",
     )
     type = models.CharField(
         max_length=20,
@@ -602,9 +618,8 @@ class LexicalArticle(models.Model):  # type: ignore
         elif self.type == "AI":
             if "prompt" not in self.parameters:
                 raise ValidationError("AI article must have 'prompt' parameter.")
-        elif self.type not in ["Dictionary", "Site"]:
-            if "model" not in self.parameters:
-                raise ValidationError(f"{self.type} article must have 'model' parameter.")
+        elif self.type not in ["Dictionary", "Site"] and "model" not in self.parameters:
+            raise ValidationError(f"{self.type} article must have 'model' parameter.")
 
     def save(self, *args: Any, **kwargs: Any) -> None:
         self.clean()
@@ -619,10 +634,14 @@ class LanguagePreferences(models.Model):  # type: ignore
     """
 
     user = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="language_preferences"
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="language_preferences",
     )
     language = models.ForeignKey(
-        Language, on_delete=models.CASCADE, related_name="language_preferences"
+        Language,
+        on_delete=models.CASCADE,
+        related_name="language_preferences",
     )
     current_book = models.ForeignKey(
         Book,
@@ -638,7 +657,9 @@ class LanguagePreferences(models.Model):  # type: ignore
         related_name="language_preferences_user_language",
     )
     inline_translation_type = models.CharField(
-        max_length=20, choices=LexicalArticleType.choices, default=LexicalArticleType.TRANSLATE
+        max_length=20,
+        choices=LexicalArticleType.choices,
+        default=LexicalArticleType.TRANSLATE,
     )
     inline_translation_parameters = models.JSONField(default=dict)
 
@@ -651,13 +672,13 @@ class LanguagePreferences(models.Model):  # type: ignore
             raise ValidationError(
                 {
                     "inline_translation_type": _(
-                        "'%(value)s' is not a valid choice. Valid choices are %(choices)s."
+                        "'%(value)s' is not a valid choice. Valid choices are %(choices)s.",
                     )
                     % {
                         "value": self.inline_translation_type,
                         "choices": ", ".join(LexicalArticleType.values),
-                    }
-                }
+                    },
+                },
             )
 
     def save(self, *args: Any, **kwargs: Any) -> None:
@@ -667,14 +688,16 @@ class LanguagePreferences(models.Model):  # type: ignore
     @classmethod
     @transaction.atomic  # type: ignore
     def get_or_create_language_preferences(
-        cls, user: CustomUser, language: Language
+        cls,
+        user: CustomUser,
+        language: Language,
     ) -> "LanguagePreferences":
         """Get or create a Language Preferences for the given user and language."""
         default = user.default_language_preferences
         if default is None:
             # Use the first existing record or create a new default
             default = cls.objects.filter(user=user).first() or create_default_language_preferences(
-                user
+                user,
             )
             user.default_language_preferences = default
             user.save()
@@ -702,7 +725,7 @@ class LanguagePreferences(models.Model):  # type: ignore
         return preferences  # type: ignore
 
     @property
-    def inline_translation(self) -> Dict[str, Any]:
+    def inline_translation(self) -> dict[str, Any]:
         """Return inline translation configuration."""
         return {
             "type": self.inline_translation_type,
@@ -721,14 +744,16 @@ class ReadingLoc(models.Model):  # type: ignore  # pylint: disable=too-many-inst
     """
 
     user = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="reading_pos"
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="reading_pos",
     )
     book = models.ForeignKey("Book", on_delete=models.CASCADE)
     jump_history = models.JSONField(default=list)
     current_jump = models.IntegerField(default=-1)
     page_number = models.PositiveIntegerField(help_text="Page number currently being read")
     word = models.IntegerField(
-        help_text="Last word read on the current reading page. -1 for no words on the page."
+        help_text="Last word read on the current reading page. -1 for no words on the page.",
     )
     last_access = models.DateTimeField(null=True, blank=True, default=None)
     furthest_reading_page = models.PositiveIntegerField(
@@ -754,7 +779,7 @@ class ReadingLoc(models.Model):  # type: ignore  # pylint: disable=too-many-inst
         self._update_reading_location(page_number, word)
         self.save()
 
-    def jump_back(self) -> Tuple[int, int]:
+    def jump_back(self) -> tuple[int, int]:
         """Jump back to the previous reading location."""
         if self.current_jump > 0:
             self.current_jump -= 1
@@ -764,7 +789,7 @@ class ReadingLoc(models.Model):  # type: ignore  # pylint: disable=too-many-inst
             return self.page_number, self.word
         return self.page_number, self.word
 
-    def jump_forward(self) -> Tuple[int, int]:
+    def jump_forward(self) -> tuple[int, int]:
         """Jump forward to the next reading location."""
         if self.current_jump < len(self.jump_history) - 1:
             self.current_jump += 1
@@ -800,14 +825,20 @@ class ReadingLoc(models.Model):  # type: ignore  # pylint: disable=too-many-inst
 
     @classmethod
     def update_reading_location(
-        cls, user: CustomUser, book_id: int, page_number: int, top_word_id: int
+        cls,
+        user: CustomUser,
+        book_id: int,
+        page_number: int,
+        top_word_id: int,
     ) -> None:
         """Update the current reading location."""
         loc: ReadingLoc
         loc, _ = cls.objects.get_or_create(
-            user=user, book_id=book_id, defaults={"page_number": page_number, "word": top_word_id}
+            user=user,
+            book_id=book_id,
+            defaults={"page_number": page_number, "word": top_word_id},
         )
-        loc._update_reading_location(page_number, top_word_id)  # pylint: disable=protected-access
+        loc._update_reading_location(page_number, top_word_id)  # noqa: SLF001
 
         # Update the current jump in jump_history
         if not loc.jump_history:
@@ -820,7 +851,7 @@ class ReadingLoc(models.Model):  # type: ignore  # pylint: disable=too-many-inst
         log.info(
             f"Reading location updated for {loc.book.code}: "
             f"{loc.page_number}({loc.furthest_reading_page}):{loc.word}"
-            f"/{loc.last_position_percent}\n{loc.jump_history}/{loc.current_jump}"
+            f"/{loc.last_position_percent}\n{loc.jump_history}/{loc.current_jump}",
         )
         loc.save()
 
@@ -828,7 +859,9 @@ class ReadingLoc(models.Model):  # type: ignore  # pylint: disable=too-many-inst
     def get_or_create_reading_loc(cls, user: CustomUser, book: Book) -> "ReadingLoc":
         """Get or create a reading location."""
         loc, _ = cls.objects.get_or_create(
-            user=user, book=book, defaults={"page_number": 1, "word": 0}
+            user=user,
+            book=book,
+            defaults={"page_number": 1, "word": 0},
         )
         return loc  # type: ignore
 
@@ -841,25 +874,32 @@ class TranslationHistory(models.Model):  # type: ignore
     term = models.CharField(max_length=255, help_text="Term looked up for translation")
     translation = models.TextField(help_text="Translation of the term")
     source_language = models.ForeignKey(
-        "Language", on_delete=models.CASCADE, related_name="translation_history"
+        "Language",
+        on_delete=models.CASCADE,
+        related_name="translation_history",
     )
     target_language = models.ForeignKey(
-        "Language", on_delete=models.CASCADE, related_name="target_translation_history"
+        "Language",
+        on_delete=models.CASCADE,
+        related_name="target_translation_history",
     )
     context = models.TextField(
         help_text=(
             f"Context of the term. Sentence with the term surrounded with {CONTEXT_MARK}. "
             f"Place of the term inside marked with single {CONTEXT_MARK}."
-        )
+        ),
     )
     book = models.ForeignKey("Book", on_delete=models.CASCADE, related_name="translation_history")
     user = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="translation_history"
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="translation_history",
     )
     lookup_count = models.PositiveIntegerField(default=1, help_text="Number of lookups")
     first_lookup = models.DateTimeField(default=timezone.now, help_text="First lookup timestamp")
     last_lookup = models.DateTimeField(
-        default=timezone.now, help_text="Most recent lookup timestamp"
+        default=timezone.now,
+        help_text="Most recent lookup timestamp",
     )
 
     class Meta:
@@ -892,7 +932,9 @@ class WordsExport(models.Model):  # type: ignore
     """Model to store exports of words into learning apps like Anki."""
 
     user = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="words_exports"
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="words_exports",
     )
     language = models.ForeignKey("Language", on_delete=models.CASCADE)
 
@@ -915,7 +957,9 @@ class WordsExport(models.Model):  # type: ignore
 
     @classmethod
     def get_last_export(
-        cls, user: settings.AUTH_USER_MODEL, language: "Language"
+        cls,
+        user: settings.AUTH_USER_MODEL,
+        language: "Language",
     ) -> Optional["WordsExport"]:
         """Get the most recent export for a user and language."""
         return (  # type: ignore
@@ -923,18 +967,20 @@ class WordsExport(models.Model):  # type: ignore
         )
 
     @classmethod
-    def get_previous_deck_names(cls, user: settings.AUTH_USER_MODEL) -> List[str]:
+    def get_previous_deck_names(cls, user: settings.AUTH_USER_MODEL) -> list[str]:
         """Get the previous deck names for a user."""
         return list(
             cls.objects.filter(user=user)
             .exclude(deck_name="")
             .values_list("deck_name", flat=True)
-            .distinct()
+            .distinct(),
         )
 
     @classmethod
     def get_default_deck_name(
-        cls, user: settings.AUTH_USER_MODEL, language: Optional["Language"]
+        cls,
+        user: settings.AUTH_USER_MODEL,
+        language: Optional["Language"],
     ) -> str:
         """Get the default deck name for a user and language."""
         last_export = cls.get_last_export(user, language) if language else None
@@ -942,10 +988,7 @@ class WordsExport(models.Model):  # type: ignore
             return last_export.deck_name  # type: ignore
 
         any_export = (
-            cls.objects.filter(user=user)
-            .exclude(deck_name="")
-            .order_by("-export_datetime")
-            .first()
+            cls.objects.filter(user=user).exclude(deck_name="").order_by("-export_datetime").first()
         )
         if any_export:
             return any_export.deck_name  # type: ignore
@@ -954,7 +997,9 @@ class WordsExport(models.Model):  # type: ignore
 
     @classmethod
     def get_last_export_format(
-        cls, user: settings.AUTH_USER_MODEL, language: Optional["Language"]
+        cls,
+        user: settings.AUTH_USER_MODEL,
+        language: Optional["Language"],
     ) -> str:
         """Get the export format for the last export for a user and language."""
         last_export = cls.get_last_export(user, language) if language else None

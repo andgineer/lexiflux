@@ -4,11 +4,10 @@ import logging
 from typing import Any
 
 from django.contrib.auth import authenticate, login
-from django.core.exceptions import PermissionDenied, ObjectDoesNotExist
-from django.http import JsonResponse, HttpResponseNotAllowed
+from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
+from django.http import HttpResponseNotAllowed, JsonResponse
 
 from lexiflux.lexiflux_settings import settings
-
 
 logger = logging.getLogger(__name__)
 
@@ -20,7 +19,7 @@ class AutoLoginMiddleware:  # pylint: disable=too-few-public-methods
         self.get_response = get_response
 
     def __call__(self, request: Any) -> Any:
-        if not request.user.is_authenticated and settings.lexiflux.skip_auth:
+        if not request.user.is_authenticated and settings.lexiflux.skip_auth:  # noqa: SIM102
             if user := authenticate(
                 username=settings.lexiflux.default_user_name,
                 password=settings.lexiflux.default_user_password,
@@ -51,9 +50,9 @@ class ExceptionJSONResponseMiddleware:
             )
         return response
 
-    def process_exception(self, request: Any, exception: Any) -> Any:
+    def process_exception(self, request: Any, exception: Any) -> Any:  # noqa: ARG002
         """Process exceptions and return JSON response."""
-        logger.error("Exception: %s", exception, exc_info=True)
+        logger.exception("Exception: %s", exception)
 
         if isinstance(exception.args, tuple) and len(exception.args) > 0:
             # Convert WSGIRequest objects to their URL path and keep other args as strings
@@ -72,7 +71,8 @@ class ExceptionJSONResponseMiddleware:
             )
         if isinstance(exception, (ValueError, ObjectDoesNotExist)):
             return JsonResponse(
-                {"error": error_message or "Bad request", "details": exception_args}, status=400
+                {"error": error_message or "Bad request", "details": exception_args},
+                status=400,
             )
         return JsonResponse(
             {"error": error_message or "Internal server error", "details": exception_args},
