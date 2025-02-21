@@ -1,18 +1,18 @@
 """URLs for Lexiflux app."""
 
-from django.urls import path, include
-from django.contrib.auth.views import LogoutView
 from django.contrib import admin
+from django.contrib.auth.views import LogoutView
+from django.urls import include, path
 
+import lexiflux.views.ai_settings_views
 import lexiflux.views.language_preferences_views
 import lexiflux.views.lexical_views
 import lexiflux.views.library_views
 import lexiflux.views.reader_views
-import lexiflux.views.ai_settings_views
-import lexiflux.views.words_export
 import lexiflux.views.search_view
-from lexiflux.views.auth_views import SignUpView, CustomLoginView
+import lexiflux.views.words_export
 from lexiflux import settings
+from lexiflux.views.auth_views import CustomLoginView, SignUpView
 from lexiflux.views.library_views import EditBookModalPartial
 from lexiflux.views.user_modal import user_modal
 
@@ -113,7 +113,9 @@ urlpatterns += [
     path("library/books/", lexiflux.views.library_views.books_list, name="books_list"),
     path("library/import/", lexiflux.views.library_views.import_modal, name="import_modal"),
     path(
-        "modals/edit-book/<int:book_id>/", EditBookModalPartial.as_view(), name="edit_book_modal"
+        "modals/edit-book/<int:book_id>/",
+        EditBookModalPartial.as_view(),
+        name="edit_book_modal",
     ),
     path(
         "api/search-authors/",

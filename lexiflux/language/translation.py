@@ -2,18 +2,17 @@
 
 import logging
 from functools import lru_cache
-from typing import List, Dict, Tuple
 
 from deep_translator import (
     GoogleTranslator,
-    MyMemoryTranslator,
     LingueeTranslator,
+    MyMemoryTranslator,
     PonsTranslator,
 )
 
 log = logging.getLogger()
 
-AVAILABLE_TRANSLATORS: Dict[str, Tuple[type, str]] = {
+AVAILABLE_TRANSLATORS: dict[str, tuple[type, str]] = {
     "GoogleTranslator": (GoogleTranslator, "Google Translator"),
     "MyMemoryTranslator": (MyMemoryTranslator, "MyMemory Translator"),
     "LingueeTranslator": (LingueeTranslator, "Linguee Translator"),
@@ -25,7 +24,10 @@ class Translator:
     """Translator."""
 
     def __init__(
-        self, translator_name: str, source_language_code: str, target_language_code: str
+        self,
+        translator_name: str,
+        source_language_code: str,
+        target_language_code: str,
     ) -> None:
         """Initialize Translator."""
         if translator_name not in AVAILABLE_TRANSLATORS:
@@ -33,7 +35,8 @@ class Translator:
 
         translator_class, _ = AVAILABLE_TRANSLATORS[translator_name]
         self._translator = translator_class(
-            source=source_language_code, target=target_language_code
+            source=source_language_code,
+            target=target_language_code,
         )
         log.debug(
             "Translator: %s, source: %s, target %s",
@@ -48,7 +51,7 @@ class Translator:
         return self._translator.translate(text)  # type: ignore
 
     @classmethod
-    def available_translators(cls) -> List[Dict[str, str]]:
+    def available_translators(cls) -> list[dict[str, str]]:
         """Return list of available translator names and labels."""
         return [
             {"value": name, "label": label} for name, (_, label) in AVAILABLE_TRANSLATORS.items()
@@ -57,7 +60,9 @@ class Translator:
 
 @lru_cache(maxsize=128)
 def get_translator(
-    translator_name: str, source_language_code: str, target_language_code: str
+    translator_name: str,
+    source_language_code: str,
+    target_language_code: str,
 ) -> Translator:
     """Get translator."""
     return Translator(translator_name, source_language_code, target_language_code)

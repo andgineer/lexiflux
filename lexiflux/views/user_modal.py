@@ -1,8 +1,8 @@
 """User modal view."""
 
-from django.http import HttpResponse, HttpRequest
-from django.template.response import TemplateResponse
 from django.db import transaction
+from django.http import HttpRequest, HttpResponse
+from django.template.response import TemplateResponse
 from django.views.decorators.http import require_http_methods
 
 from lexiflux.decorators import smart_login_required
@@ -28,7 +28,7 @@ def user_modal(request: HttpRequest) -> HttpResponse:
 
                 if update_all or not request.user.language:
                     LanguagePreferences.objects.filter(user=request.user).update(
-                        user_language=request.user.language
+                        user_language=request.user.language,
                     )
             return HttpResponse(headers={"HX-Refresh": "true"})
         return HttpResponse(status=400)
