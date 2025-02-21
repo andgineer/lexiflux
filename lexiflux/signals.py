@@ -1,11 +1,12 @@
 """Signals for the LexiFlux app."""
 
 import logging
-from typing import Any, Type
-from django.db.models.signals import post_save
-from django.dispatch import receiver
+from typing import Any
+
 from django.db import transaction
 from django.db.models import Model
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 
 from lexiflux.language.google_languages import populate_languages
 from lexiflux.language_preferences_default import create_default_language_preferences
@@ -16,20 +17,20 @@ logger = logging.getLogger(__name__)  # Use __name__ for proper module-level log
 
 @receiver(post_save, sender=CustomUser)  # type: ignore
 def create_language_preferences(
-    sender: Type[Model],  # pylint: disable=unused-argument
+    sender: type[Model],  # noqa: ARG001
     instance: CustomUser,
     created: bool,
     raw: bool = False,
-    **kwargs: Any,
+    **kwargs: Any,  # noqa: ARG001
 ) -> None:
-    """
-    Create language preferences for a new user.
+    """Create language preferences for a new user.
 
     Args:
         sender: The model class that sent the signal
         instance: The actual instance being saved
         created: Boolean indicating if this is a new instance
         raw: Boolean; True if model is saved exactly as presented
+
     """
     # Skip if this is a raw save (e.g., from loaddata)
     if raw:
@@ -47,7 +48,7 @@ def create_language_preferences(
 
                 # Update user with new preferences, but avoid recursive signal
                 CustomUser.objects.filter(pk=instance.pk).update(
-                    default_language_preferences=language_preferences
+                    default_language_preferences=language_preferences,
                 )
 
                 # Update instance to match database
@@ -55,12 +56,12 @@ def create_language_preferences(
 
                 logger.info(
                     f"Successfully created language preferences for user {instance.username} "
-                    f"(ID: {instance.pk})"
+                    f"(ID: {instance.pk})",
                 )
 
         except Exception as e:
             logger.error(
                 f"Failed to create language preferences for user {instance.username} "
-                f"(ID: {instance.pk}): {str(e)}"
+                f"(ID: {instance.pk}): {str(e)}",
             )
             raise

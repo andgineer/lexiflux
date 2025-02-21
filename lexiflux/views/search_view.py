@@ -2,9 +2,9 @@
 
 import logging
 import re
-from typing import List
 from dataclasses import dataclass
 from html import escape
+
 from bs4 import BeautifulSoup
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404
@@ -12,7 +12,6 @@ from django.views.decorators.http import require_POST
 
 from lexiflux.decorators import smart_login_required
 from lexiflux.models import Book, BookPage, normalize_for_search
-
 
 logger = logging.getLogger(__name__)
 
@@ -36,12 +35,17 @@ class SearchResult:
 
 
 def get_searchable_pages(
-    book: Book, search_term: str, start_page: int, limit: int
-) -> List[BookPage]:
+    book: Book,
+    search_term: str,
+    start_page: int,
+    limit: int,
+) -> list[BookPage]:
     """Get pages that contain the search term, starting from given page number."""
     normalized_term = normalize_for_search(search_term)
     return BookPage.objects.filter(  # type: ignore
-        book=book, normalized_content__icontains=normalized_term, number__gte=start_page
+        book=book,
+        normalized_content__icontains=normalized_term,
+        number__gte=start_page,
     ).order_by("number")[:limit]
 
 
@@ -53,7 +57,10 @@ def find_word_boundary(text: str, pos: int, direction: int) -> int:
 
 
 def get_context_boundaries(
-    content: str, word_start: int, word_end: int, context_words: int = 5
+    content: str,
+    word_start: int,
+    word_end: int,
+    context_words: int = 5,
 ) -> tuple[int, int]:
     """Get the start and end positions for context around a word."""
     context_start = word_start
@@ -93,8 +100,10 @@ def create_highlighted_context(context: str, term_start: int, term_length: int) 
 
 
 def find_matches_in_page(  # pylint: disable=too-many-locals
-    page: BookPage, search_term: str, whole_words: bool
-) -> List[SearchResult]:
+    page: BookPage,
+    search_term: str,
+    whole_words: bool,
+) -> list[SearchResult]:
     """Find all matches of search_term in the page."""
     results = []
     content = strip_html(page.content)
@@ -118,7 +127,8 @@ def find_matches_in_page(  # pylint: disable=too-many-locals
 
             # Create highlighted version
             highlighted_context = escape(context).replace(
-                escape(target_word), f'<span class="bg-warning">{escape(target_word)}</span>'
+                escape(target_word),
+                f'<span class="bg-warning">{escape(target_word)}</span>',
             )
 
             results.append(SearchResult(page_number=page.number, context=highlighted_context))
@@ -129,10 +139,10 @@ def find_matches_in_page(  # pylint: disable=too-many-locals
 
 
 def render_results_table(
-    results: List[SearchResult],
+    results: list[SearchResult],
     next_page: int | None,
     search_url: str,
-    start_page: int,  # pylint: disable=unused-argument
+    start_page: int,  # noqa: ARG001
 ) -> str:
     """Render search results as HTML table."""
     if not results:
@@ -140,7 +150,7 @@ def render_results_table(
 
     rows = "\n".join(
         f"""
-        <tr style="cursor: pointer;" 
+        <tr style="cursor: pointer;"
             onclick="goToPage({result.page_number}, 0);
                     bootstrap.Modal.getInstance(document.getElementById('searchModal')).hide();">
             <td>{result.page_number}</td>
@@ -199,7 +209,7 @@ def search(request: HttpRequest) -> HttpResponse:
     pages = get_searchable_pages(book, search_term, start_page, MAX_SEARCH_RESULTS + 1)
     page_list = list(pages)
 
-    results: List[SearchResult] = []
+    results: list[SearchResult] = []
     for page in page_list[:MAX_SEARCH_RESULTS]:
         page_results = find_matches_in_page(page, search_term, whole_words)
         results.extend(page_results)

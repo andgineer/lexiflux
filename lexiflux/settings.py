@@ -5,8 +5,6 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
 from pathlib import Path
-from typing import List
-
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -24,13 +22,13 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "django-insecure-(qy1)@^p*1x^l$ayy@(t-5cym8y5a#8e0jrlr2v#sprhv)cei#"
+SECRET_KEY = "django-insecure-(qy1)@^p*1x^l$ayy@(t-5cym8y5a#8e0jrlr2v#sprhv)cei#"  # noqa: S105
 SESSION_ENGINE = "django.contrib.sessions.backends.db"
 SESSION_COOKIE_AGE = 1209600  # Two weeks
 SESSION_SAVE_EVERY_REQUEST = False
 # SESSION_EXPIRE_AT_BROWSER_CLOSE = False
 
-ALLOWED_HOSTS: List[str] = [
+ALLOWED_HOSTS: list[str] = [
     "localhost",
     "127.0.0.1",
     "host.docker.internal",
@@ -111,7 +109,7 @@ DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.sqlite3",
         "NAME": BASE_DIR / "db.sqlite3",
-    }
+    },
 }
 
 
@@ -194,7 +192,7 @@ CACHES = {
     "default": {
         "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
         "LOCATION": "unique-snowflake",
-    }
+    },
 }
 
 if DEBUGGER_TOOLBAR:
@@ -203,5 +201,5 @@ if DEBUGGER_TOOLBAR:
     MIDDLEWARE.insert(-1, "debug_toolbar.middleware.DebugToolbarMiddleware")
     INTERNAL_IPS = ["127.0.0.1"]
     DEBUG_TOOLBAR_CONFIG = {
-        "SHOW_TOOLBAR_CALLBACK": lambda request: True,
+        "SHOW_TOOLBAR_CALLBACK": lambda _request: True,
     }

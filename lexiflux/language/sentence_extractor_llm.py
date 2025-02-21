@@ -4,10 +4,9 @@
 except for the marked sentence.
 """
 
-from typing import List, Tuple, Dict
+from langchain.schema import BaseOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_openai import ChatOpenAI
-from langchain.schema import BaseOutputParser
 
 
 class TextOutputParser(BaseOutputParser[str]):
@@ -24,7 +23,9 @@ WORD_END_MARK = "[/HIGHLIGHT]"
 
 
 def validate_inputs(
-    plain_text: str, word_slices: List[Tuple[int, int]], terms_word_ids: List[int]
+    plain_text: str,
+    word_slices: list[tuple[int, int]],
+    terms_word_ids: list[int],
 ) -> None:
     """Validate input parameters for break_into_sentences_llm."""
     if not plain_text:
@@ -38,18 +39,17 @@ def validate_inputs(
 
     if any(word_id >= len(word_slices) for word_id in terms_word_ids):
         raise ValueError(
-            f"Invalid highlighted word ID. Word IDs must be less than {len(word_slices)}"
+            f"Invalid highlighted word ID. Word IDs must be less than {len(word_slices)}",
         )
 
 
 def break_into_sentences_llm(  # pylint: disable=too-many-locals
     plain_text: str,
-    word_slices: List[Tuple[int, int]],
-    term_word_ids: List[int],  # pylint: disable=redefined-outer-name
+    word_slices: list[tuple[int, int]],
+    term_word_ids: list[int],  # pylint: disable=redefined-outer-name
     lang_code: str = "en",
-) -> Tuple[List[str], Dict[int, int]]:
-    """
-    Break plain text into sentences, mark the highlighted word, and map word IDs
+) -> tuple[list[str], dict[int, int]]:
+    """Break plain text into sentences, mark the highlighted word, and map word IDs
     to sentence indices.
 
     Args:
@@ -59,9 +59,10 @@ def break_into_sentences_llm(  # pylint: disable=too-many-locals
     lang_code: Language code of the text.
 
     Returns:
-    Tuple[List[str], Dict[int, int]]: A tuple containing:
+    tuple[list[str], dict[int, int]]: A tuple containing:
         - List of sentences
         - Dictionary mapping word index to sentence index
+
     """
     # Step 1: Mark the highlighted term with **
     validate_inputs(plain_text, word_slices, term_word_ids)
@@ -87,7 +88,8 @@ def break_into_sentences_llm(  # pylint: disable=too-many-locals
     if sentence_start == -1:
         return [], {}
     sentence_end = marked_text_with_sentence.find(
-        SENTENCE_END_MARK, sentence_start + len(SENTENCE_START_MARK)
+        SENTENCE_END_MARK,
+        sentence_start + len(SENTENCE_START_MARK),
     )
     if sentence_end == -1:
         return [], {}
@@ -131,7 +133,7 @@ def detect_sentence_llm(text: str, text_language: str) -> str:
         "Return the result as plain text with the marked sentence."
     )
     preprocessing_prompt_template = ChatPromptTemplate.from_messages(
-        [("system", preprocessing_template), ("user", "{text}")]
+        [("system", preprocessing_template), ("user", "{text}")],
     )
 
     model = ChatOpenAI(
@@ -172,7 +174,9 @@ if __name__ == "__main__":  # pragma: no cover
     term_word_ids = [3]  # "jumps"
 
     sentences, word_to_sentence = break_into_sentences_llm(
-        SAMPLE_TEXT, sample_word_ids, term_word_ids
+        SAMPLE_TEXT,
+        sample_word_ids,
+        term_word_ids,
     )
 
     print("Sentences:")

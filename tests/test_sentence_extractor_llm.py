@@ -116,10 +116,10 @@ def mock_llm_chain(request):
 ])
 def test_break_into_sentences_llm(
         text: str,
-        word_ids: List[Tuple[int, int]],
-        highlighted_word_ids: List[int],
-        expected_sentences: List[str],
-        expected_word_to_sentence: Dict[int, int],
+        word_ids: list[tuple[int, int]],
+        highlighted_word_ids: list[int],
+        expected_sentences: list[str],
+        expected_word_to_sentence: dict[int, int],
         mock_llm_chain,
 ):
     """Test break_into_sentences_llm with either real or mocked LLM based on skip_llm flag."""
@@ -144,8 +144,8 @@ def test_break_into_sentences_llm(
 ])
 def test_break_into_sentences_edge_cases(
         text: str,
-        word_ids: List[Tuple[int, int]],
-        highlighted_word_ids: List[int],
+        word_ids: list[tuple[int, int]],
+        highlighted_word_ids: list[int],
         expected_error: str,
         mock_llm_chain,
 ):

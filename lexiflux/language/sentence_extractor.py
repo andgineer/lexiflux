@@ -1,11 +1,12 @@
 """Sentence extraction utilities for the LexiFlux language module."""
 
 from enum import Enum
-from typing import List, Tuple, Dict, Optional
+from typing import Optional
 
 import spacy
 import spacy.language
 from spacy.tokens import Doc
+
 from lexiflux.language.nltk_tokenizer import get_punkt_tokenizer
 
 
@@ -25,13 +26,12 @@ def get_spacy_sentencizer(lang_code: str) -> spacy.language.Language:
 
 def break_into_sentences(
     plain_text: str,
-    word_slices: List[Tuple[int, int]],
-    term_word_ids: Optional[List[int]] = None,  # pylint: disable=unused-argument
+    word_slices: list[tuple[int, int]],
+    term_word_ids: Optional[list[int]] = None,  # noqa: ARG001
     lang_code: str = "en",
     tokenizer: SentenceTokenizer = SentenceTokenizer.SPACY,
-) -> Tuple[List[str], Dict[int, int]]:
-    """
-    Break plain text into sentences and map word IDs to sentence indices.
+) -> tuple[list[str], dict[int, int]]:
+    """Break plain text into sentences and map word IDs to sentence indices.
 
     Args:
     plain_text: The input text without HTML tags.
@@ -42,9 +42,10 @@ def break_into_sentences(
     lang_code: Language code for the text (e.g., 'en' for English, 'fr' for French).
 
     Returns:
-    Tuple[List[str], Dict[int, int]]: A tuple containing:
+    tuple[list[str], dict[int, int]]: A tuple containing:
         - List of sentences
         - Dictionary mapping word index to sentence index
+
     """
     # todo: in the sentence words is not included the punctuation
     #  that could be at the beginning and / or end of the sentence.
