@@ -2,26 +2,25 @@
 
 import logging
 import os
-from typing import List
 from urllib.parse import unquote
 
 from bs4 import BeautifulSoup
 from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.http import HttpRequest, HttpResponse, JsonResponse
-from django.shortcuts import redirect, render, get_object_or_404
+from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.views.decorators.http import require_POST
 
 from lexiflux.decorators import smart_login_required
 from lexiflux.models import (
-    BookPage,
     Book,
-    ReadingLoc,
-    LanguagePreferences,
     BookImage,
-    ReaderSettings,
+    BookPage,
     Language,
+    LanguagePreferences,
+    ReaderSettings,
+    ReadingLoc,
 )
 
 MAX_SEARCH_RESULTS = 10
@@ -33,7 +32,7 @@ def normalize_path(path: str) -> str:
     """Normalize the image path by removing '..' and extra '/'."""
     path = unquote(path)
     components = path.split("/")
-    normalized: List[str] = []
+    normalized: list[str] = []
     for component in components:
         if component == "." or not component:
             continue
@@ -63,7 +62,8 @@ def set_sources(content: str, book: Book) -> str:
                 try:
                     # If not found, try with just the filename
                     image = BookImage.objects.get(
-                        book=book, filename__endswith=os.path.basename(normalized_src)
+                        book=book,
+                        filename__endswith=os.path.basename(normalized_src),
                     )
                 except BookImage.DoesNotExist:
                     log.warning(f"Warning: Image not found in database for src: {original_src}")
@@ -111,7 +111,7 @@ def render_page(page_db: BookPage) -> str:
     return set_sources("".join(result), page_db.book)
 
 
-def redirect_to_reader(request: HttpRequest) -> HttpResponse:
+def redirect_to_reader(request: HttpRequest) -> HttpResponse:  # noqa: ARG001
     """Redirect to the 'reader' view."""
     return redirect("reader")
 
@@ -151,7 +151,8 @@ def reader(request: HttpRequest) -> HttpResponse:
     book_page = BookPage.objects.get(book=book, number=page_number)
 
     language_preferences = LanguagePreferences.get_or_create_language_preferences(
-        request.user, book.language
+        request.user,
+        book.language,
     )
     # Minimize user's confusion:
     # we expect when he goes to the Language preferences he wants to change the preferences
@@ -176,7 +177,7 @@ def reader(request: HttpRequest) -> HttpResponse:
     is_last_jump = reading_location.current_jump == len(reading_location.jump_history) - 1
     log.info(
         f"Jump status: book {book_code}, is_first_jump {is_first_jump}, "
-        f"is_last_jump {is_last_jump}"
+        f"is_last_jump {is_last_jump}",
     )
 
     reader_settings = ReaderSettings.get_settings(
@@ -220,7 +221,8 @@ def page(request: HttpRequest) -> HttpResponse:
             raise BookPage.DoesNotExist
     except (BookPage.DoesNotExist, ValueError):
         return HttpResponse(
-            f"error: Page {page_number} not found in book '{book_code}'", status=500
+            f"error: Page {page_number} not found in book '{book_code}'",
+            status=500,
         )
 
     cache_key = f"page_html_{book_code}_{page_number}"
@@ -237,7 +239,7 @@ def page(request: HttpRequest) -> HttpResponse:
                 "bookCode": book_code,
                 "pageNumber": page_number,
             },
-        }
+        },
     )
 
 
@@ -267,7 +269,10 @@ def location(request: HttpRequest) -> HttpResponse:
     book = Book.get_if_can_be_read(request.user, code=book_code)
 
     ReadingLoc.update_reading_location(
-        user=request.user, book_id=book.id, page_number=page_number, top_word_id=top_word
+        user=request.user,
+        book_id=book.id,
+        page_number=page_number,
+        top_word_id=top_word,
     )
     return HttpResponse(status=200)
 
@@ -338,7 +343,7 @@ def get_jump_status(request: HttpRequest) -> HttpResponse:
     is_last_jump = reading_loc.current_jump == len(reading_loc.jump_history) - 1
     log.info(
         f"Jump status: book {book_code}, is_first_jump {is_first_jump}, "
-        f"is_last_jump {is_last_jump}"
+        f"is_last_jump {is_last_jump}",
     )
 
     return JsonResponse({"is_first_jump": is_first_jump, "is_last_jump": is_last_jump})
@@ -372,11 +377,11 @@ def link_click(request: HttpRequest) -> HttpResponse:
     return JsonResponse({"success": True, "page_number": new_page_number, "word": new_word})
 
 
-def get_reader_settings_fields() -> List[str]:
+def get_reader_settings_fields() -> list[str]:
     """Get all fields from ReaderSettings model except user and book."""
     return [
         field.name
-        for field in ReaderSettings._meta.get_fields()
+        for field in ReaderSettings._meta.get_fields()  # noqa: SLF001
         if field.name not in ["id", "user", "book"]
     ]
 
@@ -395,6 +400,7 @@ def load_reader_settings(request: HttpRequest) -> HttpResponse:  # pragma: no co
         - font_size
         - font_family
         - other future settings
+
     """
     try:
         book_code = request.GET.get("book_code")
@@ -408,7 +414,7 @@ def load_reader_settings(request: HttpRequest) -> HttpResponse:  # pragma: no co
 
     except Book.DoesNotExist:
         return JsonResponse({"error": "Book not found"}, status=404)
-    except Exception as e:  # pylint: disable=broad-except
+    except Exception as e:  # noqa: BLE001
         log.error(f"Error loading reader settings: {str(e)}")
         return JsonResponse({"error": "Failed to load settings"}, status=500)
 
@@ -424,6 +430,7 @@ def save_reader_settings(request: HttpRequest) -> HttpResponse:
 
     Returns:
         HttpResponse with appropriate status code
+
     """
     try:
         book_code = request.POST.get("book_code")
@@ -448,6 +455,6 @@ def save_reader_settings(request: HttpRequest) -> HttpResponse:
     except ValidationError as e:
         log.error(f"Validation error saving reader settings: {str(e)}")
         return JsonResponse({"error": str(e)}, status=400)
-    except Exception as e:  # pylint: disable=broad-except
+    except Exception as e:  # noqa: BLE001
         log.error(f"Error saving reader settings: {str(e)}")
         return JsonResponse({"error": "Failed to save settings"}, status=500)

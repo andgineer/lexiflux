@@ -144,7 +144,7 @@ def test_word_slices_invalid_type(book_page_with_content):
 
 @allure.epic('Book import')
 @allure.feature('Extract words')
-@pytest.mark.skip(reason="See BooPage.clean()")
+@pytest.mark.skip(reason="See BookPage.clean()")
 def test_word_slices_invalid_structure(book_page_with_content):
     with pytest.raises(ValidationError):
         book_page_with_content.word_slices = [1, 2, 3]  # Not a list of tuples

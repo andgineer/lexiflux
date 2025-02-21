@@ -74,7 +74,7 @@ def ai_settings_api(request: HttpRequest) -> JsonResponse:
             if errors:
                 return JsonResponse({"errors": errors}, status=400)
             return JsonResponse({"status": "success"})
-        except Exception as e:  # pylint: # noqa: BLE001
+        except Exception as e:  # noqa: BLE001
             return JsonResponse({"error": str(e)}, status=400)
 
     # This line should never be reached due to the @require_http_methods decorator,

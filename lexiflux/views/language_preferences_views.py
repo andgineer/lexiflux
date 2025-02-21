@@ -1,8 +1,8 @@
 """Views for the language preferences editor page and Ajax."""
 
 import json
-from typing import Any, Dict, Optional
 import logging
+from typing import Any, Optional
 
 from deep_translator.exceptions import LanguageNotSupportedException
 from django.conf import settings
@@ -11,7 +11,7 @@ from django.core.exceptions import ValidationError
 from django.db import IntegrityError
 from django.db.models import Max
 from django.http import HttpRequest, HttpResponse, JsonResponse
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import get_object_or_404, render
 from django.views.decorators.http import require_http_methods
 
 from lexiflux.decorators import smart_login_required
@@ -19,20 +19,18 @@ from lexiflux.language.llm import Llm
 from lexiflux.language.translation import Translator, get_translator
 from lexiflux.language_preferences_default import create_default_language_preferences
 from lexiflux.models import (
-    Language,
-    LexicalArticleType,
-    LanguagePreferences,
     LEXICAL_ARTICLE_PARAMETERS,
+    Language,
+    LanguagePreferences,
     LexicalArticle,
+    LexicalArticleType,
 )
-
 
 logger = logging.getLogger()
 
 
-def get_grouped_languages(user: settings.AUTH_USER_MODEL) -> Dict[str, Any]:
-    """
-    Get grouped languages for the given user.
+def get_grouped_languages(user: settings.AUTH_USER_MODEL) -> dict[str, Any]:
+    """Get grouped languages for the given user.
 
     Returns a dictionary with two keys:
     - 'with_preferences': list of languages with existing preferences
@@ -41,7 +39,7 @@ def get_grouped_languages(user: settings.AUTH_USER_MODEL) -> Dict[str, Any]:
     assert isinstance(user, get_user_model())  # Type check for mypy
 
     languages_with_preferences = set(
-        user.language_preferences.values_list("language__google_code", flat=True)
+        user.language_preferences.values_list("language__google_code", flat=True),
     )
     all_languages = Language.objects.all()
 
@@ -75,7 +73,12 @@ def language_preferences_editor(request: HttpRequest) -> HttpResponse:
 
     articles = (
         list(
-            language_preferences.get_lexical_articles().values("id", "title", "type", "parameters")
+            language_preferences.get_lexical_articles().values(
+                "id",
+                "title",
+                "type",
+                "parameters",
+            ),
         )
         if language_preferences
         else []
@@ -117,7 +120,8 @@ def get_language_preferences(request: HttpRequest) -> JsonResponse:
         language = get_object_or_404(Language, google_code=language_id)
 
         language_preferences = LanguagePreferences.get_or_create_language_preferences(
-            request.user, language
+            request.user,
+            language,
         )
 
         all_languages_data = get_grouped_languages(request.user)
@@ -129,8 +133,11 @@ def get_language_preferences(request: HttpRequest) -> JsonResponse:
                 "language_preferences_id": language_preferences.id,
                 "articles": list(
                     language_preferences.get_lexical_articles().values(
-                        "id", "title", "type", "parameters"
-                    )
+                        "id",
+                        "title",
+                        "type",
+                        "parameters",
+                    ),
                 ),
                 "inline_translation": language_preferences.inline_translation,
                 "user_language_id": language_preferences.user_language.google_code
@@ -138,9 +145,9 @@ def get_language_preferences(request: HttpRequest) -> JsonResponse:
                 else None,
                 "all_languages": all_languages_data,
                 "all_languages_flat": all_languages_flat,
-            }
+            },
         )
-    except Exception as e:  # pylint: disable=broad-except
+    except Exception as e:  # noqa: BLE001
         logger.exception("Error in get_language_preferences")
         return JsonResponse({"status": "error", "message": str(e)}, status=500)
 
@@ -165,12 +172,14 @@ def update_user_language(request: HttpRequest) -> JsonResponse:
         language_preferences.save()
 
         return JsonResponse({"status": "success"})
-    except Exception as e:  # pylint: disable=broad-except
+    except Exception as e:  # noqa: BLE001
         return JsonResponse({"status": "error", "message": str(e)})
 
 
 def check_article_params(
-    article_type: str, parameters: Dict[str, str], language_preferences: LanguagePreferences
+    article_type: str,
+    parameters: dict[str, str],
+    language_preferences: LanguagePreferences,
 ) -> Optional[JsonResponse]:
     """Check if the article parameters are valid.
 
@@ -180,7 +189,8 @@ def check_article_params(
         dictionary_name = parameters.get("dictionary")
         if not dictionary_name:
             return JsonResponse(
-                {"status": "error", "message": "Please select a dictionary"}, status=400
+                {"status": "error", "message": "Please select a dictionary"},
+                status=400,
             )
         try:
             source_language = language_preferences.language.name.lower()
@@ -200,10 +210,10 @@ def check_article_params(
                 },
                 status=400,
             )
-        except Exception as e:  # pylint: disable=broad-except
+        except Exception as e:  # noqa: BLE001
             logger.info(
                 f"Error checking translation from {source_language} to {target_language} "
-                f"with {dictionary_name}: {str(e)}"
+                f"with {dictionary_name}: {str(e)}",
             )
     return None
 
@@ -236,13 +246,13 @@ def save_inline_translation(request: HttpRequest) -> JsonResponse:
         {
             "status": "success",
             "inline_translation": language_preferences.inline_translation,
-        }
+        },
     )
 
 
 @smart_login_required
 @require_http_methods(["POST"])  # type: ignore
-def manage_lexical_article(request: HttpRequest) -> JsonResponse:  # pylint: disable=too-many-return-statements
+def manage_lexical_article(request: HttpRequest) -> JsonResponse:  # noqa: PLR0911
     """Ajax to Add, edit, or delete a lexical article."""
     try:
         data = json.loads(request.body)
@@ -253,13 +263,15 @@ def manage_lexical_article(request: HttpRequest) -> JsonResponse:  # pylint: dis
 
         if not language_id:
             return JsonResponse(
-                {"status": "error", "message": "Language ID is missing"}, status=400
+                {"status": "error", "message": "Language ID is missing"},
+                status=400,
             )
 
         try:
             language = Language.objects.get(google_code=language_id)
             language_preferences = LanguagePreferences.objects.get(
-                user=request.user, language=language
+                user=request.user,
+                language=language,
             )
         except Language.DoesNotExist:
             return JsonResponse({"status": "error", "message": "Language not found"}, status=404)
@@ -280,27 +292,31 @@ def manage_lexical_article(request: HttpRequest) -> JsonResponse:  # pylint: dis
     except json.JSONDecodeError:
         logger.exception("Invalid JSON in request body")
         return JsonResponse(
-            {"status": "error", "message": "Invalid JSON in request body"}, status=400
+            {"status": "error", "message": "Invalid JSON in request body"},
+            status=400,
         )
-    except Exception as e:  # pylint: disable=broad-except
+    except Exception as e:  # noqa: BLE001
         logger.exception("An unexpected error occurred in manage_lexical_article")
         return JsonResponse({"status": "error", "message": str(e)}, status=500)
 
 
 @smart_login_required
 def add_lexical_article(
-    language_preferences: LanguagePreferences, data: dict[str, Any]
+    language_preferences: LanguagePreferences,
+    data: dict[str, Any],
 ) -> JsonResponse:
     """Ajax to Add a lexical article."""
     try:
         if error_response := check_article_params(
-            data["type"], data["parameters"], language_preferences
+            data["type"],
+            data["parameters"],
+            language_preferences,
         ):
             return error_response
 
         # Get the current highest order value
         highest_order = LexicalArticle.objects.filter(
-            language_preferences=language_preferences
+            language_preferences=language_preferences,
         ).aggregate(Max("order"))["order__max"]
 
         # Set the new article's order to be one more than the highest
@@ -316,34 +332,41 @@ def add_lexical_article(
         return JsonResponse({"status": "success", "id": article.id})
     except IntegrityError:
         return JsonResponse(
-            {"status": "error", "message": "An article with this title already exists"}, status=400
+            {"status": "error", "message": "An article with this title already exists"},
+            status=400,
         )
     except KeyError as e:
         return JsonResponse(
-            {"status": "error", "message": f"Missing required field: {str(e)}"}, status=400
+            {"status": "error", "message": f"Missing required field: {str(e)}"},
+            status=400,
         )
 
 
 @smart_login_required
 def edit_lexical_article(
-    language_preferences: LanguagePreferences, data: dict[str, Any]
+    language_preferences: LanguagePreferences,
+    data: dict[str, Any],
 ) -> JsonResponse:
     """Ajax to Edit a lexical article."""
     try:
         article_id = data.get("id")
         if not article_id:
             return JsonResponse(
-                {"status": "error", "message": "Article ID is missing"}, status=400
+                {"status": "error", "message": "Article ID is missing"},
+                status=400,
             )
 
         article = LexicalArticle.objects.filter(
-            id=article_id, language_preferences=language_preferences
+            id=article_id,
+            language_preferences=language_preferences,
         ).first()
         if not article:
             return JsonResponse({"status": "error", "message": "Article not found"}, status=404)
 
         if error_response := check_article_params(
-            data["type"], data["parameters"], language_preferences
+            data["type"],
+            data["parameters"],
+            language_preferences,
         ):
             return error_response
 
@@ -355,32 +378,35 @@ def edit_lexical_article(
         return JsonResponse({"status": "success", "id": article.id})
     except ValidationError as e:
         return JsonResponse({"status": "error", "message": str(e)}, status=400)
-    except Exception as e:  # pylint: disable=broad-except
-        logger.exception(f"Error editing article: {str(e)}")
+    except Exception:  # noqa: BLE001
+        logger.exception("Error editing article")
         return JsonResponse({"status": "error", "message": "Failed to edit article"}, status=500)
 
 
 @smart_login_required
 def delete_lexical_article(
-    language_preferences: LanguagePreferences, data: dict[str, Any]
+    language_preferences: LanguagePreferences,
+    data: dict[str, Any],
 ) -> JsonResponse:
     """Ajax to Delete a lexical article."""
     try:
         article_id = data.get("id")
         if not article_id:
             return JsonResponse(
-                {"status": "error", "message": "Article ID is missing"}, status=400
+                {"status": "error", "message": "Article ID is missing"},
+                status=400,
             )
 
         article = LexicalArticle.objects.get(
-            id=article_id, language_preferences=language_preferences
+            id=article_id,
+            language_preferences=language_preferences,
         )
         article.delete()
         return JsonResponse({"status": "success"})
     except LexicalArticle.DoesNotExist:
         return JsonResponse({"status": "error", "message": "Article not found"}, status=404)
-    except Exception as e:  # pylint: disable=broad-except
-        logger.exception(f"Error deleting article: {str(e)}")
+    except Exception:  # noqa: BLE001
+        logger.exception("Error deleting article")
         return JsonResponse({"status": "error", "message": "Failed to delete article"}, status=500)
 
 
@@ -395,11 +421,13 @@ def update_article_order(request: HttpRequest) -> JsonResponse:
         language_id = data.get("language_id")
 
         language_preferences = LanguagePreferences.objects.get(
-            user=request.user, language__google_code=language_id
+            user=request.user,
+            language__google_code=language_id,
         )
 
         article = LexicalArticle.objects.get(
-            id=article_id, language_preferences=language_preferences
+            id=article_id,
+            language_preferences=language_preferences,
         )
 
         # Update the order
@@ -414,7 +442,7 @@ def update_article_order(request: HttpRequest) -> JsonResponse:
             art.save()
 
         return JsonResponse({"status": "success"})
-    except Exception as e:  # pylint: disable=broad-except
+    except Exception as e:  # noqa: BLE001
         return JsonResponse({"status": "error", "message": str(e)}, status=400)
 
 
@@ -430,6 +458,6 @@ def set_global_preferences(request: HttpRequest) -> JsonResponse:
         logger.info(f"Set global preferences for user {request.user.username} to {language.name}")
 
         return JsonResponse({"status": "success"})
-    except Exception as e:  # pylint: disable=broad-except
+    except Exception as e:  # noqa: BLE001
         logger.exception("Error in set_global_preferences")
         return JsonResponse({"status": "error", "message": str(e)}, status=500)
