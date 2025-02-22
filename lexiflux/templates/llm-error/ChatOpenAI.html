@@ -1,12 +1,14 @@
 <div class="alert alert-warning" role="alert">
-    <h4 class="alert-heading">OpenAI API Configuration Required</h4>
+    <h4 class="alert-heading mb-3">OpenAI API Configuration Required</h4>
     <p>Error encountered for model {{ model_name }}: {{ error_message|safe }}</p>
-    <p>To use OpenAI models, you need to set up your API key:</p>
-    <ol>
-        <li>Sign up for an account at <a href="https://openai.com" target="_blank">OpenAI</a></li>
-        <li>Generate an API key in your account dashboard</li>
-        <li>Save the API_KEY in the <a href="ai-settings/?tab=ChatOpenAI">AI Settings</a>.</li>
+    <p class="mb-3">To use OpenAI models, please configure your API key by following these steps:</p>
+    <ol class="mb-3">
+        <li class="mb-2">Sign up for an account at <a href="https://openai.com" target="_blank" class="alert-link">OpenAI</a></li>
+        <li class="mb-2">Generate an API key in your account dashboard</li>
+        <li>Save the API_KEY in the <a href="ai-settings/?tab=ChatOpenAI" class="alert-link">AI Settings</a></li>
     </ol>
-    <p><a href="https://openai.com/api/pricing/">OpenAI API pricing</a>.</p>
-    <p>For more information, visit the <a href="https://platform.openai.com/docs/api-reference" target="_blank">OpenAI API documentation</a>.</p>
+    <p class="mb-2"><strong>Note:</strong> Using the OpenAI API typically costs only a few dollars per month for regular usage.</p>
+    <hr>
+    <p class="mb-2">For detailed pricing information, visit the <a href="https://openai.com/api/pricing/" class="alert-link">OpenAI API pricing page</a>.</p>
+    <p class="mb-0">For additional guidance, please refer to the <a href="https://platform.openai.com/docs/api-reference" target="_blank" class="alert-link">OpenAI API documentation</a>.</p>
 </div>

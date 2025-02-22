@@ -1,13 +1,15 @@
 <div class="alert alert-warning" role="alert">
-    <h4 class="alert-heading">Anthropic API Configuration Required</h4>
+    <h4 class="alert-heading mb-3">Anthropic API Configuration Required</h4>
     <p>Error encountered for model {{ model_name }}: {{ error_message|safe }}</p>
-    <p>To use Anthropic models, you need to set up your API key:</p>
-    <ol>
-        <li>Sign up for an account at <a href="https://www.anthropic.com" target="_blank">Anthropic</a></li>
-        <li>Request access to the Claude API in your account dashboard</li>
-        <li>Once approved, generate an API key in your account settings</li>
-        <li>Save the API_KEY in the <a href="ai-settings/?tab=ChatAnthropic">AI Settings</a>.</li>
+    <p class="mb-3">To use Anthropic models, please configure your API key by following these steps:</p>
+    <ol class="mb-3">
+        <li class="mb-2">Sign up for an account at <a href="https://www.anthropic.com" target="_blank" class="alert-link">Anthropic</a></li>
+        <li class="mb-2">Request access to the Claude API through your account dashboard</li>
+        <li class="mb-2">Once approved, generate an API key in your account settings</li>
+        <li>Save the API_KEY in the <a href="ai-settings/?tab=ChatAnthropic" class="alert-link">AI Settings</a></li>
     </ol>
-    <p><a href="https://docs.anthropic.com/en/docs/about-claude/models#model-comparison-table">Anthropic API pricing</a>.</p>
-    <p>For more information, visit the <a href="https://docs.anthropic.com" target="_blank">Anthropic API documentation</a>.</p>
+    <p class="mb-2"><strong>Note:</strong> Using the Anthropic API typically costs only a few dollars per month for regular usage.</p>
+    <hr>
+    <p class="mb-2">For detailed pricing information, visit the <a href="https://docs.anthropic.com/en/docs/about-claude/models#model-comparison-table" class="alert-link">Anthropic API pricing page</a>.</p>
+    <p class="mb-0">For additional guidance, please refer to the <a href="https://docs.anthropic.com" target="_blank" class="alert-link">Anthropic API documentation</a>.</p>
 </div>

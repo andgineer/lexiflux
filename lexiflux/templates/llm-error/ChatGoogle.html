@@ -1,13 +1,14 @@
 <div class="alert alert-warning" role="alert">
-    <h4 class="alert-heading">Google Gemini API Configuration Required</h4>
+    <h4 class="alert-heading mb-3">Google Gemini API Configuration Required</h4>
     <p>Error encountered for model {{ model_name }}: {{ error_message|safe }}</p>
-    <p>To use Google Gemini models, you need to set up your API key:</p>
-    <ol>
-        <li>Sign up for an account at <a href="https://ai.google.dev/gemini-api/docs/api-key" target="_blank">Gemini API key</a></li>
-        <li>Request access to the Claude API in your account dashboard</li>
-        <li>Once approved, generate an API key in your account settings</li>
-        <li>Save the API_KEY in the <a href="ai-settings/?tab=ChatGoogle">AI Settings</a>.</li>
+    <p class="mb-3">To use Google Gemini models, please configure your API key by following these steps:</p>
+    <ol class="mb-3">
+        <li class="mb-2">Sign up for an account at <a href="https://ai.google.dev/gemini-api/docs/api-key" target="_blank" class="alert-link">Google AI Studio</a></li>
+        <li class="mb-2">Create your API key in the Google AI Studio dashboard</li>
+        <li>Save the API key in the <a href="ai-settings/?tab=ChatGoogle" class="alert-link">AI Settings</a></li>
     </ol>
-    <p><a href="https://ai.google.dev/pricing#1_5flash">Google Gemini API pricing</a>.</p>
-    <p>For more information, visit the <a href="https://ai.google.dev/gemini-api/docs/models/gemini" target="_blank">Google Gemini documentation</a>.</p>
+    <p class="mb-2"><strong>Note:</strong> Using the Gemini API comes with a generous free tier and typically costs only a few dollars per month for regular usage beyond that.</p>
+    <hr>
+    <p class="mb-2">For detailed pricing information, visit the <a href="https://ai.google.dev/pricing#1_5flash" class="alert-link">Google Gemini API pricing page</a>.</p>
+    <p class="mb-0">For additional guidance, please refer to the <a href="https://ai.google.dev/gemini-api/docs/models/gemini" target="_blank" class="alert-link">Google Gemini documentation</a>.</p>
 </div>
