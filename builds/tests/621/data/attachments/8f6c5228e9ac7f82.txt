@@ -1,0 +1,4 @@
+INFO     lexiflux.signals:signals.py:57 Successfully created language preferences for user testuser (ID: 1)
+INFO     root:reader_views.py:344 Jump status: book some-book-code, is_first_jump False, is_last_jump False
+INFO     root:reader_views.py:344 Jump status: book some-book-code, is_first_jump True, is_last_jump False
+INFO     root:reader_views.py:344 Jump status: book some-book-code, is_first_jump False, is_last_jump True
