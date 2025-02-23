@@ -15,7 +15,7 @@
 На самом деле это всё, что вам нужно после первоначального создания контейнера.
 
 ### Создание Docker контейнера Lexiflux
-Если первая часть команды не удалась, вторая часть команды 
+Если первая часть команды не удалась, вторая часть команды
 
     docker run -d -p 6100:8000 --name lexiflux andgineer/lexiflux
 
@@ -23,7 +23,7 @@
 создает новый контейнер с именем `lexiflux` и открывает порт `6100` на вашей хост-машине.
 
 ### Локальный Ollama AI {#local-ollama-ai}
-Если вы хотите использовать бесплатный локальный AI и у вас достаточно оперативной памяти, вы можете предварительно загрузить модель [Ollama](aimodels.md#ollama) 
+Если вы хотите использовать бесплатный локальный AI и у вас достаточно оперативной памяти, вы можете предварительно загрузить модель [Ollama](aimodels.md#ollama)
 в docker.
 
 Добавьте `OLLAMA_LOAD_MODEL=llama3` к команде `docker run`.
@@ -52,7 +52,7 @@
 
 === "Windows (PowerShell)"
     В командной строке введите:
-    
+
     ```bash
     docker commit lexiflux lexiflux_backup
     docker save lexiflux_backup -o lexiflux_backup.tar
@@ -80,7 +80,7 @@
 
 === "Windows (PowerShell)"
     В командной строке введите:
-    
+
     ```bash
     docker stop lexiflux
     docker rm lexiflux

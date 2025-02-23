@@ -1,6 +1,6 @@
 import pytest
 import allure
-from django.http import HttpRequest, HttpResponse
+from django.http import HttpResponse
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AnonymousUser
 from django.test import RequestFactory
@@ -21,12 +21,11 @@ def mock_view():
     return MagicMock(return_value=HttpResponse())
 
 
-@allure.epic('User')
-@allure.feature('Auth')
+@allure.epic("User")
+@allure.feature("Auth")
 class TestAuthDecorators:
-    @allure.story('Default User Creation')
+    @allure.story("Default User Creation")
     class TestGetDefaultUser:
-
         @pytest.mark.django_db
         def test_get_default_user_creates_new_user(self):
             """Test that get_default_user creates a new user if it doesn't exist."""
@@ -49,16 +48,15 @@ class TestAuthDecorators:
             assert User.objects.filter(username=settings.lexiflux.default_user_name).count() == 1
 
     @pytest.mark.django_db
-    @allure.story('Smart Login Required')
+    @allure.story("Smart Login Required")
     class TestSmartLoginRequired:
-
         @pytest.mark.django_db
         def test_skip_auth_anonymous_user(self, request_factory, mock_view):
             """Test decorator with skip_auth=True and anonymous user."""
-            request = request_factory.get('/')
+            request = request_factory.get("/")
             request.user = AnonymousUser()
 
-            with patch('lexiflux.decorators.settings.lexiflux.skip_auth', True):
+            with patch("lexiflux.decorators.settings.lexiflux.skip_auth", True):
                 decorated_view = smart_login_required(mock_view)
                 response = decorated_view(request)
 
@@ -70,11 +68,11 @@ class TestAuthDecorators:
         @pytest.mark.django_db
         def test_skip_auth_authenticated_user(self, request_factory, mock_view):
             """Test decorator with skip_auth=True and authenticated user."""
-            request = request_factory.get('/')
-            request.user = User.objects.create(username='test_user')
+            request = request_factory.get("/")
+            request.user = User.objects.create(username="test_user")
             original_user = request.user
 
-            with patch('lexiflux.decorators.settings.lexiflux.skip_auth', True):
+            with patch("lexiflux.decorators.settings.lexiflux.skip_auth", True):
                 decorated_view = smart_login_required(mock_view)
                 response = decorated_view(request)
 
@@ -85,24 +83,24 @@ class TestAuthDecorators:
         @pytest.mark.django_db
         def test_no_skip_auth_anonymous_user(self, request_factory, mock_view):
             """Test decorator with skip_auth=False and anonymous user."""
-            request = request_factory.get('/')
+            request = request_factory.get("/")
             request.user = AnonymousUser()
 
-            with patch('lexiflux.decorators.settings.lexiflux.skip_auth', False):
+            with patch("lexiflux.decorators.settings.lexiflux.skip_auth", False):
                 decorated_view = smart_login_required(mock_view)
                 response = decorated_view(request)
 
                 # Should redirect to login page
                 assert response.status_code == 302
-                assert 'login' in response.url
+                assert "login" in response.url
 
         @pytest.mark.django_db
         def test_no_skip_auth_authenticated_user(self, request_factory, mock_view):
             """Test decorator with skip_auth=False and authenticated user."""
-            request = request_factory.get('/')
-            request.user = User.objects.create(username='test_user')
+            request = request_factory.get("/")
+            request.user = User.objects.create(username="test_user")
 
-            with patch('lexiflux.decorators.settings.lexiflux.skip_auth', False):
+            with patch("lexiflux.decorators.settings.lexiflux.skip_auth", False):
                 decorated_view = smart_login_required(mock_view)
                 response = decorated_view(request)
 

@@ -1,5 +1,3 @@
-from time import sleep
-
 import pytest
 import allure
 from django.urls import reverse
@@ -11,16 +9,16 @@ from tests.conftest import USER_PASSWORD
 from tests.page_models.library_page import LibraryPage
 
 
-@allure.epic('End-to-end (selenium)')
-@allure.feature('Library Page')
-@allure.story('Un-approved user cannot access library page')
+@allure.epic("End-to-end (selenium)")
+@allure.feature("Library Page")
+@allure.story("Un-approved user cannot access library page")
 @pytest.mark.docker
 @pytest.mark.selenium
 @pytest.mark.django_db
 def test_e2e_library_page_upapproved_user_cannot_access(browser, user):
     browser.login(user, USER_PASSWORD, wait_view=None)
     WebDriverWait(browser, 3).until(
-        EC.url_to_be(browser.host + reverse('login')),  # raise TimeoutException if not
+        EC.url_to_be(browser.host + reverse("login")),  # raise TimeoutException if not
         message="Expected to be redirected to login page again after login with unapproved user.",
     )
     assert "Your account is not approved yet." in browser.errors_text
@@ -28,21 +26,21 @@ def test_e2e_library_page_upapproved_user_cannot_access(browser, user):
     # just to be sure
     allure.attach(
         browser.get_screenshot_as_png(),
-        name='after_unapproved_login_screenshot',
-        attachment_type=allure.attachment_type.PNG
+        name="after_unapproved_login_screenshot",
+        attachment_type=allure.attachment_type.PNG,
     )
 
 
-@allure.epic('End-to-end (selenium)')
-@allure.feature('Library Page')
-@allure.story('Book Editing')
+@allure.epic("End-to-end (selenium)")
+@allure.feature("Library Page")
+@allure.story("Book Editing")
 @pytest.mark.docker
 @pytest.mark.selenium
 @pytest.mark.django_db
 def test_e2e_library_page_edit_book(browser, approved_user, book, language):
     approved_user.language = language
     approved_user.save()
-    
+
     with allure.step("Login and navigate to library page"):
         browser.login(approved_user, USER_PASSWORD)
         page = LibraryPage(browser)
@@ -62,8 +60,12 @@ def test_e2e_library_page_edit_book(browser, approved_user, book, language):
 
     with allure.step("Verify correct title and author in edit dialog"):
         dialog_title, dialog_author = page.get_edit_dialog_info()
-        assert dialog_title == initial_title, f"Expected title '{initial_title}', but got '{dialog_title}' in edit dialog"
-        assert dialog_author == initial_author, f"Expected author '{initial_author}', but got '{dialog_author}' in edit dialog"
+        assert dialog_title == initial_title, (
+            f"Expected title '{initial_title}', but got '{dialog_title}' in edit dialog"
+        )
+        assert dialog_author == initial_author, (
+            f"Expected author '{initial_author}', but got '{dialog_author}' in edit dialog"
+        )
 
     new_title = f"Updated: {initial_title}"
     new_author = f"Updated: {initial_author}"
@@ -75,15 +77,19 @@ def test_e2e_library_page_edit_book(browser, approved_user, book, language):
 
     with allure.step("Verify the book title and author have been updated"):
         updated_title, updated_author = page.get_first_book_info()
-        assert updated_title == new_title, f"Expected title '{new_title}', but got '{updated_title}'"
-        assert updated_author == new_author, f"Expected author '{new_author}', but got '{updated_author}'"
+        assert updated_title == new_title, (
+            f"Expected title '{new_title}', but got '{updated_title}'"
+        )
+        assert updated_author == new_author, (
+            f"Expected author '{new_author}', but got '{updated_author}'"
+        )
 
     browser.take_screenshot("Final Library Page")
 
 
-@allure.epic('End-to-end (selenium)')
-@allure.feature('Library Page')
-@allure.story('Language Selection')
+@allure.epic("End-to-end (selenium)")
+@allure.feature("Library Page")
+@allure.story("Language Selection")
 @pytest.mark.docker
 @pytest.mark.selenium
 @pytest.mark.django_db
@@ -98,7 +104,7 @@ def test_e2e_library_page_language_selection(browser, approved_user, language):
     with allure.step("Login and auto-redirect to library page"):
         browser.login(approved_user, USER_PASSWORD)
         browser.take_screenshot("Initial Library Page")
-        
+
     with allure.step("Wait for user language selection modal on library page"):
         assert page.is_user_modal_visible()
         assert "Welcome to LexiFlux!" in page.get_user_modal_text()

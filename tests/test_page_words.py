@@ -1,7 +1,7 @@
 import allure
 from django.core.exceptions import ValidationError
 import pytest
-from lexiflux.models import Book, BookPage, Author, Language
+from lexiflux.models import BookPage
 
 
 @pytest.fixture
@@ -10,8 +10,8 @@ def book_page_with_content(book):
     return BookPage.objects.create(number=100, content=content, book=book)
 
 
-@allure.epic('Book import')
-@allure.feature('Extract words')
+@allure.epic("Book import")
+@allure.feature("Extract words")
 def test_extract_words(book_page_with_content):
     page = book_page_with_content
 
@@ -41,8 +41,8 @@ def test_extract_words(book_page_with_content):
     assert len(indices) == len(page.words)
 
 
-@allure.epic('Book import')
-@allure.feature('Extract words')
+@allure.epic("Book import")
+@allure.feature("Extract words")
 def test_word_slices_empty_list(book_page_with_content):
     empty_slices = []
     book_page_with_content.word_slices = empty_slices
@@ -50,8 +50,8 @@ def test_word_slices_empty_list(book_page_with_content):
     assert book_page_with_content.words == empty_slices
 
 
-@allure.epic('Book import')
-@allure.feature('Extract words')
+@allure.epic("Book import")
+@allure.feature("Extract words")
 def test_word_slices_single_word(book_page_with_content):
     slices = [(0, 4)]
     book_page_with_content.word_slices = slices
@@ -59,8 +59,8 @@ def test_word_slices_single_word(book_page_with_content):
     assert book_page_with_content.words == slices
 
 
-@allure.epic('Book import')
-@allure.feature('Extract words')
+@allure.epic("Book import")
+@allure.feature("Extract words")
 def test_word_slices_multiple_words(book_page_with_content):
     slices = [(0, 4), (5, 7), (8, 9), (10, 14)]
     book_page_with_content.word_slices = slices
@@ -68,8 +68,8 @@ def test_word_slices_multiple_words(book_page_with_content):
     assert book_page_with_content.words == slices
 
 
-@allure.epic('Book import')
-@allure.feature('Extract words')
+@allure.epic("Book import")
+@allure.feature("Extract words")
 def test_word_slices_large_indices(book_page_with_content):
     slices = [(1000, 1004), (2000, 2010), (3000, 3005)]
     book_page_with_content.word_slices = slices
@@ -77,8 +77,8 @@ def test_word_slices_large_indices(book_page_with_content):
     assert book_page_with_content.words == slices
 
 
-@allure.epic('Book import')
-@allure.feature('Extract words')
+@allure.epic("Book import")
+@allure.feature("Extract words")
 def test_word_slices_zero_length_word(book_page_with_content):
     slices = [(0, 0), (1, 1), (2, 2)]
     book_page_with_content.word_slices = slices
@@ -86,8 +86,8 @@ def test_word_slices_zero_length_word(book_page_with_content):
     assert book_page_with_content.words == slices
 
 
-@allure.epic('Book import')
-@allure.feature('Extract words')
+@allure.epic("Book import")
+@allure.feature("Extract words")
 def test_word_slices_overlapping_indices(book_page_with_content):
     slices = [(0, 5), (3, 7), (6, 10)]
     book_page_with_content.word_slices = slices
@@ -95,8 +95,8 @@ def test_word_slices_overlapping_indices(book_page_with_content):
     assert book_page_with_content.words == slices
 
 
-@allure.epic('Book import')
-@allure.feature('Extract words')
+@allure.epic("Book import")
+@allure.feature("Extract words")
 def test_word_slices_negative_indices(book_page_with_content):
     slices = [(-5, -1), (0, 5)]
     book_page_with_content.word_slices = slices
@@ -104,8 +104,8 @@ def test_word_slices_negative_indices(book_page_with_content):
     assert book_page_with_content.words == slices
 
 
-@allure.epic('Book import')
-@allure.feature('Extract words')
+@allure.epic("Book import")
+@allure.feature("Extract words")
 def test_words_property_with_existing_slices(book_page_with_content):
     slices = [(0, 4), (5, 7), (8, 9), (10, 14)]
     book_page_with_content.word_slices = slices
@@ -113,8 +113,8 @@ def test_words_property_with_existing_slices(book_page_with_content):
     assert book_page_with_content.words == slices
 
 
-@allure.epic('Book import')
-@allure.feature('Extract words')
+@allure.epic("Book import")
+@allure.feature("Extract words")
 def test_words_property_with_no_slices(book_page_with_content):
     book_page_with_content.content = "This is a test."
     book_page_with_content.word_slices = None
@@ -124,8 +124,8 @@ def test_words_property_with_no_slices(book_page_with_content):
     assert words == [(0, 4), (5, 7), (8, 9), (10, 14)]
 
 
-@allure.epic('Book import')
-@allure.feature('Extract words')
+@allure.epic("Book import")
+@allure.feature("Extract words")
 def test_parse_and_save_words(book_page_with_content):
     book_page_with_content.content = "This is another test."
     book_page_with_content._parse_and_save_words()
@@ -134,16 +134,16 @@ def test_parse_and_save_words(book_page_with_content):
     assert book_page_with_content.words == [(0, 4), (5, 7), (8, 15), (16, 20)]
 
 
-@allure.epic('Book import')
-@allure.feature('Extract words')
+@allure.epic("Book import")
+@allure.feature("Extract words")
 def test_word_slices_invalid_type(book_page_with_content):
     with pytest.raises(ValidationError):
         book_page_with_content.word_slices = "invalid type"
         book_page_with_content.save()
 
 
-@allure.epic('Book import')
-@allure.feature('Extract words')
+@allure.epic("Book import")
+@allure.feature("Extract words")
 @pytest.mark.skip(reason="See BookPage.clean()")
 def test_word_slices_invalid_structure(book_page_with_content):
     with pytest.raises(ValidationError):
@@ -151,8 +151,8 @@ def test_word_slices_invalid_structure(book_page_with_content):
         book_page_with_content.full_clean()
 
 
-@allure.epic('Book import')
-@allure.feature('Extract words')
+@allure.epic("Book import")
+@allure.feature("Extract words")
 def test_word_slices_valid_json_invalid_structure(book_page_with_content):
     with pytest.raises(ValidationError):
         book_page_with_content.word_slices = {"key": "value"}  # Valid JSON, invalid structure
@@ -178,22 +178,41 @@ def book_page_with_tags(book):
     return BookPage.objects.create(number=101, content=content, book=book)
 
 
-@allure.epic('Book import')
-@allure.feature('Extract words')
+@allure.epic("Book import")
+@allure.feature("Extract words")
 def test_words_content_with_tags(book_page_with_tags):
     word_slices = book_page_with_tags.words
     words = [book_page_with_tags.content[start:end] for start, end in word_slices]
     assert words == [
         "razgovora",
-        "pre", "fix", "word",
-        "in", "fix",
+        "pre",
+        "fix",
+        "word",
+        "in",
+        "fix",
         "full",
-        "suf", "fix",
-        "quo", "ted",
-        "new", "line",
-        "multi", "ple", "spaces",
+        "suf",
+        "fix",
+        "quo",
+        "ted",
+        "new",
+        "line",
+        "multi",
+        "ple",
+        "spaces",
         "visible",
-        "not", "a", "tag",
-        "com", "pl&#233;", "x",
-         'Hello', 'world', 'New', 'line', 'Hello', 'world', 'New', 'line',
+        "not",
+        "a",
+        "tag",
+        "com",
+        "pl&#233;",
+        "x",
+        "Hello",
+        "world",
+        "New",
+        "line",
+        "Hello",
+        "world",
+        "New",
+        "line",
     ]

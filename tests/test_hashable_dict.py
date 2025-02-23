@@ -8,10 +8,10 @@ def llm():
     return Llm()
 
 
-@allure.epic('Pages endpoints')
-@allure.feature('Reader')
-@allure.story('Hashable Dict')
-@allure.title('Test simple dictionary')
+@allure.epic("Pages endpoints")
+@allure.feature("Reader")
+@allure.story("Hashable Dict")
+@allure.title("Test simple dictionary")
 def test_hashable_dict_simple(llm):
     input_dict = {"a": 1, "b": "string", "c": 3.14}
     result = llm.hashable_dict(input_dict)
@@ -19,10 +19,10 @@ def test_hashable_dict_simple(llm):
     assert result == expected
 
 
-@allure.epic('Pages endpoints')
-@allure.feature('Reader')
-@allure.story('Hashable Dict')
-@allure.title('Test dictionary with list')
+@allure.epic("Pages endpoints")
+@allure.feature("Reader")
+@allure.story("Hashable Dict")
+@allure.title("Test dictionary with list")
 def test_hashable_dict_with_list(llm):
     input_dict = {"a": [1, 2, 3], "b": "string"}
     result = llm.hashable_dict(input_dict)
@@ -30,10 +30,10 @@ def test_hashable_dict_with_list(llm):
     assert result == expected
 
 
-@allure.epic('Pages endpoints')
-@allure.feature('Reader')
-@allure.story('Hashable Dict')
-@allure.title('Test dictionary with nested dict')
+@allure.epic("Pages endpoints")
+@allure.feature("Reader")
+@allure.story("Hashable Dict")
+@allure.title("Test dictionary with nested dict")
 def test_hashable_dict_with_nested_dict(llm):
     input_dict = {"a": {"nested": "value"}, "b": "string"}
     result = llm.hashable_dict(input_dict)
@@ -41,10 +41,10 @@ def test_hashable_dict_with_nested_dict(llm):
     assert result == expected
 
 
-@allure.epic('Pages endpoints')
-@allure.feature('Reader')
-@allure.story('Hashable Dict')
-@allure.title('Test dictionary with nested list of dicts')
+@allure.epic("Pages endpoints")
+@allure.feature("Reader")
+@allure.story("Hashable Dict")
+@allure.title("Test dictionary with nested list of dicts")
 def test_hashable_dict_with_nested_list_of_dicts(llm):
     input_dict = {"a": [{"x": 1}, {"y": 2}], "b": "string"}
     result = llm.hashable_dict(input_dict)
@@ -52,27 +52,27 @@ def test_hashable_dict_with_nested_list_of_dicts(llm):
     assert result == expected
 
 
-@allure.epic('Pages endpoints')
-@allure.feature('Reader')
-@allure.story('Hashable Dict')
-@allure.title('Test dictionary with complex nesting')
+@allure.epic("Pages endpoints")
+@allure.feature("Reader")
+@allure.story("Hashable Dict")
+@allure.title("Test dictionary with complex nesting")
 def test_hashable_dict_with_complex_nesting(llm):
     input_dict = {
         "a": [1, {"nested": [2, 3, {"deep": "value"}]}, 4],
-        "b": {"x": [5, 6], "y": {"z": 7}}
+        "b": {"x": [5, 6], "y": {"z": 7}},
     }
     result = llm.hashable_dict(input_dict)
     expected = (
         ("a", (1, (("nested", (2, 3, (("deep", "value"),))),), 4)),
-        ("b", (("x", (5, 6)), ("y", (("z", 7),))))
+        ("b", (("x", (5, 6)), ("y", (("z", 7),)))),
     )
     assert result == expected
 
 
-@allure.epic('Pages endpoints')
-@allure.feature('Reader')
-@allure.story('Hashable Dict')
-@allure.title('Test empty dictionary')
+@allure.epic("Pages endpoints")
+@allure.feature("Reader")
+@allure.story("Hashable Dict")
+@allure.title("Test empty dictionary")
 def test_hashable_dict_empty(llm):
     input_dict = {}
     result = llm.hashable_dict(input_dict)
@@ -80,10 +80,10 @@ def test_hashable_dict_empty(llm):
     assert result == expected
 
 
-@allure.epic('Pages endpoints')
-@allure.feature('Reader')
-@allure.story('Hashable Dict')
-@allure.title('Test dictionary with None value')
+@allure.epic("Pages endpoints")
+@allure.feature("Reader")
+@allure.story("Hashable Dict")
+@allure.title("Test dictionary with None value")
 def test_hashable_dict_with_none(llm):
     input_dict = {"a": None, "b": "string"}
     result = llm.hashable_dict(input_dict)
@@ -91,10 +91,10 @@ def test_hashable_dict_with_none(llm):
     assert result == expected
 
 
-@allure.epic('Pages endpoints')
-@allure.feature('Reader')
-@allure.story('Hashable Dict')
-@allure.title('Test dictionary with tuple')
+@allure.epic("Pages endpoints")
+@allure.feature("Reader")
+@allure.story("Hashable Dict")
+@allure.title("Test dictionary with tuple")
 def test_hashable_dict_with_tuple(llm):
     input_dict = {"a": (1, 2, 3), "b": "string"}
     result = llm.hashable_dict(input_dict)
@@ -102,20 +102,21 @@ def test_hashable_dict_with_tuple(llm):
     assert result == expected
 
 
-@allure.epic('Pages endpoints')
-@allure.feature('Reader')
-@allure.story('Hashable Dict')
-@allure.title('Test dictionary sorting')
+@allure.epic("Pages endpoints")
+@allure.feature("Reader")
+@allure.story("Hashable Dict")
+@allure.title("Test dictionary sorting")
 def test_hashable_dict_sorting(llm):
     input_dict = {"c": 3, "a": 1, "b": 2}
     result = llm.hashable_dict(input_dict)
     expected = (("a", 1), ("b", 2), ("c", 3))
     assert result == expected
 
-@allure.epic('Pages endpoints')
-@allure.feature('Reader')
-@allure.story('Hashable Dict')
-@allure.title('Test dictionary with empty list')
+
+@allure.epic("Pages endpoints")
+@allure.feature("Reader")
+@allure.story("Hashable Dict")
+@allure.title("Test dictionary with empty list")
 def test_hashable_dict_with_empty_list(llm):
     input_dict = {"a": [], "b": "string"}
     result = llm.hashable_dict(input_dict)
@@ -123,10 +124,10 @@ def test_hashable_dict_with_empty_list(llm):
     assert result == expected
 
 
-@allure.epic('Pages endpoints')
-@allure.feature('Reader')
-@allure.story('Hashable Dict')
-@allure.title('Test dictionary with empty nested dict')
+@allure.epic("Pages endpoints")
+@allure.feature("Reader")
+@allure.story("Hashable Dict")
+@allure.title("Test dictionary with empty nested dict")
 def test_hashable_dict_with_empty_nested_dict(llm):
     input_dict = {"a": {}, "b": "string"}
     result = llm.hashable_dict(input_dict)
@@ -134,10 +135,10 @@ def test_hashable_dict_with_empty_nested_dict(llm):
     assert result == expected
 
 
-@allure.epic('Pages endpoints')
-@allure.feature('Reader')
-@allure.story('Hashable Dict')
-@allure.title('Test dictionary with different CustomUser objects')
+@allure.epic("Pages endpoints")
+@allure.feature("Reader")
+@allure.story("Hashable Dict")
+@allure.title("Test dictionary with different CustomUser objects")
 def test_hashable_dict_with_different_users(llm):
     class MockUser:
         def __init__(self, id):
@@ -174,10 +175,11 @@ def test_hashable_dict_with_different_users(llm):
     assert hash(result1) != hash(result2)
 
     # Check that the user part is different
-    user_tuple1 = next(item for item in result1 if item[0] == 'user')
-    user_tuple2 = next(item for item in result2 if item[0] == 'user')
+    user_tuple1 = next(item for item in result1 if item[0] == "user")
+    user_tuple2 = next(item for item in result2 if item[0] == "user")
     assert user_tuple1 != user_tuple2
 
     # Check that other parts are the same
-    assert next(item for item in result1 if item[0] == 'b') == next(item for item in result2 if item[0] == 'b')
-    
+    assert next(item for item in result1 if item[0] == "b") == next(
+        item for item in result2 if item[0] == "b"
+    )

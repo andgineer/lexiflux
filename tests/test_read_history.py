@@ -6,10 +6,10 @@ from lexiflux.models import ReadingLoc
 
 
 @allure.epic("Pages endpoints")
-@allure.feature('Reader')
+@allure.feature("Reader")
 @pytest.mark.django_db
 class TestReadingLoc:
-    @allure.story('Create Reading Location')
+    @allure.story("Create Reading Location")
     def test_create_reading_loc(self, user, book):
         reading_loc = ReadingLoc.objects.create(user=user, book=book, page_number=1, word=1)
         assert reading_loc.user == user
@@ -20,7 +20,7 @@ class TestReadingLoc:
         assert reading_loc.current_jump == -1
         assert reading_loc.last_position_percent == 0.0
 
-    @allure.story('Jump to New Location')
+    @allure.story("Jump to New Location")
     def test_jump(self, user, book):
         reading_loc = ReadingLoc.objects.create(user=user, book=book, page_number=1, word=1)
         reading_loc.jump(3, 30)
@@ -33,9 +33,11 @@ class TestReadingLoc:
         assert len(reading_loc.jump_history) == 1
         assert reading_loc.current_jump == 0
         assert reading_loc.jump_history[0] == {"page_number": 3, "word": 30}
-        assert reading_loc.last_position_percent == pytest.approx(50, 1)  # Assuming book has 5 pages
+        assert reading_loc.last_position_percent == pytest.approx(
+            50, 1
+        )  # Assuming book has 5 pages
 
-    @allure.story('Jump Back')
+    @allure.story("Jump Back")
     def test_jump_back(self, user, book):
         reading_loc = ReadingLoc.objects.create(user=user, book=book, page_number=1, word=1)
         reading_loc.jump(2, 30)
@@ -52,9 +54,11 @@ class TestReadingLoc:
         assert reading_loc.current_jump == 0
         assert len(reading_loc.jump_history) == 2
         assert reading_loc.jump_history[reading_loc.current_jump] == {"page_number": 2, "word": 30}
-        assert reading_loc.last_position_percent == pytest.approx(25, 1)  # Assuming book has 5 pages
+        assert reading_loc.last_position_percent == pytest.approx(
+            25, 1
+        )  # Assuming book has 5 pages
 
-    @allure.story('Jump Forward')
+    @allure.story("Jump Forward")
     def test_jump_forward(self, user, book):
         reading_loc = ReadingLoc.objects.create(user=user, book=book, page_number=1, word=1)
         reading_loc.jump(2, 30)
@@ -72,9 +76,11 @@ class TestReadingLoc:
         assert reading_loc.current_jump == 1
         assert len(reading_loc.jump_history) == 2
         assert reading_loc.jump_history[reading_loc.current_jump] == {"page_number": 4, "word": 50}
-        assert reading_loc.last_position_percent == pytest.approx(75, 1)  # Assuming book has 5 pages
+        assert reading_loc.last_position_percent == pytest.approx(
+            75, 1
+        )  # Assuming book has 5 pages
 
-    @allure.story('Update Reading Location')
+    @allure.story("Update Reading Location")
     def test_update_reading_location(self, user, book):
         reading_loc = ReadingLoc.objects.create(user=user, book=book, page_number=1, word=1)
         reading_loc.jump(2, 30)
@@ -95,9 +101,11 @@ class TestReadingLoc:
         assert reading_loc.jump_history[reading_loc.current_jump] == {"page_number": 5, "word": 10}
         assert reading_loc.furthest_reading_page == 5
         assert reading_loc.furthest_reading_word == 10
-        assert reading_loc.last_position_percent == pytest.approx(100, 1)  # Assuming book has 5 pages
+        assert reading_loc.last_position_percent == pytest.approx(
+            100, 1
+        )  # Assuming book has 5 pages
 
-    @allure.story('Last Access Time')
+    @allure.story("Last Access Time")
     def test_last_access_time(self, user, book):
         reading_loc = ReadingLoc.objects.create(user=user, book=book, page_number=1, word=1)
         assert reading_loc.last_access is None

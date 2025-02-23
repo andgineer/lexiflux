@@ -13,18 +13,21 @@ def medium_splitter():
     """Return splitter configured for medium-length pages."""
     return HtmlPageSplitter(target_page_size=165)
 
+
 @pytest.fixture
 def small_splitter():
     """Return splitter configured for small pages."""
     return HtmlPageSplitter(target_page_size=300)
+
 
 @pytest.fixture
 def tiny_splitter():
     """Return splitter configured for tiny pages."""
     return HtmlPageSplitter(target_page_size=50)
 
-@allure.epic('Book import')
-@allure.feature('EPUB: parse pages')
+
+@allure.epic("Book import")
+@allure.feature("EPUB: parse pages")
 def test_multiple_paragraphs_near_limit(medium_splitter):
     """Test handling of multiple paragraphs near the page size limit."""
     content = """
@@ -50,18 +53,21 @@ def test_multiple_paragraphs_near_limit(medium_splitter):
 
     for page in pages[:-1]:
         # Check page size
-        assert len(page) <= target_size * 1.1, \
+        assert len(page) <= target_size * 1.1, (
             f"Page size ({len(page)}) significantly exceeds target size ({target_size})"
+        )
         # Verify complete paragraphs
-        assert page.count('<p>') == page.count('</p>'), \
+        assert page.count("<p>") == page.count("</p>"), (
             "Paragraphs should not be split across pages"
+        )
         # Verify sentence boundaries
-        assert re.search(r'[.!?](\s|</p></div>|$)', page.strip()), \
+        assert re.search(r"[.!?](\s|</p></div>|$)", page.strip()), (
             "Pages should end at sentence boundaries"
+        )
 
 
-@allure.epic('Book import')
-@allure.feature('EPUB: parse pages')
+@allure.epic("Book import")
+@allure.feature("EPUB: parse pages")
 class TestEpubContentSplitting:
     """Test suite for EPUB content splitting functionality."""
 
@@ -72,21 +78,23 @@ class TestEpubContentSplitting:
         # Test with a large HTML element
         large_html_element = BeautifulSoup(
             "<div><p>" + "HTML content " * 500 + "</p><p>" + "More HTML " * 500 + "</p></div>",
-            "html.parser"
+            "html.parser",
         ).div
         html_pages = list(splitter.split_elements([large_html_element]))
 
         assert len(html_pages) > 1, "Large HTML element should be split into multiple pages"
-        assert all(len(page) <= TARGET_PAGE_SIZE * 2 for page in
-                   html_pages), "No HTML page should be more than twice the TARGET_PAGE_SIZE"
+        assert all(len(page) <= TARGET_PAGE_SIZE * 2 for page in html_pages), (
+            "No HTML page should be more than twice the TARGET_PAGE_SIZE"
+        )
 
         # Test with a large paragraph
         large_p_element = BeautifulSoup("<p>" + "Large content " * 1000 + "</p>", "html.parser").p
         p_pages = list(splitter.split_elements([large_p_element]))
 
         assert len(p_pages) > 1, "Large paragraph should be split into multiple pages"
-        assert all(len(page) <= TARGET_PAGE_SIZE * 2 for page in
-                   p_pages), "No paragraph page should be more than twice the TARGET_PAGE_SIZE"
+        assert all(len(page) <= TARGET_PAGE_SIZE * 2 for page in p_pages), (
+            "No paragraph page should be more than twice the TARGET_PAGE_SIZE"
+        )
 
         print(f"HTML element pages: {len(html_pages)}: {[len(page) for page in html_pages]}")
         print(f"Large paragraph pages: {len(p_pages)}, sizes: {[len(page) for page in p_pages]}")
@@ -114,16 +122,18 @@ class TestEpubContentSplitting:
 
         # Check that each page (except possibly the last) is close to but not over target size
         for page in pages[:-1]:
-            assert len(page) <= target_size * 1.1, \
+            assert len(page) <= target_size * 1.1, (
                 f"Page size ({len(page)}) significantly exceeds target size ({target_size})"
+            )
 
         # Check that each page ends with a complete sentence
-        sentence_endings = r'[.!?](\s|</p>|$)'
+        sentence_endings = r"[.!?](\s|</p>|$)"
         for page in pages[:-1]:
             print(f"Page content: {page}")
             stripped_page = page.strip()
-            assert re.search(sentence_endings, stripped_page), \
+            assert re.search(sentence_endings, stripped_page), (
                 f"Page should end with a complete sentence, but got: {stripped_page[-50:]}"
+            )
 
     def test_very_long_single_sentence(self):
         """Test handling of sentences longer than page size."""
@@ -140,8 +150,9 @@ class TestEpubContentSplitting:
             print(f"Page {i + 1}:\n{page}")
 
         assert len(pages) > 1, "Very long sentence should be split"
-        assert all(len(page) <= target_size * 1.2 for page in pages[:-1]), \
+        assert all(len(page) <= target_size * 1.2 for page in pages[:-1]), (
             "Split pages should not significantly exceed target size"
+        )
 
     def test_html_tag_integrity(self):
         """Test that HTML tags are never split across pages. Each page must be valid HTML."""
@@ -182,26 +193,30 @@ class TestEpubContentSplitting:
             tag_stack = []
 
             # Find all tags in the page
-            all_tags = re.finditer(r'</?[a-zA-Z][^>]*>', page)
+            all_tags = re.finditer(r"</?[a-zA-Z][^>]*>", page)
             for tag_match in all_tags:
                 tag = tag_match.group()
-                if tag.startswith('</'):
+                if tag.startswith("</"):
                     # This is a closing tag
                     if not tag_stack:
-                        pytest.fail(f"Found closing tag {tag} without matching opening tag in page {i}")
+                        pytest.fail(
+                            f"Found closing tag {tag} without matching opening tag in page {i}"
+                        )
                     if not tag[2:-1].lower() == tag_stack[-1].lower():
-                        pytest.fail(f"Closing tag {tag} doesn't match last opened tag {tag_stack[-1]} in page {i}")
+                        pytest.fail(
+                            f"Closing tag {tag} doesn't match last opened tag {tag_stack[-1]} in page {i}"
+                        )
                     tag_stack.pop()
-                elif not tag.endswith('/>'):  # Ignore self-closing tags
+                elif not tag.endswith("/>"):  # Ignore self-closing tags
                     # This is an opening tag
-                    tag_name = re.match(r'<([a-zA-Z][^>\s]*)', tag).group(1)
+                    tag_name = re.match(r"<([a-zA-Z][^>\s]*)", tag).group(1)
                     tag_stack.append(tag_name)
 
             # At the end of the page, all tags should be closed
             assert len(tag_stack) == 0, f"Unclosed tags {tag_stack} at end of page {i}"
 
             # Make sure no HTML entities are split
-            if '&' in page:
-                parts = page.split('&')
+            if "&" in page:
+                parts = page.split("&")
                 for part in parts[1:]:  # Skip first part (before any &)
-                    assert ';' in part, f"Split HTML entity in page {i}"
+                    assert ";" in part, f"Split HTML entity in page {i}"

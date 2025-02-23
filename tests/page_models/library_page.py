@@ -9,7 +9,7 @@ from .selenium_utils import retry_on_stale_element
 class LibraryPage(BasePage):
     @allure.step("Navigate to library page")
     def goto(self):
-        self.browser.goto('/library')
+        self.browser.goto("/library")
         self.wait_for_page_load()
 
     def wait_for_page_load(self):
@@ -29,7 +29,9 @@ class LibraryPage(BasePage):
 
     @retry_on_stale_element()
     def open_edit_modal_for_first_book(self):
-        edit_buttons = self.browser.find_elements(By.CSS_SELECTOR, "table tbody tr .btn-outline-secondary")
+        edit_buttons = self.browser.find_elements(
+            By.CSS_SELECTOR, "table tbody tr .btn-outline-secondary"
+        )
         if edit_buttons:
             edit_buttons[0].click()
             self.wait_for_modal()
@@ -82,9 +84,11 @@ class LibraryPage(BasePage):
         )
 
     def is_user_modal_visible(self):
-        return WebDriverWait(self.browser, 10).until(
-            EC.visibility_of_element_located((By.ID, "userModal"))
-        ).is_displayed()
+        return (
+            WebDriverWait(self.browser, 10)
+            .until(EC.visibility_of_element_located((By.ID, "userModal")))
+            .is_displayed()
+        )
 
     def get_user_modal_text(self):
         return self.wait_for_element((By.CLASS_NAME, "modal-body")).text

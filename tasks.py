@@ -1,15 +1,16 @@
 """Scripts for managing the project."""
+
 import shutil
+import subprocess
 import sys
 
-from invoke import task, Context, Collection
-import subprocess
+from invoke import Collection, Context, task
 
 
 def get_allowed_doc_languages():
     build_docs_file_name = "scripts/build-docs.sh"
     try:
-        with open(build_docs_file_name, "r") as f:
+        with open(build_docs_file_name) as f:
             for line in f:
                 if "for lang in" in line:
                     langs = line.split("in")[1].strip().split(";")[0].split()
@@ -26,7 +27,7 @@ ALLOWED_VERSION_TYPES = ["release", "bug", "feature"]
 @task
 def version(c: Context):
     """Show the current version."""
-    with open("lexiflux/__about__.py", "r") as f:
+    with open("lexiflux/__about__.py") as f:
         version_line = f.readline()
         version_num = version_line.split('"')[1]
         print(version_num)
@@ -61,6 +62,7 @@ def shell(c: Context):
     """Django shell"""
     c.run("./manage shell")
 
+
 @task
 def jupyter(c: Context):
     """Run Jupyter Notebook"""
@@ -85,7 +87,7 @@ def alisa(c: Context):
     """Import Alisa u zemlji cuda"""
     c.run(
         r"""./manage.py import-text "${HOME}/books/Lewis Carroll/Alice's Adventures """
-        r"""in Wonderland (96)/Alice's Adventures in Wonderland - Lewis Carroll.txt" """
+        r"""in Wonderland (96)/Alice's Adventures in Wonderland - Lewis Carroll.txt" """,
     )
 
 
@@ -99,7 +101,7 @@ def kill_db(c: Context):
 def admin(c: Context):
     """Create admin"""
     c.run(
-        "DJANGO_SUPERUSER_PASSWORD=admin python manage.py createsuperuser --username admin --email admin@example.com --noinput"
+        "DJANGO_SUPERUSER_PASSWORD=admin python manage.py createsuperuser --username admin --email admin@example.com --noinput",
     )
 
 
@@ -112,7 +114,6 @@ def user(c: Context):
 @task(kill_db, migrate, admin, user, alisa)
 def init_db(c: Context):
     """KILL Database and reinit new one"""
-    pass
 
 
 @task
@@ -126,7 +127,7 @@ def runssl(c: Context):
     """Run local SSL server"""
     c.run(
         "LEXIFLUX_SKIP_AUTH=true ./manage runserver_plus 0.0.0.0:8000 "
-        "--cert-file ssl_certs/localhost.crt --key-file ssl_certs/localhost.key"
+        "--cert-file ssl_certs/localhost.crt --key-file ssl_certs/localhost.key",
     )
 
 
@@ -176,7 +177,7 @@ def test(c: Context):
     c.run("ALLURE_LABEL_EPIC='viewport.ts' npm test", warn=True)
     c.run(
         "docker compose run --rm -it allure allure generate /allure-results "
-        "-o /allure-report --clean"
+        "-o /allure-report --clean",
     )
     c.run("docker compose restart allure")
     c.run("open -a 'Google Chrome' http://localhost:8800")
@@ -188,7 +189,7 @@ def selenium(c: Context):
     c.run("rm -rf allure-results")
     c.run("python -m pytest --alluredir=allure-results tests -m selenium -s -vv", warn=True)
     c.run(
-        "docker compose run --rm allure allure generate /allure-results -o /allure-report --clean"
+        "docker compose run --rm allure allure generate /allure-results -o /allure-report --clean",
     )
     c.run("docker compose restart allure")
     c.run("open -a 'Google Chrome' http://localhost:8800/index.html#behaviors")
@@ -200,7 +201,7 @@ def keygen(c: Context):
     c.run("mkdir -p ssl_certs")
     c.run(
         "openssl req -x509 -nodes -days 365 -newkey rsa:2048 "
-        "-keyout ssl_certs/localhost.key -out ssl_certs/localhost.crt"
+        "-keyout ssl_certs/localhost.key -out ssl_certs/localhost.crt",
     )
 
 
@@ -210,7 +211,7 @@ def mkcert(c: Context):
     c.run("mkdir -p ssl_certs")
     c.run(
         "mkcert -cert-file ssl_certs/localhost.crt "
-        "-key-file ssl_certs/localhost.key lexiflux.ai localhost 127.0.0.1"
+        "-key-file ssl_certs/localhost.key lexiflux.ai localhost 127.0.0.1",
     )
 
 

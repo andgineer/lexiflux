@@ -15,7 +15,7 @@ First part of the command `docker start lexiflux` tries to start the container w
 In fact this is all that you need after initial container creation.
 
 ### Creating Lexiflux Docker Container
-If first part of the command fails, the second part of the command 
+If first part of the command fails, the second part of the command
 
     docker run -d -p 6100:8000 --name lexiflux andgineer/lexiflux
 
@@ -23,7 +23,7 @@ downloads the image `andgineer/lexiflux` from the Docker Hub,
 creates a new container with the name `lexiflux` and exposes port `6100` on your host machine.
 
 ### Local Ollama AI
-If you want to use free local AI, and have enough RAM, you can preload [Ollama](aimodels.md#ollama) 
+If you want to use free local AI, and have enough RAM, you can preload [Ollama](aimodels.md#ollama)
 model in the docker.
 
 Add `OLLAMA_LOAD_MODEL=llama3.2` or whatever model you want to the `docker run` command.
@@ -57,7 +57,7 @@ To create archive with full backup of your Lexiflux Docker container.
 
 === "Windows (PowerShell)"
     In the command prompt, type:
-    
+
     ```bash
     docker commit lexiflux lexiflux_backup
     docker save lexiflux_backup -o lexiflux_backup.tar
@@ -85,7 +85,7 @@ Remember, you will lose all your data in the current container.
 
 === "Windows (PowerShell)"
     In the command prompt, type:
-    
+
     ```bash
     docker stop lexiflux
     docker rm lexiflux

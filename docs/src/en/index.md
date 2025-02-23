@@ -2,7 +2,7 @@
 
 # Lexiflux
 
-Master languages faster with our AI-powered reading companion. 
+Master languages faster with our AI-powered reading companion.
 
 Instantly translate and understand foreign texts as you read, building your vocabulary and comprehension skills effortlessly.
 

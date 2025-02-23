@@ -26,7 +26,15 @@ from lexiflux.ebook.book_loader_base import BookLoaderBase, MetadataField
 from lexiflux.ebook.book_loader_plain_text import BookLoaderPlainText
 from django.contrib.auth import get_user_model
 import django.utils.timezone
-from lexiflux.models import Author, Language, Book, BookPage, LanguageGroup, TranslationHistory, LanguagePreferences
+from lexiflux.models import (
+    Author,
+    Language,
+    Book,
+    BookPage,
+    LanguageGroup,
+    TranslationHistory,
+    LanguagePreferences,
+)
 from pytest_django.live_server_helper import LiveServer
 import subprocess
 import time
@@ -43,11 +51,11 @@ import logging
 
 log = logging.getLogger()
 
-CHROME_BROWSER_NAME = 'Chrome'
-FIREFOX_BROWSER_NAME = 'Firefox'
-EDGE_BROWSER_NAME = 'Edge'
+CHROME_BROWSER_NAME = "Chrome"
+FIREFOX_BROWSER_NAME = "Firefox"
+EDGE_BROWSER_NAME = "Edge"
 
-WEBDRIVER_HOST = 'http://localhost:4444/wd/hub'
+WEBDRIVER_HOST = "http://localhost:4444/wd/hub"
 
 test_browsers = [
     CHROME_BROWSER_NAME,
@@ -59,7 +67,6 @@ browser_options = {
     FIREFOX_BROWSER_NAME: FirefoxOptions,
     EDGE_BROWSER_NAME: EdgeOptions,
 }
-
 
 
 def pytest_addoption(parser):
@@ -74,11 +81,13 @@ def is_docker_compose_running(service_name: str) -> bool:
     """Check if a Docker service is running."""
     try:
         result = subprocess.run(
-            ['docker', 'compose', 'ps', '-q', service_name],
-            stdout=subprocess.PIPE, text=True, check=True
+            ["docker", "compose", "ps", "-q", service_name],
+            stdout=subprocess.PIPE,
+            text=True,
+            check=True,
         )
         # If the service is running, it will return its container ID thanks to the '-q' flag
-        return result.stdout.strip() != ''
+        return result.stdout.strip() != ""
     except subprocess.CalledProcessError as e:
         print(f"Failed to check docker-compose service `{service_name}` status: {e}")
         return False
@@ -92,7 +101,7 @@ def start_docker_compose():
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True,
-            check=True
+            check=True,
         )
         print("Docker Compose started successfully.")
         print(result.stdout)
@@ -114,23 +123,25 @@ def with_selenium():
 
 def get_options(browser: str) -> Options:
     options = browser_options[browser]()
-    options.add_argument('--ignore-certificate-errors')
+    options.add_argument("--ignore-certificate-errors")
     options.add_argument("--disable-client-side-phishing-detection")
     options.add_argument("--no-sandbox")
-    options.add_argument('--headless')
+    options.add_argument("--headless")
     return options
 
 
-def get_web_driver(browser_name: str, django_server: DjangoLiveServer, retry_interval=2, timeout=60) -> WebDriverAugmented:
+def get_web_driver(
+    browser_name: str, django_server: DjangoLiveServer, retry_interval=2, timeout=60
+) -> WebDriverAugmented:
     """
     Creates remote web driver (located on selenium host) for desired browser.
     """
-    FAIL_HELP = f'''
+    FAIL_HELP = f"""
     Fail to connect to selenium webdriver remote host {WEBDRIVER_HOST}.
 
     To run local selenium hub from tests_e2e folder: 
         docker compose up -d
-    '''
+    """
     end_time = time.time() + timeout
     while True:
         try:
@@ -144,16 +155,20 @@ def get_web_driver(browser_name: str, django_server: DjangoLiveServer, retry_int
             return webdrv
         except urllib3.exceptions.ProtocolError as e:
             if time.time() >= end_time:
-                pytest.exit(f'{FAIL_HELP}\n\n{e}\n')
+                pytest.exit(f"{FAIL_HELP}\n\n{e}\n")
             print(f"Connection failed: {e}. Retrying in {retry_interval} seconds...")
             time.sleep(retry_interval)
         except WebDriverException as e:
-            pytest.exit(f'{FAIL_HELP}:\n\n{e}\n')
-        except (urllib3.exceptions.ReadTimeoutError, urllib3.exceptions.NewConnectionError, urllib3.exceptions.MaxRetryError) as e:
-            pytest.exit(f'{FAIL_HELP}:\n\n{e}\n')
+            pytest.exit(f"{FAIL_HELP}:\n\n{e}\n")
+        except (
+            urllib3.exceptions.ReadTimeoutError,
+            urllib3.exceptions.NewConnectionError,
+            urllib3.exceptions.MaxRetryError,
+        ) as e:
+            pytest.exit(f"{FAIL_HELP}:\n\n{e}\n")
 
 
-@pytest.fixture(scope='function', params=test_browsers, ids=lambda x: f'Browser: {x}')
+@pytest.fixture(scope="function", params=test_browsers, ids=lambda x: f"Browser: {x}")
 def browser(request, with_selenium, django_server: DjangoLiveServer) -> WebDriverAugmented:
     """
     Returns all browsers to test with
@@ -180,13 +195,13 @@ def get_docker_host_ip():
 
 
 def get_linux_docker_host_ip():
-    """ Determine the IP address accessible from within Docker containers on Linux.
+    """Determine the IP address accessible from within Docker containers on Linux.
 
     Get the default gateway address.
     """
     try:
         with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
-            s.connect(('8.8.8.8', 1))  # Use a temporary connection to an external IP
+            s.connect(("8.8.8.8", 1))  # Use a temporary connection to an external IP
             host_ip = s.getsockname()[0]
         return host_ip
     except socket.error as e:
@@ -197,8 +212,7 @@ def get_linux_docker_host_ip():
 def django_server(live_server: LiveServer) -> DjangoLiveServer:
     port = urlparse(live_server.url).port
     yield DjangoLiveServer(
-        docker_url=f"http://{get_docker_host_ip()}:{port}",
-        host_url=f"http://0.0.0.0:{port}"
+        docker_url=f"http://{get_docker_host_ip()}:{port}", host_url=f"http://0.0.0.0:{port}"
     )
 
 
@@ -206,29 +220,29 @@ def django_server(live_server: LiveServer) -> DjangoLiveServer:
 def pytest_runtest_makereport(item, call):
     outcome = yield
     rep = outcome.get_result()
-    if rep.when == 'call' and rep.failed:
+    if rep.when == "call" and rep.failed:
         try:
-            if 'browser' in item.fixturenames:  # assume this is fixture with webdriver
-                web_driver = item.funcargs['browser']
+            if "browser" in item.fixturenames:  # assume this is fixture with webdriver
+                web_driver = item.funcargs["browser"]
             else:
                 return
             allure.attach(
                 web_driver.get_screenshot_as_png(),
-                name='post-mortem screenshot',
-                attachment_type=allure.attachment_type.PNG
+                name="post-mortem screenshot",
+                attachment_type=allure.attachment_type.PNG,
             )
             if web_driver.browser_name != FIREFOX_BROWSER_NAME:
                 # Firefox do not support js logs: https://github.com/SeleniumHQ/selenium/issues/2972
-                js_logs = web_driver.get_log('browser')
+                js_logs = web_driver.get_log("browser")
                 log_entries = [f"{entry['level']}: {entry['message']}" for entry in js_logs]
                 allure.attach(
-                    '\n'.join(log_entries),
-                    name='js console log:',
+                    "\n".join(log_entries),
+                    name="js console log:",
                     attachment_type=allure.attachment_type.TEXT,
                 )
 
         except Exception as e:
-            print(f'Fail to attach browser artifacts: {e}')
+            print(f"Fail to attach browser artifacts: {e}")
 
 
 @pytest.fixture(
@@ -243,7 +257,8 @@ def pytest_runtest_makereport(item, call):
         "\n\nCHAPTER last inline\nunderline\n\n",
         "\n\nI. A SCANDAL IN BOHEMIA\n \n",
         "\n\nV.\nПет наранчиних сjеменки\n\n",
-    ],)
+    ],
+)
 def chapter_pattern(request):
     return request.param
 
@@ -252,15 +267,13 @@ def chapter_pattern(request):
     scope="function",
     params=[
         "\ncorrespondent could be.\n\n",
-    ],)
+    ],
+)
 def wrong_chapter_pattern(request):
     return request.param
 
 
-@pytest.fixture(
-    scope="function",
-    params=["Hello 123 <br/> word/123 123-<word>\n<br/> and last!"]
-)
+@pytest.fixture(scope="function", params=["Hello 123 <br/> word/123 123-<word>\n<br/> and last!"])
 def sentence_6_words(request):
     return request.param
 
@@ -271,11 +284,11 @@ def book_plain_text():
     sample_data = " ".join([f"Word{i}" for i in range(1, 1000)])
 
     # Convert sample data to bytes with an encoding, e.g., UTF-8
-    sample_data_bytes = sample_data.encode('utf-8')
+    sample_data_bytes = sample_data.encode("utf-8")
 
     # Custom mock open function to handle different modes
-    def custom_open(file, mode='r', encoding=None):
-        if 'b' in mode:
+    def custom_open(file, mode="r", encoding=None):
+        if "b" in mode:
             return mock_open(read_data=sample_data_bytes).return_value
         else:
             # Decode the data if a specific encoding is provided
@@ -293,29 +306,34 @@ def book_epub(db_init):
 
     # Create mock EPUB items (pages)
     mock_items = [
-        MagicMock(spec=epub.EpubHtml,
-                  get_body_content=lambda: (f"Page {i} " + " ".join([f'word{j}' for j in range(200)])).encode('utf-8'),
-                  get_type=lambda: ITEM_DOCUMENT,
-                  file_name=f"page_{i}.xhtml",
-                  get_name=lambda: f"page_{i}.xhtml",
-                  get_id=lambda: f'item_{i}',
-                  )
+        MagicMock(
+            spec=epub.EpubHtml,
+            get_body_content=lambda: (
+                f"Page {i} " + " ".join([f"word{j}" for j in range(200)])
+            ).encode("utf-8"),
+            get_type=lambda: ITEM_DOCUMENT,
+            file_name=f"page_{i}.xhtml",
+            get_name=lambda: f"page_{i}.xhtml",
+            get_id=lambda: f"item_{i}",
+        )
         for i in range(20)  # 20 pages
     ]
 
     # Set up the mock book to return our mock items
     mock_book.get_items.return_value = mock_items
-    mock_book.spine = [(f'item_{i}',) for i in range(len(mock_items))]
-    mock_book.get_item_with_id = lambda id: mock_items[int(id.split('_')[1])]
+    mock_book.spine = [(f"item_{i}",) for i in range(len(mock_items))]
+    mock_book.get_item_with_id = lambda id: mock_items[int(id.split("_")[1])]
 
     # Mock the toc attribute
-    mock_book.toc = [MagicMock(spec=epub.Link, title=f"Chapter {i}", href=f"page_{i}.xhtml") for i in range(5)]
+    mock_book.toc = [
+        MagicMock(spec=epub.Link, title=f"Chapter {i}", href=f"page_{i}.xhtml") for i in range(5)
+    ]
 
     # Mock other necessary attributes and methods
-    mock_book.get_metadata.return_value = [('', 'Sample Title')]
+    mock_book.get_metadata.return_value = [("", "Sample Title")]
 
     # Patch epub.read_epub to return our mock book
-    with patch('ebooklib.epub.read_epub', return_value=mock_book):
+    with patch("ebooklib.epub.read_epub", return_value=mock_book):
         loader = BookLoaderEpub("dummy_path")
         loader.detect_meta()  # This will set up the epub attribute
         return loader
@@ -324,22 +342,27 @@ def book_epub(db_init):
 @pytest.fixture(autouse=True)
 def mock_detect_language():
     mock_detector = MagicMock()
-    mock_detector.detect.side_effect = itertools.cycle(['en', 'en', 'fr'])
+    mock_detector.detect.side_effect = itertools.cycle(["en", "en", "fr"])
 
-    with patch('lexiflux.ebook.book_loader_base.language_detector', return_value=mock_detector):
+    with patch("lexiflux.ebook.book_loader_base.language_detector", return_value=mock_detector):
         yield mock_detector.detect
 
 
 @pytest.fixture
 def book_processor_mock(db_init):
     """Fixture to create a real BookLoaderBase instance with mocked detect_language."""
+
     class TestBookLoader(BookLoaderBase):
         def detect_meta(self):
-            return {
-                MetadataField.TITLE: 'Test Book',
-                MetadataField.AUTHOR: 'Test Author',
-                MetadataField.LANGUAGE: 'English'
-            }, 0, 100
+            return (
+                {
+                    MetadataField.TITLE: "Test Book",
+                    MetadataField.AUTHOR: "Test Author",
+                    MetadataField.LANGUAGE: "English",
+                },
+                0,
+                100,
+            )
 
         def get_random_words(self, words_num=15):
             return "Sample random words for language detection"
@@ -348,12 +371,12 @@ def book_processor_mock(db_init):
             yield "Page 1 content"
             yield "Page 2 content"
 
-    with patch.object(BookLoaderBase, 'detect_language', return_value='English'):
-        book_processor = TestBookLoader('dummy_path')
+    with patch.object(BookLoaderBase, "detect_language", return_value="English"):
+        book_processor = TestBookLoader("dummy_path")
         return book_processor
 
 
-USER_PASSWORD = '12345'
+USER_PASSWORD = "12345"
 
 
 @pytest.fixture
@@ -364,7 +387,7 @@ def db_init(db):
 
 @pytest.fixture
 def user(db_init):
-    return get_user_model().objects.create_user(username='testuser', password=USER_PASSWORD)
+    return get_user_model().objects.create_user(username="testuser", password=USER_PASSWORD)
 
 
 @pytest.fixture
@@ -377,7 +400,7 @@ def approved_user(user, language):
 
 @pytest.fixture
 def user_preferences(language):
-    user = get_user_model().objects.create_user(username='testuser2', password=USER_PASSWORD)
+    user = get_user_model().objects.create_user(username="testuser2", password=USER_PASSWORD)
     user.is_approved = True
     user.language = language
     user.save()
@@ -396,16 +419,12 @@ def book(db_init, user, author):
         title="Alice in Wonderland",
         author=author,
         language=language,
-        code='some-book-code',
-        owner=user
+        code="some-book-code",
+        owner=user,
     )
 
     for i in range(1, 6):
-        BookPage.objects.create(
-            book=book,
-            number=i,
-            content=f"Content of page {i}"
-        )
+        BookPage.objects.create(book=book, number=i, content=f"Content of page {i}")
 
     return book
 
@@ -415,9 +434,9 @@ def translation_history(book, approved_user, language):
     return TranslationHistory.objects.create(
         user=approved_user,
         book=book,
-        term='apple',
-        translation='pomme',
-        context=f'{TranslationHistory.CONTEXT_MARK}before__{TranslationHistory.CONTEXT_MARK}__after{TranslationHistory.CONTEXT_MARK}',
+        term="apple",
+        translation="pomme",
+        context=f"{TranslationHistory.CONTEXT_MARK}before__{TranslationHistory.CONTEXT_MARK}__after{TranslationHistory.CONTEXT_MARK}",
         source_language=language,
         target_language=language,
         first_lookup=django.utils.timezone.now() - timedelta(minutes=1),
@@ -444,8 +463,8 @@ def user_with_translations(approved_user, book, language, translation_history):
         user=approved_user,
         language=language,
         user_language=user_language,
-        inline_translation_type='Translate',
-        inline_translation_parameters={'model': 'default_model'}
+        inline_translation_type="Translate",
+        inline_translation_parameters={"model": "default_model"},
     )
     approved_user.default_language_preferences = language_preferences
     approved_user.save()

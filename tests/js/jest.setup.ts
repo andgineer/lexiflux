@@ -19,7 +19,7 @@ for (let i = 0; i < global.numberOfWords; i++) {
 global.document.body.innerHTML = `
 <div id="top-navbar"></div>
 <div id="lexicalPanelContent"></div>
-<div id="book-page-scroller" style="height: 500px;">  
+<div id="book-page-scroller" style="height: 500px;">
   <div id="words-container">
   ${wordSpans}
   </div>
@@ -108,6 +108,3 @@ beforeEach(() => {
       };
   });
 });
-
-
-

@@ -21,7 +21,7 @@ class ReaderPage(BasePage):
         # Now wait for the content to actually be loaded
         WebDriverWait(self.browser, timeout).until(
             lambda driver: len(words_container.text.strip()) > 0,
-            message="Content did not load within the specified time"
+            message="Content did not load within the specified time",
         )
         return words_container
 

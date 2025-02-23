@@ -1,5 +1,3 @@
-from unittest.mock import patch, Mock
-
 import pytest
 import allure
 from django.urls import reverse
@@ -12,16 +10,16 @@ from tests.conftest import USER_PASSWORD
 from tests.page_models.language_preferences_page import LanguagePreferencesPage
 
 
-@allure.epic('End-to-end (selenium)')
-@allure.feature('Library Page')
-@allure.story('Un-approved user cannot access library page')
+@allure.epic("End-to-end (selenium)")
+@allure.feature("Library Page")
+@allure.story("Un-approved user cannot access library page")
 @pytest.mark.docker
 @pytest.mark.selenium
 @pytest.mark.django_db
 def test_e2e_library_page_upapproved_user_cannot_access(browser, user):
     browser.login(user, USER_PASSWORD, wait_view=None)
     WebDriverWait(browser, 3).until(
-        EC.url_to_be(browser.host + reverse('login')),  # raise TimeoutException if not
+        EC.url_to_be(browser.host + reverse("login")),  # raise TimeoutException if not
         message="Expected to be redirected to login page again after login with unapproved user.",
     )
     assert "Your account is not approved yet." in browser.errors_text
@@ -29,14 +27,14 @@ def test_e2e_library_page_upapproved_user_cannot_access(browser, user):
     # just to be sure
     allure.attach(
         browser.get_screenshot_as_png(),
-        name='after_unapproved_login_screenshot',
-        attachment_type=allure.attachment_type.PNG
+        name="after_unapproved_login_screenshot",
+        attachment_type=allure.attachment_type.PNG,
     )
 
 
-@allure.epic('End-to-end (selenium)')
-@allure.feature('Language Preferences Page')
-@allure.story('Inline Translation Editor')
+@allure.epic("End-to-end (selenium)")
+@allure.feature("Language Preferences Page")
+@allure.story("Inline Translation Editor")
 @pytest.mark.docker
 @pytest.mark.selenium
 @pytest.mark.django_db
@@ -80,15 +78,15 @@ def test_e2e_language_preferences_page_inline_translation(browser, user_preferen
     browser.take_screenshot("Final")
 
 
-@allure.epic('End-to-end (selenium)')
-@allure.feature('Language Preferences Page')
-@allure.story('Global Preferences')
+@allure.epic("End-to-end (selenium)")
+@allure.feature("Language Preferences Page")
+@allure.story("Global Preferences")
 @pytest.mark.docker
 @pytest.mark.selenium
 @pytest.mark.django_db
 def test_e2e_language_preferences_global_settings(browser, user_preferences):
     # Create second language preference to make initial state non-global
-    spanish = Language.objects.get(google_code='es')
+    spanish = Language.objects.get(google_code="es")
     LanguagePreferences.get_or_create_language_preferences(user_preferences, spanish)
 
     with allure.step("Login and navigate to language preferences"):
@@ -98,7 +96,9 @@ def test_e2e_language_preferences_global_settings(browser, user_preferences):
         browser.take_screenshot("Initial state")
 
     with allure.step("Verify initial non-global state"):
-        assert user_preferences.language_preferences.count() > 1, "Should have multiple language preferences"
+        assert user_preferences.language_preferences.count() > 1, (
+            "Should have multiple language preferences"
+        )
 
     with allure.step("Open global preferences confirmation modal"):
         page.set_global_preferences()
@@ -114,4 +114,6 @@ def test_e2e_language_preferences_global_settings(browser, user_preferences):
         )
 
     with allure.step("Verify language preferences became global"):
-        assert user_preferences.language_preferences.count() == 1, "Should have only one language preference"
+        assert user_preferences.language_preferences.count() == 1, (
+            "Should have only one language preference"
+        )

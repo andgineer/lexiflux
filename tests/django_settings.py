@@ -1,18 +1,18 @@
 # Override ALLOWED_HOSTS to allow all hosts during testing
 from lexiflux.settings import *
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = ["*"]
 
 LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,
+    "version": 1,
+    "disable_existing_loggers": False,
     "formatters": {
         "verbose": {
             "format": "{asctime} {levelname} {module} {message}",
             "style": "{",
         },
     },
-    'handlers': {
+    "handlers": {
         "console": {
             "level": "INFO",
             "class": "logging.StreamHandler",
@@ -23,11 +23,11 @@ LOGGING = {
         "handlers": ["console"],
         "level": "INFO",
     },
-    'loggers': {
-        'django': {
-            'handlers': ['console'],
-            'level': 'INFO',
-            'propagate': True,
+    "loggers": {
+        "django": {
+            "handlers": ["console"],
+            "level": "INFO",
+            "propagate": True,
         },
     },
 }

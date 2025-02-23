@@ -3,8 +3,12 @@ from typing import Optional
 
 import allure
 from django.urls import reverse
-from selenium.common import TimeoutException, NoSuchElementException, NoAlertPresentException, \
-    UnexpectedAlertPresentException
+from selenium.common import (
+    TimeoutException,
+    NoSuchElementException,
+    NoAlertPresentException,
+    UnexpectedAlertPresentException,
+)
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -27,14 +31,16 @@ class LanguagePreferencesPage(BasePage):
             WebDriverWait(self.browser, 3).until(EC.alert_is_present())
             alert = self.browser.switch_to.alert
             alert_text = alert.text
-            allure.attach(alert_text, name="Unexpected Alert", attachment_type=allure.attachment_type.TEXT)
+            allure.attach(
+                alert_text, name="Unexpected Alert", attachment_type=allure.attachment_type.TEXT
+            )
             return alert_text
         except (TimeoutException, NoAlertPresentException):
             return None
 
     @allure.step("Navigate to language preferences page")
     def goto(self):
-        self.browser.goto(reverse('language-preferences'))
+        self.browser.goto(reverse("language-preferences"))
         self.wait_for_page_load()
 
     def get_page_title(self):
@@ -66,9 +72,7 @@ class LanguagePreferencesPage(BasePage):
         try:
             select.select_by_visible_text(type_text)
         except NoSuchElementException:
-            if options := [
-                option for option in select.options if type_text in option.text
-            ]:
+            if options := [option for option in select.options if type_text in option.text]:
                 select.select_by_visible_text(options[0].text)
             else:
                 select.select_by_index(0)
@@ -128,8 +132,14 @@ class LanguagePreferencesPage(BasePage):
         try:
             model_select = Select(self.wait_for_element((By.ID, "model-select")))
             dictionary_select = Select(self.wait_for_element((By.ID, "dictionary-select")))
-            print("$"*20, f"Model options: {json.dumps([option.text for option in model_select.options])}")
-            print("$"*20, f"Dictionary options: {json.dumps([option.text for option in dictionary_select.options])}")
+            print(
+                "$" * 20,
+                f"Model options: {json.dumps([option.text for option in model_select.options])}",
+            )
+            print(
+                "$" * 20,
+                f"Dictionary options: {json.dumps([option.text for option in dictionary_select.options])}",
+            )
             return len(model_select.options) > 1 and len(dictionary_select.options) > 1
         except NoSuchElementException:
             return False

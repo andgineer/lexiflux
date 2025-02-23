@@ -1,13 +1,10 @@
 exclude: |
   (?x)(
-      tests/|
-      docs/|
       .venv/|
-      migrations/|
-      manage.py|
+      ^tests/resources/|
       tasks.py|
-      experiments/|
-      __about__.py
+      migrations/|
+      experiments/
   )
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
@@ -77,4 +74,4 @@ repos:
         ]
         language: system
         types: [ python ]
-        files: lexiflux/
+        exclude: ^tests/

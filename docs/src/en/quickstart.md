@@ -9,7 +9,7 @@ That's it! You have a running Lexiflux.
 
 Open it in web browser at [http://localhost:6100](http://localhost:6100)
 
-Remember the DB with your books and reading progress is stored in the Docker container. 
+Remember the DB with your books and reading progress is stored in the Docker container.
 If you remove the container, you will lose all your data.
 
 To backup your data, see the [Backup](docker.md#backup) section.
