@@ -2,7 +2,6 @@ exclude: |
   (?x)(
       .venv/|
       ^tests/resources/|
-      tasks.py|
       migrations/|
       experiments/
   )
@@ -16,7 +15,7 @@ repos:
       - id: trailing-whitespace
         exclude_types: [ python ]
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.9.3
+    rev: v0.9.8
     hooks:
       - id: ruff
         exclude: ^tests/

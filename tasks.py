@@ -1,8 +1,8 @@
 """Scripts for managing the project."""
 
 import shutil
-import subprocess
 import sys
+import time
 
 from invoke import Collection, Context, task
 
@@ -25,7 +25,7 @@ ALLOWED_VERSION_TYPES = ["release", "bug", "feature"]
 
 
 @task
-def version(c: Context):
+def version(_c: Context):
     """Show the current version."""
     with open("lexiflux/__about__.py") as f:
         version_line = f.readline()
@@ -101,7 +101,8 @@ def kill_db(c: Context):
 def admin(c: Context):
     """Create admin"""
     c.run(
-        "DJANGO_SUPERUSER_PASSWORD=admin python manage.py createsuperuser --username admin --email admin@example.com --noinput",
+        "DJANGO_SUPERUSER_PASSWORD=admin python manage.py createsuperuser "
+        "--username admin --email admin@example.com --noinput",
     )
 
 
@@ -134,14 +135,22 @@ def runssl(c: Context):
 @task
 def compile_requirements(c: Context):
     "Convert requirements.in to requirements.txt and requirements.dev.txt."
-    start_time = subprocess.check_output(["date", "+%s"]).decode().strip()
-    c.run("uv pip compile requirements.in --output-file=requirements.txt --upgrade")
-    reqs_time = subprocess.check_output(["date", "+%s"]).decode().strip()
+
+    start_time = int(time.time())
+
+    c.run(
+        "uv pip compile requirements.in --output-file=requirements.txt --upgrade",
+    )  # --refresh-package
+
+    reqs_time = int(time.time())
+
     c.run("uv pip compile requirements.dev.in --output-file=requirements.dev.txt --upgrade")
-    end_time = subprocess.check_output(["date", "+%s"]).decode().strip()
-    print(f"Req's compilation time: {int(reqs_time) - int(start_time)} seconds")
-    print(f"Req's dev compilation time: {int(end_time) - int(reqs_time)} seconds")
-    print(f"Total execution time: {int(end_time) - int(start_time)} seconds")
+
+    end_time = int(time.time())
+
+    print(f"Req's compilation time: {reqs_time - start_time} seconds")
+    print(f"Req's dev compilation time: {end_time - reqs_time} seconds")
+    print(f"Total execution time: {end_time - start_time} seconds")
 
 
 @task(pre=[compile_requirements])
