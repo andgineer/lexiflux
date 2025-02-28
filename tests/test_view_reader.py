@@ -317,7 +317,7 @@ def test_normalize_path_removes_dots_and_slashes():
 @allure.feature("Reader")
 @pytest.mark.django_db
 def test_set_sources_replaces_image_sources(book, client):
-    from lexiflux.views.reader_views import set_sources
+    from lexiflux.views.reader_views import rewire_epub_references
 
     # Create a test BookImage
     test_image = BookImage.objects.create(
@@ -325,7 +325,7 @@ def test_set_sources_replaces_image_sources(book, client):
     )
 
     test_html = '<img src="test.jpg"><img src="../images/test.jpg">'
-    processed_html = set_sources(test_html, book)
+    processed_html = rewire_epub_references(test_html, book)
 
     soup = BeautifulSoup(processed_html, "html.parser")
     images = soup.find_all("img")
@@ -341,7 +341,7 @@ def test_set_sources_replaces_image_sources(book, client):
 @allure.feature("Reader")
 @pytest.mark.django_db
 def test_set_sources_handles_internal_links(book):
-    from lexiflux.views.reader_views import set_sources
+    from lexiflux.views.reader_views import rewire_epub_references
 
     test_html = """
         <a href="#chapter1">Anchor Link</a>
@@ -350,7 +350,7 @@ def test_set_sources_handles_internal_links(book):
         <a href="http://external.com">External Link</a>
         <a href="https://another.com">Another External</a>
     """
-    processed_html = set_sources(test_html, book)
+    processed_html = rewire_epub_references(test_html, book)
     soup = BeautifulSoup(processed_html, "html.parser")
 
     links = soup.find_all("a")

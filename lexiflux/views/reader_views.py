@@ -4,7 +4,7 @@ import logging
 import os
 from urllib.parse import unquote
 
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, Tag
 from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.http import HttpRequest, HttpResponse, JsonResponse
@@ -44,48 +44,68 @@ def normalize_path(path: str) -> str:
     return "/".join(normalized)
 
 
-def set_sources(content: str, book: Book) -> str:
+def rewire_epub_references(content: str, book: Book) -> str:
     """Replace image sources / link targets with the Django view URL."""
     soup = BeautifulSoup(content, "html.parser")
 
+    rewire_epub_images(soup, book)
+    rewire_epub_links(soup)
+
+    return str(soup)
+
+
+def rewire_epub_images(soup, book):
     for img in soup.find_all("img"):
-        if "src" in img.attrs:
-            original_src = img["src"]
+        if not isinstance(img, Tag):
+            continue
 
-            normalized_src = normalize_path(original_src)
+        original_src = img.get("src")
+        if not original_src or not isinstance(original_src, str):
+            continue
 
-            # Try to find the image in the database
-            try:
-                # First, try with the full normalized path
-                image = BookImage.objects.get(book=book, filename=normalized_src)
-            except BookImage.DoesNotExist:
-                try:
-                    # If not found, try with just the filename
-                    image = BookImage.objects.get(
-                        book=book,
-                        filename__endswith=os.path.basename(normalized_src),
-                    )
-                except BookImage.DoesNotExist:
-                    log.warning(f"Warning: Image not found in database for src: {original_src}")
-                    continue
-
-            new_src = reverse(
-                "serve_book_image",
-                kwargs={"book_code": book.code, "image_filename": image.filename},
-            )
+        new_src = lookup_image_in_database(original_src, book)
+        if new_src:
             img["src"] = new_src
 
-    # Retarget internal links
-    for link in soup.find_all("a", href=True):
-        href = link["href"]
+
+def lookup_image_in_database(original_src, book):
+    normalized_src = normalize_path(original_src)
+
+    try:
+        # First, try with the full normalized path
+        image = BookImage.objects.get(book=book, filename=normalized_src)
+    except BookImage.DoesNotExist:
+        try:
+            # If not found, try with just the filename
+            image = BookImage.objects.get(
+                book=book,
+                filename__endswith=os.path.basename(normalized_src),
+            )
+        except BookImage.DoesNotExist:
+            log.warning(f"Warning: Image not found in database for src: {original_src}")
+            return None
+
+    return reverse(
+        "serve_book_image",
+        kwargs={"book_code": book.code, "image_filename": image.filename},
+    )
+
+
+def rewire_epub_links(soup):
+    for link in soup.find_all("a"):
+        if not isinstance(link, Tag):
+            continue
+
+        href = link.get("href")
+        if not href or not isinstance(href, str):
+            continue
+
         if href.startswith(("http://", "https://", "ftp://", "mailto:")):
             continue  # Skip external links
 
         normalized_href = normalize_path(href)
         link["href"] = "javascript:void(0);"
         link["data-href"] = normalized_href
-
-    return str(soup)
 
 
 def render_page(page_db: BookPage) -> str:
@@ -108,7 +128,7 @@ def render_page(page_db: BookPage) -> str:
     # Add any remaining text after the last word
     if last_end < len(content):
         result.append(content[last_end:])
-    return set_sources("".join(result), page_db.book)
+    return rewire_epub_references("".join(result), page_db.book)
 
 
 def redirect_to_reader(request: HttpRequest) -> HttpResponse:  # noqa: ARG001
