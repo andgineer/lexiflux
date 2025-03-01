@@ -1,3 +1,0 @@
-INFO     lexiflux.signals:signals.py:56 Successfully created language preferences for user testuser (ID: 1)
-INFO     lexiflux.signals:signals.py:56 Successfully created language preferences for user superuser (ID: 2)
-INFO     lexiflux.signals:signals.py:56 Successfully created language preferences for user another_user (ID: 3)

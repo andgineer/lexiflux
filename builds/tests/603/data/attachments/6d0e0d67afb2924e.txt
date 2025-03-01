@@ -1,2 +1,0 @@
-INFO     lexiflux.signals:signals.py:56 Successfully created language preferences for user testuser (ID: 1)
-INFO     lexiflux.views.words_export:words_export.py:46 No translations found for the user
