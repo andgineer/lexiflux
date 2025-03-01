@@ -8,7 +8,7 @@ from collections import defaultdict
 from collections.abc import Iterable, Iterator
 from typing import Any, Optional
 
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, Tag
 from django.db import transaction
 from ebooklib import ITEM_DOCUMENT, ITEM_IMAGE, epub
 
@@ -225,12 +225,13 @@ class BookLoaderEpub(BookLoaderBase):
         """Process anchors for a page."""
         soup = BeautifulSoup(content, "html.parser")
         for anchor in soup.find_all(lambda tag: tag.has_attr("id")):
-            anchor_id = anchor["id"]
-            self.anchor_map[f"{item.file_name}#{anchor_id}"] = {
-                "page": current_page,
-                "item_id": item.get_id(),
-                "item_name": item.get_name(),
-            }
+            if isinstance(anchor, Tag):
+                anchor_id = str(anchor["id"])
+                self.anchor_map[f"{item.file_name}#{anchor_id}"] = {
+                    "page": current_page,
+                    "item_id": item.get_id(),
+                    "item_name": item.get_name(),
+                }
 
         # Add an entry for the start of the document if it hasn't been added yet
         if item.file_name not in self.anchor_map:
@@ -336,7 +337,7 @@ def href_hierarchy(input_dict: dict[str, str]) -> dict[str, dict[str, str]]:
     return result
 
 
-def clear_html(  # noqa: PLR0913,C901
+def clear_html(  # noqa: PLR0913
     input_html: str,
     tags_to_remove_with_content: Iterable[str] = ("head", "style", "script", "svg", "noscript"),
     tags_to_remove_keeping_content: Iterable[str] = ("body", "html"),
@@ -368,26 +369,68 @@ def clear_html(  # noqa: PLR0913,C901
 
     try:
         soup = BeautifulSoup(input_html, "html.parser")
-        for tag in tags_to_remove_with_content:
-            for match in soup.find_all(tag):
-                match.decompose()
-        for tag in tags_to_remove_keeping_content:
-            for match in soup.find_all(tag):
-                match.unwrap()
-        for tag in soup.find_all(tags_to_clear_attributes):
-            tag.attrs = {}  # type: ignore
-        for tag, attrs in tag_to_partially_clear_attributes.items():
-            for match in soup.find_all(tag):
-                match.attrs = {
-                    attr: match.attrs.get(attr, "") for attr in attrs if attr in match.attrs
-                }
-
-        # Add classes to heading tags
-        for tag, classes in heading_classes.items():
-            for match in soup.find_all(tag):
-                match["class"] = match.get("class", []) + classes.split()
-
+        clear_tags(soup, tags_to_remove_with_content, tags_to_remove_keeping_content)
+        clear_attributes(
+            soup,
+            tags_to_clear_attributes,
+            tag_to_partially_clear_attributes,
+        )
+        add_classes_to_headings(soup, heading_classes)
         return str(soup)
     except Exception as e:  # noqa: BLE001
         log.error("Error cleaning HTML: %s", e)
         return input_html
+
+
+def clear_tags(
+    soup: BeautifulSoup,
+    tags_to_remove_with_content: Iterable[str],
+    tags_to_remove_keeping_content: Iterable[str],
+) -> None:
+    for tag_name in tags_to_remove_with_content:
+        for tag in soup.find_all(tag_name):
+            tag.decompose()
+
+    for tag_name in tags_to_remove_keeping_content:
+        for tag in soup.find_all(tag_name):
+            if isinstance(tag, Tag):
+                tag.unwrap()
+
+
+def clear_attributes(
+    soup: BeautifulSoup,
+    tags_to_clear_attributes: Iterable[str],
+    tag_to_partially_clear_attributes: dict[str, list[str]],
+) -> None:
+    for tag in soup.find_all(tags_to_clear_attributes):
+        if isinstance(tag, Tag):
+            tag.attrs = {}
+
+    for tag_name, attrs in tag_to_partially_clear_attributes.items():
+        for tag in soup.find_all(tag_name):
+            if isinstance(tag, Tag):
+                preserved_attrs = {
+                    attr: tag.attrs.get(attr, "") for attr in attrs if attr in tag.attrs
+                }
+                tag.attrs = preserved_attrs
+
+
+def add_classes_to_headings(soup: BeautifulSoup, heading_classes: dict[str, str]) -> None:
+    for tag_name, classes_str in heading_classes.items():
+        classes_to_add = classes_str.split()
+
+        for tag in soup.find_all(tag_name):
+            if not isinstance(tag, Tag):
+                continue
+
+            element_classes = []
+            if "class" in tag.attrs:
+                current_classes = tag["class"]
+                if isinstance(current_classes, str):
+                    element_classes.append(current_classes)
+                elif isinstance(current_classes, list):
+                    element_classes.extend(current_classes)
+
+            element_classes.extend(classes_to_add)
+
+            tag["class"] = element_classes  # type: ignore
