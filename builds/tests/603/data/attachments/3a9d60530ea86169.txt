@@ -1,0 +1,3 @@
+2025-02-14 17:50:32,047 INFO signals Successfully created language preferences for user testuser (ID: 1)
+2025-02-14 17:50:32,058 WARNING log Bad Request: /jump
+2025-02-14 17:50:32,058 WARNING log Bad Request: /jump

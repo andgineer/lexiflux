@@ -1,0 +1,1 @@
+ERROR    lexiflux.language.llm:llm.py:85 Lexical article 'InvalidArticle' not found., model: gpt-4o, class: ChatOpenAI, show_api_key_info: True

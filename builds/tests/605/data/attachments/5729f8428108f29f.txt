@@ -1,0 +1,2 @@
+2025-02-14 18:20:43,494 INFO signals Successfully created language preferences for user testuser (ID: 1)
+2025-02-14 18:20:43,526 ERROR llm 'book_code', model: gpt-4o, class: ChatOpenAI, show_api_key_info: True
