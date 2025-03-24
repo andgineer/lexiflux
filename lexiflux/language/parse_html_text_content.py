@@ -38,6 +38,8 @@ VALID_TAGS = set(HTMLParser.CDATA_CONTENT_ELEMENTS) | {
     "code",
     "title",
     "sup",
+    "sub",
+    "small",
 }
 
 

@@ -124,6 +124,16 @@ def test_clean_html_removes_attributes():
 
 @allure.epic("Book import")
 @allure.feature("EPUB: Clean HTML")
+def test_clean_html_nested_tags():
+    input_html = '<div class="test"><p style="color: red;">conserving O<sub class="calibre9"><small class="calibre10"><span class="calibre10"><span class="calibre2">2</span></span></small></sub>,</p></div>'
+    expected_output = (
+        "<div><p>conserving O<sub><small><span><span>2</span></span></small></sub>,</p></div>"
+    )
+    assert clear_html(input_html) == expected_output
+
+
+@allure.epic("Book import")
+@allure.feature("EPUB: Clean HTML")
 def test_clean_html_handles_empty_input():
     input_html = ""
     expected_output = ""

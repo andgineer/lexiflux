@@ -69,6 +69,10 @@ def test_page_view_respects_access_control(client, user, book):
         ),
         ("<br/>", "<br/>"),
         ("SingleWord", '<span class="word" id="word-0">SingleWord</span>'),
+        (
+            'conserving O<sub class="calibre9"><small class="calibre10"><span class="calibre10"><span class="calibre2">2</span></span></small></sub>, has',
+            '<span class="word" id="word-0">conserving</span> <span class="word" id="word-1">O</span><sub class="calibre9"><small class="calibre10"><span class="calibre10"><span class="calibre2"><span class="word" id="word-2">2</span></span></span></small></sub>, <span class="word" id="word-3">has</span>',
+        ),
     ],
 )
 @pytest.mark.django_db

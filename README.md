@@ -58,7 +58,7 @@ Install root certificate
 
     mkcert -install
 
-Update `runssl` command in Makefile to use this certificates.
+Update `runssl` command in `tasks.py` to use this certificates.
 
 ### Scripts
 To get available scripts:
