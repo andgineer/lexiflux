@@ -432,7 +432,7 @@ def test_link_click_success(client, approved_user, book):
     client.force_login(approved_user)
 
     # Update book's anchor_map with test data
-    book.anchor_map = {"#chapter1": {"page": 2, "word": 5}}
+    book.anchor_map = {"#chapter1": {"page": 2}}
     book.save()
 
     response = client.post(reverse("link_click"), {"book-code": book.code, "link": "#chapter1"})
@@ -441,7 +441,7 @@ def test_link_click_success(client, approved_user, book):
     data = response.json()
     assert data["success"] is True
     assert data["page_number"] == 2
-    assert data["word"] == 5
+    assert data["word"] == 0
 
 
 @allure.epic("Pages endpoints")

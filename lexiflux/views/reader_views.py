@@ -369,6 +369,70 @@ def get_jump_status(request: HttpRequest) -> HttpResponse:
     return JsonResponse({"is_first_jump": is_first_jump, "is_last_jump": is_last_jump})
 
 
+def find_closest_word_for_anchor(book_page: BookPage, link: str) -> int:
+    """Find the word closest to the anchor in the given link."""
+    closest_word = 0
+
+    try:
+        anchor_id = link.split("#", 1)[1] if "#" in link else None
+        if not anchor_id:
+            return closest_word
+
+        soup = BeautifulSoup(book_page.content, "html.parser")
+        anchor_element = soup.find(id=anchor_id)
+
+        if not anchor_element:
+            return closest_word
+
+        anchor_position = book_page.content.find(str(anchor_element))
+        if anchor_position < 0:
+            return closest_word
+
+        return find_closest_word_index(book_page.words, anchor_position)
+
+    except Exception as e:  # noqa: BLE001
+        log.warning(f"Error finding closest word for anchor: {e}")
+
+    return closest_word
+
+
+def find_closest_word_index(positions: list[tuple[int, int]], target_position: int) -> int:  # noqa: PLR0911
+    """Find the index of the word closest to the target position using binary search."""
+    if not positions:
+        return 0
+
+    left, right = 0, len(positions) - 1
+
+    if target_position <= positions[0][0]:
+        return 0
+    if target_position >= positions[-1][1]:
+        return len(positions) - 1
+
+    while left <= right:
+        mid = (left + right) // 2
+        mid_start, mid_end = positions[mid]
+
+        # Direct hit - position is within this word
+        if mid_start <= target_position <= mid_end:
+            return mid
+
+        if mid_start > target_position:
+            # Target is before this word
+            right = mid - 1
+        else:
+            # Target is after this word
+            left = mid + 1
+
+    # If we didn't find an exact match, determine closest word
+    if left >= len(positions):
+        return right
+    if right < 0:
+        return left
+
+    # always prefer word before the target
+    return left
+
+
 @smart_login_required
 @require_POST  # type: ignore
 def link_click(request: HttpRequest) -> HttpResponse:
@@ -386,7 +450,9 @@ def link_click(request: HttpRequest) -> HttpResponse:
         return JsonResponse({"success": False, "error": f"Link {link} not found in anchor map"})
 
     new_page_number = page_info["page"]
-    new_word = page_info.get("word", 0)  # Default to 0 if 'word' is not provided
+
+    book_page = get_object_or_404(BookPage, book=book, number=new_page_number)
+    new_word = find_closest_word_for_anchor(book_page, link)
 
     # Get or create the reading location for this user and book
     reading_loc = ReadingLoc.get_or_create_reading_loc(request.user, book)

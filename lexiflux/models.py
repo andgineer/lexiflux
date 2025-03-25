@@ -182,7 +182,10 @@ class Book(models.Model):  # type: ignore
     anchor_map = models.JSONField(
         default=dict,
         blank=True,
-        help_text="Maps anchors to page numbers and EPUB items",
+        help_text=(
+            "Maps anchors to page numbers and EPUB items. "
+            "anchor -> {`page`: .., `item_id``: .., item_name``: ..}"
+        ),
     )
 
     @property
