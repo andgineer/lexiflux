@@ -70,6 +70,7 @@ repos:
           "--namespace-packages",
           "--explicit-package-bases"
         ]
+        require_serial: true
         language: system
         types: [ python ]
         exclude: ^tests/

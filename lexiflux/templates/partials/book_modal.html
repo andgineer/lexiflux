@@ -80,6 +80,13 @@
               {% endfor %}
             </select>
           </div>
+
+          {% if not skip_auth %}
+          <div class="mb-3 form-check">
+            <input type="checkbox" class="form-check-input" id="bookPublic" name="public" {% if book.public %}checked{% endif %}>
+            <label class="form-check-label" for="bookPublic">Public (visible to all users)</label>
+          </div>
+          {% endif %}
         </div>
 
         <div class="modal-footer justify-content-between">

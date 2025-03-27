@@ -21,6 +21,7 @@ from lexiflux.ebook.book_loader_base import BookLoaderBase
 from lexiflux.ebook.book_loader_epub import BookLoaderEpub
 from lexiflux.ebook.book_loader_html import BookLoaderHtml
 from lexiflux.ebook.book_loader_plain_text import BookLoaderPlainText
+from lexiflux.lexiflux_settings import settings
 from lexiflux.models import Author, Book, Language
 
 logger = logging.getLogger(__name__)
@@ -108,6 +109,7 @@ class EditBookModalPartial(TemplateView):  # type: ignore
                 "require_delete_confirmation": require_delete_confirmation,
                 "show_delete_button": show_delete_button,
                 "languages": Language.objects.all(),
+                "skip_auth": settings.lexiflux.skip_auth,
             },
         )
         return context  # type: ignore
@@ -134,6 +136,11 @@ class EditBookModalPartial(TemplateView):  # type: ignore
             self.book.author = author
             language = Language.objects.get(google_code=language_code)
             self.book.language = language
+
+            # Only update public field if not in autologin mode
+            if not settings.lexiflux.skip_auth:
+                self.book.public = request.POST.get("public") == "on"
+
             self.book.save()
 
             return HttpResponse()
@@ -215,6 +222,7 @@ def import_book(request: HttpRequest) -> HttpResponse:
             "languages": Language.objects.all(),
             "require_delete_confirmation": False,
             "show_delete_button": True,
+            "skip_auth": settings.lexiflux.skip_auth,
         }
         return HttpResponse(f"""
             <script>

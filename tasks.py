@@ -125,9 +125,18 @@ def run(c: Context):
 
 @task
 def runssl(c: Context):
-    """Run local SSL server"""
+    """Run local SSL server in auto-login mode"""
     c.run(
         "LEXIFLUX_SKIP_AUTH=true ./manage runserver_plus 0.0.0.0:8000 "
+        "--cert-file ssl_certs/localhost.crt --key-file ssl_certs/localhost.key",
+    )
+
+
+@task
+def runcloud(c: Context):
+    """Run local SSL server in multi-user mode"""
+    c.run(
+        "LEXIFLUX_SKIP_AUTH=false ./manage runserver_plus 0.0.0.0:8000 "
         "--cert-file ssl_certs/localhost.crt --key-file ssl_certs/localhost.key",
     )
 
