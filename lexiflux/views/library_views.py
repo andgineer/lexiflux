@@ -1,4 +1,4 @@
-"""Library partial views."""
+"""Library partial views with URL import functionality."""
 
 import logging
 import tempfile
@@ -21,6 +21,7 @@ from lexiflux.ebook.book_loader_base import BookLoaderBase
 from lexiflux.ebook.book_loader_epub import BookLoaderEpub
 from lexiflux.ebook.book_loader_html import BookLoaderHtml
 from lexiflux.ebook.book_loader_plain_text import BookLoaderPlainText
+from lexiflux.ebook.book_loader_url import BookLoaderURL
 from lexiflux.lexiflux_settings import settings
 from lexiflux.models import Author, Book, Language
 
@@ -179,43 +180,76 @@ def import_modal(request: HttpRequest) -> HttpResponse:
 
 @smart_login_required
 @require_POST  # type: ignore
-def import_book(request: HttpRequest) -> HttpResponse:
+def import_book(request: HttpRequest) -> HttpResponse:  # noqa: PLR0912,PLR0915,C901
     """Handle book import and return appropriate modal."""
     try:
-        file = request.FILES.get("file")
-        if not file:
-            raise ValueError("No file provided")
+        import_type = request.POST.get("importType", "file")
 
-        original_filename = file.name
-        file_extension = original_filename.split(".")[-1].lower()
+        if import_type == "file":
+            # Handle file import
+            file = request.FILES.get("file")
+            if not file:
+                raise ValueError("No file provided")
 
-        book_class: type[BookLoaderBase]
-        if file_extension == "txt":
-            book_class = BookLoaderPlainText
-        elif file_extension == "html":
-            book_class = BookLoaderHtml
-        elif file_extension == "epub":
-            book_class = BookLoaderEpub
-        else:
-            raise ValueError(f"Unsupported file format for {file.name}")
+            original_filename = file.name
+            file_extension = original_filename.split(".")[-1].lower()
 
-        if isinstance(file, TemporaryUploadedFile):
-            book_processor = book_class(
-                file.temporary_file_path(),
-                original_filename=original_filename,
-            )
-            book = book_processor.create(request.user.email)
-            book.save()
-        else:
-            # in-memory, save on dist
-            with tempfile.NamedTemporaryFile(delete=True) as tmp_file:
-                for chunk in file.chunks():
-                    tmp_file.write(chunk)
-                tmp_file.flush()
+            book_class: type[BookLoaderBase]
+            if file_extension == "txt":
+                book_class = BookLoaderPlainText
+            elif file_extension == "html":
+                book_class = BookLoaderHtml
+            elif file_extension == "epub":
+                book_class = BookLoaderEpub
+            else:
+                raise ValueError(f"Unsupported file format for {file.name}")
 
-                book_processor = book_class(tmp_file.name, original_filename=original_filename)
+            if isinstance(file, TemporaryUploadedFile):
+                book_processor = book_class(
+                    file.temporary_file_path(),
+                    original_filename=original_filename,
+                )
                 book = book_processor.create(request.user.email)
                 book.save()
+            else:
+                # in-memory, save on disk
+                with tempfile.NamedTemporaryFile(delete=True) as tmp_file:
+                    for chunk in file.chunks():
+                        tmp_file.write(chunk)
+                    tmp_file.flush()
+
+                    book_processor = book_class(tmp_file.name, original_filename=original_filename)
+                    book = book_processor.create(request.user.email)
+                    book.save()
+
+        elif import_type == "url":
+            # Handle URL import
+            url = request.POST.get("url")
+            if not url:
+                raise ValueError("No URL provided")
+
+            # Validate URL
+            from django.core.exceptions import ValidationError
+            from django.core.validators import URLValidator
+
+            validator = URLValidator()
+            try:
+                validator(url)
+            except ValidationError as e:
+                raise ValueError("Invalid URL format") from e
+
+            # Get cleaning level with a default of "moderate"
+            cleaning_level = request.POST.get("cleaning_level", "moderate")
+            if cleaning_level not in ["aggressive", "moderate", "minimal"]:
+                cleaning_level = "moderate"  # Default to moderate if invalid value
+
+            # Process URL with cleaning level
+            book_processor = BookLoaderURL(url, cleaning_level=cleaning_level)
+            book = book_processor.create(request.user.email)
+            book.save()
+
+        else:
+            raise ValueError(f"Unknown import type: {import_type}")
 
         context = {
             "book": book,
@@ -234,16 +268,22 @@ def import_book(request: HttpRequest) -> HttpResponse:
 
     except Exception as e:  # noqa: BLE001
         logging.exception("Error importing book")
-        return render(
-            request,
-            "partials/import_modal.html",
-            {
-                "error_message": str(e),
-                "last_filename": request.FILES.get("file").name
-                if request.FILES.get("file")
-                else None,
-            },
-        )
+        context = {
+            "error_message": str(e),
+            "importType": request.POST.get("importType", "file"),
+            "cleaning_level": request.POST.get(
+                "cleaning_level",
+                "moderate",
+            ),  # Preserve selected cleaning level
+        }
+
+        # Add appropriate context based on import type
+        if request.POST.get("importType") == "file" and request.FILES.get("file"):
+            context["last_filename"] = request.FILES.get("file").name
+        elif request.POST.get("importType") == "url" and request.POST.get("url"):
+            context["last_url"] = request.POST.get("url")
+
+        return render(request, "partials/import_modal.html", context)
 
 
 @smart_login_required  # type: ignore

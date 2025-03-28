@@ -25,26 +25,88 @@
           </div>
           {% endif %}
 
-          <div class="mb-3">
-            <label for="bookFile" class="form-label">Select Book File</label>
-            <div class="input-group">
-              <input type="file"
-                     class="form-control {% if error_message %}is-invalid{% endif %}"
-                     id="bookFile"
-                     name="file"
-                     accept=".epub,.txt,.html"
-                     required>
-              {% if last_filename %}
-              <div class="small text-muted mt-1 text-break">
-                Last attempted: {{ last_filename }}
+          <!-- Import Type Tabs -->
+          <ul class="nav nav-tabs mb-3" id="importTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+              <button class="nav-link active" id="file-tab" data-bs-toggle="tab" data-bs-target="#file-pane"
+                      type="button" role="tab" aria-controls="file-pane" aria-selected="true"
+                      onclick="document.getElementById('importType').value = 'file';">
+                File
+              </button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link" id="url-tab" data-bs-toggle="tab" data-bs-target="#url-pane"
+                      type="button" role="tab" aria-controls="url-pane" aria-selected="false"
+                      onclick="document.getElementById('importType').value = 'url';">
+                URL
+              </button>
+            </li>
+          </ul>
+
+          <!-- Hidden import type field -->
+          <input type="hidden" id="importType" name="importType" value="file">
+
+          <div class="tab-content" id="importTabsContent">
+            <!-- File Import Tab -->
+            <div class="tab-pane fade show active" id="file-pane" role="tabpanel" aria-labelledby="file-tab">
+              <div class="mb-3">
+                <label for="bookFile" class="form-label">Select Book File</label>
+                <div class="input-group">
+                  <input type="file"
+                         class="form-control {% if error_message and importType == 'file' %}is-invalid{% endif %}"
+                         id="bookFile"
+                         name="file"
+                         accept=".epub,.txt,.html"
+                         required>
+                  {% if last_filename and importType == 'file' %}
+                  <div class="small text-muted mt-1 text-break">
+                    Last attempted: {{ last_filename }}
+                  </div>
+                  {% endif %}
+                </div>
               </div>
-              {% endif %}
+
+              <small class="form-text text-muted d-block mb-3">
+                Supported formats: EPUB, TXT, HTML (defined by file extension)
+              </small>
+            </div>
+
+            <!-- URL Import Tab -->
+            <div class="tab-pane fade" id="url-pane" role="tabpanel" aria-labelledby="url-tab">
+              <div class="mb-3">
+                <label for="bookUrl" class="form-label">Enter Web Page URL</label>
+                <input type="url"
+                       class="form-control {% if error_message and importType == 'url' %}is-invalid{% endif %}"
+                       id="bookUrl"
+                       name="url"
+                       placeholder="https://example.com/article"
+                       required>
+                {% if last_url and importType == 'url' %}
+                <div class="small text-muted mt-1 text-break">
+                  Last attempted: {{ last_url }}
+                </div>
+                {% endif %}
+              </div>
+
+              <!-- Cleaning Level Selection -->
+              <div class="mb-3">
+                <label for="cleaningLevel" class="form-label">Content Cleaning Level</label>
+                <select class="form-select" id="cleaningLevel" name="cleaning_level">
+                  <option value="moderate" {% if cleaning_level == 'moderate' %}selected{% endif %}>Moderate (Recommended)</option>
+                  <option value="minimal" {% if cleaning_level == 'minimal' %}selected{% endif %}>Minimal (Keep Most Content)</option>
+                  <option value="aggressive" {% if cleaning_level == 'aggressive' %}selected{% endif %}>Aggressive (Main Content Only)</option>
+                </select>
+                <div class="form-text mt-1">
+                  <small>Controls how much of the page content is preserved:</small>
+                  <ul class="small ps-3 mt-1 mb-0">
+                    <li><strong>Minimal:</strong> Keep most of the original page content</li>
+                    <li><strong>Moderate:</strong> Balance between readability and content preservation</li>
+                    <li><strong>Aggressive:</strong> Extract only the main article content</li>
+                  </ul>
+                </div>
+              </div>
             </div>
           </div>
-
-          <small class="form-text text-muted d-block mb-3">
-            Supported formats: EPUB, TXT, HTML (defined by file extension)
-          </small>
         </div>
 
         <div class="modal-footer">
@@ -63,4 +125,15 @@
 
 <script>
   new bootstrap.Modal(document.getElementById('importModal')).show();
+
+  // Handle required attribute switching between tabs
+  document.getElementById('file-tab').addEventListener('click', function() {
+    document.getElementById('bookFile').setAttribute('required', '');
+    document.getElementById('bookUrl').removeAttribute('required');
+  });
+
+  document.getElementById('url-tab').addEventListener('click', function() {
+    document.getElementById('bookUrl').setAttribute('required', '');
+    document.getElementById('bookFile').removeAttribute('required');
+  });
 </script>
