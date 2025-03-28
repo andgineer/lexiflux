@@ -562,7 +562,7 @@ class AIModelConfig(models.Model):  # type: ignore
         config, created = AIModelConfig.objects.get_or_create(
             user=user,
             chat_model=chat_model,
-            defaults={"settings": {setting: "" for setting in supported_settings}},
+            defaults={"settings": dict.fromkeys(supported_settings, "")},
         )
         if created:
             config.save()
