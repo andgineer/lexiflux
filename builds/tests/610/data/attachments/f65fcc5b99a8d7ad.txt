@@ -1,2 +1,0 @@
-INFO     lexiflux.signals:signals.py:56 Successfully created language preferences for user testuser (ID: 1)
-INFO     lexiflux.language.llm:lexical_views.py:144 Selected text: of page 1

@@ -1,3 +1,0 @@
-INFO     lexiflux.signals:signals.py:56 Successfully created language preferences for user testuser (ID: 1)
-WARNING  django.request:log.py:248 Method Not Allowed (PUT): /api/ai-settings/
-WARNING  django.request:log.py:248 Method Not Allowed: /api/ai-settings/
