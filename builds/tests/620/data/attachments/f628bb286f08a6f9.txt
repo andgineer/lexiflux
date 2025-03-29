@@ -1,0 +1,5 @@
+2025-02-22 06:12:18,406 INFO signals Successfully created language preferences for user testuser (ID: 1)
+2025-02-22 06:12:18,413 WARNING log Method Not Allowed (GET): /api/import-book/
+2025-02-22 06:12:18,413 WARNING log Method Not Allowed (GET): /api/import-book/
+2025-02-22 06:12:18,413 WARNING log Method Not Allowed: /api/import-book/
+2025-02-22 06:12:18,413 WARNING log Method Not Allowed: /api/import-book/

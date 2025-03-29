@@ -1,0 +1,7 @@
+INFO     lexiflux.signals:signals.py:56 Successfully created language preferences for user testuser (ID: 19)
+INFO     root:reader_views.py:150 Opening book some-book-code at page 1 for user testuser
+INFO     root:models.py:820 Reading location updated for some-book-code: 1(1):0/0.0
+[{'page_number': 1, 'word': 0}]/0
+INFO     root:reader_views.py:178 Jump status: book some-book-code, is_first_jump True, is_last_jump True
+INFO     root:reader_views.py:231 Rendering page 1 of book some-book-code
+INFO     lexiflux.language.llm:lexical_views.py:143 Selected text: page

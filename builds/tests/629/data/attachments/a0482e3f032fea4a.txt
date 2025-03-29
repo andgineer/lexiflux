@@ -1,0 +1,2 @@
+2025-03-27 09:19:44,119 INFO signals Successfully created language preferences for user testuser (ID: 24)
+2025-03-27 09:19:45,083 INFO words_export No translations found for the user

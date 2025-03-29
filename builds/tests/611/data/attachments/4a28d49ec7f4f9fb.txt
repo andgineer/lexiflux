@@ -1,0 +1,3 @@
+INFO     root:apps.py:36 Lexiflux 1.21.3 is ready.
+INFO     lexiflux.signals:signals.py:56 Successfully created language preferences for user testuser (ID: 1)
+INFO     lexiflux.anki.anki_connect:anki_connect.py:83 result {'result': [1, 2, 3, 4, 5, 6]}
