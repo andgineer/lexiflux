@@ -20,11 +20,10 @@ langchain_mistralai
 lxml_html_clean
 openai
 ollama
-readability-lxml
-markdownify
 EbookLib
 chardet
 transliterate
+trafilatura
 beautifulsoup4
 fasttext
 nltk

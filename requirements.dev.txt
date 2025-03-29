@@ -62,14 +62,16 @@ attrs==25.3.0
     #   referencing
     #   trio
 babel==2.17.0
-    # via mkdocs-material
+    # via
+    #   -r requirements.txt
+    #   courlan
+    #   mkdocs-material
 backrefs==5.8
     # via mkdocs-material
 beautifulsoup4==4.13.3
     # via
     #   -r requirements.txt
     #   deep-translator
-    #   markdownify
     #   nbconvert
 bleach==6.2.0
     # via nbconvert
@@ -100,6 +102,7 @@ certifi==2025.1.31
     #   httpx
     #   requests
     #   selenium
+    #   trafilatura
 cffi==1.17.1
     # via
     #   -r requirements.txt
@@ -108,13 +111,13 @@ cffi==1.17.1
 cfgv==3.4.0
     # via pre-commit
 chardet==5.2.0
-    # via
-    #   -r requirements.txt
-    #   readability-lxml
+    # via -r requirements.txt
 charset-normalizer==3.4.1
     # via
     #   -r requirements.txt
+    #   htmldate
     #   requests
+    #   trafilatura
 chevron==0.14.0
     # via
     #   -r requirements.txt
@@ -141,6 +144,10 @@ confection==0.1.5
     #   -r requirements.txt
     #   thinc
     #   weasel
+courlan==1.3.2
+    # via
+    #   -r requirements.txt
+    #   trafilatura
 coverage==7.7.1
     # via
     #   coveralls
@@ -151,10 +158,6 @@ cryptography==44.0.2
     # via
     #   -r requirements.txt
     #   pyopenssl
-cssselect==1.3.0
-    # via
-    #   -r requirements.txt
-    #   readability-lxml
 cymem==2.0.11
     # via
     #   -r requirements.txt
@@ -165,6 +168,10 @@ dataclasses-json==0.6.7
     # via
     #   -r requirements.txt
     #   langchain-community
+dateparser==1.2.1
+    # via
+    #   -r requirements.txt
+    #   htmldate
 debugpy==1.8.13
     # via ipykernel
 decorator==5.2.1
@@ -284,6 +291,10 @@ hpack==4.1.0
     # via
     #   -r requirements.txt
     #   h2
+htmldate==1.9.3
+    # via
+    #   -r requirements.txt
+    #   trafilatura
 httpcore==1.0.7
     # via
     #   -r requirements.txt
@@ -409,6 +420,10 @@ jupyter-server-terminals==0.5.3
     # via jupyter-server
 jupyterlab-pygments==0.3.0
     # via nbconvert
+justext==3.0.2
+    # via
+    #   -r requirements.txt
+    #   trafilatura
 langchain==0.3.21
     # via
     #   -r requirements.txt
@@ -455,10 +470,14 @@ lxml==5.3.1
     # via
     #   -r requirements.txt
     #   ebooklib
+    #   htmldate
+    #   justext
     #   lxml-html-clean
-    #   readability-lxml
+    #   trafilatura
 lxml-html-clean==0.4.1
-    # via -r requirements.txt
+    # via
+    #   -r requirements.txt
+    #   lxml
 marisa-trie==1.2.1
     # via
     #   -r requirements.txt
@@ -474,8 +493,6 @@ markdown-it-py==3.0.0
     # via
     #   -r requirements.txt
     #   rich
-markdownify==1.1.0
-    # via -r requirements.txt
 markupsafe==3.0.2
     # via
     #   -r requirements.txt
@@ -696,7 +713,7 @@ pycparser==2.22
     # via
     #   -r requirements.txt
     #   cffi
-pydantic==2.11.0
+pydantic==2.11.1
     # via
     #   -r requirements.txt
     #   anthropic
@@ -765,8 +782,11 @@ pytest-xdist==3.6.1
     # via -r requirements.dev.in
 python-dateutil==2.9.0.post0
     # via
+    #   -r requirements.txt
     #   arrow
+    #   dateparser
     #   ghp-import
+    #   htmldate
     #   jupyter-client
 python-dotenv==1.1.0
     # via
@@ -775,7 +795,10 @@ python-dotenv==1.1.0
 python-json-logger==3.3.0
     # via jupyter-events
 pytz==2025.2
-    # via -r requirements.dev.in
+    # via
+    #   -r requirements.dev.in
+    #   -r requirements.txt
+    #   dateparser
 pyyaml==6.0.2
     # via
     #   -r requirements.txt
@@ -799,8 +822,6 @@ pyzmq==26.3.0
     #   jupyter-console
     #   jupyter-server
     #   notebook
-readability-lxml==0.8.1
-    # via -r requirements.txt
 referencing==0.36.2
     # via
     #   jsonschema
@@ -809,6 +830,7 @@ referencing==0.36.2
 regex==2024.11.6
     # via
     #   -r requirements.txt
+    #   dateparser
     #   nltk
     #   tiktoken
 requests==2.32.3
@@ -871,7 +893,6 @@ six==1.17.0
     # via
     #   -r requirements.txt
     #   ebooklib
-    #   markdownify
     #   python-dateutil
     #   rfc3339-validator
     #   transliterate
@@ -941,6 +962,10 @@ tiktoken==0.9.0
     #   langchain-openai
 tinycss2==1.4.0
     # via bleach
+tld==0.13
+    # via
+    #   -r requirements.txt
+    #   courlan
 tokenizers==0.21.1
     # via
     #   -r requirements.txt
@@ -961,6 +986,8 @@ tqdm==4.67.1
     #   nltk
     #   openai
     #   spacy
+trafilatura==2.0.0
+    # via -r requirements.txt
 traitlets==5.9.0
     # via
     #   -r requirements.dev.in
@@ -1021,6 +1048,10 @@ typing-inspection==0.4.0
     #   pydantic
 tzdata==2025.2
     # via faker
+tzlocal==5.3.1
+    # via
+    #   -r requirements.txt
+    #   dateparser
 unidecode==1.3.8
     # via -r requirements.txt
 uri-template==1.3.0
@@ -1028,8 +1059,11 @@ uri-template==1.3.0
 urllib3==2.3.0
     # via
     #   -r requirements.txt
+    #   courlan
+    #   htmldate
     #   requests
     #   selenium
+    #   trafilatura
 virtualenv==20.29.3
     # via pre-commit
 wasabi==1.1.3

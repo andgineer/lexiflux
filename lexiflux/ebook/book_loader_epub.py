@@ -339,8 +339,8 @@ def href_hierarchy(input_dict: dict[str, str]) -> dict[str, dict[str, str]]:
 
 def clear_html(  # noqa: PLR0913
     input_html: str,
-    tags_to_remove_with_content: Iterable[str] = ("head", "style", "script", "svg", "noscript"),
-    tags_to_remove_keeping_content: Iterable[str] = ("body", "html"),
+    tags_to_remove_with_content: Iterable[str] = ("head", "style", "script", "svg", "noscript", "form", "input", "option", "select", "textarea"),
+    tags_to_remove_keeping_content: Iterable[str] = ("body", "html", "label"),
     tags_to_clear_attributes: Iterable[str] = ("p", "br", "small", "sub"),
     tag_to_partially_clear_attributes: dict[str, list[str]] | None = None,
     heading_classes: dict[str, str] | None = None,
