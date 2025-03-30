@@ -34,6 +34,11 @@ class BookLoaderPlainText(BookLoaderBase):  # pylint: disable=too-many-instance-
     book_start: int
     book_end: int
 
+    def load_text(self) -> str:
+        if isinstance(self.file_path, str):
+            return self.read_file(self.file_path)
+        return self.file_path.read()
+
     def detect_meta(self) -> tuple[dict[str, Any], int, int]:
         """Try to detect book meta and text.
 
@@ -41,10 +46,6 @@ class BookLoaderPlainText(BookLoaderBase):  # pylint: disable=too-many-instance-
         Trim meta text from the beginning and end of the book text.
         Return: meta, start, end
         """
-        if isinstance(self.file_path, str):
-            self.text = self.read_file(self.file_path)
-        else:
-            self.text = self.file_path.read()
         meta, start = self.parse_gutenberg_header()
         end = self.cut_gutenberg_ending()
         if start > end:

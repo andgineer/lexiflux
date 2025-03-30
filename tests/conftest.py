@@ -364,6 +364,9 @@ def book_processor_mock(db_init):
                 100,
             )
 
+        def load_text(self) -> str:
+            return "This is a test book content."
+
         def get_random_words(self, words_num=15):
             return "Sample random words for language detection"
 

@@ -27,6 +27,7 @@ PAGES_NUM_TO_DEBUG = 3  # number of page for detailed tracing
 class BookLoaderEpub(BookLoaderBase):
     """Import ebook from EPUB."""
 
+    epub: Any
     book_start: int
     book_end: int
     heading_hrefs: dict[str, dict[str, str]]
@@ -65,12 +66,15 @@ class BookLoaderEpub(BookLoaderBase):
                 )
         return book
 
+    def load_text(self) -> str:
+        self.epub = epub.read_epub(self.file_path)
+        return ""
+
     def detect_meta(self) -> tuple[dict[str, Any], int, int]:
         """Read the book and extract meta if it is present.
 
         Return: meta, start, end
         """
-        self.epub = epub.read_epub(self.file_path)
 
         self.heading_hrefs = {}
         if self.epub.toc:
@@ -97,7 +101,7 @@ class BookLoaderEpub(BookLoaderBase):
         meta[MetadataField.AUTHOR] = authors[0][0] if authors else "Unknown Author"
         language_metadata = self.epub.get_metadata("DC", "language")
         meta[MetadataField.LANGUAGE] = (
-            language_metadata[0][0] if language_metadata else self.get_language()
+            language_metadata[0][0] if language_metadata else self.detect_language()
         )
         return meta, 0, -1  # todo: detect start/finish of the book
 
@@ -339,7 +343,18 @@ def href_hierarchy(input_dict: dict[str, str]) -> dict[str, dict[str, str]]:
 
 def clear_html(  # noqa: PLR0913
     input_html: str,
-    tags_to_remove_with_content: Iterable[str] = ("head", "style", "script", "svg", "noscript", "form", "input", "option", "select", "textarea"),
+    tags_to_remove_with_content: Iterable[str] = (
+        "head",
+        "style",
+        "script",
+        "svg",
+        "noscript",
+        "form",
+        "input",
+        "option",
+        "select",
+        "textarea",
+    ),
     tags_to_remove_keeping_content: Iterable[str] = ("body", "html", "label"),
     tags_to_clear_attributes: Iterable[str] = ("p", "br", "small", "sub"),
     tag_to_partially_clear_attributes: dict[str, list[str]] | None = None,

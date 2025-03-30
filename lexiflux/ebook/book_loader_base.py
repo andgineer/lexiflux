@@ -43,9 +43,13 @@ class BookLoaderBase:
         self.file_path = file_path
         self.original_filename = original_filename
         self.languages = ["en", "sr"] if languages is None else languages
+        self.text = self.load_text()
         self.meta, self.book_start, self.book_end = self.detect_meta()
         self.meta[MetadataField.TITLE], self.meta[MetadataField.AUTHOR] = self.get_title_author()
         self.meta[MetadataField.LANGUAGE] = self.get_language()
+
+    def load_text(self) -> str:
+        raise NotImplementedError()
 
     def detect_meta(self) -> tuple[dict[str, Any], int, int]:
         """Try to detect book meta and text.
