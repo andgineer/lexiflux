@@ -11,8 +11,8 @@ import trafilatura
 from bs4 import BeautifulSoup
 
 from lexiflux.ebook.book_loader_base import MetadataField
-from lexiflux.ebook.book_loader_epub import clear_html
 from lexiflux.ebook.book_loader_html import BookLoaderHtml
+from lexiflux.ebook.clear_html import clear_html
 
 log = logging.getLogger()
 

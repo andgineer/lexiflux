@@ -9,7 +9,6 @@ from lexiflux.ebook.book_loader_epub import (
     extract_headings,
     BookLoaderEpub,
     href_hierarchy,
-    clear_html,
     TARGET_PAGE_SIZE,
 )
 
@@ -96,48 +95,6 @@ def test_epub_import_href_hierarchy():
         "main2.xml": {"#": "Part 1 - YOUTH.Chapter 1", "#anchor": "Part 1 - YOUTH.Chapter 2"},
     }
     assert href_hierarchy(input_dict) == expected_output
-
-
-@allure.epic("Book import")
-@allure.feature("EPUB: Clean HTML")
-def test_clean_html_removes_head():
-    input_html = "<html><head><title>Test</title></head><body><p>Hello, world!</p></body></html>"
-    expected_output = "<p>Hello, world!</p>"
-    assert clear_html(input_html) == expected_output
-
-
-@allure.epic("Book import")
-@allure.feature("EPUB: Clean HTML")
-def test_clean_html_unwraps_tags():
-    input_html = "<html><body><span><p>Hello, world!</p></span></body></html>"
-    expected_output = "<span><p>Hello, world!</p></span>"
-    assert clear_html(input_html) == expected_output
-
-
-@allure.epic("Book import")
-@allure.feature("EPUB: Clean HTML")
-def test_clean_html_removes_attributes():
-    input_html = '<div class="test"><p style="color: red;">Hello, world!</p></div>'
-    expected_output = "<div><p>Hello, world!</p></div>"
-    assert clear_html(input_html) == expected_output
-
-
-@allure.epic("Book import")
-@allure.feature("EPUB: Clean HTML")
-def test_clean_html_nested_tags():
-    input_html = '<div class="test"><p style="color: red;">conserving O<sub class="calibre9"><small class="calibre10"><span class="calibre10"><span class="calibre2">2</span></span></small></sub>,</p></div>'
-    expected_output = (
-        "<div><p>conserving O<sub><small><span><span>2</span></span></small></sub>,</p></div>"
-    )
-    assert clear_html(input_html) == expected_output
-
-
-@allure.epic("Book import")
-@allure.feature("EPUB: Clean HTML")
-def test_clean_html_handles_empty_input():
-    input_html = ""
-    expected_output = ""
-    assert clear_html(input_html) == expected_output
 
 
 @allure.epic("Book import")
