@@ -167,3 +167,110 @@ def test_clean_html_preserves_all_attributes_except_style_and_class():
     assert "loading" in img.attrs, "loading should be preserved"
     assert "width" in img.attrs, "width should be preserved"
     assert "height" in img.attrs, "height should be preserved"
+
+
+@allure.epic("Book import")
+@allure.feature("EPUB: Clean HTML")
+def test_clean_html_removes_comments():
+    input_html = "<div><!-- This is a comment -->Content<!-- Another comment --></div>"
+    expected_output = "<div>Content</div>"
+    assert clear_html(input_html) == expected_output
+
+
+@allure.epic("Book import")
+@allure.feature("EPUB: Clean HTML")
+def test_clean_html_removes_empty_p_tags():
+    input_html = "<div><p>Content</p><p>  </p><p>\n\t</p></div>"
+    expected_output = "<div><p>Content</p></div>"
+    assert clear_html(input_html) == expected_output
+
+
+@allure.epic("Book import")
+@allure.feature("EPUB: Clean HTML")
+def test_clean_html_removes_consecutive_br_tags():
+    input_html = "<div>Line 1<br><br>Line 2</div>"
+    expected_output = "<div>Line 1<br>Line 2</div>"
+    assert clear_html(input_html) == expected_output
+
+
+@allure.epic("Book import")
+@allure.feature("EPUB: Clean HTML")
+def test_clean_html_removes_consecutive_br_tags_with_whitespace():
+    input_html = "<div>Line 1<br>  \n  <br>Line 2</div>"
+    expected_output = "<div>Line 1<br>\nLine 2</div>"
+    assert clear_html(input_html) == expected_output
+
+
+@allure.epic("Book import")
+@allure.feature("EPUB: Clean HTML")
+def test_clean_html_removes_multiple_br_tags_in_p():
+    input_html = '<p><span class="word" id="word-42">vremena</span>. <br> <br> <br> <br> <br> <br> <br> <br></p>'
+    expected_output = '<p><span id="word-42">vremena</span>. <br>       </p>'
+    assert clear_html(input_html) == expected_output
+
+
+@allure.epic("Book import")
+@allure.feature("EPUB: Clean HTML")
+def test_clean_html_removes_div_with_only_br_tags():
+    input_html = "<div><div><br><br></div><p>Content</p></div>"
+    expected_output = "<div><p>Content</p></div>"
+    assert clear_html(input_html) == expected_output
+
+
+@allure.epic("Book import")
+@allure.feature("EPUB: Clean HTML")
+def test_clean_html_removes_div_with_br_and_whitespace():
+    input_html = "<div><div>  <br>  \n  </div><p>Content</p></div>"
+    expected_output = "<div><p>Content</p></div>"
+    assert clear_html(input_html) == expected_output
+
+
+@allure.epic("Book import")
+@allure.feature("EPUB: Clean HTML")
+def test_clean_html_removes_nested_div_with_only_br():
+    input_html = "<div><div> <br> <div> <br> </div> <br> </div><p>Content</p></div>"
+    expected_output = "<div><p>Content</p></div>"
+    assert clear_html(input_html) == expected_output
+
+
+@allure.epic("Book import")
+@allure.feature("EPUB: Clean HTML")
+def test_clean_html_keeps_div_with_content_and_br():
+    input_html = "<div><div>Text<br></div><p>Content</p></div>"
+    expected_output = "<div><div>Text<br></div><p>Content</p></div>"
+    assert clear_html(input_html) == expected_output
+
+
+@allure.epic("Book import")
+@allure.feature("EPUB: Clean HTML")
+def test_clean_html_complex_case():
+    input_html = """
+    <div>
+        <!-- Header comment -->
+        <p>  </p>
+        <h1>Title<!-- comment inside --></h1>
+        <p>Content</p>
+        <br><br><br>
+        <!-- Another comment -->
+        <div><br>  <br></div>
+        <p>\t \n</p>
+        <div>Text<br><br>More text</div>
+    </div>
+    """
+    expected_output = """
+    <div>
+
+        <h1 class="display-4fw-semiboldtext-primarymb-4">Title</h1>
+        <p>Content</p>
+        <br>
+
+
+        <div>Text<br>More text</div>
+    </div>
+    """
+
+    # Compare without whitespace
+    cleaned = "".join(clear_html(input_html).split())
+    expected = "".join(expected_output.split())
+
+    assert cleaned == expected

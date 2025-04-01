@@ -1,7 +1,7 @@
 import logging
 from collections.abc import Iterable
 
-from bs4 import BeautifulSoup, Tag
+from bs4 import BeautifulSoup, Comment, Tag
 
 log = logging.getLogger(__name__)
 
@@ -67,6 +67,9 @@ def clear_html(
     Returns:
         Cleaned HTML string with only allowed tags and without class/style attributes
     """
+    if not input_html:
+        return ""
+
     if tags_with_classes is None:
         tags_with_classes = {
             "h1": "display-4 fw-semibold text-primary mb-4",
@@ -79,18 +82,35 @@ def clear_html(
     try:
         soup = BeautifulSoup(input_html, "html.parser")
 
-        # Step 1: Remove tags with their content
+        # Step 1: Remove HTML comments
+        for comment in soup.find_all(string=lambda text: isinstance(text, Comment)):
+            comment.extract()
+
+        # Step 2: Remove tags with their content
         for tag_name in tags_to_remove_with_content:
             for tag in soup.find_all(tag_name):
                 tag.decompose()
 
-        # Step 2: Process remaining tags
+        # Step 3: Process remaining tags
         process_tags(soup, allowed_tags)
 
-        # Step 3: Add classes to specified tags
+        # Step 4: Remove empty p tags
+        remove_empty_tags(soup, "p")
+
+        # Step 5: Handle multiple br tags
+        handle_br_tags(soup)
+
+        # Step 6: Remove divs that contain only br tags and whitespace
+        remove_only_br_divs(soup)
+
+        # Step 7: Add classes to specified tags
         add_classes_to_tags(soup, tags_with_classes)
 
-        return str(soup)
+        # Get HTML string
+        html_output = str(soup)
+
+        # Post-processing for <br/> tags to make them <br> for compatibility
+        return html_output.replace("<br/>", "<br>")
     except Exception as e:  # noqa: BLE001
         log.error("Error cleaning HTML: %s", e)
         return input_html
@@ -146,3 +166,92 @@ def add_classes_to_tags(soup: BeautifulSoup, tags_with_classes: dict[str, str]) 
                 continue
 
             tag["class"] = classes_to_add  # type: ignore
+
+
+def remove_empty_tags(soup: BeautifulSoup, tag_name: str) -> None:
+    """Remove empty tags of the specified type.
+
+    Args:
+        soup: BeautifulSoup object to process
+        tag_name: Tag name to check for emptiness
+    """
+    for tag in soup.find_all(tag_name):
+        # Check if tag contains only whitespace
+        if tag.get_text(strip=True) == "":
+            tag.decompose()
+
+
+def is_only_br_and_whitespace(tag: Tag) -> bool:
+    """Check if tag contains only br tags and whitespace.
+
+    Args:
+        tag: BeautifulSoup Tag to check
+
+    Returns:
+        True if tag contains only br tags and whitespace, False otherwise
+    """
+    # Get all non-br elements (excluding whitespace text nodes)
+    non_br_elements = [
+        child
+        for child in tag.contents
+        if (isinstance(child, Tag) and child.name != "br")
+        or (not isinstance(child, Tag) and child.strip())  # type: ignore
+    ]
+
+    # If we have no non-br elements, this tag has only br tags and whitespace
+    return len(non_br_elements) == 0
+
+
+def remove_only_br_divs(soup: BeautifulSoup) -> None:
+    """Remove divs that contain only br tags and whitespace.
+
+    Args:
+        soup: BeautifulSoup object to process
+    """
+    # Process recursively from bottom up to handle nested divs
+    found_changes = True
+    while found_changes:
+        found_changes = False
+        for div in soup.find_all("div"):
+            if isinstance(div, Tag) and is_only_br_and_whitespace(div):  # isinstance fo mypy
+                div.decompose()
+                found_changes = True
+                break
+
+
+def handle_br_tags(soup: BeautifulSoup) -> None:
+    """Handle multiple consecutive <br> tags, keeping only the first one.
+
+    This function looks for consecutive <br> tags in the document and
+    keeps only one of them. It also handles complex cases inside <p> tags.
+
+    Args:
+        soup: BeautifulSoup object to process
+    """
+    for tag in soup.find_all():
+        if not isinstance(tag, Tag):
+            continue
+
+        # Get all children as a list
+        contents = list(tag.children)
+
+        # Look for <br> tags with only whitespace in between
+        to_remove = []
+        last_was_br = False
+
+        for child in contents:
+            if isinstance(child, Tag) and child.name == "br":
+                if last_was_br:
+                    # This is a consecutive <br>, mark for removal
+                    to_remove.append(child)
+                last_was_br = True
+            elif isinstance(child, str) and child.strip() == "":
+                # This is whitespace, preserve last_was_br state
+                pass
+            else:
+                # This is content, reset the state
+                last_was_br = False
+
+        # Remove the consecutive br tags
+        for br_tag in to_remove:
+            br_tag.decompose()
