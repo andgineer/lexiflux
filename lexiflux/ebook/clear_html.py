@@ -6,7 +6,7 @@ from bs4 import BeautifulSoup, Comment, Tag
 log = logging.getLogger(__name__)
 
 
-def clear_html(
+def clear_html(  # noqa: PLR0913
     input_html: str,
     allowed_tags: Iterable[str] = (
         "p",
@@ -54,14 +54,25 @@ def clear_html(
         "select",
         "textarea",
     ),
+    keep_empty_tags: Iterable[str] = (
+        "img",
+        "hr",
+        "br",
+        "iframe",
+    ),
+    ids_to_keep: Iterable[str] = (),
     tags_with_classes: dict[str, str] | None = None,
 ) -> str:
     """Clean HTML by keeping only whitelisted tags and removing class/style attributes.
 
     Args:
         input_html: The HTML string to clean
-        allowed_tags: Whitelist of tags that should be kept
+        allowed_tags: Whitelist of tags that should be kept, others will be removed keeping content,
+            except for tags tags_to_remove_with_content which will be removed along
+            with their content.
         tags_to_remove_with_content: Tags that should be removed along with their content
+        keep_empty_tags: Tags that should be kept even when they have no content
+        ids_to_keep: List of element IDs that should be preserved regardless of tag type
         tags_with_classes: Dict mapping tags to classes to add
 
     Returns:
@@ -82,69 +93,83 @@ def clear_html(
     try:
         soup = BeautifulSoup(input_html, "html.parser")
 
-        # Step 1: Remove HTML comments
-        for comment in soup.find_all(string=lambda text: isinstance(text, Comment)):
-            comment.extract()
-
-        # Step 2: Remove tags with their content
-        for tag_name in tags_to_remove_with_content:
-            for tag in soup.find_all(tag_name):
-                tag.decompose()
-
-        # Step 3: Process remaining tags
-        process_tags(soup, allowed_tags)
-
-        # Step 4: Remove empty p tags
-        remove_empty_tags(soup, "p")
-
-        # Step 5: Handle multiple br tags
-        handle_br_tags(soup)
-
-        # Step 6: Remove divs that contain only br tags and whitespace
-        remove_only_br_divs(soup)
-
-        # Step 7: Add classes to specified tags
+        delete_comments(soup)
+        delete_tags(soup, tags_to_remove_with_content)
+        unwrap_tags(
+            soup=soup,
+            allowed_tags=allowed_tags,
+            ids_to_keep=ids_to_keep,
+        )
+        remove_styles(soup)
+        remove_empty_tags(soup, allowed_tags, keep_empty_tags, ids_to_keep)
+        remove_consecutive_br_tags(soup)
         add_classes_to_tags(soup, tags_with_classes)
 
-        # Get HTML string
-        html_output = str(soup)
-
         # Post-processing for <br/> tags to make them <br> for compatibility
-        return html_output.replace("<br/>", "<br>")
+        # Remove new lines because in html they are meaningless
+        html_output = str(soup)
+        new_lines_table = str.maketrans(
+            {
+                "\r": " ",
+                "\n": " ",
+            },
+        )
+        return html_output.replace("<br/>", "<br>").translate(new_lines_table)
     except Exception as e:  # noqa: BLE001
         log.error("Error cleaning HTML: %s", e)
         return input_html
 
 
-def process_tags(
+def delete_tags(soup, tags_to_remove_with_content):
+    for tag_name in tags_to_remove_with_content:
+        for tag in soup.find_all(tag_name):
+            tag.decompose()
+
+
+def delete_comments(soup):
+    for comment in soup.find_all(string=lambda text: isinstance(text, Comment)):
+        comment.extract()
+
+
+def unwrap_tags(
     soup: BeautifulSoup,
     allowed_tags: Iterable[str],
+    ids_to_keep: Iterable[str] = (),
 ) -> None:
-    """Process all tags, keeping only those in the whitelist and removing class/style attributes.
+    """Delete tags keeping content. Except those in the `allowed_tags` or with `ids_to_keep`.
 
     Args:
         soup: BeautifulSoup object to process
         allowed_tags: Set of tags to keep
+        ids_to_keep: IDs of elements to preserve regardless of tag type
     """
     allowed_tags_set = set(allowed_tags)
+    ids_to_keep_set = set(ids_to_keep)
 
     # First collect all non-whitelisted tags to process
     tags_to_process = []
     for tag in soup.find_all():
-        if tag.name not in allowed_tags_set:  # type: ignore
+        if not isinstance(tag, Tag):
+            continue
+
+        if "id" in tag.attrs and tag["id"] in ids_to_keep_set:
+            continue
+
+        if tag.name not in allowed_tags_set:
             tags_to_process.append(tag)
 
-    # Process in reverse order to handle nested tags correctly (inner to outer)
+    # Unwrap in reverse order to handle nested tags correctly (inner to outer)
     for tag in reversed(tags_to_process):
         # Unwrap the tag (remove tag but keep its contents)
         tag.unwrap()  # type: ignore
 
-    # Remove class and style attributes from all remaining tags
+
+def remove_styles(soup):
+    """Remove class and style attributes."""
     for tag in soup.find_all():
         if not isinstance(tag, Tag):
             continue
 
-        # Remove class and style attributes
         if "class" in tag.attrs:
             del tag["class"]
         if "style" in tag.attrs:
@@ -168,19 +193,6 @@ def add_classes_to_tags(soup: BeautifulSoup, tags_with_classes: dict[str, str]) 
             tag["class"] = classes_to_add  # type: ignore
 
 
-def remove_empty_tags(soup: BeautifulSoup, tag_name: str) -> None:
-    """Remove empty tags of the specified type.
-
-    Args:
-        soup: BeautifulSoup object to process
-        tag_name: Tag name to check for emptiness
-    """
-    for tag in soup.find_all(tag_name):
-        # Check if tag contains only whitespace
-        if tag.get_text(strip=True) == "":
-            tag.decompose()
-
-
 def is_only_br_and_whitespace(tag: Tag) -> bool:
     """Check if tag contains only br tags and whitespace.
 
@@ -202,32 +214,8 @@ def is_only_br_and_whitespace(tag: Tag) -> bool:
     return len(non_br_elements) == 0
 
 
-def remove_only_br_divs(soup: BeautifulSoup) -> None:
-    """Remove divs that contain only br tags and whitespace.
-
-    Args:
-        soup: BeautifulSoup object to process
-    """
-    # Process recursively from bottom up to handle nested divs
-    found_changes = True
-    while found_changes:
-        found_changes = False
-        for div in soup.find_all("div"):
-            if isinstance(div, Tag) and is_only_br_and_whitespace(div):  # isinstance fo mypy
-                div.decompose()
-                found_changes = True
-                break
-
-
-def handle_br_tags(soup: BeautifulSoup) -> None:
-    """Handle multiple consecutive <br> tags, keeping only the first one.
-
-    This function looks for consecutive <br> tags in the document and
-    keeps only one of them. It also handles complex cases inside <p> tags.
-
-    Args:
-        soup: BeautifulSoup object to process
-    """
+def remove_consecutive_br_tags(soup: BeautifulSoup) -> None:
+    """From <br> tags sequence, keep only the first one."""
     for tag in soup.find_all():
         if not isinstance(tag, Tag):
             continue
@@ -255,3 +243,72 @@ def handle_br_tags(soup: BeautifulSoup) -> None:
         # Remove the consecutive br tags
         for br_tag in to_remove:
             br_tag.decompose()
+
+
+def has_content(tag: Tag, keep_empty_tags: set[str]) -> bool:
+    """Check if a tag has meaningful content or is a tag that should be kept even when empty.
+
+    Args:
+        tag: Tag to check
+        keep_empty_tags: Set of tag names that should be kept even when empty
+
+    Returns:
+        True if tag has content or should be kept, False otherwise
+    """
+    # If it's a tag that should be kept even if empty, return True
+    if tag.name in keep_empty_tags:
+        return True
+
+    # If it has meaningful text content, return True
+    if tag.get_text(strip=True):
+        return True
+
+    # If it contains any tags that should be kept even if empty, return True
+    return any(tag.find(empty_tag) for empty_tag in keep_empty_tags)
+
+
+def remove_empty_tags(
+    soup: BeautifulSoup,
+    allowed_tags: Iterable[str],
+    keep_empty_tags: Iterable[str],
+    ids_to_keep: Iterable[str],
+) -> None:
+    """Remove empty tags from the whitelist (except those in keep_empty_tags).
+
+    Args:
+        soup: BeautifulSoup object to process
+        allowed_tags: Whitelist of tags that should be kept
+        keep_empty_tags: Set of tag names that should be kept even when empty
+        ids_to_keep: IDs of elements to preserve regardless of content
+    """
+    # Convert to sets for faster lookup
+    allowed_tags_set = set(allowed_tags)
+    keep_empty_tags_set = set(keep_empty_tags)
+    ids_to_keep_set = set(ids_to_keep)
+
+    # Process recursively until no changes are found
+    found_changes = True
+    while found_changes:
+        found_changes = False
+
+        for tag in soup.find_all():
+            if not isinstance(tag, Tag):
+                continue
+
+            if tag.name not in allowed_tags_set:
+                # not whitelisted tags will be removed anyway
+                continue
+
+            if "id" in tag.attrs and tag["id"] in ids_to_keep_set:
+                continue
+
+            if not has_content(tag, keep_empty_tags_set):
+                tag.decompose()
+                found_changes = True
+                break
+
+            # Case 1: Tag contains only br tags and whitespace (former remove_only_br_divs logic)
+            if tag.name == "div" and is_only_br_and_whitespace(tag):
+                tag.decompose()
+                found_changes = True
+                break

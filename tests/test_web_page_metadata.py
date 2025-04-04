@@ -262,7 +262,7 @@ def test_minimal_html_fallbacks(minimal_html):
 
     assert metadata[MetadataField.TITLE] == "Minimal Page Title"
     assert metadata[MetadataField.AUTHOR] == "example.com"  # Domain fallback
-    assert metadata[MetadataField.LANGUAGE] == "en"  # Default fallback
+    assert metadata[MetadataField.LANGUAGE] is None  # no language fields on the page
 
 
 @allure.epic("Book import")

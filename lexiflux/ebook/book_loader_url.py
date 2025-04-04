@@ -13,6 +13,7 @@ from bs4 import BeautifulSoup
 from lexiflux.ebook.book_loader_base import MetadataField
 from lexiflux.ebook.book_loader_html import BookLoaderHtml
 from lexiflux.ebook.clear_html import clear_html
+from lexiflux.ebook.web_page_metadata import extract_web_page_metadata
 
 log = logging.getLogger()
 
@@ -27,6 +28,9 @@ class CleaningLevel(str, enum.Enum):
 
 class BookLoaderURL(BookLoaderHtml):
     """Import ebook from web pages."""
+
+    title: str
+    html_content: str
 
     def __init__(
         self,
@@ -65,20 +69,16 @@ class BookLoaderURL(BookLoaderHtml):
             parts = path.split("/")
             last_part = parts[-1]
             # If the last part has a file extension, use it
-            if "." in last_part:
-                return last_part
-            # Otherwise combine domain and path
-            return f"{parsed_url.netloc}_{last_part}"
-
+            return last_part if "." in last_part else f"{parsed_url.netloc}_{last_part}"
         # If no path, use the domain
         return parsed_url.netloc
 
-    def load_text(self) -> str:
+    def load_text(self):
         """Fetch content from URL and apply cleaning according to the cleaning level."""
         try:
             response = requests.get(self.url, headers=self.headers, timeout=30)
             response.raise_for_status()
-            html_content = response.text
+            self.html_content = response.text
 
             extracted_content = None
             if self.cleaning_level in (CleaningLevel.AGGRESSIVE, CleaningLevel.MODERATE):
@@ -86,7 +86,7 @@ class BookLoaderURL(BookLoaderHtml):
                 target_language = self.languages[0] if self.languages else None
 
                 extracted_content = trafilatura.extract(
-                    html_content,
+                    self.html_content,
                     output_format="html",
                     include_comments=not aggressive,
                     favor_precision=aggressive,
@@ -99,39 +99,29 @@ class BookLoaderURL(BookLoaderHtml):
                 log.info("Extracted content with trafilatura")
             if extracted_content is None:
                 log.info("Using original HTML")
-                extracted_content = self._process_minimal_cleaning(html_content)
+                extracted_content = self.html_content
 
-            return self._add_source_info(extracted_content)
+            self.text = clear_html(
+                extracted_content,
+            )  # we need the text to calculate title in add_source_info
+            self.text = self._add_source_info(self.text)
 
         except Exception as e:
             log.error(f"Error fetching URL {self.url}: {e}")
             raise
 
-    def _process_minimal_cleaning(self, html_content: str) -> str:
-        """Apply minimal cleaning to the HTML content."""
-        # Use BeautifulSoup to parse and clean the HTML
-        soup = BeautifulSoup(html_content, "html.parser")
-
-        # Add title if available
-        title = soup.find("title")
-        title_text = title.get_text() if title else urlparse(self.url).netloc
-
-        # Clean the HTML using the method from book_loader_epub
-        cleaned_html = clear_html(str(soup))
-
-        # Add source info at the beginning
-        return self._add_source_info(cleaned_html, title_text)
-
-    def _add_source_info(self, html_content: str, title: Optional[str] = None) -> str:
+    def _add_source_info(self, html_content: str) -> str:
         """Add source information at the beginning of the content."""
         soup = BeautifulSoup(html_content, "html.parser")
+
+        self.detect_meta()
 
         source_attrs: dict[str, str] = {"class": "source-info"}
         source_div = soup.new_tag("div", attrs=source_attrs)
 
         # Add a heading
         heading = soup.new_tag("h1")
-        heading.string = title or "Web Page Import"
+        heading.string = self.meta[MetadataField.TITLE]
         source_div.append(heading)
 
         # Add source URL info
@@ -156,28 +146,14 @@ class BookLoaderURL(BookLoaderHtml):
         return str(soup)
 
     def detect_meta(self) -> tuple[dict[str, Any], int, int]:
-        """Try to detect book meta from the web page."""
-        meta: dict[str, Any] = {}
-        start, end = 0, len(self.text)
+        """Try to detect book meta from the web page.
 
-        # If a title wasn't found, try to extract it from the URL
-        if meta.get(MetadataField.TITLE) == "Unknown Title":
-            parsed_url = urlparse(self.url)
-            domain = parsed_url.netloc
-            path = parsed_url.path.strip("/")
+        Do not recalculate if self.meta is already set.
+        """
+        if not self.meta:
+            self.book_start, self.book_end = 0, len(self.text)
 
-            if path:
-                # Use the last part of the path, replace dashes and underscores with spaces
-                parts = path.split("/")
-                title = parts[-1].replace("-", " ").replace("_", " ").capitalize()
-                meta[MetadataField.TITLE] = title
-            else:
-                # Use the domain as title
-                meta[MetadataField.TITLE] = domain
-
-        # Set the URL as author if not found
-        if meta.get(MetadataField.AUTHOR) == "Unknown Author":
-            parsed_url = urlparse(self.url)
-            meta[MetadataField.AUTHOR] = parsed_url.netloc
-
-        return meta, start, end
+            self.meta = extract_web_page_metadata(self.html_content, self.url)
+            if self.meta[MetadataField.LANGUAGE] is None:
+                self.meta[MetadataField.LANGUAGE] = self.detect_language()
+        return self.meta, self.book_start, self.book_end

@@ -67,14 +67,14 @@ class BookLoaderEpub(BookLoaderBase):
                 )
         return book
 
-    def load_text(self) -> str:
+    def load_text(self) -> None:
         self.epub = epub.read_epub(self.file_path)
-        return ""
 
     def detect_meta(self) -> tuple[dict[str, Any], int, int]:
         """Read the book and extract meta if it is present.
 
-        Return: meta, start, end
+        Should set self.meta, self.start, self.end
+        And return them in result (mostly for tests compatibility)
         """
 
         self.heading_hrefs = {}
@@ -91,7 +91,7 @@ class BookLoaderEpub(BookLoaderBase):
             log.warning("No TOC found in EPUB. Generating TOC from spine.")
             self.heading_hrefs = self.generate_toc_from_spine()
 
-        meta = {
+        self.meta = {
             MetadataField.TITLE: (
                 self.epub.get_metadata("DC", "title")[0][0]
                 if self.epub.get_metadata("DC", "title")
@@ -99,12 +99,13 @@ class BookLoaderEpub(BookLoaderBase):
             ),
         }
         authors = self.epub.get_metadata("DC", "creator")
-        meta[MetadataField.AUTHOR] = authors[0][0] if authors else "Unknown Author"
+        self.meta[MetadataField.AUTHOR] = authors[0][0] if authors else "Unknown Author"
         language_metadata = self.epub.get_metadata("DC", "language")
-        meta[MetadataField.LANGUAGE] = (
+        self.meta[MetadataField.LANGUAGE] = (
             language_metadata[0][0] if language_metadata else self.detect_language()
         )
-        return meta, 0, -1  # todo: detect start/finish of the book
+        self.book_start, self.book_end = 0, -1  # todo: detect start/finish of the book
+        return self.meta, self.book_start, self.book_end
 
     def pages(self) -> Iterator[str]:  ## noqa: C901,PLR0912  # todo: refactor
         """Split a text into pages of approximately equal length."""

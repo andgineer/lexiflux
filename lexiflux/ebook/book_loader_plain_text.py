@@ -34,24 +34,27 @@ class BookLoaderPlainText(BookLoaderBase):  # pylint: disable=too-many-instance-
     book_start: int
     book_end: int
 
-    def load_text(self) -> str:
+    def load_text(self) -> None:
         if isinstance(self.file_path, str):
-            return self.read_file(self.file_path)
-        return self.file_path.read()
+            self.text = self.read_file(self.file_path)
+        else:
+            self.text = self.file_path.read()
 
     def detect_meta(self) -> tuple[dict[str, Any], int, int]:
         """Try to detect book meta and text.
 
         Extract meta if it is present.
         Trim meta text from the beginning and end of the book text.
-        Return: meta, start, end
+
+        Should set self.meta, self.start, self.end
+        And return them in result (mostly for tests compatibility)
         """
-        meta, start = self.parse_gutenberg_header()
-        end = self.cut_gutenberg_ending()
-        if start > end:
-            start = 0
-            end = len(self.text)
-        return meta, start, end
+        self.meta, self.book_start = self.parse_gutenberg_header()
+        self.book_end = self.cut_gutenberg_ending()
+        if self.book_start > self.book_end:
+            self.book_start = 0
+            self.book_end = len(self.text)
+        return self.meta, self.book_start, self.book_end
 
     def read_file(self, file_path: str) -> str:
         """Read file with detecting correct encoding."""

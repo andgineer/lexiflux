@@ -79,7 +79,8 @@ def test_clean_html_whitelist_nested_unknown_tags():
     # Strip whitespace for comparison
     cleaned = clear_html(input_html).replace(" ", "")
     expected = expected_output.replace(" ", "")
-
+    # Compare without whitespace
+    expected = "".join(expected.split())
     assert cleaned == expected
 
 
@@ -197,7 +198,7 @@ def test_clean_html_removes_consecutive_br_tags():
 @allure.feature("EPUB: Clean HTML")
 def test_clean_html_removes_consecutive_br_tags_with_whitespace():
     input_html = "<div>Line 1<br>  \n  <br>Line 2</div>"
-    expected_output = "<div>Line 1<br>\nLine 2</div>"
+    expected_output = "<div>Line 1<br> Line 2</div>"
     assert clear_html(input_html) == expected_output
 
 
@@ -274,3 +275,11 @@ def test_clean_html_complex_case():
     expected = "".join(expected_output.split())
 
     assert cleaned == expected
+
+
+@allure.epic("Book import")
+@allure.feature("EPUB: Clean HTML")
+def test_clean_html_removes_nested_div_with_only_spaces():
+    input_html = "<div><p>Content <br>\n<div><p>\n</p></div><br/> </p></div>"
+    expected_output = "<div><p>Content <br> </p></div>"
+    assert clear_html(input_html) == expected_output

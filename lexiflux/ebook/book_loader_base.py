@@ -28,7 +28,10 @@ class BookLoaderBase:
     """Base class for importing books from different formats."""
 
     toc: Toc = []
-    meta: dict[str, Any]
+    meta: dict[str, Any] = {}
+    book_start: int
+    book_end: int
+    text: str
 
     def __init__(
         self,
@@ -43,12 +46,16 @@ class BookLoaderBase:
         self.file_path = file_path
         self.original_filename = original_filename
         self.languages = ["en", "sr"] if languages is None else languages
-        self.text = self.load_text()
+        self.load_text()
         self.meta, self.book_start, self.book_end = self.detect_meta()
         self.meta[MetadataField.TITLE], self.meta[MetadataField.AUTHOR] = self.get_title_author()
         self.meta[MetadataField.LANGUAGE] = self.get_language()
 
-    def load_text(self) -> str:
+    def load_text(self) -> None:
+        """Load the book text.
+
+        Should put the text into self.text.
+        """
         raise NotImplementedError()
 
     def detect_meta(self) -> tuple[dict[str, Any], int, int]:
@@ -56,7 +63,9 @@ class BookLoaderBase:
 
         Read the book and extract meta if it is present.
         Trim meta text from the beginning and end of the book text.
-        Return: meta, start, end
+
+        Should set self.meta, self.start, self.end
+        And return them in result (mostly for tests compatibility)
         """
         raise NotImplementedError
 
@@ -156,7 +165,7 @@ class BookLoaderBase:
         raise NotImplementedError
 
     def detect_language(self) -> Optional[str]:
-        """Detect language of the book extracting random fragments of the text.
+        """Detect language of the book extracting random fragments of the `self.text`.
 
         Returns lang code.
         """
