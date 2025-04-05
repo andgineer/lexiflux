@@ -1,0 +1,3 @@
+2025-03-27 09:18:21,735 INFO signals Successfully created language preferences for user testuser (ID: 1)
+2025-03-27 09:18:21,750 WARNING log Bad Request: /api/update-article-order/
+2025-03-27 09:18:21,750 WARNING log Bad Request: /api/update-article-order/

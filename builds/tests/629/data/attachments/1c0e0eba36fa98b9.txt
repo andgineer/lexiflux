@@ -1,0 +1,4 @@
+2025-03-27 09:18:39,472 INFO signals Successfully created language preferences for user testuser (ID: 1)
+2025-03-27 09:18:39,503 INFO reader_views Jump status: book some-book-code, is_first_jump False, is_last_jump False
+2025-03-27 09:18:39,511 INFO reader_views Jump status: book some-book-code, is_first_jump True, is_last_jump False
+2025-03-27 09:18:39,517 INFO reader_views Jump status: book some-book-code, is_first_jump False, is_last_jump True
