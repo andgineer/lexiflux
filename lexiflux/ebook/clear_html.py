@@ -67,6 +67,7 @@ def clear_html(  # noqa: PLR0913
 
     Args:
         input_html: The HTML string to clean
+        soup: BeautifulSoup object to process (optional, if provided, input_html should be None)
         allowed_tags: Whitelist of tags that should be kept, others will be removed keeping content,
             except for tags tags_to_remove_with_content which will be removed along
             with their content.
@@ -91,7 +92,7 @@ def clear_html(  # noqa: PLR0913
         }
 
     try:
-        soup = BeautifulSoup(input_html, "html.parser")
+        soup = BeautifulSoup(input_html, "lxml")
 
         delete_comments(soup)
         delete_tags(soup, tags_to_remove_with_content)

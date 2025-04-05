@@ -3,6 +3,7 @@
 import datetime
 import enum
 import logging
+import time
 from typing import Any, Optional, Union
 from urllib.parse import urlparse
 
@@ -76,15 +77,19 @@ class BookLoaderURL(BookLoaderHtml):
     def load_text(self):
         """Fetch content from URL and apply cleaning according to the cleaning level."""
         try:
+            start_time = time.time()
             response = requests.get(self.url, headers=self.headers, timeout=30)
             response.raise_for_status()
             self.html_content = response.text
+            elapsed_time = time.time() - start_time
+            log.info(f"Loaded from {self.url} in {elapsed_time:.2f} seconds")
 
             extracted_content = None
             if self.cleaning_level in (CleaningLevel.AGGRESSIVE, CleaningLevel.MODERATE):
                 aggressive = self.cleaning_level == CleaningLevel.AGGRESSIVE
                 target_language = self.languages[0] if self.languages else None
 
+                start_time = time.time()
                 extracted_content = trafilatura.extract(
                     self.html_content,
                     output_format="html",
@@ -96,16 +101,23 @@ class BookLoaderURL(BookLoaderHtml):
                     include_images=True,
                     target_language=target_language,
                 )
-                log.info("Extracted content with trafilatura")
+                elapsed_time = time.time() - start_time
+                log.info(f"Extracted content with trafilatura in {elapsed_time:.2f} seconds")
             if extracted_content is None:
                 log.info("Using original HTML")
                 extracted_content = self.html_content
 
-            self.text = clear_html(
+            start_time = time.time()
+            self.text = clear_html(  # we need the self.text to calculate title in add_source_info
                 extracted_content,
-            )  # we need the text to calculate title in add_source_info
-            self.text = self._add_source_info(self.text)
+            )
+            elapsed_time = time.time() - start_time
+            log.info(f"Cleared HTML in {elapsed_time:.2f} seconds")
 
+            start_time = time.time()
+            self.text = self._add_source_info(self.text)
+            elapsed_time = time.time() - start_time
+            log.info(f"Added source info in {elapsed_time:.2f} seconds")
         except Exception as e:
             log.error(f"Error fetching URL {self.url}: {e}")
             raise
