@@ -113,7 +113,7 @@ def clear_html(  # noqa: PLR0913
         remove_consecutive_br_tags(soup)
         add_classes_to_tags(soup, tags_with_classes)
 
-        return str(soup)
+        return str(soup).replace("<br/>", "<br>")
     except Exception as e:  # noqa: BLE001
         log.error("Error cleaning HTML: %s", e)
         return input_html
