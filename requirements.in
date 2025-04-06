@@ -25,12 +25,12 @@ chardet
 transliterate
 trafilatura
 beautifulsoup4
+selectolax
 fasttext
 nltk
 psutil
 pyjwt
 unidecode
 genanki
-# pin spaCy for blis ARM build error workaround
-spacy<3.8.0
+spacy
 googletrans

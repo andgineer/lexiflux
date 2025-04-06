@@ -81,6 +81,13 @@ def clear_html(  # noqa: PLR0913
     """
     if not input_html:
         return ""
+    new_lines_table = str.maketrans(
+        {
+            "\r": " ",
+            "\n": " ",
+        },
+    )
+    input_html = input_html.replace("<br/>", "<br>").translate(new_lines_table)
 
     if tags_with_classes is None:
         tags_with_classes = {
@@ -106,16 +113,7 @@ def clear_html(  # noqa: PLR0913
         remove_consecutive_br_tags(soup)
         add_classes_to_tags(soup, tags_with_classes)
 
-        # Post-processing for <br/> tags to make them <br> for compatibility
-        # Remove new lines because in html they are meaningless
-        html_output = str(soup)
-        new_lines_table = str.maketrans(
-            {
-                "\r": " ",
-                "\n": " ",
-            },
-        )
-        return html_output.replace("<br/>", "<br>").translate(new_lines_table)
+        return str(soup)
     except Exception as e:  # noqa: BLE001
         log.error("Error cleaning HTML: %s", e)
         return input_html
