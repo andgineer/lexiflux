@@ -63,16 +63,17 @@ def clear_html(  # noqa: PLR0913
     ids_to_keep: Iterable[str] = (),
     tags_with_classes: dict[str, str] | None = None,
 ) -> str:
-    """Clean HTML by keeping only whitelisted tags and removing class/style attributes.
+    """Clean HTML by keeping only whitelisted tags and removing class/style attributes
+    and reducing sequences of <br> into single <br>.
 
     Args:
         input_html: The HTML string to clean
-        soup: BeautifulSoup object to process (optional, if provided, input_html should be None)
         allowed_tags: Whitelist of tags that should be kept, others will be removed keeping content,
             except for tags tags_to_remove_with_content which will be removed along
             with their content.
         tags_to_remove_with_content: Tags that should be removed along with their content
-        keep_empty_tags: Tags that should be kept even when they have no content
+        keep_empty_tags: Tags that should be kept even when they have no content. all other tags
+            without content will be removed
         ids_to_keep: List of element IDs that should be preserved regardless of tag type
         tags_with_classes: Dict mapping tags to classes to add
 
@@ -87,7 +88,7 @@ def clear_html(  # noqa: PLR0913
             "\n": " ",
         },
     )
-    input_html = input_html.replace("<br/>", "<br>").translate(new_lines_table)
+    input_html = input_html.translate(new_lines_table)
 
     if tags_with_classes is None:
         tags_with_classes = {

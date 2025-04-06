@@ -25,7 +25,7 @@ chardet
 transliterate
 trafilatura
 beautifulsoup4
-selectolax
+lxml
 fasttext
 nltk
 psutil

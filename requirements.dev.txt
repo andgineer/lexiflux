@@ -872,8 +872,6 @@ rsa==4.9
     # via
     #   -r requirements.txt
     #   google-auth
-selectolax==0.3.28
-    # via -r requirements.txt
 selenium==4.31.0
     # via -r requirements.dev.in
 send2trash==1.8.3
