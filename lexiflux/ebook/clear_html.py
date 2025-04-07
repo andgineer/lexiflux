@@ -1,19 +1,19 @@
 import logging
+import re
 from collections.abc import Iterable
+from typing import Optional
 
-from bs4 import BeautifulSoup, Comment, Tag
+from lxml import etree
 
-log = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 
-def clear_html(  # noqa: PLR0913
+def clear_html(  # noqa: PLR0915,PLR0912,PLR0913,C901
     input_html: str,
     allowed_tags: Iterable[str] = (
         "p",
         "div",
         "span",
-        "br",
-        "hr",
         "h1",
         "h2",
         "h3",
@@ -25,71 +25,53 @@ def clear_html(  # noqa: PLR0913
         "li",
         "a",
         "img",
-        "blockquote",
-        "strong",
-        "em",
-        "b",
-        "i",
-        "small",
-        "sub",
-        "sup",
-        "pre",
-        "code",
+        "br",
+        "hr",
         "table",
         "tr",
         "td",
         "th",
         "thead",
         "tbody",
+        "b",
+        "i",
+        "strong",
+        "em",
+        "code",
+        "pre",
+        "blockquote",
+        "sub",
+        "small",
     ),
-    tags_to_remove_with_content: Iterable[str] = (
-        "head",
-        "style",
-        "script",
-        "svg",
-        "noscript",
-        "form",
-        "input",
-        "option",
-        "select",
-        "textarea",
-    ),
-    keep_empty_tags: Iterable[str] = (
-        "img",
-        "hr",
-        "br",
-        "iframe",
-    ),
+    tags_to_remove_with_content: Iterable[str] = ("script", "style", "head", "iframe", "noscript"),
+    keep_empty_tags: Iterable[str] = ("img", "br", "hr", "input"),
     ids_to_keep: Iterable[str] = (),
-    tags_with_classes: dict[str, str] | None = None,
+    tags_with_classes: Optional[dict[str, str]] = None,
 ) -> str:
-    """Clean HTML by keeping only whitelisted tags and removing class/style attributes
-    and reducing sequences of <br> into single <br>.
+    """
+    Sanitize and normalize HTML content.
 
     Args:
-        input_html: The HTML string to clean
-        allowed_tags: Whitelist of tags that should be kept, others will be removed keeping content,
-            except for tags tags_to_remove_with_content which will be removed along
-            with their content.
-        tags_to_remove_with_content: Tags that should be removed along with their content
-        keep_empty_tags: Tags that should be kept even when they have no content. all other tags
-            without content will be removed
-        ids_to_keep: List of element IDs that should be preserved regardless of tag type
-        tags_with_classes: Dict mapping tags to classes to add
+        input_html: HTML string to clean
+        allowed_tags: Tags that are allowed in the output HTML
+        tags_to_remove_with_content: Tags to be completely removed along with their content
+        keep_empty_tags: Tags that should be kept even if they have no content
+        ids_to_keep: IDs that should be kept even if their tags are not in allowed_tags
+        tags_with_classes: Dictionary mapping tag names to class strings to add
 
     Returns:
-        Cleaned HTML string with only allowed tags and without class/style attributes
+        Cleaned HTML string
     """
     if not input_html:
         return ""
-    new_lines_table = str.maketrans(
-        {
-            "\r": " ",
-            "\n": " ",
-        },
-    )
-    input_html = input_html.translate(new_lines_table)
+    # Wrap the input in a wrapper element to ensure we can handle the root element
+    input_html = f"<wrapper>{input_html}</wrapper>"
 
+    # Convert iterables to sets for faster lookups
+    allowed_tags_set = set(allowed_tags)
+    tags_to_remove_set = set(tags_to_remove_with_content)
+    keep_empty_tags_set = set(keep_empty_tags)
+    ids_to_keep_set = set(ids_to_keep)
     if tags_with_classes is None:
         tags_with_classes = {
             "h1": "display-4 fw-semibold text-primary mb-4",
@@ -99,216 +81,289 @@ def clear_html(  # noqa: PLR0913
             "h5": "h5 fw-normal text-dark mb-2",
         }
 
+    # Normalize whitespace: replace newlines and carriage returns with spaces
+    input_html = input_html.replace("\n", " ").replace("\r", " ")
+
+    # Parse HTML
     try:
-        soup = BeautifulSoup(input_html, "lxml")
-
-        delete_comments(soup)
-        delete_tags(soup, tags_to_remove_with_content)
-        unwrap_tags(
-            soup=soup,
-            allowed_tags=allowed_tags,
-            ids_to_keep=ids_to_keep,
-        )
-        remove_styles(soup)
-        remove_empty_tags(soup, allowed_tags, keep_empty_tags, ids_to_keep)
-        remove_consecutive_br_tags(soup)
-        add_classes_to_tags(soup, tags_with_classes)
-
-        return str(soup).replace("<br/>", "<br>")
-    except Exception as e:  # noqa: BLE001
-        log.error("Error cleaning HTML: %s", e)
+        parser = etree.XMLParser(remove_comments=True, recover=True)
+        root = etree.fromstring(input_html, parser=parser)  # noqa: S320
+    except Exception:
+        logger.exception("Failed to parse HTML, trying to fix malformed HTML")
         return input_html
 
-
-def delete_tags(soup, tags_to_remove_with_content):
-    for tag_name in tags_to_remove_with_content:
-        for tag in soup.find_all(tag_name):
-            tag.decompose()
-
-
-def delete_comments(soup):
-    for comment in soup.find_all(string=lambda text: isinstance(text, Comment)):
-        comment.extract()
-
-
-def unwrap_tags(
-    soup: BeautifulSoup,
-    allowed_tags: Iterable[str],
-    ids_to_keep: Iterable[str] = (),
-) -> None:
-    """Delete tags keeping content. Except those in the `allowed_tags` or with `ids_to_keep`.
-
-    Args:
-        soup: BeautifulSoup object to process
-        allowed_tags: Set of tags to keep
-        ids_to_keep: IDs of elements to preserve regardless of tag type
-    """
-    allowed_tags_set = set(allowed_tags)
-    ids_to_keep_set = set(ids_to_keep)
-
-    # First collect all non-whitelisted tags to process
-    tags_to_process = []
-    for tag in soup.find_all():
-        if not isinstance(tag, Tag):
-            continue
-
-        if "id" in tag.attrs and tag["id"] in ids_to_keep_set:
-            continue
-
-        if tag.name not in allowed_tags_set:
-            tags_to_process.append(tag)
-
-    # Unwrap in reverse order to handle nested tags correctly (inner to outer)
-    for tag in reversed(tags_to_process):
-        # Unwrap the tag (remove tag but keep its contents)
-        tag.unwrap()  # type: ignore
-
-
-def remove_styles(soup):
-    """Remove class and style attributes."""
-    for tag in soup.find_all():
-        if not isinstance(tag, Tag):
-            continue
-
-        if "class" in tag.attrs:
-            del tag["class"]
-        if "style" in tag.attrs:
-            del tag["style"]
-
-
-def add_classes_to_tags(soup: BeautifulSoup, tags_with_classes: dict[str, str]) -> None:
-    """Add specified classes to tags.
-
-    Args:
-        soup: BeautifulSoup object to process
-        tags_with_classes: Dict mapping tags to classes to add
-    """
-    for tag_name, classes_str in tags_with_classes.items():
-        classes_to_add = classes_str.split()
-
-        for tag in soup.find_all(tag_name):
-            if not isinstance(tag, Tag):
+    # First pass: Remove tags with content
+    for tag in tags_to_remove_set:
+        for element in root.xpath(f"//{tag}"):
+            if element is root:
                 continue
+            element.getparent().remove(element)
 
-            tag["class"] = classes_to_add  # type: ignore
-
-
-def is_only_br_and_whitespace(tag: Tag) -> bool:
-    """Check if tag contains only br tags and whitespace.
-
-    Args:
-        tag: BeautifulSoup Tag to check
-
-    Returns:
-        True if tag contains only br tags and whitespace, False otherwise
-    """
-    # Get all non-br elements (excluding whitespace text nodes)
-    non_br_elements = [
-        child
-        for child in tag.contents
-        if (isinstance(child, Tag) and child.name != "br")
-        or (not isinstance(child, Tag) and child.strip())  # type: ignore
-    ]
-
-    # If we have no non-br elements, this tag has only br tags and whitespace
-    return len(non_br_elements) == 0
-
-
-def remove_consecutive_br_tags(soup: BeautifulSoup) -> None:
-    """From <br> tags sequence, keep only the first one."""
-    for tag in soup.find_all():
-        if not isinstance(tag, Tag):
+    # Handle unknown tags
+    elements_to_unwrap = []
+    for element in root.iter():
+        if element is root:
             continue
 
-        # Get all children as a list
-        contents = list(tag.children)
+        tag_name = element.tag
+        element_id = element.get("id", "")
 
-        # Look for <br> tags with only whitespace in between
-        to_remove = []
-        last_was_br = False
-
-        for child in contents:
-            if isinstance(child, Tag) and child.name == "br":
-                if last_was_br:
-                    # This is a consecutive <br>, mark for removal
-                    to_remove.append(child)
-                last_was_br = True
-            elif isinstance(child, str) and child.strip() == "":
-                # This is whitespace, preserve last_was_br state
+        # Handle unknown tags - collect for unwrapping
+        if tag_name not in allowed_tags_set:
+            if element_id and element_id in ids_to_keep_set:
+                # Keep the tag if its ID is in ids_to_keep
                 pass
             else:
-                # This is content, reset the state
-                last_was_br = False
+                # Mark for unwrapping (remove tag but keep content)
+                elements_to_unwrap.append(element)
 
-        # Remove the consecutive br tags
-        for br_tag in to_remove:
-            br_tag.decompose()
+    # Unwrap the collected elements - doing this separately avoids modification during iteration
+    for element in reversed(elements_to_unwrap):
+        parent = element.getparent()
+        if parent is None:
+            continue
 
+        # Get element's position
+        pos = parent.index(element)
 
-def has_content(tag: Tag, keep_empty_tags: set[str]) -> bool:
-    """Check if a tag has meaningful content or is a tag that should be kept even when empty.
+        # Handle text content
+        if element.text:
+            if pos > 0:
+                # Add to tail of previous sibling
+                prev = parent[pos - 1]
+                if prev.tail:
+                    prev.tail += element.text
+                else:
+                    prev.tail = element.text
+            # Add to parent's text
+            elif parent.text:
+                parent.text += element.text
+            else:
+                parent.text = element.text
 
-    Args:
-        tag: Tag to check
-        keep_empty_tags: Set of tag names that should be kept even when empty
+        # Move each child to parent
+        children = list(element)
+        for i, child in enumerate(children):
+            parent.insert(pos + i, child)
 
-    Returns:
-        True if tag has content or should be kept, False otherwise
-    """
-    # If it's a tag that should be kept even if empty, return True
-    if tag.name in keep_empty_tags:
-        return True
+        # Handle tail text
+        if element.tail:
+            if len(children) > 0:
+                # Add to tail of last child
+                if children[-1].tail:
+                    children[-1].tail += element.tail
+                else:
+                    children[-1].tail = element.tail
+            elif pos > 0:
+                # Add to tail of previous sibling
+                prev = parent[pos - 1]
+                if prev.tail:
+                    prev.tail += element.tail
+                else:
+                    prev.tail = element.tail
+            # Add to parent's text
+            elif parent.text:
+                parent.text += element.tail
+            else:
+                parent.text = element.tail
 
-    # If it has meaningful text content, return True
-    if tag.get_text(strip=True):
-        return True
+        # Remove the element now that contents have been preserved
+        parent.remove(element)
 
-    # If it contains any tags that should be kept even if empty, return True
-    return any(tag.find(empty_tag) for empty_tag in keep_empty_tags)
+    # Process remaining elements for class, style, and specified classes
+    for element in root.iter():
+        if element.tag not in ("html", "body"):
+            # Remove class and style attributes if not in tags_with_classes
+            if "class" in element.attrib and element.tag not in tags_with_classes:
+                del element.attrib["class"]
+            if "style" in element.attrib:
+                del element.attrib["style"]
 
+            # Add specified classes to tags
+            if element.tag in tags_with_classes:
+                element.set("class", tags_with_classes[element.tag])
 
-def remove_empty_tags(
-    soup: BeautifulSoup,
-    allowed_tags: Iterable[str],
-    keep_empty_tags: Iterable[str],
-    ids_to_keep: Iterable[str],
-) -> None:
-    """Remove empty tags from the whitelist (except those in keep_empty_tags).
+    # Identify empty elements and collapse consecutive br tags
+    # We need to do this in multiple passes, as removing elements affects the structure
 
-    Args:
-        soup: BeautifulSoup object to process
-        allowed_tags: Whitelist of tags that should be kept
-        keep_empty_tags: Set of tag names that should be kept even when empty
-        ids_to_keep: IDs of elements to preserve regardless of content
-    """
-    # Convert to sets for faster lookup
-    allowed_tags_set = set(allowed_tags)
-    keep_empty_tags_set = set(keep_empty_tags)
-    ids_to_keep_set = set(ids_to_keep)
+    def has_meaningful_content(element):
+        """Check if element has non-whitespace content or non-empty children."""
+        # Check direct text
+        if element.text and element.text.strip():
+            return True
 
-    # Process recursively until no changes are found
-    found_changes = True
-    while found_changes:
-        found_changes = False
-
-        for tag in soup.find_all():
-            if not isinstance(tag, Tag):
+        # Check children
+        for child in element:
+            # If child is a preserved empty tag, don't count it as meaningful content
+            if child.tag in keep_empty_tags_set:
                 continue
 
-            if tag.name not in allowed_tags_set:
-                # not whitelisted tags will be removed anyway
+            # If child itself has meaningful content, parent has meaningful content
+            if has_meaningful_content(child):
+                return True
+
+        # Check tail text
+        return bool(element.tail and element.tail.strip())
+
+    # Find all br tags in the document for collapsing consecutive brs
+    br_xpath = "//br"
+    for i in range(3):  # Multiple passes to handle complex nesting
+        # First clean empty elements
+        elements_to_remove = []
+        for element in root.iter():
+            # Skip tags that should be kept even if empty
+            if element.tag in keep_empty_tags_set:
                 continue
 
-            if "id" in tag.attrs and tag["id"] in ids_to_keep_set:
+            # Skip elements with IDs to keep
+            element_id = element.get("id", "")
+            if element_id in ids_to_keep_set:
                 continue
 
-            if not has_content(tag, keep_empty_tags_set):
-                tag.decompose()
-                found_changes = True
-                break
+            # Remove empty elements
+            if not has_meaningful_content(element) and element.getparent() is not None:  # noqa: SIM102
+                # Don't consider <br> tags alone as meaningful content, but don't remove them either
+                if element.tag != "br":
+                    tail = element.tail
+                    elements_to_remove.append((element, tail))
 
-            # Case 1: Tag contains only br tags and whitespace (former remove_only_br_divs logic)
-            if tag.name == "div" and is_only_br_and_whitespace(tag):
-                tag.decompose()
-                found_changes = True
-                break
+        # Remove collected empty elements
+        for element, tail in elements_to_remove:
+            parent = element.getparent()
+            if parent is not None:
+                if tail:
+                    # Preserve tail content
+                    previous = element.getprevious()
+                    if previous is not None:
+                        if previous.tail:
+                            previous.tail += tail
+                        else:
+                            previous.tail = tail
+                    elif parent.text:
+                        parent.text += tail
+                    else:
+                        parent.text = tail
+
+                parent.remove(element)
+
+        # Collapse consecutive <br> elements
+        br_elements = root.xpath(br_xpath)
+        br_to_remove = set()
+
+        i = 0  # noqa PLW2901
+        while i < len(br_elements):
+            # Skip brs already marked for removal
+            if br_elements[i] in br_to_remove:
+                i += 1  # noqa PLW2901
+                continue
+
+            # Start with current br
+            current_br = br_elements[i]
+            next_br_idx = i + 1
+            consecutive_count = 0
+
+            # Look for consecutive brs
+            while next_br_idx < len(br_elements):
+                next_br = br_elements[next_br_idx]
+
+                # If already marked for removal, skip
+                if next_br in br_to_remove:
+                    next_br_idx += 1
+                    continue
+
+                # Check if br tags are consecutive
+                # (no non-whitespace content between them)
+                is_consecutive = False
+
+                # Check if they're direct siblings with only whitespace between
+                if current_br.tail is None or current_br.tail.strip() == "":
+                    # Check if next element is the next br
+                    next_elem = current_br.getnext()
+                    while next_elem is not None:
+                        if next_elem == next_br:
+                            is_consecutive = True
+                            break
+                        # If there's anything other than whitespace between, not consecutive
+                        if next_elem.text and next_elem.text.strip():
+                            break
+                        if next_elem.tail and next_elem.tail.strip():
+                            break
+                        next_elem = next_elem.getnext()
+
+                if is_consecutive:
+                    # FIXED: Don't remove the next br if it's the last in consecutive sequence
+                    consecutive_count += 1
+                    if consecutive_count == 1:  # This is the first consecutive br after current
+                        # In this case, we want to remove it but preserve any tail
+                        tail = next_br.tail
+                        br_to_remove.add(next_br)
+                        # Preserve tail text for content after the removed br
+                        if tail and tail.strip():
+                            # Add tail to current br's tail
+                            if current_br.tail:
+                                current_br.tail += tail
+                            else:
+                                current_br.tail = tail
+                    else:
+                        br_to_remove.add(next_br)
+                    next_br_idx += 1
+                else:
+                    break
+
+            # Move to next br not marked for removal
+            i = next_br_idx  # noqa PLW2901
+
+        # Remove the brs marked for removal
+        for br in br_to_remove:
+            parent = br.getparent()
+            if parent is not None:
+                # Preserve tail content
+                if br.tail:
+                    prev = br.getprevious()
+                    if prev is not None:
+                        if prev.tail:
+                            prev.tail += br.tail
+                        else:
+                            prev.tail = br.tail
+                    elif parent.text:
+                        parent.text += br.tail
+                    else:
+                        parent.text = br.tail
+
+                parent.remove(br)
+
+        # If no more elements were removed, break the loop
+        if not elements_to_remove and not br_to_remove:
+            break
+
+    # Get the content within our wrapper without the wrapper tags themselves
+    result = ""
+    # Add the text directly inside the wrapper
+    if root.text:
+        result += root.text
+
+    # Add HTML for each child element
+    for child in root:
+        result += etree.tostring(child, encoding="unicode", method="html")
+
+    return re.sub(r"\s+", " ", result).strip()
+
+
+# Example usage
+if __name__ == "__main__":
+    input_html = "<div>Line 1<br>  \n  <br>Line 2</div>"
+    expected_output = "some headerin header"
+    result = clear_html(input_html)
+    print(result)
+
+    # Test case 1: Consecutive <br> tags
+    test1 = "<html><head><title>Title</title></head><body><p>Hello<br><br>World</p></body></html>"
+    print(clear_html(test1))
+
+    # Test case 2: Remove style and add class
+    test2 = '<div><style>h1 { color: red; }</style><h1 class="red">Heading</h1></div>'
+    print(clear_html(test2, tags_with_classes={"h1": "title-class"}))
+
+    # Test case 3: Custom tags
+    test3 = "<section><p>text</p><custom>more text</custom></section>"
+    print(clear_html(test3))
