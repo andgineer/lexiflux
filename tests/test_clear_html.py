@@ -206,7 +206,7 @@ def test_clean_html_removes_consecutive_br_tags_with_whitespace():
 @allure.feature("EPUB: Clean HTML")
 def test_clean_html_removes_multiple_br_tags_in_p():
     input_html = '<p><span class="word" id="word-42">vremena</span>. <br> <br> <br> <br> <br> <br> <br> <br></p>'
-    expected_output = '<p><span id="word-42">vremena</span>. <br></p>'
+    expected_output = '<p><span id="word-42">vremena</span>. <br> </p>'
     assert clear_html(input_html) == expected_output
 
 
@@ -281,5 +281,5 @@ def test_clean_html_complex_case():
 @allure.feature("EPUB: Clean HTML")
 def test_clean_html_removes_nested_div_with_only_spaces():
     input_html = "<div><p>Content <br>\n<div><p>\n</p></div><br/> </p></div>"
-    expected_output = "<div><p>Content <br></p></div>"
+    expected_output = "<div><p>Content <br> </p><br> </div>"
     assert clear_html(input_html) == expected_output

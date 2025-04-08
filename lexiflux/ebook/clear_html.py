@@ -4,6 +4,7 @@ from collections.abc import Iterable
 from typing import Optional
 
 from lxml import etree
+from lxml.html import tostring
 
 TAGS_WITH_CLASSES = {
     "h1": "display-4 fw-semibold text-primary mb-4",
@@ -78,6 +79,11 @@ def clear_html(  # noqa: PLR0915,PLR0912,PLR0913,C901
     """
     if not input_html:
         return ""
+
+    # Normalize new lines to spaces for consistent handling
+    input_html = re.sub(r"[\n\r]+", " ", input_html)
+
+    # Wrap in a root element for proper parsing
     input_html = f"<root>{input_html}</root>"
 
     # Convert to sets for faster lookups
@@ -88,13 +94,11 @@ def clear_html(  # noqa: PLR0915,PLR0912,PLR0913,C901
     if tags_with_classes is None:
         tags_with_classes = TAGS_WITH_CLASSES
 
-    input_html = input_html.replace("\n", " ").replace("\r", " ")
-
     try:
-        parser = etree.XMLParser(remove_comments=True, recover=True)
+        parser = etree.HTMLParser(remove_comments=True)
         root = etree.fromstring(input_html, parser=parser)  # noqa: S320
     except Exception:
-        logger.exception("Failed to parse HTML, trying to fix malformed HTML")
+        logger.exception("Failed to parse HTML, returning original")
         return input_html
 
     remove_tags_with_content(root, tags_to_remove_set)
@@ -111,139 +115,201 @@ def etree_to_str(root):
     if root.text:
         result += root.text
     for child in root:
-        result += etree.tostring(child, encoding="unicode", method="html")
+        result += tostring(child, encoding="unicode", method="html")
     return result
 
 
 def collapse_consecutive_br(root):  # noqa: C901,PLR0912,PLR0915
-    br_xpath = "//br"
-    for i in range(3):  # Multiple passes to handle complex nesting
-        # Collapse consecutive <br> elements
-        br_elements = root.xpath(br_xpath)
-        br_to_remove = set()
+    """From <br> tags sequence, keep only the first one.
 
-        i = 0  # noqa PLW2901
-        while i < len(br_elements):
-            # Skip brs already marked for removal
-            if br_elements[i] in br_to_remove:
-                i += 1  # noqa PLW2901
+    This function searches for consecutive <br> tags and removes all but the first one
+    in each sequence. Whitespace between <br> tags is ignored for determining consecutive tags.
+
+    Args:
+        root: The root element of the lxml tree
+    """
+    # Process each element in the tree
+    for element in root.iter():
+        # Skip the root element itself
+        if element is root:
+            continue
+
+        # Get all children as a list
+        children = list(element)
+        if not children:
+            continue
+
+        # We'll track if we've seen a <br> and which one it was
+        last_br = None
+        br_tags_to_remove = []
+
+        # Check each child
+        for child in children:
+            if child.tag == "br":
+                if last_br is not None:
+                    # This is a consecutive <br>, mark it for removal
+                    br_tags_to_remove.append(child)
+                else:
+                    # This is the first <br> in a potential sequence
+                    last_br = child
+            # This is not a <br> tag
+            # If the child has meaningful text content, reset last_br
+            elif (child.text and child.text.strip()) or has_meaningful_content(
+                child,
+                {"img", "br", "hr", "input"},
+            ):
+                last_br = None
+
+        # Remove consecutive <br> tags and preserve their tail text
+        for br_tag in br_tags_to_remove:
+            if br_tag.tail:
+                # There's text after this <br> that needs to be preserved
+                # Add it to the tail of the first <br> or another previous sibling
+                if last_br is not None:
+                    if last_br.tail:
+                        last_br.tail += br_tag.tail
+                    else:
+                        last_br.tail = br_tag.tail
+                # If no first <br> (shouldn't happen), add to parent's text
+                elif element.text:
+                    element.text += br_tag.tail
+                else:
+                    element.text = br_tag.tail
+
+            # Now remove the br tag
+            parent = br_tag.getparent()
+            if parent is not None:
+                parent.remove(br_tag)
+
+
+def is_empty_div_with_only_br(element, keep_empty_tags_set):
+    """Check if an element is a div that contains only <br> tags and whitespace.
+
+    Args:
+        element: The element to check
+        keep_empty_tags_set: Set of tags that should be kept even when empty
+
+    Returns:
+        True if the element is a div with only <br> tags and whitespace, False otherwise
+    """
+    if element.tag != "div":
+        return False
+
+    # Check if element has text content before any children
+    if element.text and element.text.strip():
+        return False
+
+    # Check all children
+    for child in element:  # noqa: SIM102
+        # If child is not a <br>, and it's not an empty element that should be kept anyway
+        if child.tag != "br" and child.tag not in keep_empty_tags_set:  # noqa: SIM102
+            # Check if the child has meaningful content
+            if has_meaningful_content(child, keep_empty_tags_set):
+                return False
+
+        # Check tail text of child - THIS IS THE FIX
+        # If there's any non-whitespace text after a <br> tag, don't consider it empty
+        if child.tail and child.tail.strip():
+            return False
+
+    # If we got here, the div only has <br> tags and/or whitespace
+    return True
+
+
+def remove_empty_elements(ids_to_keep_set, keep_empty_tags_set, root):  # noqa: PLR0912,C901,PLR0915
+    """Remove empty elements and divs that contain only <br> tags and whitespace.
+
+    Args:
+        ids_to_keep_set: Set of element IDs that should be preserved
+        keep_empty_tags_set: Set of tags that should be kept even when empty
+        root: The root element of the lxml tree
+
+    Returns:
+        List of removed elements
+    """
+    # We'll iterate until no more elements are removed
+    elements_removed = True
+    elements_to_remove = []
+
+    while elements_removed:
+        elements_removed = False
+        elements_to_remove = []
+
+        for element in root.iter():
+            if element is root:
                 continue
 
-            # Start with current br
-            current_br = br_elements[i]
-            next_br_idx = i + 1
-            consecutive_count = 0
+            element_id = element.get("id", "")
+            if element_id in ids_to_keep_set:
+                continue
 
-            # Look for consecutive brs
-            while next_br_idx < len(br_elements):
-                next_br = br_elements[next_br_idx]
+            # Skip elements that should be kept even when empty
+            if element.tag in keep_empty_tags_set:
+                continue
 
-                # If already marked for removal, skip
-                if next_br in br_to_remove:
-                    next_br_idx += 1
+            # Check if it's a div with only <br> tags
+            if is_empty_div_with_only_br(element, keep_empty_tags_set):
+                # Get the parent and prepare to remove this element
+                parent = element.getparent()
+                if parent is not None:
+                    # Preserve any tail text
+                    tail = element.tail
+                    elements_to_remove.append((element, tail))
+                    elements_removed = True
                     continue
 
-                # Check if br tags are consecutive
-                # (no non-whitespace content between them)
-                is_consecutive = False
+            # Check if element is completely empty
+            if (  # noqa: SIM102
+                not has_meaningful_content(element, keep_empty_tags_set)
+                and element.getparent() is not None
+            ):
+                # Don't consider <br> tags alone as meaningful content
+                if element.tag != "br":
+                    tail = element.tail
+                    elements_to_remove.append((element, tail))
+                    elements_removed = True
 
-                # Check if they're direct siblings with only whitespace between
-                if current_br.tail is None or current_br.tail.strip() == "":
-                    # Check if next element is the next br
-                    next_elem = current_br.getnext()
-                    while next_elem is not None:
-                        if next_elem == next_br:
-                            is_consecutive = True
-                            break
-                        # If there's anything other than whitespace between, not consecutive
-                        if next_elem.text and next_elem.text.strip():
-                            break
-                        if next_elem.tail and next_elem.tail.strip():
-                            break
-                        next_elem = next_elem.getnext()
-
-                if is_consecutive:
-                    # FIXED: Don't remove the next br if it's the last in consecutive sequence
-                    consecutive_count += 1
-                    if consecutive_count == 1:  # This is the first consecutive br after current
-                        # In this case, we want to remove it but preserve any tail
-                        tail = next_br.tail
-                        br_to_remove.add(next_br)
-                        # Preserve tail text for content after the removed br
-                        if tail and tail.strip():
-                            # Add tail to current br's tail
-                            if current_br.tail:
-                                current_br.tail += tail
-                            else:
-                                current_br.tail = tail
-                    else:
-                        br_to_remove.add(next_br)
-                    next_br_idx += 1
-                else:
-                    break
-
-            # Move to next br not marked for removal
-            i = next_br_idx  # noqa PLW2901
-
-        # Remove the brs marked for removal
-        for br in br_to_remove:
-            parent = br.getparent()
+        # Remove elements identified in this iteration
+        for element, tail in elements_to_remove:
+            parent = element.getparent()
             if parent is not None:
-                # Preserve tail content
-                if br.tail:
-                    prev = br.getprevious()
-                    if prev is not None:
-                        if prev.tail:
-                            prev.tail += br.tail
+                # Preserve tail text by adding it to previous sibling or parent
+                if tail:
+                    previous = element.getprevious()
+                    if previous is not None:
+                        if previous.tail:
+                            previous.tail += tail
                         else:
-                            prev.tail = br.tail
+                            previous.tail = tail
                     elif parent.text:
-                        parent.text += br.tail
+                        parent.text += tail
                     else:
-                        parent.text = br.tail
+                        parent.text = tail
 
-                parent.remove(br)
+                # We need to preserve the content of any children before removing
+                # This is a major fix - we need to preserve all text from children
+                for child in element:
+                    # If the child has tail text, we need to preserve it
+                    if child.tail and child.tail.strip():
+                        # Add to parent's text or previous sibling's tail
+                        previous = element.getprevious()
+                        if previous is not None:
+                            if previous.tail:
+                                previous.tail += child.tail
+                            else:
+                                previous.tail = child.tail
+                        elif parent.text:
+                            parent.text += child.tail
+                        else:
+                            parent.text = child.tail
 
-        # If no more elements were removed, break the loop
-        if not br_to_remove:
-            break
+                # Remove the element
+                parent.remove(element)
 
-
-def remove_empty_elements(ids_to_keep_set, keep_empty_tags_set, root):  # noqa: PLR0912,C901
-    elements_to_remove = []
-    for element in root.iter():
-        if element.tag in keep_empty_tags_set:
+        # If we removed elements, we need to check again
+        if elements_removed:
             continue
 
-        element_id = element.get("id", "")
-        if element_id in ids_to_keep_set:
-            continue
-
-        if (  # noqa: SIM102
-            not has_meaningful_content(element, keep_empty_tags_set)
-            and element.getparent() is not None
-        ):  # noqa: SIM102
-            # Don't consider <br> tags alone as meaningful content, but don't remove them either
-            if element.tag != "br":
-                tail = element.tail
-                elements_to_remove.append((element, tail))
-
-    for element, tail in elements_to_remove:
-        parent = element.getparent()
-        if parent is not None:
-            if tail:
-                previous = element.getprevious()
-                if previous is not None:
-                    if previous.tail:
-                        previous.tail += tail
-                    else:
-                        previous.tail = tail
-                elif parent.text:
-                    parent.text += tail
-                else:
-                    parent.text = tail
-
-            parent.remove(element)
     return elements_to_remove
 
 
@@ -265,14 +331,13 @@ def has_meaningful_content(element, keep_empty_tags_set):
 def process_class_and_style(root, tags_with_classes):
     """Remove class and style attributes from elements not in tags_with_classes."""
     for element in root.iter():
-        if element.tag not in ("html", "body"):
-            if "class" in element.attrib and element.tag not in tags_with_classes:
-                del element.attrib["class"]
-            if "style" in element.attrib:
-                del element.attrib["style"]
+        if "class" in element.attrib and element.tag not in tags_with_classes:
+            del element.attrib["class"]
+        if "style" in element.attrib:
+            del element.attrib["style"]
 
-            if element.tag in tags_with_classes:
-                element.set("class", tags_with_classes[element.tag])
+        if element.tag in tags_with_classes:
+            element.set("class", tags_with_classes[element.tag])
 
 
 def unwrap_unknow_tags(allowed_tags_set, ids_to_keep_set, root):  # noqa: C901,PLR0912
@@ -341,10 +406,27 @@ def unwrap_unknow_tags(allowed_tags_set, ids_to_keep_set, root):  # noqa: C901,P
 
 
 def remove_tags_with_content(root, tags_to_remove_set):
+    """Remove specified tags along with their content."""
     for tag in tags_to_remove_set:
         for element in root.xpath(f"//{tag}"):
             if element is not root:
-                element.getparent().remove(element)
+                parent = element.getparent()
+                if parent is not None:
+                    # Preserve tail text if present
+                    if element.tail and element.tail.strip():
+                        prev = element.getprevious()
+                        if prev is not None:
+                            if prev.tail:
+                                prev.tail += element.tail
+                            else:
+                                prev.tail = element.tail
+                        elif parent.text:
+                            parent.text += element.tail
+                        else:
+                            parent.text = element.tail
+
+                    # Remove the element
+                    parent.remove(element)
 
 
 # Example usage
