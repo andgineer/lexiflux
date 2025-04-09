@@ -19,6 +19,7 @@ class MetadataExtractor:
             url: Original URL of the content
         """
         self.soup = BeautifulSoup(html_content, "html.parser")
+        # todo: add metadata from trafilature.extract_metadata()
         self.url = url
         self.metadata: dict[str, Any] = {}
 

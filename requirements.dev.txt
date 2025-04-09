@@ -199,7 +199,7 @@ django-allauth==65.7.0
     # via -r requirements.txt
 django-debug-toolbar==5.1.0
     # via -r requirements.dev.in
-django-extensions==3.2.3
+django-extensions==4.0
     # via -r requirements.txt
 django-widget-tweaks==1.5.0
     # via -r requirements.txt
@@ -313,7 +313,7 @@ httpx-sse==0.4.0
     #   -r requirements.txt
     #   langchain-community
     #   langchain-mistralai
-huggingface-hub==0.30.1
+huggingface-hub==0.30.2
     # via
     #   -r requirements.txt
     #   tokenizers
@@ -456,7 +456,7 @@ langcodes==3.5.0
     # via
     #   -r requirements.txt
     #   spacy
-langsmith==0.3.24
+langsmith==0.3.26
     # via
     #   -r requirements.txt
     #   langchain
@@ -603,7 +603,7 @@ numpy==1.26.4
     #   thinc
 ollama==0.4.7
     # via -r requirements.txt
-openai==1.70.0
+openai==1.71.0
     # via
     #   -r requirements.txt
     #   langchain-openai

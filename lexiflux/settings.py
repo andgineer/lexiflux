@@ -4,6 +4,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
+import logging
 from pathlib import Path
 
 # SECURITY WARNING: don't run with debug turned on in production!
@@ -153,6 +154,9 @@ STATIC_URL = "static/"
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+trafilatura_logger = logging.getLogger("trafilatura")
+trafilatura_logger.setLevel(logging.DEBUG)
 
 LOGGING = {
     "version": 1,

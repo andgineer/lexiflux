@@ -4,6 +4,7 @@ import datetime
 import enum
 import logging
 import time
+from pprint import pformat
 from typing import Any, Optional, Union
 from urllib.parse import urlparse
 
@@ -87,7 +88,6 @@ class BookLoaderURL(BookLoaderHtml):
             extracted_content = None
             if self.cleaning_level in (CleaningLevel.AGGRESSIVE, CleaningLevel.MODERATE):
                 aggressive = self.cleaning_level == CleaningLevel.AGGRESSIVE
-                target_language = self.languages[0] if self.languages else None
 
                 start_time = time.time()
                 extracted_content = trafilatura.extract(
@@ -99,11 +99,13 @@ class BookLoaderURL(BookLoaderHtml):
                     deduplicate=aggressive,
                     include_links=True,
                     include_images=True,
-                    target_language=target_language,
                 )
                 elapsed_time = time.time() - start_time
                 log.info(f"Extracted content with trafilatura in {elapsed_time:.2f} seconds")
             if extracted_content is None:
+                metadata = trafilatura.core.extract_metadata(self.html_content)
+                log.info("Metadata extraction result: %s", pformat(metadata.as_dict()))
+
                 log.info("Using original HTML")
                 extracted_content = self.html_content
 
