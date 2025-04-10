@@ -4,7 +4,7 @@ from collections.abc import Iterable
 from typing import Optional
 
 from lxml import etree
-from lxml.html import tostring
+from lxml.html import fragments_fromstring, tostring
 
 TAGS_WITH_CLASSES = {
     "h1": "display-4 fw-semibold text-primary mb-4",
@@ -83,8 +83,11 @@ def clear_html(  # noqa: PLR0915,PLR0912,PLR0913,C901
     # Normalize new lines to spaces for consistent handling
     input_html = re.sub(r"[\n\r]+", " ", input_html)
 
-    # Wrap in a root element for proper parsing
-    input_html = f"<root>{input_html}</root>"
+    try:
+        root = parse_partial_html(input_html)
+    except Exception:
+        logger.exception("Failed to parse HTML, returning original")
+        return input_html
 
     # Convert to sets for faster lookups
     allowed_tags_set = set(allowed_tags)
@@ -94,13 +97,6 @@ def clear_html(  # noqa: PLR0915,PLR0912,PLR0913,C901
     if tags_with_classes is None:
         tags_with_classes = TAGS_WITH_CLASSES
 
-    try:
-        parser = etree.HTMLParser(remove_comments=True)
-        root = etree.fromstring(input_html, parser=parser)  # noqa: S320
-    except Exception:
-        logger.exception("Failed to parse HTML, returning original")
-        return input_html
-
     remove_tags_with_content(root, tags_to_remove_set)
     unwrap_unknow_tags(allowed_tags_set, ids_to_keep_set, root)
     process_class_and_style(root, tags_with_classes)
@@ -108,6 +104,26 @@ def clear_html(  # noqa: PLR0915,PLR0912,PLR0913,C901
     collapse_consecutive_br(root)
 
     return re.sub(r"\s+", " ", etree_to_str(root)).strip()
+
+
+def parse_partial_html(input_html):
+    """Parse string with HTML fragment into an lxml tree.
+
+    Supports partial HTML content.
+    Removes comments.
+    """
+    parser = etree.HTMLParser(remove_comments=True)
+    fragments = fragments_fromstring(input_html, parser=parser)
+    root = etree.Element("root")
+    for fragment in fragments:
+        if isinstance(fragment, str):
+            if root.text is None:
+                root.text = fragment
+            else:
+                root.text += fragment
+        else:
+            root.append(fragment)
+    return root
 
 
 def etree_to_str(root):
