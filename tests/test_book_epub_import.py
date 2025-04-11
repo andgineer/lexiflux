@@ -79,7 +79,7 @@ def test_import_epub_e2e():
     assert book.author.name == "Theodore Dreiser"
     assert book.language.name == "English"
     assert book.public is True
-    assert book.pages.count() == 735
+    assert book.pages.count() == 734
 
 
 @allure.epic("Book import")

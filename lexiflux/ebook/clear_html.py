@@ -112,6 +112,14 @@ def parse_partial_html(input_html):
     Supports partial HTML content.
     Removes comments.
     """
+    # Simple heuristic to detect unclosed comments
+    open_count = input_html.count("<!--")
+    close_count = input_html.count("-->")
+
+    # If counts don't match, escape all opening comment tags
+    if open_count != close_count:
+        input_html = input_html.replace("<!--", "&lt;!--")
+
     parser = etree.HTMLParser(remove_comments=True)
     fragments = fragments_fromstring(input_html, parser=parser)
     root = etree.Element("root")
@@ -162,7 +170,7 @@ def collapse_consecutive_br(root):  # noqa: C901,PLR0912,PLR0915
         # Check each child
         for child in children:
             if child.tag == "br":
-                if last_br is not None:
+                if last_br is not None and (not last_br.tail or not last_br.tail.strip()):
                     # This is a consecutive <br>, mark it for removal
                     br_tags_to_remove.append(child)
                 else:
@@ -331,6 +339,11 @@ def remove_empty_elements(ids_to_keep_set, keep_empty_tags_set, root):  # noqa: 
 
 def has_meaningful_content(element, keep_empty_tags_set):
     """Check if element has non-whitespace content or non-empty children."""
+    # First, directly check if this element should be kept regardless
+    if element.tag in keep_empty_tags_set:
+        return True
+
+    # Then check for text content
     if element.text and element.text.strip():
         return True
 
