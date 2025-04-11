@@ -1,0 +1,3 @@
+2025-04-01 13:43:51,096 INFO signals Successfully created language preferences for user testuser (ID: 1)
+2025-04-01 13:43:51,102 WARNING log Bad Request: /location
+2025-04-01 13:43:51,102 WARNING log Bad Request: /location

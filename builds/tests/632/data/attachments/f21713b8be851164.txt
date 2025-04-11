@@ -1,0 +1,2 @@
+2025-03-29 09:15:11,993 INFO signals Successfully created language preferences for user testuser (ID: 1)
+2025-03-29 09:15:12,280 INFO signals Successfully created language preferences for user another_user (ID: 2)
