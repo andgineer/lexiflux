@@ -1,6 +1,0 @@
-2025-03-25 06:03:58,772 INFO signals Successfully created language preferences for user testuser (ID: 1)
-2025-03-25 06:03:58,780 ERROR library_views Error importing book
-Traceback (most recent call last):
-  File "/home/runner/work/lexiflux/lexiflux/lexiflux/views/library_views.py", line 180, in import_book
-    raise ValueError("No file provided")
-ValueError: No file provided
