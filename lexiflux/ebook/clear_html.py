@@ -101,7 +101,7 @@ def clear_html(  # noqa: PLR0915,PLR0912,PLR0913,C901
     unwrap_unknow_tags(allowed_tags_set, ids_to_keep_set, root)
     process_class_and_style(root, tags_with_classes)
     remove_empty_elements(ids_to_keep_set, keep_empty_tags_set, root)
-    collapse_consecutive_br(root)
+    collapse_consecutive_br(root, keep_empty_tags_set)
 
     return re.sub(r"\s+", " ", etree_to_str(root)).strip()
 
@@ -143,7 +143,7 @@ def etree_to_str(root):
     return result
 
 
-def collapse_consecutive_br(root):  # noqa: C901,PLR0912,PLR0915
+def collapse_consecutive_br(root, keep_empty_tags_set):  # noqa: C901,PLR0912,PLR0915
     """From <br> tags sequence, keep only the first one.
 
     This function searches for consecutive <br> tags and removes all but the first one
@@ -180,7 +180,7 @@ def collapse_consecutive_br(root):  # noqa: C901,PLR0912,PLR0915
             # If the child has meaningful text content, reset last_br
             elif (child.text and child.text.strip()) or has_meaningful_content(
                 child,
-                {"img", "br", "hr", "input"},
+                keep_empty_tags_set,
             ):
                 last_br = None
 
@@ -204,40 +204,6 @@ def collapse_consecutive_br(root):  # noqa: C901,PLR0912,PLR0915
             parent = br_tag.getparent()
             if parent is not None:
                 parent.remove(br_tag)
-
-
-def is_empty_div_with_only_br(element, keep_empty_tags_set):
-    """Check if an element is a div that contains only <br> tags and whitespace.
-
-    Args:
-        element: The element to check
-        keep_empty_tags_set: Set of tags that should be kept even when empty
-
-    Returns:
-        True if the element is a div with only <br> tags and whitespace, False otherwise
-    """
-    if element.tag != "div":
-        return False
-
-    # Check if element has text content before any children
-    if element.text and element.text.strip():
-        return False
-
-    # Check all children
-    for child in element:  # noqa: SIM102
-        # If child is not a <br>, and it's not an empty element that should be kept anyway
-        if child.tag != "br" and child.tag not in keep_empty_tags_set:  # noqa: SIM102
-            # Check if the child has meaningful content
-            if has_meaningful_content(child, keep_empty_tags_set):
-                return False
-
-        # Check tail text of child - THIS IS THE FIX
-        # If there's any non-whitespace text after a <br> tag, don't consider it empty
-        if child.tail and child.tail.strip():
-            return False
-
-    # If we got here, the div only has <br> tags and/or whitespace
-    return True
 
 
 def remove_empty_elements(ids_to_keep_set, keep_empty_tags_set, root):  # noqa: PLR0912,C901,PLR0915
@@ -271,8 +237,7 @@ def remove_empty_elements(ids_to_keep_set, keep_empty_tags_set, root):  # noqa: 
             if element.tag in keep_empty_tags_set:
                 continue
 
-            # Check if it's a div with only <br> tags
-            if is_empty_div_with_only_br(element, keep_empty_tags_set):
+            if not has_meaningful_content(element, keep_empty_tags_set - {"br"}):
                 # Get the parent and prepare to remove this element
                 parent = element.getparent()
                 if parent is not None:
@@ -338,23 +303,17 @@ def remove_empty_elements(ids_to_keep_set, keep_empty_tags_set, root):  # noqa: 
 
 
 def has_meaningful_content(element, keep_empty_tags_set):
-    """Check if element has non-whitespace content or non-empty children."""
-    # First, directly check if this element should be kept regardless
+    """Check if element/children has non-whitespace content or in the `keep_empty_tags_set`."""
     if element.tag in keep_empty_tags_set:
         return True
 
-    # Then check for text content
     if element.text and element.text.strip():
         return True
 
-    for child in element:
-        if child.tag in keep_empty_tags_set:
-            return True
+    if element.tail and element.tail.strip():
+        return True
 
-        if has_meaningful_content(child, keep_empty_tags_set):
-            return True
-
-    return bool(element.tail and element.tail.strip())
+    return any(has_meaningful_content(child, keep_empty_tags_set) for child in element)
 
 
 def process_class_and_style(root, tags_with_classes):
@@ -460,10 +419,9 @@ def remove_tags_with_content(root, tags_to_remove_set):
 
 # Example usage
 if __name__ == "__main__":
-    input_html = "<div>Line 1<br>  \n  <br>Line 2</div>"
-    expected_output = "some headerin header"
+    input_html = '<div><img id="Image1graphic" src="../Images/image001.jpg"/></div>'
     result = clear_html(input_html)
-    print(result)
+    print(f"result=`{result}`")
 
     # Test case 1: Consecutive <br> tags
     test1 = "<html><head><title>Title</title></head><body><p>Hello<br><br>World</p></body></html>"

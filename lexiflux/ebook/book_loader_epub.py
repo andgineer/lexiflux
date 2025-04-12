@@ -129,8 +129,11 @@ class BookLoaderEpub(BookLoaderBase):
                 if len(content) > MAX_ITEM_SIZE:
                     for sub_page in self.page_splitter.split_content(soup):
                         if sub_page.strip():  # Only process non-empty pages
-                            sub_soup = BeautifulSoup(sub_page, "html.parser")
-                            cleaned_content = clear_html(str(sub_soup)).strip()
+                            if page_num < PAGES_NUM_TO_DEBUG:
+                                log.debug(f"SubPage {page_num}: {sub_page}")
+                            cleaned_content = clear_html(sub_page).strip()
+                            if page_num < PAGES_NUM_TO_DEBUG:
+                                log.debug(f"Cleaned SubPage {page_num}: {cleaned_content}")
                             if cleaned_content:
                                 self._process_anchors(item, page_num, cleaned_content)
                                 if page_num < PAGES_NUM_TO_DEBUG:
@@ -144,7 +147,11 @@ class BookLoaderEpub(BookLoaderBase):
                         else:
                             log.warning(f"Empty sub-page skipped for {item.file_name}")
                 else:
+                    if page_num < PAGES_NUM_TO_DEBUG:
+                        log.debug(f"Content {page_num}: {content}")
                     cleaned_content = clear_html(content).strip()
+                    if page_num < PAGES_NUM_TO_DEBUG:
+                        log.debug(f"Cleaned SubPage {page_num}: {cleaned_content}")
                     if cleaned_content:
                         self._process_anchors(item, page_num, cleaned_content)
                         if page_num < PAGES_NUM_TO_DEBUG:
