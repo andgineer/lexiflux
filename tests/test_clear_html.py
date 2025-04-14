@@ -1,8 +1,10 @@
+import re
+
 import pytest
 import allure
 from bs4 import BeautifulSoup
 
-from lexiflux.ebook.clear_html import clear_html, ALLOWED_TAGS
+from lexiflux.ebook.clear_html import clear_html, ALLOWED_TAGS, KEEP_EMPTY_TAGS, REMOVE_WITH_CONTENT
 
 
 @allure.epic("Book import")
@@ -43,7 +45,7 @@ from lexiflux.ebook.clear_html import clear_html, ALLOWED_TAGS
         ),
     ],
 )
-def test_clean_html_structure(test_id, input_html, expected_output):
+def test_clear_html_structure(test_id, input_html, expected_output):
     """Test HTML structure cleaning functionality."""
     assert clear_html(input_html) == expected_output
 
@@ -84,7 +86,7 @@ def test_clean_html_structure(test_id, input_html, expected_output):
         ),
     ],
 )
-def test_clean_html_attributes(test_id, input_html, expected_output):
+def test_clear_html_attributes(test_id, input_html, expected_output):
     """Test HTML attribute handling."""
     assert clear_html(input_html) == expected_output
 
@@ -143,7 +145,7 @@ def test_clean_html_attributes(test_id, input_html, expected_output):
         ),
     ],
 )
-def test_clean_html_br_handling(test_id, input_html, expected_output):
+def test_clear_html_br_handling(test_id, input_html, expected_output):
     """Test handling of <br> tags."""
     assert clear_html(input_html) == expected_output
 
@@ -186,7 +188,7 @@ def test_clean_html_br_handling(test_id, input_html, expected_output):
         ),
     ],
 )
-def test_clean_html_empty_elements(test_id, input_html, expected_output):
+def test_clear_html_empty_elements(test_id, input_html, expected_output):
     """Test handling of empty elements."""
     assert clear_html(input_html) == expected_output
 
@@ -228,7 +230,7 @@ def test_clean_html_empty_elements(test_id, input_html, expected_output):
         ),
     ],
 )
-def test_clean_html_add_classes(test_id, input_html, expected_output, tags_with_classes):
+def test_clear_html_add_classes(test_id, input_html, expected_output, tags_with_classes):
     """Test adding classes to tags."""
     result = clear_html(input_html, tags_with_classes=tags_with_classes)
 
@@ -278,7 +280,7 @@ def test_clean_html_add_classes(test_id, input_html, expected_output, tags_with_
         ),
     ],
 )
-def test_clean_html_keep_ids(test_id, input_html, ids_to_keep, expected_tag_preserved):
+def test_clear_html_keep_ids(test_id, input_html, ids_to_keep, expected_tag_preserved):
     """Test preserving elements with specific IDs."""
     result = clear_html(input_html, ids_to_keep=ids_to_keep)
     soup = BeautifulSoup(result, "html.parser")
@@ -315,7 +317,7 @@ def test_clean_html_keep_ids(test_id, input_html, ids_to_keep, expected_tag_pres
         ),
     ],
 )
-def test_clean_html_comments(test_id, input_html, expected_output):
+def test_clear_html_comments(test_id, input_html, expected_output):
     """Test handling of HTML comments."""
     assert clear_html(input_html) == expected_output
 
@@ -338,14 +340,14 @@ def test_clean_html_comments(test_id, input_html, expected_output):
         ("trim_whitespace", "  <div>Content</div>  ", "<div>Content</div>"),
     ],
 )
-def test_clean_html_whitespace(test_id, input_html, expected_output):
+def test_clear_html_whitespace(test_id, input_html, expected_output):
     """Test whitespace handling."""
     assert clear_html(input_html) == expected_output
 
 
 @allure.epic("Book import")
 @allure.feature("EPUB: Clean HTML")
-def test_clean_html_error_handling():
+def test_clear_html_error_handling():
     """Test that clear_html handles errors gracefully and returns original input."""
     # Malformed HTML that might cause parsing errors
     input_html = "<small>begin<div><unclosed_tag><span>end</small><p>paragraph</p>"
@@ -358,7 +360,7 @@ def test_clean_html_error_handling():
 # Test complex case
 @allure.epic("Book import")
 @allure.feature("EPUB: Clean HTML")
-def test_clean_html_complex_case():
+def test_clear_html_complex_case():
     """Test a complex case with multiple cleaning rules."""
     input_html = """
     <div>
@@ -418,7 +420,7 @@ def test_clean_html_complex_case():
         ),
     ],
 )
-def test_clean_html_custom_tags(test_id, input_html, expected_pattern, custom_allowed_tags):
+def test_clear_html_custom_tags(test_id, input_html, expected_pattern, custom_allowed_tags):
     """Test handling of custom tags with configurable allowed tags."""
     from lexiflux.ebook.clear_html import ALLOWED_TAGS
 
@@ -433,7 +435,7 @@ def test_clean_html_custom_tags(test_id, input_html, expected_pattern, custom_al
 
 @allure.epic("Book import")
 @allure.feature("EPUB: Clean HTML")
-def test_clean_html_whitelist_nested_unknown_tags():
+def test_clear_html_whitelist_nested_unknown_tags():
     input_html = """<custom-container>
                       <p>This paragraph is allowed</p>
                       <unknown-tag>
@@ -461,7 +463,7 @@ def test_clean_html_whitelist_nested_unknown_tags():
 
 @allure.epic("Book import")
 @allure.feature("EPUB: Clean HTML")
-def test_clean_html_adds_classes_to_tags():
+def test_clear_html_adds_classes_to_tags():
     input_html = """
     <div>
         <h1>This is a heading 1</h1>
@@ -504,7 +506,7 @@ def test_clean_html_adds_classes_to_tags():
 
 @allure.epic("Book import")
 @allure.feature("EPUB: Clean HTML")
-def test_clean_html_preserves_all_attributes_except_style_and_class():
+def test_clear_html_preserves_all_attributes_except_style_and_class():
     input_html = """
     <div class="container" style="margin: 20px;" id="main" data-test="value" role="main">
         <a href="https://example.com" class="link" target="_blank" rel="noopener" aria-label="Example">Link</a>
@@ -543,3 +545,613 @@ def test_clean_html_preserves_all_attributes_except_style_and_class():
     assert "loading" in img.attrs, "loading should be preserved"
     assert "width" in img.attrs, "width should be preserved"
     assert "height" in img.attrs, "height should be preserved"
+
+
+def normalize_whitespace(html_string):
+    """Normalize whitespace in HTML strings for comparison."""
+    # Replace all whitespace sequences (including newlines) with a single space
+    normalized = re.sub(r"\s+", " ", html_string)
+    # Trim leading/trailing whitespace
+    return normalized.strip()
+
+
+@allure.epic("Book import")
+@allure.feature("EPUB: Clean HTML - Complex Edge Cases")
+class TestClearHtmlComplexEdgeCases:
+    """Tests for complex edge cases in the clear_html function."""
+
+    @pytest.mark.parametrize(
+        "test_id, input_html, expected_output",
+        [
+            (
+                "deeply_nested_structure_with_mixed_valid_invalid_tags",
+                """
+                    <section>
+                        <article>
+                            <custom-section>
+                                <header>
+                                    <h1>Title</h1>
+                                    <nav>
+                                        <ul>
+                                            <li>Item 1</li>
+                                            <li>Item 2</li>
+                                        </ul>
+                                    </nav>
+                                </header>
+                                <div>
+                                    <p>This is a paragraph</p>
+                                    <unknown-tag>Should be preserved <strong>but unwrapped</strong></unknown-tag>
+                                </div>
+                                <footer>Footer content</footer>
+                            </custom-section>
+                        </article>
+                    </section>
+                    """,
+                """
+                                <h1 class="display-4 fw-semibold text-primary mb-4">Title</h1>
+    
+                                    <ul>
+                                        <li>Item 1</li>
+                                        <li>Item 2</li>
+                                    </ul>
+    
+                                <div>
+                                    <p>This is a paragraph</p>
+                                    Should be preserved <strong>but unwrapped</strong>
+                                </div>
+                                Footer content
+                    """,
+            ),
+            (
+                "fragment_with_text_before_and_after_elements",
+                """
+                    Text before elements
+                    <div>Content inside div</div>
+                    Text between elements
+                    <p>Content inside paragraph</p>
+                    Text after elements
+                    """,
+                """
+                    Text before elements
+                    <div>Content inside div</div>
+                    Text between elements
+                    <p>Content inside paragraph</p>
+                    Text after elements
+                    """,
+            ),
+        ],
+    )
+    def test_clear_html_complex_nested_structures(self, test_id, input_html, expected_output):
+        """Test handling of complex nested structures with text nodes."""
+        # Clean HTML and normalize whitespace for comparison
+        cleaned = normalize_whitespace(clear_html(input_html))
+        expected = normalize_whitespace(expected_output)
+
+        assert cleaned == expected
+
+    @pytest.mark.parametrize(
+        "test_id, input_html, expected_output",
+        [
+            (
+                "malformed_unclosed_tags",
+                """
+                    <div>
+                        <p>Paragraph with <strong>bold text
+                        <em>and italics</p>
+                        <p>Another paragraph</p>
+                    </div>
+                    """,
+                """
+                    <div>
+                        <p>Paragraph with <strong>bold text
+                        <em>and italics</em></strong></p>
+                        <p>Another paragraph</p>
+                    </div>
+                    """,
+            ),
+            (
+                "malformed_improperly_nested",
+                """
+                    <div>
+                        <p>Text with <b>bold and <i>italic</b> overlapping</i> tags</p>
+                    </div>
+                    """,
+                """
+                    <div>
+                        <p>Text with <b>bold and <i>italic</i></b> overlapping tags</p>
+                    </div>
+                    """,
+            ),
+        ],
+    )
+    def test_clear_html_malformed_html(self, test_id, input_html, expected_output):
+        """Test handling of malformed HTML with unclosed or improperly nested tags."""
+        result = clear_html(input_html)
+
+        # Parse both to compare DOM structure rather than exact string matching
+        result_soup = BeautifulSoup(result, "html.parser")
+        expected_soup = BeautifulSoup(expected_output, "html.parser")
+
+        # Compare normalized serialized versions
+        assert normalize_whitespace(str(result_soup)) == normalize_whitespace(str(expected_soup))
+
+    @pytest.mark.parametrize(
+        "test_id, input_html, expected_output",
+        [
+            (
+                "html_entities",
+                """
+                    <div>
+                        <p>Entity: &lt;div&gt; &amp; &quot;quotes&quot; &apos;apostrophes&apos;</p>
+                        <p>Numeric entities: &#60;div&#62; &#38; &#34;quotes&#34;</p>
+                        <p>Special chars: &copy; &reg; &euro; &pound;</p>
+                    </div>
+                    """,
+                """
+                    <div>
+                        <p>Entity: &lt;div&gt; &amp; "quotes" 'apostrophes'</p>
+                        <p>Numeric entities: &lt;div&gt; &amp; "quotes"</p>
+                        <p>Special chars: © ® € £</p>
+                    </div>
+                    """,
+            ),
+            (
+                "cdata_sections",
+                """
+                    <div>
+                        <![CDATA[This is CDATA content with <tags> that shouldn't be parsed]]>
+                        Normal text
+                        <![CDATA[This is another CDATA content with <tags> that shouldn't be parsed]]>
+                        More text
+                    </div>
+                    """,
+                """
+                    <div>
+                        Normal text
+                        More text
+                    </div>
+                    """,
+            ),
+        ],
+    )
+    def test_clear_html_entities_and_cdata(self, test_id, input_html, expected_output):
+        """Test handling of HTML entities and CDATA sections."""
+        # Clean HTML
+        cleaned = clear_html(input_html)
+
+        # Parse both as BeautifulSoup objects to normalize entity handling
+        result_soup = BeautifulSoup(cleaned, "html.parser")
+        expected_soup = BeautifulSoup(expected_output, "html.parser")
+
+        # Compare normalized versions
+        assert normalize_whitespace(str(result_soup)) == normalize_whitespace(str(expected_soup))
+
+    @pytest.mark.parametrize(
+        "test_id, input_html, expected_output",
+        [
+            (
+                "empty_div_at_end_with_tail_text",
+                """
+                    <div>
+                        <p>Content</p>
+                        <div></div>Text after empty div
+                    </div>
+                    """,
+                """
+                    <div>
+                        <p>Content</p>
+                        <div></div>Text after empty div
+                    </div>
+                    """,
+            ),
+            (
+                "nested_empty_elements_with_tail_text",
+                """
+                    <div>
+                        <span><em></em>Text after empty em</span>
+                        <p>Content</p>
+                    </div>
+                    """,
+                """
+                    <div>
+                        <span><em></em>Text after empty em</span>
+                        <p>Content</p>
+                    </div>
+                    """,
+            ),
+            (
+                "br_with_important_tail",
+                """
+                    <div>
+                        <p>Line 1<br><br><!-- This should be removed --><br>Important text after multiple br tags</p>
+                    </div>
+                    """,
+                """
+                    <div>
+                        <p>Line 1<br>Important text after multiple br tags</p>
+                    </div>
+                    """,
+            ),
+        ],
+    )
+    def test_clear_html_empty_elements_with_tail_text(self, test_id, input_html, expected_output):
+        """Test handling of empty elements with important tail text."""
+        cleaned = " ".join(clear_html(input_html).split())
+        expected = " ".join(expected_output.split())
+
+        assert cleaned == expected
+
+    @pytest.mark.parametrize(
+        "test_id, input_html, ids_to_keep, expected_output",
+        [
+            (
+                "preserve_attribute_precedence_with_ids",
+                """
+                    <custom-container id="custom-id">
+                        <custom-header id="header-id">This header should be kept</custom-header>
+                        <custom-content>This should be unwrapped</custom-content>
+                        <div id="not-in-list"></div>
+                        <div id="custom-id"></div>
+                    </custom-container>
+                    """,
+                ["custom-id", "header-id"],
+                """
+                    <custom-container id="custom-id">
+                        <custom-header id="header-id">This header should be kept</custom-header>
+                        This should be unwrapped
+                        <div id="custom-id"></div>
+                    </custom-container>
+                    """,
+            ),
+            (
+                "preserve_ids_with_namespaced_elements",
+                """
+                    <ns:custom-element id="ns-id" xmlns:ns="http://example.org/ns">
+                        <ns:child id="child-id">Namespaced content</ns:child>
+                    </ns:custom-element>
+                    """,
+                ["ns-id", "child-id"],
+                """
+                    <ns:custom-element id="ns-id" xmlns:ns="http://example.org/ns">
+                        <ns:child id="child-id">Namespaced content</ns:child>
+                    </ns:custom-element>
+                    """,
+            ),
+        ],
+    )
+    def test_clear_html_ids_to_keep_precedence(
+        self, test_id, input_html, ids_to_keep, expected_output
+    ):
+        """Test that IDs to keep take precedence over tag filtering."""
+        result = clear_html(input_html, ids_to_keep=ids_to_keep)
+
+        # Parse both to normalize for comparison
+        result_soup = BeautifulSoup(result, "html.parser")
+        expected_soup = BeautifulSoup(expected_output, "html.parser")
+
+        # Check IDs are preserved
+        for id_value in ids_to_keep:
+            assert result_soup.find(id=id_value) is not None, (
+                f"Element with id={id_value} should be preserved"
+            )
+
+        # Compare normalized structures
+        assert normalize_whitespace(str(result_soup)) == normalize_whitespace(str(expected_soup))
+
+    @pytest.mark.parametrize(
+        "test_id, input_html, expected_output",
+        [
+            (
+                "svg_and_math_content",
+                """
+                    <div>
+                        <svg width="100" height="100">
+                            <circle cx="50" cy="50" r="40" stroke="black" fill="red" />
+                        </svg>
+                        <math>
+                            <mi>x</mi><mo>+</mo><mn>1</mn><mo>=</mo><mn>0</mn>
+                        </math>
+                        <p>Regular content</p>
+                    </div>
+                    """,
+                """
+                    <div>
+    
+                            x+1=0
+    
+                        <p>Regular content</p>
+                    </div>
+                    """,
+            ),
+            (
+                "xml_processing_instructions",
+                """
+                    <?xml version="1.0" encoding="UTF-8"?>
+                    <?xml-stylesheet type="text/css" href="style.css"?>
+                    <!DOCTYPE html>
+                    <div>
+                        <p>Content after processing instructions</p>
+                    </div>
+                    """,
+                """
+    
+    
+    
+                    <div>
+                        <p>Content after processing instructions</p>
+                    </div>
+                    """,
+            ),
+        ],
+    )
+    def test_clear_html_xml_and_special_content(self, test_id, input_html, expected_output):
+        """Test handling of SVG, MathML content and XML processing instructions."""
+        # Focus on structure rather than whitespace
+        cleaned = " ".join(clear_html(input_html).split())
+        expected = " ".join(expected_output.split())
+
+        # Parse both for DOM comparison
+        result_soup = BeautifulSoup(cleaned, "html.parser")
+        expected_soup = BeautifulSoup(expected, "html.parser")
+
+        # Compare normalized versions
+        assert str(result_soup) == str(expected_soup)
+
+    @pytest.mark.parametrize(
+        "test_id, input_html, keep_empty_tags, expected_output",
+        [
+            (
+                "custom_keep_empty_tags",
+                """
+                    <div>
+                        <span></span>
+                        <custom-empty></custom-empty>
+                        <p>Content</p>
+                    </div>
+                    """,
+                KEEP_EMPTY_TAGS + ("custom-empty",),
+                """
+                    <div>
+                        <custom-empty></custom-empty>
+                        <p>Content</p>
+                    </div>
+                    """,
+            ),
+            (
+                "override_keep_empty_tags",
+                """
+                    <div>
+                        <img src="image.jpg">
+                        <br>
+                        <p>Content</p>
+                    </div>
+                    """,
+                ("img",),  # Only keep img, not br
+                """
+                    <div>
+                        <img src="image.jpg">
+                        <p>Content</p>
+                    </div>
+                    """,
+            ),
+        ],
+    )
+    def test_clear_html_custom_keep_empty_tags(
+        self, test_id, input_html, keep_empty_tags, expected_output
+    ):
+        """Test customization of which empty tags to keep."""
+        result = clear_html(input_html, keep_empty_tags=keep_empty_tags)
+
+        # Parse both for comparison
+        result_soup = BeautifulSoup(result, "html.parser")
+        expected_soup = BeautifulSoup(expected_output, "html.parser")
+
+        # Compare normalized versions
+        assert normalize_whitespace(str(result_soup)) == normalize_whitespace(str(expected_soup))
+
+    @pytest.mark.parametrize(
+        "test_id, input_html, tags_to_remove, expected_output",
+        [
+            (
+                "custom_tags_to_remove_with_content",
+                """
+                    <div>
+                        <script>alert('Test');</script>
+                        <remove-me>This should be removed</remove-me>
+                        <p>This should stay</p>
+                    </div>
+                    """,
+                REMOVE_WITH_CONTENT + ("remove-me",),
+                """
+                    <div>
+                        <p>This should stay</p>
+                    </div>
+                    """,
+            ),
+            (
+                "override_tags_to_remove",
+                """
+                    <div>
+                        <script>alert('Test');</script>
+                        <style>.test { color: red; }</style>
+                        <p>Content</p>
+                    </div>
+                    """,
+                ("style",),  # Remove with content style, keep content of script
+                """
+                    <div>
+                        alert('Test');
+                        <p>Content</p>
+                    </div>
+                    """,
+            ),
+        ],
+    )
+    def test_clear_html_custom_tags_to_remove_with_content(
+        self, test_id, input_html, tags_to_remove, expected_output
+    ):
+        """Test customization of which tags to remove with their content."""
+        result = clear_html(input_html, tags_to_remove_with_content=tags_to_remove)
+
+        # Parse both for comparison
+        result_soup = BeautifulSoup(result, "html.parser")
+        expected_soup = BeautifulSoup(expected_output, "html.parser")
+
+        # Compare normalized versions
+        assert normalize_whitespace(str(result_soup)) == normalize_whitespace(str(expected_soup))
+
+    @pytest.mark.parametrize(
+        "test_id, input_html, expected_output",
+        [
+            (
+                "mixed_unicode_and_special_chars",
+                """
+                    <div>
+                        <p>Unicode: ♥ ☺ ★ 你好 привет</p>
+                        <p>Mixed with HTML: <span>♥</span> &hearts; <b>★</b></p>
+                        <p>Special spaces: no-break space [&#160;] em space [&#8195;]</p>
+                        <p>Control chars: [&#x200B;] zero-width space</p>
+                    </div>
+                    """,
+                """
+                    <div>
+                        <p>Unicode: ♥ ☺ ★ 你好 привет</p>
+                        <p>Mixed with HTML: <span>♥</span> ♥ <b>★</b></p>
+                        <p>Special spaces: no-break space [ ] em space [ ]</p>
+                        <p>Control chars: [&#x200B;] zero-width space</p>
+                    </div>
+                    """,
+            ),
+            (
+                "emoji_and_surrogate_pairs",
+                """
+                    <div>
+                        <p>Emoji: 🚀 🌍 👨‍👩‍👧‍👦 👾</p>
+                        <p>Flags: 🇺🇸 🏳️‍🌈 🏴‍☠️</p>
+                    </div>
+                    """,
+                """
+                    <div>
+                        <p>Emoji: 🚀 🌍 👨‍👩‍👧‍👦 👾</p>
+                        <p>Flags: 🇺🇸 🏳️‍🌈 🏴‍☠️</p>
+                    </div>
+                    """,
+            ),
+        ],
+    )
+    def test_clear_html_unicode_and_special_characters(self, test_id, input_html, expected_output):
+        """Test handling of Unicode characters, emoji, and special whitespace."""
+        result = clear_html(input_html)
+
+        # Parse both for comparison while preserving Unicode
+        result_soup = BeautifulSoup(result, "html.parser")
+        expected_soup = BeautifulSoup(expected_output, "html.parser")
+
+        # Compare normalized versions
+        assert normalize_whitespace(str(result_soup)) == normalize_whitespace(str(expected_soup))
+
+    @pytest.mark.parametrize(
+        "test_id, input_html, expected_output",
+        [
+            (
+                "extreme_tag_nesting_depth",
+                "<div>"
+                + "<span>".join(["" for _ in range(100)])
+                + "Deep content"
+                + "</span>" * 100
+                + "</div>",
+                "<div>"
+                + "<span>".join(["" for _ in range(100)])
+                + "Deep content"
+                + "</span>" * 100
+                + "</div>",
+            ),
+            (
+                "very_long_text_content",
+                f"<p>{'Lorem ipsum ' * 1000}</p>",
+                f"<p>{'Lorem ipsum ' * 1000}</p>",
+            ),
+            (
+                "huge_number_of_siblings",
+                "<div>" + "".join([f"<span>Item {i}</span>" for i in range(500)]) + "</div>",
+                "<div>" + "".join([f"<span>Item {i}</span>" for i in range(500)]) + "</div>",
+            ),
+        ],
+    )
+    def test_clear_html_performance_edge_cases(self, test_id, input_html, expected_output):
+        """Test handling of extreme cases that might affect performance."""
+        # We just check that the function completes without error
+        # and returns something reasonable for these extreme cases
+        result = clear_html(input_html)
+        assert len(result) > 0, "Result should not be empty"
+
+        # For the extreme nesting case, verify that the deep content is preserved
+        if test_id == "extreme_tag_nesting_depth":
+            assert "Deep content" in result
+
+        # For the very long text case, check that the content is preserved
+        elif test_id == "very_long_text_content":
+            assert "Lorem ipsum" in result
+            assert len(result) > 1000
+
+        # For the huge siblings case, verify that some siblings are preserved
+        elif test_id == "huge_number_of_siblings":
+            assert "Item 1" in result and "Item 499" in result
+
+    @pytest.mark.parametrize(
+        "test_id, input_html, expected_output",
+        [
+            (
+                "edge_case_with_namespaced_attributes",
+                """
+                    <div xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:epub="http://www.idpf.org/2007/ops">
+                        <p epub:type="bridgehead">Special paragraph</p>
+                        <a xlink:href="chapter1.html">Link with namespace</a>
+                    </div>
+                    """,
+                """
+                    <div xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:epub="http://www.idpf.org/2007/ops">
+                        <p epub:type="bridgehead">Special paragraph</p>
+                        <a xlink:href="chapter1.html">Link with namespace</a>
+                    </div>
+                    """,
+            ),
+            (
+                "edge_case_with_data_attributes",
+                """
+                    <div>
+                        <p data-ref="123" data-custom="value">Paragraph with data attributes</p>
+                        <span data-test="test" data-index="0">Span with data</span>
+                    </div>
+                    """,
+                """
+                    <div>
+                        <p data-ref="123" data-custom="value">Paragraph with data attributes</p>
+                        <span data-test="test" data-index="0">Span with data</span>
+                    </div>
+                    """,
+            ),
+        ],
+    )
+    def test_clear_html_special_attribute_handling(self, test_id, input_html, expected_output):
+        """Test handling of namespaced and data-* attributes."""
+        result = clear_html(input_html)
+
+        # Parse both for comparison
+        result_soup = BeautifulSoup(result, "html.parser")
+        expected_soup = BeautifulSoup(expected_output, "html.parser")
+
+        # Check that namespaced attributes are preserved
+        if test_id == "edge_case_with_namespaced_attributes":
+            assert "epub:type" in result
+            assert "xlink:href" in result
+
+        # Check that data attributes are preserved
+        elif test_id == "edge_case_with_data_attributes":
+            assert "data-ref" in result
+            assert "data-custom" in result
+            assert "data-test" in result
+            assert "data-index" in result
+
+        # Compare normalized versions
+        assert normalize_whitespace(str(result_soup)) == normalize_whitespace(str(expected_soup))

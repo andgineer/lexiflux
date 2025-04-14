@@ -52,6 +52,9 @@ ALLOWED_TAGS = (
     "small",
 )
 
+CDATA_START = "<![CDATA["
+CDATA_END = "]]>"
+
 logger = logging.getLogger(__name__)
 
 
@@ -82,6 +85,7 @@ def clear_html(  # noqa: PLR0915,PLR0912,PLR0913,C901
 
     # Normalize new lines to spaces for consistent handling
     input_html = re.sub(r"[\n\r]+", " ", input_html)
+    input_html = re.sub(r"<!\[CDATA\[.*?]]>", "", input_html, flags=re.DOTALL)
 
     try:
         root = parse_partial_html(input_html)
@@ -90,9 +94,9 @@ def clear_html(  # noqa: PLR0915,PLR0912,PLR0913,C901
         return input_html
 
     # Convert to sets for faster lookups
-    allowed_tags_set = set(allowed_tags)
     tags_to_remove_set = set(tags_to_remove_with_content)
     keep_empty_tags_set = set(keep_empty_tags)
+    allowed_tags_set = set(allowed_tags) | set(keep_empty_tags)
     ids_to_keep_set = set(ids_to_keep)
     if tags_with_classes is None:
         tags_with_classes = TAGS_WITH_CLASSES
@@ -120,7 +124,7 @@ def parse_partial_html(input_html):
     if open_count != close_count:
         input_html = input_html.replace("<!--", "&lt;!--")
 
-    parser = etree.HTMLParser(remove_comments=True)
+    parser = etree.HTMLParser(recover=True, remove_comments=True, remove_pis=True)
     fragments = fragments_fromstring(input_html, parser=parser)
     root = etree.Element("root")
     for fragment in fragments:
@@ -204,6 +208,14 @@ def collapse_consecutive_br(root, keep_empty_tags_set):  # noqa: C901,PLR0912,PL
             parent = br_tag.getparent()
             if parent is not None:
                 parent.remove(br_tag)
+
+
+def remove_cdata(element):
+    if element.text and CDATA_START in element.text:
+        start_idx = element.text.find(CDATA_START)
+        end_idx = element.text.find(CDATA_END, start_idx)
+        if end_idx != -1:
+            element.text = element.text[:start_idx] + element.text[end_idx + len(CDATA_END) :]
 
 
 def remove_empty_elements(ids_to_keep_set, keep_empty_tags_set, root):  # noqa: PLR0912,C901,PLR0915
@@ -310,6 +322,8 @@ def has_meaningful_content(element, keep_empty_tags_set):
     if element.text and element.text.strip():
         return True
 
+    # todo: test_clear_html_empty_elements_with_tail_text should really check
+    #  for empty tags removing for that we should replace emty tags with their tail text
     if element.tail and element.tail.strip():
         return True
 
@@ -333,6 +347,7 @@ def unwrap_unknow_tags(allowed_tags_set, ids_to_keep_set, root):  # noqa: C901,P
     for element in root.iter():
         if element is root:
             continue
+        remove_cdata(element)
 
         tag_name = element.tag
         element_id = element.get("id", "")
@@ -419,18 +434,6 @@ def remove_tags_with_content(root, tags_to_remove_set):
 
 # Example usage
 if __name__ == "__main__":
-    input_html = '<div><img id="Image1graphic" src="../Images/image001.jpg"/></div>'
+    input_html = "<![CDATA[This is CDATA content with <tags> that shouldn't be parsed]]>"
     result = clear_html(input_html)
     print(f"result=`{result}`")
-
-    # Test case 1: Consecutive <br> tags
-    test1 = "<html><head><title>Title</title></head><body><p>Hello<br><br>World</p></body></html>"
-    print(clear_html(test1))
-
-    # Test case 2: Remove style and add class
-    test2 = '<div><style>h1 { color: red; }</style><h1 class="red">Heading</h1></div>'
-    print(clear_html(test2, tags_with_classes={"h1": "title-class"}))
-
-    # Test case 3: Custom tags
-    test3 = "<section><p>text</p><custom>more text</custom></section>"
-    print(clear_html(test3))
