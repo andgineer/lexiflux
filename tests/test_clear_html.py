@@ -740,7 +740,7 @@ class TestClearHtmlComplexEdgeCases:
                 """
                     <div>
                         <p>Content</p>
-                        <div></div>Text after empty div
+                        Text after empty div
                     </div>
                     """,
             ),
@@ -754,10 +754,25 @@ class TestClearHtmlComplexEdgeCases:
                     """,
                 """
                     <div>
-                        <span><em></em>Text after empty em</span>
+                        <span>Text after empty em</span>
                         <p>Content</p>
                     </div>
                     """,
+            ),
+            (
+                "nested_empty_elements_with_self_closing_tags",
+                """
+                        <div>
+                            <span><em/>Text after empty self closing em</span>
+                            <p>Content</p>
+                        </div>
+                        """,
+                """
+                        <div>
+                            <span>Text after empty self closing em</span>
+                            <p>Content</p>
+                        </div>
+                        """,
             ),
             (
                 "br_with_important_tail",

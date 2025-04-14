@@ -261,14 +261,12 @@ def remove_empty_elements(ids_to_keep_set, keep_empty_tags_set, root):  # noqa: 
 
             # Check if element is completely empty
             if (  # noqa: SIM102
-                not has_meaningful_content(element, keep_empty_tags_set)
+                not has_meaningful_content(element, keep_empty_tags_set, check_tail=False)
                 and element.getparent() is not None
             ):
-                # Don't consider <br> tags alone as meaningful content
-                if element.tag != "br":
-                    tail = element.tail
-                    elements_to_remove.append((element, tail))
-                    elements_removed = True
+                tail = element.tail
+                elements_to_remove.append((element, tail))
+                elements_removed = True
 
         # Remove elements identified in this iteration
         for element, tail in elements_to_remove:
@@ -314,7 +312,7 @@ def remove_empty_elements(ids_to_keep_set, keep_empty_tags_set, root):  # noqa: 
     return elements_to_remove
 
 
-def has_meaningful_content(element, keep_empty_tags_set):
+def has_meaningful_content(element, keep_empty_tags_set, check_tail=True):
     """Check if element/children has non-whitespace content or in the `keep_empty_tags_set`."""
     if element.tag in keep_empty_tags_set:
         return True
@@ -322,9 +320,7 @@ def has_meaningful_content(element, keep_empty_tags_set):
     if element.text and element.text.strip():
         return True
 
-    # todo: test_clear_html_empty_elements_with_tail_text should really check
-    #  for empty tags removing for that we should replace emty tags with their tail text
-    if element.tail and element.tail.strip():
+    if check_tail and element.tail and element.tail.strip():
         return True
 
     return any(has_meaningful_content(child, keep_empty_tags_set) for child in element)
