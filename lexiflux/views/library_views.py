@@ -248,6 +248,48 @@ def import_book(request: HttpRequest) -> HttpResponse:  # noqa: PLR0912,PLR0915,
             book = book_processor.create(request.user.email)
             book.save()
 
+        elif import_type == "paste":
+            # Handle pasted content import
+            pasted_content = request.POST.get("pasted_content")
+            if not pasted_content or not pasted_content.strip():
+                raise ValueError("No content pasted")
+
+            # Get format from the form
+            paste_format = request.POST.get("paste_format", "txt").lower()
+            if paste_format not in ["txt", "html"]:
+                paste_format = "txt"  # Default to txt if invalid value
+
+            # Save the pasted content to a temporary file with appropriate extension
+            with tempfile.NamedTemporaryFile(delete=False, suffix=f".{paste_format}") as tmp_file:
+                tmp_file.write(pasted_content.encode("utf-8"))
+                tmp_file.flush()
+
+                # Select the appropriate loader based on format
+                if paste_format == "txt":
+                    book_class = BookLoaderPlainText
+                    original_filename = "pasted_text.txt"
+                else:
+                    book_class = BookLoaderHtml
+                    original_filename = "pasted_content.html"
+
+                logger.info(f"Pasted content ({paste_format}): {pasted_content[:200]}...")
+
+                try:
+                    book_processor = book_class(
+                        tmp_file.name,
+                        original_filename=original_filename,
+                    )
+                    book = book_processor.create(request.user.email)
+                    book.save()
+                finally:
+                    # Make sure we clean up the temporary file
+                    import os
+
+                    try:
+                        os.unlink(tmp_file.name)
+                    except Exception:  # noqa: BLE001
+                        logger.warning(f"Failed to delete temporary file: {tmp_file.name}")
+
         else:
             raise ValueError(f"Unknown import type: {import_type}")
 
@@ -282,6 +324,9 @@ def import_book(request: HttpRequest) -> HttpResponse:  # noqa: PLR0912,PLR0915,
             context["last_filename"] = request.FILES.get("file").name
         elif request.POST.get("importType") == "url" and request.POST.get("url"):
             context["last_url"] = request.POST.get("url")
+        elif request.POST.get("importType") == "paste" and request.POST.get("pasted_content"):
+            # Store the length of the pasted content for user feedback
+            context["last_paste_length"] = len(request.POST.get("pasted_content"))
 
         return render(request, "partials/import_modal.html", context)
 

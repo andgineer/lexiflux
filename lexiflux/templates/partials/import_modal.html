@@ -42,7 +42,8 @@
                       aria-selected="true"
                       hx-on:click="document.getElementById('importType').value = 'file';
                                    document.getElementById('bookFile').setAttribute('required', '');
-                                   document.getElementById('bookUrl').removeAttribute('required');">
+                                   document.getElementById('bookUrl').removeAttribute('required');
+                                   document.getElementById('pasteContent').removeAttribute('required');">
                 File
               </button>
             </li>
@@ -57,8 +58,26 @@
                       aria-selected="false"
                       hx-on:click="document.getElementById('importType').value = 'url';
                                    document.getElementById('bookUrl').setAttribute('required', '');
-                                   document.getElementById('bookFile').removeAttribute('required');">
+                                   document.getElementById('bookFile').removeAttribute('required');
+                                   document.getElementById('pasteContent').removeAttribute('required');">
                 URL
+              </button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link"
+                      id="paste-tab"
+                      data-bs-toggle="tab"
+                      data-bs-target="#paste-pane"
+                      type="button"
+                      role="tab"
+                      aria-controls="paste-pane"
+                      aria-selected="false"
+                      hx-on:click="document.getElementById('importType').value = 'paste';
+                                   document.getElementById('pasteContent').setAttribute('required', '');
+                                   document.getElementById('bookFile').removeAttribute('required');
+                                   document.getElementById('bookUrl').removeAttribute('required');
+                                   setTimeout(() => document.getElementById('pasteContentInput').focus(), 100);">
+                Paste
               </button>
             </li>
           </ul>
@@ -128,6 +147,52 @@
                 </div>
               </div>
             </div>
+
+            <!-- Paste Content Tab -->
+            <div class="tab-pane fade"
+                 id="paste-pane"
+                 role="tabpanel"
+                 aria-labelledby="paste-tab">
+              <div class="mb-3">
+                <label for="pasteContentInput" class="form-label">Paste Text Content</label>
+                <div class="paste-container position-relative">
+                  <div class="form-control bg-light text-muted border {% if error_message %}is-invalid{% endif %} overflow-hidden"
+                       id="pasteOverlay"
+                       style="min-height: 150px; cursor: text;"
+                       onclick="document.getElementById('pasteContentInput').focus();">
+                    <span id="pasteContentStatus" class="d-block text-center my-4">
+                      Click here and paste text (Ctrl+V)
+                    </span>
+                  </div>
+                  <textarea id="pasteContentInput"
+                            name="pasted_content"
+                            class="position-absolute top-0 start-0 opacity-0"
+                            style="width: 100%; height: 100%; resize: none;"
+                            tabindex="-1"
+                            oninput="updatePasteStatus(this.value)"></textarea>
+                </div>
+                {% if last_paste_length %}
+                <div class="small text-muted mt-1">
+                  Last attempted: {{ last_paste_length }} characters
+                </div>
+                {% endif %}
+
+                <!-- Hidden real field that will be required -->
+                <input type="hidden" id="pasteContent" name="pasted_content_hidden">
+              </div>
+
+              <!-- Format Selection -->
+              <div class="mb-3">
+                <label for="pasteFormat" class="form-label">Content Format</label>
+                <select class="form-select" id="pasteFormat" name="paste_format">
+                  <option value="txt" selected>Plain Text</option>
+                  <option value="html">HTML</option>
+                </select>
+                <div class="form-text mt-1">
+                  <small>Select the format that best matches your pasted content</small>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -147,4 +212,37 @@
 
 <script>
   new bootstrap.Modal(document.getElementById('importModal')).show();
+
+  // Function to update the paste status indicator
+  function updatePasteStatus(content) {
+    const statusElement = document.getElementById('pasteContentStatus');
+    const hiddenField = document.getElementById('pasteContent');
+
+    if (content && content.trim().length > 0) {
+      // Content exists
+      const charCount = content.length;
+      statusElement.innerHTML = `<i class="bi bi-check-circle-fill text-success"></i> Text content ready (${charCount} characters)`;
+      statusElement.classList.add('text-success');
+      hiddenField.value = content; // Update the hidden field that's actually required
+    } else {
+      // No content
+      statusElement.innerHTML = 'Click here and paste text (Ctrl+V)';
+      statusElement.classList.remove('text-success');
+      hiddenField.value = ''; // Clear the hidden field
+    }
+  }
+
+  // Focus the real textarea when clicking the overlay
+  document.getElementById('pasteOverlay').addEventListener('click', function() {
+    document.getElementById('pasteContentInput').focus();
+  });
+
+  // Handle paste events
+  document.getElementById('pasteContentInput').addEventListener('paste', function() {
+    // Show a brief "Processing..." message
+    document.getElementById('pasteContentStatus').textContent = 'Processing...';
+
+    // This will be updated by the oninput handler after paste completes
+    setTimeout(() => updatePasteStatus(this.value), 100);
+  });
 </script>
