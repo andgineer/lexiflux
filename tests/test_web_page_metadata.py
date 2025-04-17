@@ -1,7 +1,7 @@
 import pytest
 import allure
 
-from lexiflux.ebook.web_page_metadata import extract_web_page_metadata
+from lexiflux.ebook.web_page_metadata import extract_web_page_metadata, MetadataExtractor
 from lexiflux.ebook.book_loader_base import MetadataField
 
 
@@ -445,3 +445,567 @@ def test_graph_json_ld():
     # Only check author if JSON-LD was processed correctly
     if metadata[MetadataField.TITLE] == "Graph Article Title" and MetadataField.AUTHOR in metadata:
         assert metadata[MetadataField.AUTHOR] == "Graph Author"
+
+
+@pytest.fixture
+def input_html_samples():
+    return [
+        # Basic HTML with standard metadata
+        {
+            "html": """
+            <!DOCTYPE html>
+            <html lang="en">
+            <head>
+                <meta charset="UTF-8">
+                <title>Test Page Title</title>
+                <meta name="description" content="Test page description">
+                <meta name="keywords" content="test, pytest, metadata">
+                <meta name="author" content="Test Author">
+            </head>
+            <body>
+                <h1>Test Page Heading</h1>
+                <p>Test content</p>
+            </body>
+            </html>
+            """,
+            "expected": {
+                MetadataField.TITLE: "Test Page Title",
+                MetadataField.AUTHOR: "Test Author",
+                MetadataField.LANGUAGE: "en",
+                "description": "Test page description",
+                "keywords": ["test", "pytest", "metadata"],
+            },
+        },
+        # HTML with Dublin Core metadata
+        {
+            "html": """
+            <!DOCTYPE html>
+            <html lang="en-US">
+            <head>
+                <meta charset="UTF-8">
+                <title>Standard Title</title>
+                <meta name="author" content="Standard Author">
+                <meta name="dc.title" content="Dublin Core Title">
+                <meta name="dc.creator" content="Dublin Core Author">
+                <meta name="dc.language" content="en">
+                <meta name="dc.date" content="2023-01-01">
+                <meta name="dc.publisher" content="Test Publisher">
+                <meta name="dc.description" content="Dublin Core description">
+            </head>
+            <body>
+                <h1>Page Heading</h1>
+            </body>
+            </html>
+            """,
+            "expected": {
+                MetadataField.TITLE: "Dublin Core Title",
+                MetadataField.AUTHOR: "Dublin Core Author",
+                MetadataField.LANGUAGE: "en",
+                MetadataField.RELEASED: "2023-01-01",
+                MetadataField.CREDITS: "Test Publisher",
+                "description": "Dublin Core description",
+            },
+        },
+        # HTML with Open Graph metadata
+        {
+            "html": """
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>Standard Title</title>
+                <meta property="og:title" content="OG Title">
+                <meta property="og:description" content="OG description">
+                <meta property="og:image" content="https://example.com/image.jpg">
+                <meta property="og:locale" content="en_US">
+                <meta property="og:site_name" content="Test Site">
+                <meta property="article:author" content="OG Author">
+            </head>
+            <body>
+                <h1>Page Heading</h1>
+            </body>
+            </html>
+            """,
+            "expected": {
+                MetadataField.TITLE: "OG Title",
+                MetadataField.AUTHOR: "OG Author",
+                MetadataField.LANGUAGE: "en",
+                MetadataField.CREDITS: "Test Site",
+                "description": "OG description",
+                "image": "https://example.com/image.jpg",
+            },
+        },
+        # HTML with Twitter Card metadata
+        {
+            "html": """
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>Standard Title</title>
+                <meta name="twitter:title" content="Twitter Title">
+                <meta name="twitter:description" content="Twitter description">
+                <meta name="twitter:image" content="https://example.com/twitter-image.jpg">
+                <meta name="twitter:creator" content="@twitteruser">
+            </head>
+            <body>
+                <h1>Page Heading</h1>
+            </body>
+            </html>
+            """,
+            "expected": {
+                MetadataField.TITLE: "Twitter Title",
+                MetadataField.AUTHOR: "@twitteruser",
+                "description": "Twitter description",
+                "image": "https://example.com/twitter-image.jpg",
+            },
+        },
+        # HTML with minimal metadata
+        {
+            "html": """
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>Minimal Page</title>
+            </head>
+            <body>
+                <h1>Minimal Heading</h1>
+                <p>Minimal content</p>
+            </body>
+            </html>
+            """,
+            "expected": {
+                MetadataField.TITLE: "Minimal Page",
+                MetadataField.LANGUAGE: None,
+            },
+        },
+        # HTML with JSON-LD metadata (Article)
+        {
+            "html": """
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>Standard Title</title>
+            </head>
+            <body>
+                <h1>Page Heading</h1>
+                <script type="application/ld+json">
+                {
+                    "@context": "https://schema.org",
+                    "@type": "Article",
+                    "headline": "JSON-LD Article Title",
+                    "description": "JSON-LD Article description",
+                    "image": "https://example.com/jsonld-image.jpg",
+                    "datePublished": "2023-01-03",
+                    "author": {
+                        "@type": "Person",
+                        "name": "JSON-LD Author"
+                    },
+                    "publisher": {
+                        "@type": "Organization",
+                        "name": "JSON-LD Publisher"
+                    }
+                }
+                </script>
+            </body>
+            </html>
+            """,
+            "expected": {
+                MetadataField.TITLE: "JSON-LD Article Title",
+                MetadataField.AUTHOR: "JSON-LD Author",
+                MetadataField.RELEASED: "2023-01-03",
+                "description": "JSON-LD Article description",
+                "image": "https://example.com/jsonld-image.jpg",
+            },
+        },
+        # HTML with JSON-LD metadata (WebPage)
+        {
+            "html": """
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>Standard Title</title>
+            </head>
+            <body>
+                <h1>Page Heading</h1>
+                <script type="application/ld+json">
+                {
+                    "@context": "https://schema.org",
+                    "@type": "WebPage",
+                    "name": "JSON-LD WebPage Title",
+                    "description": "JSON-LD WebPage description"
+                }
+                </script>
+            </body>
+            </html>
+            """,
+            "expected": {
+                MetadataField.TITLE: "JSON-LD WebPage Title",
+                "description": "JSON-LD WebPage description",
+            },
+        },
+        # HTML with JSON-LD metadata (Organization)
+        {
+            "html": """
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>Standard Title</title>
+            </head>
+            <body>
+                <h1>Page Heading</h1>
+                <script type="application/ld+json">
+                {
+                    "@context": "https://schema.org",
+                    "@type": "Organization",
+                    "name": "JSON-LD Organization"
+                }
+                </script>
+            </body>
+            </html>
+            """,
+            "expected": {
+                MetadataField.TITLE: "Standard Title",
+                MetadataField.CREDITS: "JSON-LD Organization",
+            },
+        },
+        # HTML with JSON-LD graph
+        {
+            "html": """
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>Standard Title</title>
+            </head>
+            <body>
+                <h1>Page Heading</h1>
+                <script type="application/ld+json">
+                {
+                    "@context": "https://schema.org",
+                    "@graph": [
+                        {
+                            "@type": "NewsArticle",
+                            "headline": "JSON-LD Graph Article",
+                            "datePublished": "2023-01-04",
+                            "author": {
+                                "@type": "Person",
+                                "name": "JSON-LD Graph Author"
+                            }
+                        },
+                        {
+                            "@type": "Organization",
+                            "name": "JSON-LD Graph Organization"
+                        }
+                    ]
+                }
+                </script>
+            </body>
+            </html>
+            """,
+            "expected": {
+                MetadataField.TITLE: "JSON-LD Graph Article",
+                MetadataField.AUTHOR: "JSON-LD Graph Author",
+                MetadataField.RELEASED: "2023-01-04",
+            },
+        },
+        # HTML with JSON-LD array
+        {
+            "html": """
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>Standard Title</title>
+            </head>
+            <body>
+                <h1>Page Heading</h1>
+                <script type="application/ld+json">
+                [
+                    {
+                        "@context": "https://schema.org",
+                        "@type": "Article",
+                        "headline": "JSON-LD Array Article 1"
+                    },
+                    {
+                        "@context": "https://schema.org",
+                        "@type": "Article",
+                        "headline": "JSON-LD Array Article 2"
+                    }
+                ]
+                </script>
+            </body>
+            </html>
+            """,
+            "expected": {MetadataField.TITLE: "JSON-LD Array Article 1"},
+        },
+        # HTML with image from link rel
+        {
+            "html": """
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>Image Link Page</title>
+                <link rel="image_src" href="https://example.com/link-image.jpg">
+            </head>
+            <body>
+                <h1>Page with Image Link</h1>
+            </body>
+            </html>
+            """,
+            "expected": {
+                MetadataField.TITLE: "Image Link Page",
+                "image": "https://example.com/link-image.jpg",
+            },
+        },
+        # HTML with image from featured class
+        {
+            "html": """
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>Featured Image Page</title>
+            </head>
+            <body>
+                <h1>Page with Featured Image</h1>
+                <img class="featured" src="https://example.com/featured-image.jpg" alt="Featured Image">
+            </body>
+            </html>
+            """,
+            "expected": {
+                MetadataField.TITLE: "Featured Image Page",
+                "image": "https://example.com/featured-image.jpg",
+            },
+        },
+        # HTML with keywords from tag links
+        {
+            "html": """
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>Tag Links Page</title>
+            </head>
+            <body>
+                <h1>Page with Tag Links</h1>
+                <a rel="tag" href="/tag/test">Test Tag</a>
+                <a rel="tag" href="/tag/metadata">Metadata Tag</a>
+            </body>
+            </html>
+            """,
+            "expected": {
+                MetadataField.TITLE: "Tag Links Page",
+                "keywords": ["Test Tag", "Metadata Tag"],
+            },
+        },
+        # HTML with multiple metadata sources (testing priority)
+        {
+            "html": """
+            <!DOCTYPE html>
+            <html lang="en-US">
+            <head>
+                <meta charset="UTF-8">
+                <title>Standard Title</title>
+
+                <!-- Standard Meta -->
+                <meta name="description" content="Standard description">
+                <meta name="keywords" content="test, standard, metadata">
+                <meta name="author" content="Standard Author">
+
+                <!-- Dublin Core -->
+                <meta name="dc.title" content="Dublin Core Title">
+                <meta name="dc.creator" content="Dublin Core Author">
+                <meta name="dc.language" content="en">
+                <meta name="dc.date" content="2023-01-01">
+                <meta name="dc.publisher" content="Test Publisher">
+                <meta name="dc.description" content="Dublin Core description">
+
+                <!-- Open Graph -->
+                <meta property="og:title" content="OG Title">
+                <meta property="og:description" content="OG description">
+                <meta property="og:image" content="https://example.com/image.jpg">
+                <meta property="og:locale" content="en_US">
+                <meta property="og:site_name" content="Test Site">
+                <meta property="article:author" content="OG Author">
+
+                <!-- Twitter Card -->
+                <meta name="twitter:title" content="Twitter Title">
+                <meta name="twitter:description" content="Twitter description">
+                <meta name="twitter:image" content="https://example.com/twitter-image.jpg">
+                <meta name="twitter:creator" content="@twitteruser">
+            </head>
+            <body>
+                <h1>Priority Test Page</h1>
+            </body>
+            </html>
+            """,
+            "expected": {
+                MetadataField.TITLE: "Dublin Core Title",
+                MetadataField.AUTHOR: "Dublin Core Author",
+                MetadataField.LANGUAGE: "en",
+                MetadataField.RELEASED: "2023-01-01",
+                MetadataField.CREDITS: "Test Publisher",
+                "description": "Dublin Core description",
+                "keywords": ["test", "standard", "metadata"],
+                "image": "https://example.com/image.jpg",
+            },
+        },
+    ]
+
+
+@pytest.fixture
+def broken_html_samples():
+    return [
+        # Broken HTML with unclosed tags
+        {
+            "html": """
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>Broken Page
+            </head>
+            <body>
+                <h1>Broken Heading</h1>
+                <p>Broken content
+            </body>
+            </html>
+            """,
+            "expected": {MetadataField.TITLE: "Broken Page"},
+        },
+        # Broken HTML with invalid JSON-LD
+        {
+            "html": """
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>JSON Error Page</title>
+            </head>
+            <body>
+                <h1>Page with JSON Error</h1>
+                <script type="application/ld+json">
+                {
+                    "@type": "Article",
+                    "headline": "Broken JSON-LD",
+                    "datePublished": "2023-01-01"
+                    incomplete JSON
+                </script>
+            </body>
+            </html>
+            """,
+            "expected": {MetadataField.TITLE: "JSON Error Page"},
+        },
+        # Empty HTML
+        {"html": "", "expected": {}},
+        # HTML with missing title
+        {
+            "html": """
+            <!DOCTYPE html>
+            <html>
+            <head>
+            </head>
+            <body>
+                <h1>First Heading</h1>
+            </body>
+            </html>
+            """,
+            "expected": {MetadataField.TITLE: "First Heading"},
+        },
+    ]
+
+
+# Fixed URL for testing
+@pytest.fixture
+def url():
+    return "https://example.com/test-article"
+
+
+@allure.epic("Book import")
+@allure.feature("URL: Metadata")
+class TestMetadataExtractor:
+    @pytest.mark.parametrize("sample_index", range(13))
+    def test_extract_all(self, input_html_samples, sample_index, url):
+        """Test that extract_all correctly extracts metadata from various HTML samples."""
+        sample = input_html_samples[sample_index]
+
+        # Extract metadata
+        extractor = MetadataExtractor(sample["html"], url)
+        result = extractor.extract_all()
+
+        # Check each expected field
+        for field, value in sample["expected"].items():
+            if field in result:
+                if isinstance(value, list) and isinstance(result[field], list):
+                    # For list fields like keywords, check that all expected items are present
+                    assert set(value).issubset(set(result[field]))
+                else:
+                    assert result[field] == value, (
+                        f"Field {field} should be {value}, got {result[field]}"
+                    )
+            else:
+                assert value is None, f"Field {field} should exist in result"
+
+    @pytest.mark.parametrize("sample_index", range(4))
+    def test_broken_html(self, broken_html_samples, sample_index, url):
+        """Test that the extractor handles broken HTML gracefully."""
+        sample = broken_html_samples[sample_index]
+
+        # Extract metadata from broken HTML
+        extractor = MetadataExtractor(sample["html"], url)
+        result = extractor.extract_all()
+
+        # Check that expected fields are extracted despite broken HTML
+        for field, value in sample["expected"].items():
+            if value is not None:
+                assert field in result, f"Field {field} should exist in result"
+                assert result[field] == value
+
+    def test_url_fallback(self, url):
+        """Test that URL is used as a fallback for title when no other source is available."""
+        # HTML with no title or headings
+        html = """
+        <!DOCTYPE html>
+        <html>
+        <body>
+            <p>Just some content</p>
+        </body>
+        </html>
+        """
+
+        extractor = MetadataExtractor(html, url)
+        result = extractor.extract_all()
+
+        # URL fallback should transform "test-article" to "Test article"
+        assert result[MetadataField.TITLE] == "Test article"
+
+    def test_domain_fallback_for_author(self, url):
+        """Test that domain is used as fallback for author when no other source is available."""
+        # HTML with no author metadata
+        html = """
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Test Page</title>
+        </head>
+        <body>
+            <p>Just some content</p>
+        </body>
+        </html>
+        """
+
+        extractor = MetadataExtractor(html, url)
+        result = extractor.extract_all()
+
+        # Domain should be used as author fallback
+        assert result[MetadataField.AUTHOR] == "example.com"
+
+
+def test_extract_web_page_metadata(input_html_samples, url):
+    """Test that the extract_web_page_metadata function works correctly."""
+    # Use a sample with known values
+    sample = input_html_samples[0]
+
+    # Call the main function
+    result = extract_web_page_metadata(sample["html"], url)
+
+    # Verify basic extraction works through the main function
+    for field, value in sample["expected"].items():
+        if isinstance(value, list) and isinstance(result[field], list):
+            # For list fields like keywords, check that all expected items are present
+            assert set(value).issubset(set(result[field]))
+        else:
+            assert result[field] == value

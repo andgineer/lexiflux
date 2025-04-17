@@ -25,6 +25,9 @@ class MetadataExtractor:
 
     def extract_all(self) -> dict[str, Any]:
         """Extract all metadata from the page and return as a dictionary."""
+        # Extract structured data
+        self._extract_json_ld()
+
         # Extract standard metadata
         self._extract_title()
         self._extract_author()
@@ -36,9 +39,6 @@ class MetadataExtractor:
         self._extract_description()
         self._extract_keywords()
         self._extract_image()
-
-        # Extract structured data
-        self._extract_json_ld()
 
         return self.metadata
 
@@ -63,7 +63,8 @@ class MetadataExtractor:
 
     def _extract_title(self) -> None:
         """Extract title using multiple methods."""
-        # Try different sources in order of preference
+        if self.metadata.get(MetadataField.TITLE):
+            return
         title_sources = [
             lambda: self._get_meta_content(name="dc.title"),  # Dublin Core
             lambda: self._get_meta_content(property="og:title"),  # Open Graph
@@ -90,7 +91,8 @@ class MetadataExtractor:
 
     def _extract_author(self) -> None:
         """Extract author using multiple methods."""
-        # Try different sources in order of preference
+        if self.metadata.get(MetadataField.AUTHOR):
+            return
         author_sources = [
             lambda: self._get_meta_content(name="dc.creator"),  # Dublin Core creator
             lambda: self._get_meta_content(name="dc.contributor"),  # Dublin Core contributor
@@ -155,7 +157,8 @@ class MetadataExtractor:
 
     def _extract_credits(self) -> None:
         """Extract credits using multiple methods."""
-        # Try different sources in order of preference
+        if self.metadata.get(MetadataField.CREDITS):
+            return
         credit_sources = [
             lambda: self._get_meta_content(name="dc.publisher"),  # Dublin Core
             lambda: self._get_meta_content(name="generator"),  # Generator
@@ -252,11 +255,11 @@ class MetadataExtractor:
 
                 # Handle single item
                 if isinstance(data, dict):
-                    self._process_json_ld_item(data)
-                # Handle @graph with multiple items
-                elif isinstance(data, dict) and "@graph" in data:
-                    for item in data["@graph"]:
-                        self._process_json_ld_item(item)
+                    if "@graph" in data:
+                        for item in data["@graph"]:
+                            self._process_json_ld_item(item)
+                    else:
+                        self._process_json_ld_item(data)
                 # Handle array of items
                 elif isinstance(data, list):
                     for item in data:
