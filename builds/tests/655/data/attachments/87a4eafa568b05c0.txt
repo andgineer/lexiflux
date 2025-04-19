@@ -1,0 +1,2 @@
+INFO     lexiflux.signals:signals.py:57 Successfully created language preferences for user testuser (ID: 10)
+WARNING  django.request:log.py:248 Bad Request: /api/ai-settings/

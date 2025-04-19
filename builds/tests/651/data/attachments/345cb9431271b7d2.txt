@@ -1,0 +1,4 @@
+2025-04-15 04:01:41,180 INFO apps Lexiflux 1.21.4 is ready.
+2025-04-15 04:01:44,508 INFO signals Successfully created language preferences for user testuser2 (ID: 1)
+2025-04-15 04:01:44,637 INFO apps Lexiflux 1.21.4 is ready.
+2025-04-15 04:01:46,986 INFO language_preferences_views Set global preferences for user testuser2 to Serbian

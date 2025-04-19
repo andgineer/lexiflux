@@ -1,0 +1,6 @@
+INFO     lexiflux.signals:signals.py:57 Successfully created language preferences for user testuser (ID: 27)
+INFO     root:apps.py:36 Lexiflux 1.21.4 is ready.
+INFO     lexiflux.views.words_export:words_export.py:184 For language en last export datetime: 2025-01-01 00:00:00
+INFO     lexiflux.views.words_export:words_export.py:246 Words exported for English: 1 words
+INFO     lexiflux.views.words_export:words_export.py:273 Words exported for English: 1 words using ankiConnect
+INFO     lexiflux.views.words_export:words_export.py:184 For language en last export datetime: 2025-04-19 05:08:45.516363+00:00

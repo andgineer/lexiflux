@@ -1,0 +1,3 @@
+2025-04-17 04:16:29,346 INFO signals Successfully created language preferences for user testuser (ID: 10)
+2025-04-17 04:16:29,370 WARNING log Bad Request: /api/save-inline-translation/
+2025-04-17 04:16:29,370 WARNING log Bad Request: /api/save-inline-translation/

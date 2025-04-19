@@ -1,0 +1,3 @@
+2025-04-19 05:07:50,209 INFO signals Successfully created language preferences for user testuser (ID: 13)
+2025-04-19 05:07:50,241 INFO apps Lexiflux 1.21.4 is ready.
+2025-04-19 05:07:51,538 INFO words_export No translations found for the user

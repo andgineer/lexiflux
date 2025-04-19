@@ -1,0 +1,1 @@
+WARNING  root:book_loader_epub.py:155 Empty page skipped for cover.xml

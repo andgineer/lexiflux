@@ -1,0 +1,1 @@
+2025-04-08 09:19:42,963 WARNING book_loader_epub Empty page skipped for cover.xml

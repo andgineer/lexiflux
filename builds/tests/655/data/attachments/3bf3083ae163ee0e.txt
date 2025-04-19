@@ -1,0 +1,2 @@
+2025-04-19 05:09:00,535 INFO signals Successfully created language preferences for user testuser (ID: 28)
+2025-04-19 05:09:00,546 ERROR llm Test error, model: gpt-4o, class: ChatOpenAI, show_api_key_info: True

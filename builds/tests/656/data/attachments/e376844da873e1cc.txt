@@ -1,0 +1,15 @@
+INFO     root:book_loader_url.py:90 Loaded from https://example.com/alice.html in 0.00 seconds
+DEBUG    trafilatura.main_extractor:main_extractor.py:515 Recovering wild text elements
+DEBUG    trafilatura.readability_lxml:readability_lxml.py:217 Top 5: body 5.08
+DEBUG    trafilatura.readability_lxml:readability_lxml.py:217 Top 5: html 2.54
+DEBUG    trafilatura.readability_lxml:readability_lxml.py:217 Top 5: div 7.54
+DEBUG    trafilatura.readability_lxml:readability_lxml.py:217 Top 5: body 5.08
+DEBUG    trafilatura.external:external.py:64 extracted length: 142 (algorithm) 109 (extraction)
+DEBUG    trafilatura.external:external.py:84 extraction values: 109 142 for None
+DEBUG    trafilatura.external:external.py:92 using custom extraction: None
+DEBUG    trafilatura.external:external.py:96 unclean document triggering justext examination: None
+DEBUG    trafilatura.core:core.py:125 non-clean extracted length: 109 (extraction)
+DEBUG    trafilatura.core:core.py:316 not enough comments: None
+INFO     root:book_loader_url.py:132 Extracted content with trafilatura in 0.22 seconds
+INFO     root:book_loader_url.py:104 Cleared HTML in 0.00 seconds
+INFO     root:book_loader_url.py:109 Added source info in 0.00 seconds

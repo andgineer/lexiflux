@@ -1,0 +1,3 @@
+INFO     lexiflux.signals:signals.py:57 Successfully created language preferences for user testuser2 (ID: 3)
+INFO     root:apps.py:36 Lexiflux 1.21.4 is ready.
+INFO     root:language_preferences_views.py:458 Set global preferences for user testuser2 to Serbian

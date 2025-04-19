@@ -1,0 +1,2 @@
+2025-04-07 17:22:06,775 INFO signals Successfully created language preferences for user testuser (ID: 1)
+2025-04-07 17:22:06,795 INFO reader_views Rendering page 5 of book some-book-code

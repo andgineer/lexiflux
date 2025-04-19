@@ -1,0 +1,5 @@
+2025-04-09 03:49:49,304 INFO signals Successfully created language preferences for user testuser (ID: 1)
+2025-04-09 03:49:49,311 WARNING log Method Not Allowed (PUT): /api/ai-settings/
+2025-04-09 03:49:49,311 WARNING log Method Not Allowed (PUT): /api/ai-settings/
+2025-04-09 03:49:49,311 WARNING log Method Not Allowed: /api/ai-settings/
+2025-04-09 03:49:49,311 WARNING log Method Not Allowed: /api/ai-settings/

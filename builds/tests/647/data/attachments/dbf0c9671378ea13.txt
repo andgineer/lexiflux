@@ -1,0 +1,2 @@
+2025-04-11 04:20:33,412 INFO signals Successfully created language preferences for user testuser (ID: 1)
+2025-04-11 04:20:33,428 WARNING reader_views Error finding closest word for anchor: Test exception
