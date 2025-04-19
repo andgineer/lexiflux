@@ -95,6 +95,8 @@ class BookLoaderURL(BookLoaderHtml):
             self.tree_root = parse_partial_html(
                 extracted_content,
             )  # to calculate title in add_source_info
+
+            # todo: if clear_html gets root it does not return text - just modify the root
             self.text = clear_html(
                 root=self.tree_root,
             )

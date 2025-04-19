@@ -11,6 +11,7 @@ allure-pytest
 pytz
 django-debug-toolbar
 pytest-xdist
+requests_mock
 
 # build & reqs management
 
