@@ -59,8 +59,45 @@ CDATA_END = "]]>"
 logger = logging.getLogger(__name__)
 
 
+def parse_partial_html(input_html):
+    """Parse string with HTML fragment into an lxml tree.
+
+    Supports partial HTML content.
+    Removes comments.
+    """
+    # Simple heuristic to detect unclosed comments
+    open_count = input_html.count("<!--")
+    close_count = input_html.count("-->")
+
+    # If counts don't match, escape all opening comment tags
+    if open_count != close_count:
+        input_html = input_html.replace("<!--", "&lt;!--")
+
+    # Normalize new lines to spaces for consistent handling
+    input_html = re.sub(r"[\n\r]+", " ", input_html)
+
+    # Remove CDATA sections
+    input_html = re.sub(r"<!\[CDATA\[.*?]]>", "", input_html, flags=re.DOTALL)
+
+    parser = etree.HTMLParser(recover=True, remove_comments=True, remove_pis=True)
+    tree = html.parse(io.StringIO(input_html), parser=parser)
+    return tree.getroot()
+
+
+def etree_to_str(root):
+    if root.tag in ["root", "html"]:
+        # If it's our artificial root, only return its contents
+        result = root.text if root.text else ""
+        for child in root:
+            result += tostring(child, encoding="unicode", method="html")
+        return result
+    return tostring(root, encoding="unicode", method="html")
+
+
 def clear_html(  # noqa: PLR0915,PLR0912,PLR0913,C901
-    input_html: str,
+    input_html: str | None = None,
+    *,
+    root: Optional[etree.Element] = None,
     allowed_tags: Iterable[str] = ALLOWED_TAGS,
     tags_to_remove_with_content: Iterable[str] = REMOVE_WITH_CONTENT,
     keep_empty_tags: Iterable[str] = KEEP_EMPTY_TAGS,
@@ -72,6 +109,7 @@ def clear_html(  # noqa: PLR0915,PLR0912,PLR0913,C901
 
     Args:
         input_html: HTML string to clean
+        root: Alternatively instead of input_html - lxml tree root element
         allowed_tags: Tags that are allowed in the output HTML
         tags_to_remove_with_content: Tags to be completely removed along with their content
         keep_empty_tags: Tags that should be kept even if they have no content
@@ -81,18 +119,15 @@ def clear_html(  # noqa: PLR0915,PLR0912,PLR0913,C901
     Returns:
         Cleaned HTML string
     """
-    if not input_html:
+    if not input_html and not root:
         return ""
 
-    # Normalize new lines to spaces for consistent handling
-    input_html = re.sub(r"[\n\r]+", " ", input_html)
-    input_html = re.sub(r"<!\[CDATA\[.*?]]>", "", input_html, flags=re.DOTALL)
-
-    try:
-        root = parse_partial_html(input_html)
-    except Exception:
-        logger.exception("Failed to parse HTML, returning original")
-        return input_html
+    if not root:
+        try:
+            root = parse_partial_html(input_html)
+        except Exception:
+            logger.exception("Failed to parse HTML, returning original")
+            return input_html or ""
 
     # Convert to sets for faster lookups
     tags_to_remove_set = set(tags_to_remove_with_content)
@@ -109,35 +144,6 @@ def clear_html(  # noqa: PLR0915,PLR0912,PLR0913,C901
     collapse_consecutive_br(root, keep_empty_tags_set)
 
     return re.sub(r"\s+", " ", etree_to_str(root)).strip()
-
-
-def parse_partial_html(input_html):
-    """Parse string with HTML fragment into an lxml tree.
-
-    Supports partial HTML content.
-    Removes comments.
-    """
-    # Simple heuristic to detect unclosed comments
-    open_count = input_html.count("<!--")
-    close_count = input_html.count("-->")
-
-    # If counts don't match, escape all opening comment tags
-    if open_count != close_count:
-        input_html = input_html.replace("<!--", "&lt;!--")
-
-    parser = etree.HTMLParser(recover=True, remove_comments=True, remove_pis=True)
-    tree = html.parse(io.StringIO(input_html), parser=parser)
-    return tree.getroot()
-
-
-def etree_to_str(root):
-    if root.tag in ["root", "html"]:
-        # If it's our artificial root, only return its contents
-        result = root.text if root.text else ""
-        for child in root:
-            result += tostring(child, encoding="unicode", method="html")
-        return result
-    return tostring(root, encoding="unicode", method="html")
 
 
 def collapse_consecutive_br(root, keep_empty_tags_set):  # noqa: C901,PLR0912,PLR0915

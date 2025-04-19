@@ -14,7 +14,7 @@ from bs4 import BeautifulSoup
 
 from lexiflux.ebook.book_loader_base import MetadataField
 from lexiflux.ebook.book_loader_html import BookLoaderHtml
-from lexiflux.ebook.clear_html import clear_html
+from lexiflux.ebook.clear_html import clear_html, parse_partial_html
 from lexiflux.ebook.web_page_metadata import extract_web_page_metadata
 
 log = logging.getLogger()
@@ -76,7 +76,11 @@ class BookLoaderURL(BookLoaderHtml):
         return parsed_url.netloc
 
     def load_text(self):
-        """Fetch content from URL and apply cleaning according to the cleaning level."""
+        """Fetch content from URL and apply cleaning according to the cleaning level.
+
+        Put the resulting text into self.text.
+        Cache lxml tree root in self.tree_root.
+        """
         try:
             start_time = time.time()
             response = requests.get(self.url, headers=self.headers, timeout=30)
@@ -85,33 +89,14 @@ class BookLoaderURL(BookLoaderHtml):
             elapsed_time = time.time() - start_time
             log.info(f"Loaded from {self.url} in {elapsed_time:.2f} seconds")
 
-            extracted_content = None
-            if self.cleaning_level in (CleaningLevel.AGGRESSIVE, CleaningLevel.MODERATE):
-                aggressive = self.cleaning_level == CleaningLevel.AGGRESSIVE
-
-                start_time = time.time()
-                extracted_content = trafilatura.extract(
-                    self.html_content,
-                    output_format="html",
-                    include_comments=not aggressive,
-                    favor_precision=aggressive,
-                    favor_recall=not aggressive,
-                    deduplicate=aggressive,
-                    include_links=True,
-                    include_images=True,
-                )
-                elapsed_time = time.time() - start_time
-                log.info(f"Extracted content with trafilatura in {elapsed_time:.2f} seconds")
-            if extracted_content is None:
-                metadata = trafilatura.core.extract_metadata(self.html_content)
-                log.info("Metadata extraction result: %s", pformat(metadata.as_dict()))
-
-                log.info("Using original HTML")
-                extracted_content = self.html_content
+            extracted_content = self.extract_readable_html()
 
             start_time = time.time()
-            self.text = clear_html(  # we need the self.text to calculate title in add_source_info
+            self.tree_root = parse_partial_html(
                 extracted_content,
+            )  # to calculate title in add_source_info
+            self.text = clear_html(
+                root=self.tree_root,
             )
             elapsed_time = time.time() - start_time
             log.info(f"Cleared HTML in {elapsed_time:.2f} seconds")
@@ -123,6 +108,33 @@ class BookLoaderURL(BookLoaderHtml):
         except Exception as e:
             log.error(f"Error fetching URL {self.url}: {e}")
             raise
+
+    def extract_readable_html(self):
+        """Extract readable HTML content from the webpage."""
+        extracted_content = None
+        if self.cleaning_level in (CleaningLevel.AGGRESSIVE, CleaningLevel.MODERATE):
+            aggressive = self.cleaning_level == CleaningLevel.AGGRESSIVE
+
+            start_time = time.time()
+            extracted_content = trafilatura.extract(
+                self.html_content,
+                output_format="html",
+                include_comments=not aggressive,
+                favor_precision=aggressive,
+                favor_recall=not aggressive,
+                deduplicate=aggressive,
+                include_links=True,
+                include_images=True,
+            )
+            elapsed_time = time.time() - start_time
+            log.info(f"Extracted content with trafilatura in {elapsed_time:.2f} seconds")
+        if extracted_content is None:
+            metadata = trafilatura.core.extract_metadata(self.html_content)
+            log.info("Metadata extraction result: %s", pformat(metadata.as_dict()))
+
+            log.info("Using original HTML")
+            extracted_content = self.html_content
+        return extracted_content
 
     def _add_source_info(self, html_content: str) -> str:
         """Add source information at the beginning of the content."""
