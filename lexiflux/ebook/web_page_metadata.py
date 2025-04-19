@@ -1,10 +1,31 @@
+import io
 import json
-from typing import Any, Optional, cast
+from typing import Any, Optional
 from urllib.parse import urlparse
 
-from bs4 import BeautifulSoup, Tag
+from lxml import etree, html
 
 from lexiflux.ebook.book_loader_base import MetadataField
+
+
+def parse_partial_html(input_html):
+    """Parse string with HTML fragment into an lxml tree.
+
+    Supports partial HTML content.
+    Removes comments.
+    """
+    if not input_html:
+        return None
+    open_count = input_html.count("<!--")
+    close_count = input_html.count("-->")
+
+    # If counts don't match, escape all opening comment tags
+    if open_count != close_count:
+        input_html = input_html.replace("<!--", "&lt;!--")
+
+    parser = etree.HTMLParser(recover=True, remove_comments=True, remove_pis=True)
+    tree = html.parse(io.StringIO(input_html), parser=parser)
+    return tree.getroot()
 
 
 class MetadataExtractor:
@@ -18,13 +39,16 @@ class MetadataExtractor:
             html_content: HTML content as string
             url: Original URL of the content
         """
-        self.soup = BeautifulSoup(html_content, "html.parser")
+        self.tree = parse_partial_html(html_content)
         # todo: add metadata from trafilature.extract_metadata()
+
         self.url = url
         self.metadata: dict[str, Any] = {}
 
     def extract_all(self) -> dict[str, Any]:
         """Extract all metadata from the page and return as a dictionary."""
+        if not self.tree:
+            return {}
         # Extract structured data
         self._extract_json_ld()
 
@@ -37,7 +61,6 @@ class MetadataExtractor:
 
         # Extract additional metadata
         self._extract_description()
-        self._extract_keywords()
         self._extract_image()
 
         return self.metadata
@@ -48,15 +71,14 @@ class MetadataExtractor:
         property: Optional[str] = None,
     ) -> Optional[str]:
         """Helper method to get content from meta tags."""
-        selector: dict[str, Any] = {}
+        xpath_query = "//meta"
         if name:
-            selector["name"] = name
-        if property:
-            selector["property"] = property
+            xpath_query += f"[@name='{name}']"
+        elif property:
+            xpath_query += f"[@property='{property}']"
 
-        meta_tag = self.soup.find("meta", attrs=selector)
-        if meta_tag and isinstance(meta_tag, Tag):
-            content = meta_tag.get("content")
+        if meta_tags := self.tree.xpath(xpath_query):
+            content = meta_tags[0].get("content")
             if content and isinstance(content, str):
                 return content.strip()
         return None
@@ -69,11 +91,11 @@ class MetadataExtractor:
             lambda: self._get_meta_content(name="dc.title"),  # Dublin Core
             lambda: self._get_meta_content(property="og:title"),  # Open Graph
             lambda: self._get_meta_content(name="twitter:title"),  # Twitter Card
-            lambda: self.soup.find("title").get_text().strip()  # type: ignore
-            if self.soup.find("title") and isinstance(self.soup.find("title"), Tag)
+            lambda: self.tree.xpath("//title/text()")[0].strip()
+            if self.tree.xpath("//title/text()")
             else None,  # HTML title
-            lambda: self.soup.find("h1").get_text().strip()  # type: ignore
-            if self.soup.find("h1") and isinstance(self.soup.find("h1"), Tag)
+            lambda: self.tree.xpath("//h1/text()")[0].strip()
+            if self.tree.xpath("//h1/text()")
             else None,  # First H1
             lambda: self.url.rsplit("/", 1)[-1]
             .replace("-", " ")
@@ -86,7 +108,7 @@ class MetadataExtractor:
                 if title := source():
                     self.metadata[MetadataField.TITLE] = title
                     break
-            except (AttributeError, TypeError):
+            except (AttributeError, TypeError, IndexError):
                 continue
 
     def _extract_author(self) -> None:
@@ -115,14 +137,8 @@ class MetadataExtractor:
         # Try different sources in order of preference
         language_sources = [
             lambda: self._get_meta_content(name="dc.language"),  # Dublin Core
-            lambda: cast(Tag, self.soup.find("html")).get("lang", "").strip().split("-")[0]  # type: ignore
-            if self.soup.find("html")
-            and isinstance(self.soup.find("html"), Tag)
-            and cast(Tag, self.soup.find("html")).get("lang")
-            else None,  # HTML lang
-            lambda: self._get_meta_content(property="og:locale").split("_")[0]  # type: ignore
-            if self._get_meta_content(property="og:locale")
-            else None,  # Open Graph locale
+            lambda: self._extract_html_lang(),  # HTML lang extraction
+            lambda: self._extract_og_locale(),  # Open Graph locale extraction
             lambda: self._get_meta_content(name="content-language"),  # Content-language
         ]
 
@@ -131,9 +147,19 @@ class MetadataExtractor:
                 if language := source():
                     self.metadata[MetadataField.LANGUAGE] = language
                     return
-            except (AttributeError, TypeError):
+            except (AttributeError, TypeError, IndexError):
                 continue
         self.metadata[MetadataField.LANGUAGE] = None  # Default to None if no language found
+
+    def _extract_html_lang(self) -> Optional[str]:
+        """Extract language from HTML lang attribute."""
+        lang_attrs = self.tree.xpath("//html/@lang")
+        return lang_attrs[0].strip().split("-")[0] if lang_attrs else None
+
+    def _extract_og_locale(self) -> Optional[str]:
+        """Extract language from Open Graph locale."""
+        locale = self._get_meta_content(property="og:locale")
+        return locale.split("_")[0] if locale else None
 
     def _extract_date(self) -> None:
         """Extract publication date using multiple methods."""
@@ -142,6 +168,9 @@ class MetadataExtractor:
             lambda: self._get_meta_content(name="dc.date"),  # Dublin Core
             lambda: self._get_meta_content(name="dcterms.created"),  # Dublin Core terms
             lambda: self._get_meta_content(name="article:published_time"),  # Open Graph
+            lambda: self._get_meta_content(
+                property="article:published_time",
+            ),  # Open Graph (alternate)
             lambda: self._get_meta_content(name="publication_date"),  # Generic
             lambda: self._get_meta_content(name="date"),  # Generic
         ]
@@ -191,47 +220,22 @@ class MetadataExtractor:
             except (AttributeError, TypeError):
                 continue
 
-    def _extract_keywords(self) -> None:
-        """Extract keywords using multiple methods."""
-        # Try different sources in order of preference
-        keywords_sources = [
-            lambda: self._get_meta_content(name="keywords"),  # HTML meta keywords
-            lambda: self._get_meta_content(name="news_keywords"),  # News keywords
-            lambda: [
-                tag.get_text()
-                for tag in self.soup.find_all("a", attrs={"rel": "tag"})
-                if isinstance(tag, Tag)
-            ],  # Tag links
-        ]
-
-        for source in keywords_sources:
-            try:
-                if keywords := source():
-                    if isinstance(keywords, str):
-                        keywords = [k.strip() for k in keywords.split(",")]
-                    self.metadata["keywords"] = keywords
-                    break
-            except (AttributeError, TypeError):
-                continue
-
     def _extract_image(self) -> None:
         """Extract main image using multiple methods."""
         # Try different sources in order of preference
         image_sources = [
             lambda: self._get_meta_content(property="og:image"),  # Open Graph
             lambda: self._get_meta_content(name="twitter:image"),  # Twitter Card
-            lambda: cast(Tag, self.soup.find("link", attrs={"rel": "image_src"})).get("href")
-            if self.soup.find("link", attrs={"rel": "image_src"})
-            and isinstance(self.soup.find("link", attrs={"rel": "image_src"}), Tag)
+            lambda: self.tree.xpath("//link[@rel='image_src']/@href")[0]
+            if self.tree.xpath("//link[@rel='image_src']/@href")
             else None,  # Link rel
-            lambda: cast(
-                Tag,
-                self.soup.find("img", attrs={"class": ["featured", "main", "hero"]}),
-            ).get("src")
-            if self.soup.find("img", attrs={"class": ["featured", "main", "hero"]})
-            and isinstance(
-                self.soup.find("img", attrs={"class": ["featured", "main", "hero"]}),
-                Tag,
+            lambda: self.tree.xpath(
+                "//img[contains(@class, 'featured') or contains(@class, 'main') "
+                "or contains(@class, 'hero')]/@src",
+            )[0]
+            if self.tree.xpath(
+                "//img[contains(@class, 'featured') or contains(@class, 'main') "
+                "or contains(@class, 'hero')]/@src",
             )
             else None,  # Common image classes
         ]
@@ -241,29 +245,29 @@ class MetadataExtractor:
                 if image := source():
                     self.metadata["image"] = image
                     break
-            except (AttributeError, TypeError):
+            except (AttributeError, TypeError, IndexError):
                 continue
 
     def _extract_json_ld(self) -> None:
         """Extract and parse JSON-LD structured data."""
-        json_ld_tags = self.soup.find_all("script", attrs={"type": "application/ld+json"})
+        json_ld_tags = self.tree.xpath("//script[@type='application/ld+json']")
 
         for tag in json_ld_tags:
             try:
-                if isinstance(tag, Tag) and tag.string:
-                    data = json.loads(tag.string)
+                if tag.text:
+                    data = json.loads(tag.text)
 
-                # Handle single item
-                if isinstance(data, dict):
-                    if "@graph" in data:
-                        for item in data["@graph"]:
+                    # Handle single item
+                    if isinstance(data, dict):
+                        if "@graph" in data:
+                            for item in data["@graph"]:
+                                self._process_json_ld_item(item)
+                        else:
+                            self._process_json_ld_item(data)
+                    # Handle array of items
+                    elif isinstance(data, list):
+                        for item in data:
                             self._process_json_ld_item(item)
-                    else:
-                        self._process_json_ld_item(data)
-                # Handle array of items
-                elif isinstance(data, list):
-                    for item in data:
-                        self._process_json_ld_item(item)
             except (json.JSONDecodeError, AttributeError):
                 continue
 

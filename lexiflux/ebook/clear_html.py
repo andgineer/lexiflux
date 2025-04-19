@@ -1,10 +1,11 @@
+import io
 import logging
 import re
 from collections.abc import Iterable
 from typing import Optional
 
-from lxml import etree
-from lxml.html import fragments_fromstring, tostring
+from lxml import etree, html
+from lxml.html import tostring
 
 TAGS_WITH_CLASSES = {
     "h1": "display-4 fw-semibold text-primary mb-4",
@@ -125,26 +126,18 @@ def parse_partial_html(input_html):
         input_html = input_html.replace("<!--", "&lt;!--")
 
     parser = etree.HTMLParser(recover=True, remove_comments=True, remove_pis=True)
-    fragments = fragments_fromstring(input_html, parser=parser)
-    root = etree.Element("root")
-    for fragment in fragments:
-        if isinstance(fragment, str):
-            if root.text is None:
-                root.text = fragment
-            else:
-                root.text += fragment
-        else:
-            root.append(fragment)
-    return root
+    tree = html.parse(io.StringIO(input_html), parser=parser)
+    return tree.getroot()
 
 
 def etree_to_str(root):
-    result = ""
-    if root.text:
-        result += root.text
-    for child in root:
-        result += tostring(child, encoding="unicode", method="html")
-    return result
+    if root.tag in ["root", "html"]:
+        # If it's our artificial root, only return its contents
+        result = root.text if root.text else ""
+        for child in root:
+            result += tostring(child, encoding="unicode", method="html")
+        return result
+    return tostring(root, encoding="unicode", method="html")
 
 
 def collapse_consecutive_br(root, keep_empty_tags_set):  # noqa: C901,PLR0912,PLR0915

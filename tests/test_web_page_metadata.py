@@ -185,7 +185,6 @@ def test_basic_metadata_extraction(basic_html):
     assert metadata[MetadataField.TITLE] == "Test Article Title"
     assert metadata[MetadataField.AUTHOR] == "John Doe"
     assert metadata["description"] == "This is a test article description"
-    assert metadata["keywords"] == ["test", "article", "metadata"]
     assert metadata[MetadataField.LANGUAGE] == "en"
 
 
@@ -321,8 +320,8 @@ def test_empty_html():
     metadata = extract_web_page_metadata(html, url)
 
     # Should fall back to URL-based title
-    assert metadata[MetadataField.TITLE] == "Empty"
-    assert metadata[MetadataField.AUTHOR] == "example.com"
+    assert metadata.get(MetadataField.TITLE) is None
+    assert metadata.get(MetadataField.AUTHOR) is None
 
 
 @allure.epic("Book import")
@@ -374,8 +373,6 @@ def test_meta_content_extraction_edge_cases():
 
     # Empty author should fall back to domain
     assert metadata[MetadataField.AUTHOR] == "example.com"
-    # Single keyword should be handled properly
-    assert metadata["keywords"] == ["single"]
     # Spaces should be stripped
     assert metadata["description"] == "spaced content"
 
@@ -473,7 +470,6 @@ def input_html_samples():
                 MetadataField.AUTHOR: "Test Author",
                 MetadataField.LANGUAGE: "en",
                 "description": "Test page description",
-                "keywords": ["test", "pytest", "metadata"],
             },
         },
         # HTML with Dublin Core metadata
@@ -790,7 +786,6 @@ def input_html_samples():
             """,
             "expected": {
                 MetadataField.TITLE: "Tag Links Page",
-                "keywords": ["Test Tag", "Metadata Tag"],
             },
         },
         # HTML with multiple metadata sources (testing priority)
@@ -841,8 +836,24 @@ def input_html_samples():
                 MetadataField.RELEASED: "2023-01-01",
                 MetadataField.CREDITS: "Test Publisher",
                 "description": "Dublin Core description",
-                "keywords": ["test", "standard", "metadata"],
                 "image": "https://example.com/image.jpg",
+            },
+        },
+    ]
+
+
+@pytest.fixture
+def input_html_fragments():
+    return [
+        # HTML fragments
+        {
+            "html": """
+                <h1>Test Page Heading</h1>
+                <p>Test content</p>
+            """,
+            "expected": {
+                MetadataField.TITLE: "Test Page Heading",
+                MetadataField.AUTHOR: "example.com",
             },
         },
     ]
@@ -921,6 +932,28 @@ class TestMetadataExtractor:
     def test_extract_all(self, input_html_samples, sample_index, url):
         """Test that extract_all correctly extracts metadata from various HTML samples."""
         sample = input_html_samples[sample_index]
+
+        # Extract metadata
+        extractor = MetadataExtractor(sample["html"], url)
+        result = extractor.extract_all()
+
+        # Check each expected field
+        for field, value in sample["expected"].items():
+            if field in result:
+                if isinstance(value, list) and isinstance(result[field], list):
+                    # For list fields like keywords, check that all expected items are present
+                    assert set(value).issubset(set(result[field]))
+                else:
+                    assert result[field] == value, (
+                        f"Field {field} should be {value}, got {result[field]}"
+                    )
+            else:
+                assert value is None, f"Field {field} should exist in result"
+
+    @pytest.mark.parametrize("sample_index", range(1))
+    def test_extract_from_fragment(self, input_html_fragments, sample_index, url):
+        """Test that extract_all correctly extracts metadata from various HTML fragments."""
+        sample = input_html_fragments[sample_index]
 
         # Extract metadata
         extractor = MetadataExtractor(sample["html"], url)

@@ -43,6 +43,23 @@ from lexiflux.ebook.clear_html import clear_html, ALLOWED_TAGS, KEEP_EMPTY_TAGS,
             "<div><iframe src='https://example.com'></iframe><p>Content</p></div>",
             "<div><p>Content</p></div>",
         ),
+        (
+            "web page",
+            """            
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>Tag Links Page</title>
+            </head>
+            <body>
+                <h1>Page with Tag Links</h1>
+                <a rel="tag" href="/tag/test">Test Tag</a>
+                <a rel="tag" href="/tag/metadata">Metadata Tag</a>
+            </body>
+            </html>
+            """,
+            """<h1 class="display-4 fw-semibold text-primary mb-4">Page with Tag Links</h1> <a rel="tag" href="/tag/test">Test Tag</a> <a rel="tag" href="/tag/metadata">Metadata Tag</a>""",
+        ),
     ],
 )
 def test_clear_html_structure(test_id, input_html, expected_output):
@@ -612,8 +629,7 @@ class TestClearHtmlComplexEdgeCases:
                     Text after elements
                     """,
                 """
-                    Text before elements
-                    <div>Content inside div</div>
+                    <p>Text before elements </p><div>Content inside div</div>
                     Text between elements
                     <p>Content inside paragraph</p>
                     Text after elements
