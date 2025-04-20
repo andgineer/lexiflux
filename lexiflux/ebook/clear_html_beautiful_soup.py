@@ -1,3 +1,4 @@
+# pragma: no cover
 import logging
 from collections.abc import Iterable
 

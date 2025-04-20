@@ -209,14 +209,6 @@ def collapse_consecutive_br(root, keep_empty_tags_set):  # noqa: C901,PLR0912,PL
                 parent.remove(br_tag)
 
 
-def remove_cdata(element):
-    if element.text and CDATA_START in element.text:
-        start_idx = element.text.find(CDATA_START)
-        end_idx = element.text.find(CDATA_END, start_idx)
-        if end_idx != -1:
-            element.text = element.text[:start_idx] + element.text[end_idx + len(CDATA_END) :]
-
-
 def remove_empty_elements(ids_to_keep_set, keep_empty_tags_set, root):  # noqa: PLR0912,C901,PLR0915
     """Remove empty elements and divs that contain only <br> tags and whitespace.
 
@@ -342,7 +334,6 @@ def unwrap_unknow_tags(allowed_tags_set, ids_to_keep_set, root):  # noqa: C901,P
     for element in root.iter():
         if element is root:
             continue
-        remove_cdata(element)
 
         tag_name = element.tag
         element_id = element.get("id", "")
@@ -427,8 +418,7 @@ def remove_tags_with_content(root, tags_to_remove_set):
                     parent.remove(element)
 
 
-# Example usage
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
     input_html = "<![CDATA[This is CDATA content with <tags> that shouldn't be parsed]]>"
     result = clear_html(input_html)
     print(f"result=`{result}`")

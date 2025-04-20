@@ -180,7 +180,7 @@ def html_with_multiple_schema_types():
 def test_basic_metadata_extraction(basic_html):
     """Test extraction of basic metadata from HTML."""
     url = "https://example.com/test-article"
-    metadata = extract_web_page_metadata(basic_html, url)
+    metadata = extract_web_page_metadata(basic_html, url=url)
 
     assert metadata[MetadataField.TITLE] == "Test Article Title"
     assert metadata[MetadataField.AUTHOR] == "John Doe"
@@ -193,7 +193,7 @@ def test_basic_metadata_extraction(basic_html):
 def test_dublin_core_metadata_priority(dublin_core_html):
     """Test that Dublin Core metadata takes priority over regular HTML metadata."""
     url = "https://example.com/dublin-core-test"
-    metadata = extract_web_page_metadata(dublin_core_html, url)
+    metadata = extract_web_page_metadata(dublin_core_html, url=url)
 
     assert metadata[MetadataField.TITLE] == "Dublin Core Title"
     assert metadata[MetadataField.AUTHOR] == "Dublin Author"
@@ -208,7 +208,7 @@ def test_dublin_core_metadata_priority(dublin_core_html):
 def test_open_graph_metadata_extraction(open_graph_html):
     """Test extraction of Open Graph metadata."""
     url = "https://example.com/og-test"
-    metadata = extract_web_page_metadata(open_graph_html, url)
+    metadata = extract_web_page_metadata(open_graph_html, url=url)
 
     assert metadata[MetadataField.TITLE] == "OG Title"
     assert metadata[MetadataField.AUTHOR] == "OG Author"
@@ -228,7 +228,7 @@ def test_open_graph_metadata_extraction(open_graph_html):
 def test_json_ld_metadata_extraction(json_ld_html):
     """Test extraction of JSON-LD structured data."""
     url = "https://example.com/jsonld-test"
-    metadata = extract_web_page_metadata(json_ld_html, url)
+    metadata = extract_web_page_metadata(json_ld_html, url=url)
 
     # The expected behavior might be that the extractor doesn't fully
     # process the JSON-LD in the current implementation
@@ -257,7 +257,7 @@ def test_json_ld_metadata_extraction(json_ld_html):
 def test_minimal_html_fallbacks(minimal_html):
     """Test fallback mechanisms for minimal HTML."""
     url = "https://example.com/minimal-test"
-    metadata = extract_web_page_metadata(minimal_html, url)
+    metadata = extract_web_page_metadata(minimal_html, url=url)
 
     assert metadata[MetadataField.TITLE] == "Minimal Page Title"
     assert metadata[MetadataField.AUTHOR] == "example.com"  # Domain fallback
@@ -269,7 +269,7 @@ def test_minimal_html_fallbacks(minimal_html):
 def test_twitter_card_metadata_extraction(twitter_card_html):
     """Test extraction of Twitter Card metadata."""
     url = "https://example.com/twitter-test"
-    metadata = extract_web_page_metadata(twitter_card_html, url)
+    metadata = extract_web_page_metadata(twitter_card_html, url=url)
 
     assert metadata[MetadataField.TITLE] == "Twitter Card Title"
     assert metadata[MetadataField.AUTHOR] == "@TwitterAuthor"
@@ -283,7 +283,7 @@ def test_url_title_fallback():
     """Test URL-based title fallback when no other title is found."""
     html = "<html><body><p>No title here</p></body></html>"
     url = "https://example.com/this-is-the-title"
-    metadata = extract_web_page_metadata(html, url)
+    metadata = extract_web_page_metadata(html, url=url)
 
     assert metadata[MetadataField.TITLE] == "This is the title"
 
@@ -293,7 +293,7 @@ def test_url_title_fallback():
 def test_multiple_schema_types(html_with_multiple_schema_types):
     """Test handling of multiple JSON-LD items with different schema types."""
     url = "https://example.com/multi-schema-test"
-    metadata = extract_web_page_metadata(html_with_multiple_schema_types, url)
+    metadata = extract_web_page_metadata(html_with_multiple_schema_types, url=url)
 
     # Similar to the JSON-LD test, be more flexible with assertions
     # as the JSON-LD processing may be different than expected
@@ -317,7 +317,7 @@ def test_empty_html():
     """Test handling of empty HTML."""
     html = ""
     url = "https://example.com/empty"
-    metadata = extract_web_page_metadata(html, url)
+    metadata = extract_web_page_metadata(html, url=url)
 
     # Should fall back to URL-based title
     assert metadata.get(MetadataField.TITLE) is None
@@ -344,7 +344,7 @@ def test_malformed_json_ld():
     </html>
     """
     url = "https://example.com/malformed-test"
-    metadata = extract_web_page_metadata(html, url)
+    metadata = extract_web_page_metadata(html, url=url)
 
     # Should fall back to regular title
     assert metadata[MetadataField.TITLE] == "Malformed JSON-LD Test"
@@ -369,7 +369,7 @@ def test_meta_content_extraction_edge_cases():
     </html>
     """
     url = "https://example.com/edge-case"
-    metadata = extract_web_page_metadata(html, url)
+    metadata = extract_web_page_metadata(html, url=url)
 
     # Empty author should fall back to domain
     assert metadata[MetadataField.AUTHOR] == "example.com"
@@ -396,7 +396,7 @@ def test_image_extraction_priority():
     </html>
     """
     url = "https://example.com/image-test"
-    metadata = extract_web_page_metadata(html, url)
+    metadata = extract_web_page_metadata(html, url=url)
 
     # OG image should have highest priority
     assert metadata["image"] == "https://example.com/og-image.jpg"
@@ -434,7 +434,7 @@ def test_graph_json_ld():
     </html>
     """
     url = "https://example.com/graph-test"
-    metadata = extract_web_page_metadata(html, url)
+    metadata = extract_web_page_metadata(html, url=url)
 
     # Be flexible with the title assertion since JSON-LD processing might be different
     assert metadata[MetadataField.TITLE] in ["Graph Article Title", "Graph JSON-LD Test"]
@@ -934,7 +934,7 @@ class TestMetadataExtractor:
         sample = input_html_samples[sample_index]
 
         # Extract metadata
-        extractor = MetadataExtractor(sample["html"], url)
+        extractor = MetadataExtractor(sample["html"], url=url)
         result = extractor.extract_all()
 
         # Check each expected field
@@ -956,7 +956,7 @@ class TestMetadataExtractor:
         sample = input_html_fragments[sample_index]
 
         # Extract metadata
-        extractor = MetadataExtractor(sample["html"], url)
+        extractor = MetadataExtractor(sample["html"], url=url)
         result = extractor.extract_all()
 
         # Check each expected field
@@ -978,7 +978,7 @@ class TestMetadataExtractor:
         sample = broken_html_samples[sample_index]
 
         # Extract metadata from broken HTML
-        extractor = MetadataExtractor(sample["html"], url)
+        extractor = MetadataExtractor(sample["html"], url=url)
         result = extractor.extract_all()
 
         # Check that expected fields are extracted despite broken HTML
@@ -999,7 +999,7 @@ class TestMetadataExtractor:
         </html>
         """
 
-        extractor = MetadataExtractor(html, url)
+        extractor = MetadataExtractor(html, url=url)
         result = extractor.extract_all()
 
         # URL fallback should transform "test-article" to "Test article"
@@ -1020,7 +1020,7 @@ class TestMetadataExtractor:
         </html>
         """
 
-        extractor = MetadataExtractor(html, url)
+        extractor = MetadataExtractor(html, url=url)
         result = extractor.extract_all()
 
         # Domain should be used as author fallback
@@ -1033,7 +1033,7 @@ def test_extract_web_page_metadata(input_html_samples, url):
     sample = input_html_samples[0]
 
     # Call the main function
-    result = extract_web_page_metadata(sample["html"], url)
+    result = extract_web_page_metadata(sample["html"], url=url)
 
     # Verify basic extraction works through the main function
     for field, value in sample["expected"].items():

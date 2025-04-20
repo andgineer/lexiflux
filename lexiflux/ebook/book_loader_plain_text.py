@@ -174,9 +174,9 @@ class BookLoaderPlainText(BookLoaderBase):  # pylint: disable=too-many-instance-
             MetadataField.LANGUAGE: r"Language:\s*([^\n]*)\n",
             MetadataField.CREDITS: r"Credits:\s*([^\n]*)\n",
         }
-        header_end_pattern = r"\*\*\* START OF THE PROJECT GUTENBERG EBOOK[^*\n]* \*\*\*"
         if signature := re.search(header_signature_pattern, header):
             meta = {}
+            header_end_pattern = r"\*\*\* START OF THE PROJECT GUTENBERG EBOOK[^*\n]* \*\*\*"
             if match := re.search(header_end_pattern, header):
                 header_end = match.end()
                 header = header[:header_end]

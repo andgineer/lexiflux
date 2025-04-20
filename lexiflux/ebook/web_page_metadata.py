@@ -31,7 +31,13 @@ def parse_partial_html(input_html):
 class MetadataExtractor:
     """A class to extract metadata from web pages using multiple methods."""
 
-    def __init__(self, html_content: str, url: str):
+    def __init__(
+        self,
+        html_content: str | None = None,
+        *,
+        url: str,
+        tree: Optional[etree.Element] = None,
+    ) -> None:
         """
         Initialize the metadata extractor.
 
@@ -39,7 +45,7 @@ class MetadataExtractor:
             html_content: HTML content as string
             url: Original URL of the content
         """
-        self.tree = parse_partial_html(html_content)
+        self.tree = tree or parse_partial_html(html_content)
         # todo: add metadata from trafilature.extract_metadata()
 
         self.url = url
@@ -317,7 +323,12 @@ class MetadataExtractor:
                 self.metadata[MetadataField.CREDITS] = item["name"]
 
 
-def extract_web_page_metadata(html_content: str, url: str) -> dict[str, Any]:
+def extract_web_page_metadata(
+    html_content: str | None = None,
+    *,
+    url: str,
+    root: Optional[etree.Element] = None,
+) -> dict[str, Any]:
     """
     Extract metadata from HTML content using multiple methods.
 
@@ -328,5 +339,5 @@ def extract_web_page_metadata(html_content: str, url: str) -> dict[str, Any]:
     Returns:
         Dictionary with metadata fields as keys
     """
-    extractor = MetadataExtractor(html_content, url)
+    extractor = MetadataExtractor(html_content, url=url, tree=root)
     return extractor.extract_all()
