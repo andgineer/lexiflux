@@ -2,6 +2,7 @@ import allure
 import pytest
 from unittest.mock import patch, MagicMock, call, ANY
 
+from django.http import HttpRequest
 from lxml import etree
 
 from lexiflux.ebook.clear_html import etree_to_str, parse_partial_html
@@ -11,6 +12,8 @@ from lexiflux.ebook.book_loader_url import BookLoaderURL, CleaningLevel
 from lexiflux.ebook.book_loader_base import MetadataField
 
 from bs4 import BeautifulSoup
+
+from lexiflux.views.library_views import import_book
 
 
 @pytest.fixture
@@ -574,7 +577,6 @@ def test_load_text_request_and_processing():
         loader.text = ""
         loader.detect_meta = MagicMock()
 
-        # Call the method
         loader.load_text()
 
         # Verify the flow
@@ -626,9 +628,404 @@ def test_detect_meta_no_text_attribute():
         # Call detect_meta - this should not raise an AttributeError
         result_meta, book_start, book_end = loader.detect_meta()
 
-        # Verify the results
         assert result_meta[MetadataField.TITLE] == "Test Article"
         assert result_meta[MetadataField.AUTHOR] == "Test Author"
         assert result_meta[MetadataField.LANGUAGE] is None  # since text is not set
         assert book_start == 0
         assert book_end == 0  # Should be 0 since text is not set
+
+
+@allure.epic("Book import")
+@allure.feature("URL import: import_book view")
+@patch("lexiflux.views.library_views.BookLoaderURL")
+def test_import_book_from_url_success(mock_book_loader_url):
+    """Test successful book import from URL."""
+
+    request = MagicMock(spec=HttpRequest)
+    request.method = "POST"  # Add method attribute for require_POST decorator
+    request.user = MagicMock()
+    request.user.email = "test@example.com"
+    request.POST = {
+        "importType": "url",
+        "url": "https://example.com/book",
+        "cleaning_level": "moderate",
+    }
+
+    mock_book = MagicMock()
+    mock_book.title = "Test Book from URL"
+    mock_book_instance = MagicMock()
+    mock_book_instance.create.return_value = mock_book
+    mock_book_loader_url.return_value = mock_book_instance
+
+    with (
+        patch("lexiflux.views.library_views.render") as mock_render,
+        patch("lexiflux.decorators.login_required", lambda f: f),
+    ):  # Bypass decorator
+        response = import_book(request)
+
+    mock_book_loader_url.assert_called_once_with(
+        "https://example.com/book", cleaning_level="moderate"
+    )
+    mock_book_instance.create.assert_called_once_with("test@example.com")
+    mock_book.save.assert_called_once()
+
+    assert "error_message" not in response.content.decode("utf-8")
+    assert "show-edit-modal" in response.content.decode("utf-8")
+
+
+@allure.epic("Book import")
+@allure.feature("URL import: import_book view")
+@patch("lexiflux.views.library_views.BookLoaderURL")
+def test_import_book_from_url_with_aggressive_cleaning(mock_book_loader_url):
+    """Test URL import with aggressive cleaning level."""
+    request = MagicMock(spec=HttpRequest)
+    request.method = "POST"  # Add method attribute for require_POST decorator
+    request.user = MagicMock()
+    request.user.email = "test@example.com"
+    request.POST = {
+        "importType": "url",
+        "url": "https://example.com/book",
+        "cleaning_level": "aggressive",
+    }
+
+    mock_book = MagicMock()
+    mock_book_instance = MagicMock()
+    mock_book_instance.create.return_value = mock_book
+    mock_book_loader_url.return_value = mock_book_instance
+
+    with (
+        patch("lexiflux.views.library_views.render"),
+        patch("lexiflux.decorators.login_required", lambda f: f),
+    ):  # Bypass decorator
+        import_book(request)
+
+    mock_book_loader_url.assert_called_once_with(
+        "https://example.com/book", cleaning_level="aggressive"
+    )
+
+
+@allure.epic("Book import")
+@allure.feature("URL import: import_book view")
+def test_import_book_from_url_invalid_url():
+    """Test handling of invalid URL during import."""
+    request = MagicMock(spec=HttpRequest)
+    request.method = "POST"  # Add method attribute for require_POST decorator
+    request.user = MagicMock()
+    request.POST = {"importType": "url", "url": "not-a-valid-url", "cleaning_level": "moderate"}
+
+    with (
+        patch("lexiflux.views.library_views.render") as mock_render,
+        patch("lexiflux.decorators.login_required", lambda f: f),
+    ):  # Bypass decorator
+        response = import_book(request)
+
+    mock_render.assert_called_once()
+    context = mock_render.call_args[0][2]
+    assert "error_message" in context
+    assert "Invalid URL format" in context["error_message"]
+
+
+@allure.epic("Book import")
+@allure.feature("URL import: import_book view")
+@patch("django.core.validators.URLValidator")
+def test_import_book_from_url_empty_url(mock_validator):
+    """Test handling of empty URL during import."""
+    request = MagicMock(spec=HttpRequest)
+    request.method = "POST"  # Add method attribute for require_POST decorator
+    request.user = MagicMock()
+    request.POST = {
+        "importType": "url",
+        "url": "",  # Empty URL
+        "cleaning_level": "moderate",
+    }
+
+    with (
+        patch("lexiflux.views.library_views.render") as mock_render,
+        patch("lexiflux.decorators.login_required", lambda f: f),
+    ):  # Bypass decorator
+        response = import_book(request)
+
+    mock_render.assert_called_once()
+    context = mock_render.call_args[0][2]
+    assert "error_message" in context
+    assert "No URL provided" in context["error_message"]
+
+    mock_validator.assert_not_called()
+
+
+@allure.epic("Book import")
+@allure.feature("Paste import: import_book view")
+@patch("tempfile.NamedTemporaryFile")
+@patch("lexiflux.views.library_views.BookLoaderPlainText")
+def test_import_book_from_paste_text_success(mock_book_loader, mock_temp_file):
+    """Test successful book import from pasted text content."""
+    request = MagicMock(spec=HttpRequest)
+    request.method = "POST"  # Add method attribute for require_POST decorator
+    request.user = MagicMock()
+    request.user.email = "test@example.com"
+    request.POST = {
+        "importType": "paste",
+        "pasted_content": "This is some pasted text content for the book.",
+        "paste_format": "txt",
+    }
+
+    mock_file = MagicMock()
+    mock_file.name = "/tmp/test_file.txt"
+    mock_temp_file.return_value.__enter__.return_value = mock_file
+
+    mock_book = MagicMock()
+    mock_book.title = "Pasted Text Book"
+    mock_book_instance = MagicMock()
+    mock_book_instance.create.return_value = mock_book
+    mock_book_loader.return_value = mock_book_instance
+
+    with (
+        patch("lexiflux.views.library_views.render"),
+        patch("os.unlink"),
+        patch("lexiflux.decorators.login_required", lambda f: f),
+    ):  # Bypass decorator
+        response = import_book(request)
+
+    mock_file.write.assert_called_once_with(b"This is some pasted text content for the book.")
+
+    mock_book_loader.assert_called_once_with(mock_file.name, original_filename="pasted_text.txt")
+
+    mock_book_instance.create.assert_called_once_with("test@example.com")
+    mock_book.save.assert_called_once()
+
+
+@allure.epic("Book import")
+@allure.feature("Paste import: import_book view")
+@patch("tempfile.NamedTemporaryFile")
+@patch("lexiflux.views.library_views.BookLoaderHtml")
+def test_import_book_from_paste_html_success(mock_book_loader, mock_temp_file):
+    """Test successful book import from pasted HTML content."""
+    request = MagicMock(spec=HttpRequest)
+    request.method = "POST"  # Add method attribute for require_POST decorator
+    request.user = MagicMock()
+    request.user.email = "test@example.com"
+    request.POST = {
+        "importType": "paste",
+        "pasted_content": "<html><body><h1>Book Title</h1><p>Content</p></body></html>",
+        "paste_format": "html",
+    }
+
+    mock_file = MagicMock()
+    mock_file.name = "/tmp/test_file.html"
+    mock_temp_file.return_value.__enter__.return_value = mock_file
+
+    mock_book = MagicMock()
+    mock_book.title = "Pasted HTML Book"
+    mock_book_instance = MagicMock()
+    mock_book_instance.create.return_value = mock_book
+    mock_book_loader.return_value = mock_book_instance
+
+    with (
+        patch("lexiflux.views.library_views.render"),
+        patch("os.unlink"),
+        patch("lexiflux.decorators.login_required", lambda f: f),
+    ):  # Bypass decorator
+        response = import_book(request)
+
+    mock_book_loader.assert_called_once_with(
+        mock_file.name, original_filename="pasted_content.html"
+    )
+
+    mock_book_instance.create.assert_called_once_with("test@example.com")
+    mock_book.save.assert_called_once()
+
+
+@allure.epic("Book import")
+@allure.feature("Paste import: import_book view")
+def test_import_book_from_paste_empty_content():
+    """Test handling of empty pasted content during import."""
+    request = MagicMock(spec=HttpRequest)
+    request.method = "POST"  # Add method attribute for require_POST decorator
+    request.user = MagicMock()
+    request.POST = {
+        "importType": "paste",
+        "pasted_content": "",  # Empty content
+        "paste_format": "txt",
+    }
+
+    with (
+        patch("lexiflux.views.library_views.render") as mock_render,
+        patch("lexiflux.decorators.login_required", lambda f: f),
+    ):  # Bypass decorator
+        response = import_book(request)
+
+    mock_render.assert_called_once()
+    context = mock_render.call_args[0][2]
+    assert "error_message" in context
+    assert "No content pasted" in context["error_message"]
+
+
+@allure.epic("Book import")
+@allure.feature("Paste import: import_book view")
+def test_import_book_from_paste_whitespace_only():
+    """Test handling of whitespace-only pasted content during import."""
+    request = MagicMock(spec=HttpRequest)
+    request.method = "POST"  # Add method attribute for require_POST decorator
+    request.user = MagicMock()
+    request.POST = {
+        "importType": "paste",
+        "pasted_content": "   \n  \t  ",  # Whitespace-only content
+        "paste_format": "txt",
+    }
+
+    with (
+        patch("lexiflux.views.library_views.render") as mock_render,
+        patch("lexiflux.decorators.login_required", lambda f: f),
+    ):  # Bypass decorator
+        response = import_book(request)
+
+    mock_render.assert_called_once()
+    context = mock_render.call_args[0][2]
+    assert "error_message" in context
+    assert "No content pasted" in context["error_message"]
+
+
+@allure.epic("Book import")
+@allure.feature("Paste import: import_book view")
+@patch("tempfile.NamedTemporaryFile")
+def test_import_book_from_paste_file_cleanup(mock_temp_file):
+    """Test that temporary files are cleaned up after paste import."""
+    request = MagicMock(spec=HttpRequest)
+    request.method = "POST"  # Add method attribute for require_POST decorator
+    request.user = MagicMock()
+    request.user.email = "test@example.com"
+    request.POST = {"importType": "paste", "pasted_content": "Test content", "paste_format": "txt"}
+
+    mock_file = MagicMock()
+    mock_file.name = "/tmp/test_file.txt"
+    mock_temp_file.return_value.__enter__.return_value = mock_file
+
+    # Mock os.unlink to verify it's called
+    with (
+        patch("lexiflux.views.library_views.BookLoaderPlainText") as mock_loader,
+        patch("os.unlink") as mock_unlink,
+        patch("lexiflux.views.library_views.render"),
+        patch("lexiflux.decorators.login_required", lambda f: f),
+    ):  # Bypass decorator
+        # Setup book loader to return a book
+        mock_book = MagicMock()
+        mock_instance = MagicMock()
+        mock_instance.create.return_value = mock_book
+        mock_loader.return_value = mock_instance
+
+        import_book(request)
+
+    mock_unlink.assert_called_once_with(mock_file.name)
+
+
+@allure.epic("Book import")
+@allure.feature("Paste import: import_book view")
+@patch("tempfile.NamedTemporaryFile")
+def test_import_book_from_paste_with_exception_still_cleans_up(mock_temp_file):
+    """Test that temporary files are cleaned up even if an exception occurs."""
+    request = MagicMock(spec=HttpRequest)
+    request.method = "POST"  # Add method attribute for require_POST decorator
+    request.user = MagicMock()
+    request.user.email = "test@example.com"
+    request.POST = {"importType": "paste", "pasted_content": "Test content", "paste_format": "txt"}
+
+    mock_file = MagicMock()
+    mock_file.name = "/tmp/test_file.txt"
+    mock_temp_file.return_value.__enter__.return_value = mock_file
+
+    # Mock BookLoaderPlainText to raise an exception
+    with (
+        patch("lexiflux.views.library_views.BookLoaderPlainText") as mock_loader,
+        patch("os.unlink") as mock_unlink,
+        patch("lexiflux.views.library_views.render"),
+        patch("lexiflux.decorators.login_required", lambda f: f),
+    ):  # Bypass decorator
+        mock_loader.return_value.create.side_effect = ValueError("Test error")
+
+        import_book(request)
+
+    mock_unlink.assert_called_once_with(mock_file.name)
+
+
+@allure.epic("Book import")
+@allure.feature("General import: import_book view")
+def test_import_book_unknown_type():
+    """Test handling of unknown import type."""
+    request = MagicMock(spec=HttpRequest)
+    request.method = "POST"  # Add method attribute for require_POST decorator
+    request.user = MagicMock()
+    request.POST = {
+        "importType": "unknown_type"  # Invalid import type
+    }
+
+    with (
+        patch("lexiflux.views.library_views.render") as mock_render,
+        patch("lexiflux.decorators.login_required", lambda f: f),
+    ):  # Bypass decorator
+        response = import_book(request)
+
+    mock_render.assert_called_once()
+    context = mock_render.call_args[0][2]
+    assert "error_message" in context
+    assert "Unknown import type" in context["error_message"]
+
+
+@pytest.mark.django_db
+class TestImportIntegration:
+    @allure.epic("Book import")
+    @allure.feature("URL import: integration")
+    @patch("lexiflux.views.library_views.BookLoaderURL")
+    def test_url_import_integration(self, mock_book_loader_url, client, approved_user, book):
+        """Test URL import flow with Django test client."""
+        client.force_login(approved_user)
+
+        # Set up mock book loader to return the existing book fixture
+        mock_book_instance = MagicMock()
+        mock_book_instance.create.return_value = book
+        mock_book_loader_url.return_value = mock_book_instance
+
+        response = client.post(
+            "/api/import-book/",
+            {
+                "importType": "url",
+                "url": "https://example.com/valid-book",
+                "cleaning_level": "moderate",
+            },
+            HTTP_HX_REQUEST="true",
+        )
+
+        assert response.status_code == 200
+        assert b"show-edit-modal" in response.content
+        assert b"error_message" not in response.content
+
+        # Verify book loader was called correctly
+        mock_book_loader_url.assert_called_once_with(
+            "https://example.com/valid-book", cleaning_level="moderate"
+        )
+        mock_book_instance.create.assert_called_once_with(approved_user.email)
+
+    @allure.epic("Book import")
+    @allure.feature("Paste import: integration")
+    def test_paste_import_integration(self, client, approved_user, book):
+        """Test paste import flow with Django test client."""
+        client.force_login(approved_user)
+
+        with patch("lexiflux.views.library_views.BookLoaderPlainText") as mock_loader:
+            # Set up mock loader to return the existing book fixture
+            mock_instance = MagicMock()
+            mock_instance.create.return_value = book
+            mock_loader.return_value = mock_instance
+
+            response = client.post(
+                "/api/import-book/",
+                {
+                    "importType": "paste",
+                    "pasted_content": "This is test content for a book import.",
+                    "paste_format": "txt",
+                },
+                HTTP_HX_REQUEST="true",
+            )
+
+        assert response.status_code == 200
+        assert b"show-edit-modal" in response.content
+        assert b"error_message" not in response.content
