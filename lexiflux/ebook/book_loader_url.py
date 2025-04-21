@@ -88,10 +88,15 @@ class BookLoaderURL(BookLoaderHtml):
                 response.raise_for_status()
                 self.html_content = response.text
 
+            with timing("Extract metadata"):
+                # Before extracting readable to not lose any metadata
+                self.tree_root = parse_partial_html(self.html_content)
+                self.detect_meta()
+
             with timing("Extracting readable HTML"):
                 extracted_content = self.extract_readable_html()
 
-            with timing("Parsing HTML"):
+            with timing("Parse extracted HTML"):
                 self.tree_root = parse_partial_html(extracted_content)
 
             with timing("Adding source info"):
@@ -135,8 +140,6 @@ class BookLoaderURL(BookLoaderHtml):
 
         Modifies root.
         """
-
-        self.detect_meta()
 
         # Create source info div
         source_div = etree.Element("div", attrib={"class": "source-info"})
