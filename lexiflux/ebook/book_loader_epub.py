@@ -8,7 +8,7 @@ from collections import defaultdict
 from collections.abc import Iterable, Iterator
 from typing import Any, Optional
 
-from bs4 import BeautifulSoup, Tag
+from bs4 import BeautifulSoup
 from django.db import transaction
 from ebooklib import ITEM_DOCUMENT, ITEM_IMAGE, epub
 
@@ -135,7 +135,13 @@ class BookLoaderEpub(BookLoaderBase):
                             if page_num < PAGES_NUM_TO_DEBUG:
                                 log.debug(f"Cleaned SubPage {page_num}: {cleaned_content}")
                             if cleaned_content:
-                                self._process_anchors(item, page_num, cleaned_content)
+                                self._process_anchors(
+                                    page_num,
+                                    cleaned_content,
+                                    item.file_name,
+                                    item.get_id(),
+                                    item.get_name(),
+                                )
                                 if page_num < PAGES_NUM_TO_DEBUG:
                                     log.debug(f"SubPage {page_num}: {cleaned_content}")
                                 yield cleaned_content
@@ -153,7 +159,13 @@ class BookLoaderEpub(BookLoaderBase):
                     if page_num < PAGES_NUM_TO_DEBUG:
                         log.debug(f"Cleaned SubPage {page_num}: {cleaned_content}")
                     if cleaned_content:
-                        self._process_anchors(item, page_num, cleaned_content)
+                        self._process_anchors(
+                            page_num,
+                            cleaned_content,
+                            item.file_name,
+                            item.get_id(),
+                            item.get_name(),
+                        )
                         if page_num < PAGES_NUM_TO_DEBUG:
                             log.debug(f"Page {page_num}: {cleaned_content}")
                         yield cleaned_content
@@ -196,6 +208,7 @@ class BookLoaderEpub(BookLoaderBase):
         try:
             soup = BeautifulSoup(item.get_body_content().decode("utf-8"), "html.parser")
 
+            # todo: use ExtractMetadata class
             # Prioritize standard <title> tag in the <head>
             title_tag = soup.find("title")
             if title_tag and title_tag.get_text(strip=True):
@@ -233,26 +246,6 @@ class BookLoaderEpub(BookLoaderBase):
         except Exception as e:  # noqa: BLE001
             log.error("Error extracting title from item %s: %s", item.get_id(), e)
         return None
-
-    def _process_anchors(self, item: epub.EpubItem, current_page: int, content: str) -> None:
-        """Process anchors for a page."""
-        soup = BeautifulSoup(content, "html.parser")
-        for anchor in soup.find_all(lambda tag: tag.has_attr("id")):
-            if isinstance(anchor, Tag):
-                anchor_id = str(anchor["id"])
-                self.anchor_map[f"{item.file_name}#{anchor_id}"] = {
-                    "page": current_page,
-                    "item_id": item.get_id(),
-                    "item_name": item.get_name(),
-                }
-
-        # Add an entry for the start of the document if it hasn't been added yet
-        if item.file_name not in self.anchor_map:
-            self.anchor_map[item.file_name] = {
-                "page": current_page,
-                "item_id": item.get_id(),
-                "item_name": item.get_name(),
-            }
 
     def get_random_words(self, words_num: int = 15) -> str:
         """Get random words from the book."""

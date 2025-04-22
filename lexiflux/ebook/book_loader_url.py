@@ -32,8 +32,6 @@ class BookLoaderURL(BookLoaderHtml):
     """Import ebook from web pages."""
 
     title: str
-    html_content: str
-    tree_root: etree.Element
 
     def __init__(
         self,
@@ -99,12 +97,18 @@ class BookLoaderURL(BookLoaderHtml):
             with timing("Parse extracted HTML"):
                 self.tree_root = parse_partial_html(extracted_content)
 
+            # Extract IDs that have internal links to them
+            with timing("Extracting IDs with internal links"):
+                ids_to_keep = self.extract_ids_with_internal_links()
+                log.debug(f"IDs to keep: {ids_to_keep}")
+
             with timing("Adding source info"):
-                self._add_source_info(self.tree_root)
+                self._add_source_info()
 
             with timing("Cleared HTML"):
                 self.text = clear_html(
                     root=self.tree_root,
+                    ids_to_keep=ids_to_keep,
                 )
 
         except Exception as e:
@@ -135,11 +139,8 @@ class BookLoaderURL(BookLoaderHtml):
             extracted_content = self.html_content
         return extracted_content
 
-    def _add_source_info(self, root) -> None:
-        """Add source information at the beginning of the content.
-
-        Modifies root.
-        """
+    def _add_source_info(self) -> None:
+        """Add source information at the beginning of the self.tree_root."""
 
         # Create source info div
         source_div = etree.Element("div", attrib={"class": "source-info"})
@@ -164,13 +165,13 @@ class BookLoaderURL(BookLoaderHtml):
         source_div.append(hr)
 
         # Insert at the beginning of the body or document
-        body = root.find("body")
+        body = self.tree_root.find("body")
         if body is not None:
             # If there's a body tag, insert at the beginning of the body
             body.insert(0, source_div)
         else:
             # If there's no body tag, insert at the beginning of the root
-            root.insert(0, source_div)
+            self.tree_root.insert(0, source_div)
 
     def detect_meta(self) -> tuple[dict[str, Any], int, int]:
         """Try to detect book meta from the web page.
@@ -188,3 +189,16 @@ class BookLoaderURL(BookLoaderHtml):
             self.meta[MetadataField.LANGUAGE] = self.detect_language()
 
         return self.meta, self.book_start, self.book_end
+
+    def pages(self):
+        """Extends parent's pages method to add anchor processing."""
+        for page_num, content in enumerate(super().pages(), start=1):
+            self._process_anchors(page_num, content)
+            yield content
+
+    def create(self, owner_email, forced_language=None):
+        """Include anchor_map in the book object."""
+        book = super().create(owner_email, forced_language)
+        book.anchor_map = self.anchor_map
+        log.info(str(self.anchor_map))
+        return book

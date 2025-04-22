@@ -7,7 +7,9 @@ from collections.abc import Iterator
 from typing import IO, Any, Optional, Union
 
 from django.core.management import CommandError
+from lxml import etree
 
+from lexiflux.ebook.clear_html import parse_partial_html
 from lexiflux.language.detect_language_fasttext import language_detector
 from lexiflux.models import Author, Book, BookPage, CustomUser, Language, Toc
 
@@ -28,10 +30,13 @@ class BookLoaderBase:
     """Base class for importing books from different formats."""
 
     toc: Toc = []
-    meta: dict[str, Any] = {}
+    meta: dict[str, Any]
     book_start: int
     book_end: int
     text: str
+    html_content: str
+    tree_root: etree.Element
+    anchor_map: dict[str, dict[str, Any]]
 
     def __init__(
         self,
@@ -43,6 +48,8 @@ class BookLoaderBase:
 
         file_path - a path to a file to import.
         """
+        self.meta = {}
+        self.anchor_map = {}
         self.file_path = file_path
         self.original_filename = original_filename
         self.languages = ["en", "sr"] if languages is None else languages
@@ -221,3 +228,61 @@ class BookLoaderBase:
         language_name = self.detect_language()
         log.debug("Language '%s' detected.", language_name)
         return language_name  # type: ignore
+
+    def _process_anchors(
+        self,
+        page_num: int,
+        content: str,
+        file_name: str = "",
+        item_id: Optional[str] = None,
+        item_name: Optional[str] = None,
+    ):
+        """Process anchors for a page.
+
+        Store in self.anchor_map.
+        """
+        try:
+            html_tree = parse_partial_html(content)
+            if "chap03" in content:
+                log.warning(f"Found anchor ID in the _process_anchors: {page_num}")
+            # Find all elements with id attributes
+            # todo: store only used in links - see extract_ids_with_internal_links()
+            for element in html_tree.xpath("//*[@id]"):
+                if anchor_id := element.get("id"):
+                    log.info(f"Found anchor with id: {anchor_id}")
+                    current_item_id = item_id or anchor_id
+                    element_text = element.text.strip() if element.text else ""
+                    current_item_name = item_name or element_text[:100]
+
+                    self.anchor_map[f"{file_name}#{anchor_id}"] = {
+                        "page": page_num,
+                        "item_id": current_item_id,
+                        "item_name": current_item_name,
+                    }
+
+            # Add an entry for the start of the document if it hasn't been added yet
+            if file_name and file_name not in self.anchor_map:
+                doc_item_id = item_id if item_id is not None else os.path.basename(file_name)
+                doc_item_name = item_name if item_name is not None else os.path.basename(file_name)
+                self.anchor_map[file_name] = {
+                    "page": page_num,
+                    "item_id": doc_item_id,
+                    "item_name": doc_item_name,
+                }
+
+        except Exception:
+            log.exception("Error processing anchors")
+
+    def extract_ids_with_internal_links(self) -> set[str]:
+        """Extract from self.tree_root IDs that have internal links to them."""
+        ids_to_keep = set()
+
+        # Find all internal links (href starting with #)
+        for link in self.tree_root.xpath('//a[starts-with(@href, "#")]'):
+            href = link.get("href", "")
+            # Extract the ID from the href (remove the leading #)
+            if href.startswith("#"):  # noqa: SIM102
+                if target_id := href[1:]:
+                    ids_to_keep.add(target_id)
+
+        return ids_to_keep

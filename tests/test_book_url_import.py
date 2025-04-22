@@ -200,6 +200,7 @@ def test_import_url_e2e():
         book_loader.meta = metadata
         book_loader.book_start = 0
         book_loader.book_end = 100
+        book_loader.anchor_map = {}
 
         # Configure mock methods
         book_loader.detect_meta.return_value = (metadata, 0, 100)
@@ -268,9 +269,9 @@ def test_add_source_info_title_and_source():
         loader.text = html_content
         loader.book_start, loader.book_end = 0, len(loader.text)
 
-        root = parse_partial_html(html_content)
-        loader._add_source_info(root)
-        result = etree_to_str(root)
+        loader.tree_root = parse_partial_html(html_content)
+        loader._add_source_info()
+        result = etree_to_str(loader.tree_root)
 
         # Parse the result for easier testing
         soup = BeautifulSoup(result, "html.parser")
@@ -317,9 +318,9 @@ def test_add_source_info_date_and_formatting():
 
         with patch("datetime.datetime") as mock_datetime:
             mock_datetime.now.return_value = mock_date
-            root = parse_partial_html(html_content)
-            loader._add_source_info(root)
-            result = etree_to_str(root)
+            loader.tree_root = parse_partial_html(html_content)
+            loader._add_source_info()
+            result = etree_to_str(loader.tree_root)
 
         # Parse the result for easier testing
         soup = BeautifulSoup(result, "html.parser")
@@ -359,9 +360,9 @@ def test_add_source_info_body_placement():
         """
         loader.text = html_content
         loader.book_start, loader.book_end = 0, len(loader.text)
-        root = parse_partial_html(html_content)
-        loader._add_source_info(root)
-        result = etree_to_str(root)
+        loader.tree_root = parse_partial_html(html_content)
+        loader._add_source_info()
+        result = etree_to_str(loader.tree_root)
 
         # Parse the result
         soup = BeautifulSoup(result, "html.parser")
@@ -407,9 +408,9 @@ def test_add_source_info_no_body():
         loader.text = html_content
         loader.book_start, loader.book_end = 0, len(loader.text)
 
-        root = parse_partial_html(html_content)
-        loader._add_source_info(root)
-        result = etree_to_str(root)
+        loader.tree_root = parse_partial_html(html_content)
+        loader._add_source_info()
+        result = etree_to_str(loader.tree_root)
 
         parsed_doc = etree.fromstring(result, etree.HTMLParser())
 
@@ -584,8 +585,8 @@ def test_load_text_request_and_processing():
             "https://example.com/test", headers={"User-Agent": "Test Agent"}, timeout=30
         )
         mock_extract.assert_called_once()
-        mock_parse.assert_called_once()
-        mock_clear.assert_called_once()
+        mock_parse.assert_called()
+        assert mock_parse.call_count == 2  # reparse afte trafilatura readable extract
 
         # Verify the final text
         assert loader.text == "<p>Cleaned content</p>"
@@ -616,6 +617,8 @@ def test_detect_meta_no_text_attribute():
         # Set up required attributes manually, but deliberately omit 'text'
         loader.url = "https://example.com/test"
         loader.html_content = "<html><body><p>Test content</p></body></html>"
+        loader.anchor_map = {}
+        loader.meta = {}
 
         # Create tree_root from the html_content
         from lxml import etree, html

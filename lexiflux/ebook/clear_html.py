@@ -15,7 +15,7 @@ TAGS_WITH_CLASSES = {
     "h5": "h5 fw-normal text-dark mb-2",
 }
 
-KEEP_EMPTY_TAGS = ("img", "br", "hr", "input")
+KEEP_EMPTY_TAGS = ("img", "br", "hr", "input", "a")
 
 REMOVE_WITH_CONTENT = ("script", "style", "head", "iframe", "noscript")
 
