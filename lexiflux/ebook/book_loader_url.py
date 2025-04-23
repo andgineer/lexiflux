@@ -94,13 +94,11 @@ class BookLoaderURL(BookLoaderHtml):
             with timing("Extracting readable HTML"):
                 extracted_content = self.extract_readable_html()
 
+            with timing("Extracting IDs with internal links"):
+                self.keep_ids = self.extract_ids_with_internal_links()
+
             with timing("Parse extracted HTML"):
                 self.tree_root = parse_partial_html(extracted_content)
-
-            # Extract IDs that have internal links to them
-            with timing("Extracting IDs with internal links"):
-                ids_to_keep = self.extract_ids_with_internal_links()
-                log.debug(f"IDs to keep: {ids_to_keep}")
 
             with timing("Adding source info"):
                 self._add_source_info()
@@ -108,7 +106,7 @@ class BookLoaderURL(BookLoaderHtml):
             with timing("Cleared HTML"):
                 self.text = clear_html(
                     root=self.tree_root,
-                    ids_to_keep=ids_to_keep,
+                    ids_to_keep=self.keep_ids,
                 )
 
         except Exception as e:
@@ -200,5 +198,4 @@ class BookLoaderURL(BookLoaderHtml):
         """Include anchor_map in the book object."""
         book = super().create(owner_email, forced_language)
         book.anchor_map = self.anchor_map
-        log.info(str(self.anchor_map))
         return book

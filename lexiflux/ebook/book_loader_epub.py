@@ -40,9 +40,8 @@ class BookLoaderEpub(BookLoaderBase):
     MAX_RANDOM_WORDS_ATTEMPTS = 10  # Maximum number of attempts to find a suitable page
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
-        self.page_splitter = HtmlPageSplitter(target_page_size=TARGET_PAGE_SIZE)
         super().__init__(*args, **kwargs)
-        self.anchor_map: dict[str, dict[str, Any]] = {}
+        self.page_splitter = HtmlPageSplitter(target_page_size=TARGET_PAGE_SIZE)
 
     @transaction.atomic  # type: ignore
     def create(self, owner_email: str, forced_language: Optional[str] = None) -> Book:
@@ -131,7 +130,10 @@ class BookLoaderEpub(BookLoaderBase):
                         if sub_page.strip():  # Only process non-empty pages
                             if page_num < PAGES_NUM_TO_DEBUG:
                                 log.debug(f"SubPage {page_num}: {sub_page}")
-                            cleaned_content = clear_html(sub_page).strip()
+                            cleaned_content = clear_html(
+                                sub_page,
+                                ids_to_keep=self.keep_ids,
+                            ).strip()
                             if page_num < PAGES_NUM_TO_DEBUG:
                                 log.debug(f"Cleaned SubPage {page_num}: {cleaned_content}")
                             if cleaned_content:
@@ -155,7 +157,7 @@ class BookLoaderEpub(BookLoaderBase):
                 else:
                     if page_num < PAGES_NUM_TO_DEBUG:
                         log.debug(f"Content {page_num}: {content}")
-                    cleaned_content = clear_html(content).strip()
+                    cleaned_content = clear_html(content, ids_to_keep=self.keep_ids).strip()
                     if page_num < PAGES_NUM_TO_DEBUG:
                         log.debug(f"Cleaned SubPage {page_num}: {cleaned_content}")
                     if cleaned_content:

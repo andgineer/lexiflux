@@ -34,9 +34,11 @@ class BookLoaderBase:
     book_start: int
     book_end: int
     text: str
+
     html_content: str
     tree_root: etree.Element
     anchor_map: dict[str, dict[str, Any]]
+    keep_ids: set[str]
 
     def __init__(
         self,
@@ -50,6 +52,7 @@ class BookLoaderBase:
         """
         self.meta = {}
         self.anchor_map = {}
+        self.keep_ids = set()
         self.file_path = file_path
         self.original_filename = original_filename
         self.languages = ["en", "sr"] if languages is None else languages
@@ -249,7 +252,6 @@ class BookLoaderBase:
             # todo: store only used in links - see extract_ids_with_internal_links()
             for element in html_tree.xpath("//*[@id]"):
                 if anchor_id := element.get("id"):
-                    log.info(f"Found anchor with id: {anchor_id}")
                     current_item_id = item_id or anchor_id
                     element_text = element.text.strip() if element.text else ""
                     current_item_name = item_name or element_text[:100]
