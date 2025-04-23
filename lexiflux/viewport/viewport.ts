@@ -222,12 +222,12 @@ export class Viewport {
         // first find any visible word - this is the upper bound in search for the first visible word
         let totalHeight = {value: 0};  // accumulate statistics to
         let wordCount = {value: 0};    // calculate average line height
-        let high = this.binarySearchVisibleWord(0, this.totalWords, totalHeight, wordCount);
-        // log('found high bound:', high);
+        let high = this.binarySearchVisibleWord(0, this.totalWords - 1, totalHeight, wordCount);
+//         log('found high bound:', high, 'wordCount:', this.totalWords);
         let low = 0;
         const containerHeight = this.getWordsContainerHeight();
         const containerTop = this.wordsContainerTopMargin;
-        // log('container:', containerTop, containerHeight);
+//         log('container:', containerTop, containerHeight);
 
         // look for first visible word using binary search
         while (low < high) {
@@ -240,7 +240,7 @@ export class Viewport {
             let rect = word.getBoundingClientRect();
             totalHeight.value += rect.height;
             wordCount.value++;
-            // log('low:', low, 'high:', high, 'mid:', mid, 'top:', rect.top);
+//             log('low:', low, 'high:', high, 'mid:', mid, 'top:', rect.top);
 
             if (rect.top < containerTop) {
                 low = mid + 1;
