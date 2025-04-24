@@ -41,7 +41,6 @@ class BookLoaderEpub(BookLoaderBase):
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
-        self.page_splitter = HtmlPageSplitter(target_page_size=TARGET_PAGE_SIZE)
 
     @transaction.atomic  # type: ignore
     def create(self, owner_email: str, forced_language: Optional[str] = None) -> Book:
@@ -121,12 +120,12 @@ class BookLoaderEpub(BookLoaderBase):
                     item.get_id(),
                     item.file_name,
                 )
-                soup = BeautifulSoup(item.get_body_content().decode("utf-8"), "html.parser")
-                content = str(soup)
+                content = item.get_body_content().decode("utf-8")
+                page_splitter = HtmlPageSplitter(content, target_page_size=TARGET_PAGE_SIZE)
                 if page_num < PAGES_NUM_TO_DEBUG:
                     log.debug(f"Content: {content}")
                 if len(content) > MAX_ITEM_SIZE:
-                    for sub_page in self.page_splitter.split_content(soup):
+                    for sub_page in page_splitter.pages():
                         if sub_page.strip():  # Only process non-empty pages
                             if page_num < PAGES_NUM_TO_DEBUG:
                                 log.debug(f"SubPage {page_num}: {sub_page}")

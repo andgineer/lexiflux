@@ -2,33 +2,14 @@ import re
 
 import allure
 import pytest
-from bs4 import BeautifulSoup
 
 from lexiflux.ebook.book_loader_epub import TARGET_PAGE_SIZE
 from lexiflux.ebook.html_page_splitter import HtmlPageSplitter
 
 
-@pytest.fixture
-def medium_splitter():
-    """Return splitter configured for medium-length pages."""
-    return HtmlPageSplitter(target_page_size=165)
-
-
-@pytest.fixture
-def small_splitter():
-    """Return splitter configured for small pages."""
-    return HtmlPageSplitter(target_page_size=300)
-
-
-@pytest.fixture
-def tiny_splitter():
-    """Return splitter configured for tiny pages."""
-    return HtmlPageSplitter(target_page_size=50)
-
-
 @allure.epic("Book import")
 @allure.feature("EPUB: parse pages")
-def test_multiple_paragraphs_near_limit(medium_splitter):
+def test_multiple_paragraphs_near_limit():
     """Test handling of multiple paragraphs near the page size limit."""
     content = """
     <div>
@@ -37,12 +18,12 @@ def test_multiple_paragraphs_near_limit(medium_splitter):
         <p>Third paragraph with some content. More text here. Final sentence.</p>
     </div>
     """
+    target_size = 165
 
-    element = BeautifulSoup(content, "html.parser").div
-    pages = list(medium_splitter.split_elements([element]))
-    target_size = medium_splitter.target_page_size
+    medium_splitter = HtmlPageSplitter(content, target_page_size=target_size)
+    pages = list(medium_splitter.pages())
 
-    print(f"\nTotal content size: {len(str(element))} chars")
+    print(f"\nTotal content size: {len(content)} chars")
     print(f"Target page size: {target_size} chars")
     for i, page in enumerate(pages):
         print(f"Page {i + 1} size: {len(page)} chars")
@@ -73,23 +54,20 @@ class TestEpubContentSplitting:
 
     def test_split_large_element(self):
         """Test splitting of large HTML elements."""
-        splitter = HtmlPageSplitter(target_page_size=TARGET_PAGE_SIZE)
-
-        # Test with a large HTML element
-        large_html_element = BeautifulSoup(
-            "<div><p>" + "HTML content " * 500 + "</p><p>" + "More HTML " * 500 + "</p></div>",
-            "html.parser",
-        ).div
-        html_pages = list(splitter.split_elements([large_html_element]))
+        large_html = (
+            "<div><p>" + "HTML content " * 500 + "</p><p>" + "More HTML " * 500 + "</p></div>"
+        )
+        splitter = HtmlPageSplitter(large_html, target_page_size=TARGET_PAGE_SIZE)
+        html_pages = list(splitter.pages())
 
         assert len(html_pages) > 1, "Large HTML element should be split into multiple pages"
         assert all(len(page) <= TARGET_PAGE_SIZE * 2 for page in html_pages), (
             "No HTML page should be more than twice the TARGET_PAGE_SIZE"
         )
 
-        # Test with a large paragraph
-        large_p_element = BeautifulSoup("<p>" + "Large content " * 1000 + "</p>", "html.parser").p
-        p_pages = list(splitter.split_elements([large_p_element]))
+        large_p_element = "<p>" + "Large content " * 1000 + "</p>"
+        splitter = HtmlPageSplitter(large_p_element, target_page_size=TARGET_PAGE_SIZE)
+        p_pages = list(splitter.pages())
 
         assert len(p_pages) > 1, "Large paragraph should be split into multiple pages"
         assert all(len(page) <= TARGET_PAGE_SIZE * 2 for page in p_pages), (
@@ -102,17 +80,16 @@ class TestEpubContentSplitting:
     def test_split_large_element_sentence_boundaries(self):
         """Test that content is split at sentence boundaries with realistic text."""
         target_size = 300
-        splitter = HtmlPageSplitter(target_page_size=target_size)
 
         russian_text = """
         <p class="p1">Моя мать не боялась загробной жизни. Как и большинство евреев, она имела очень смутное представление о том, что ждет человека, попавшего в могилу, и она старалась не думать об этом. Ее страшили само умирание, безвозвратность ухода из жизни. Я до сих пор не могу забыть, с какой одержимостью она говорила о неизбежности конца, особенно в моменты расставаний. Все мое существование было наполнено экзальтированными и драматическими сценами прощаний. И когда они с отцом уезжали из Бостона в Нью-Йорк на уик-энд, и когда мать провожала меня в летний лагерь, и даже когда я уходил в школу, она прижималась ко мне и со слезами говорила о том, как она ослабла, предупреждая, что мы можем больше не увидеться. Если мы шли вместе куда-нибудь, она вдруг останавливалась, словно теряя сознание. Иногда она показывала мне вену на шее, брала меня за руку и просила пощупать пульс, чтобы удостовериться в том, как неровно бьется ее сердце.</p>
         """
+        splitter = HtmlPageSplitter(russian_text, target_page_size=target_size)
 
-        element = BeautifulSoup(russian_text, "html.parser").p
-        pages = list(splitter.split_elements([element]))
+        pages = list(splitter.pages())
 
         # Print debug info
-        print(f"\nText size: {len(str(element))} chars")
+        print(f"\nText size: {len(russian_text)} chars")
         print(f"Target page size: {target_size} chars")
         for i, page in enumerate(pages):
             print(f"Page {i + 1}:\n{page}")
@@ -138,13 +115,12 @@ class TestEpubContentSplitting:
     def test_very_long_single_sentence(self):
         """Test handling of sentences longer than page size."""
         target_size = 50
-        splitter = HtmlPageSplitter(target_page_size=target_size)
 
         long_sentence = "<p>This is a very long sentence that significantly exceeds our tiny page size limit and will need to be split into multiple pages somehow.</p>"
-        element = BeautifulSoup(long_sentence, "html.parser").p
-        pages = list(splitter.split_elements([element]))
+        splitter = HtmlPageSplitter(long_sentence, target_page_size=target_size)
+        pages = list(splitter.pages())
 
-        print(f"\nLong sentence size: {len(str(element))} chars")
+        print(f"\nLong sentence size: {len(long_sentence)} chars")
         print(f"Target page size: {target_size} chars")
         for i, page in enumerate(pages):
             print(f"Page {i + 1}:\n{page}")
@@ -157,7 +133,6 @@ class TestEpubContentSplitting:
     def test_html_tag_integrity(self):
         """Test that HTML tags are never split across pages. Each page must be valid HTML."""
         target_size = 50
-        splitter = HtmlPageSplitter(target_page_size=target_size)
 
         complex_html = """
         <p>Start of text 
@@ -169,8 +144,8 @@ class TestEpubContentSplitting:
         </span>
         </p>
         """
-        element = BeautifulSoup(complex_html, "html.parser").p
-        pages = list(splitter.split_elements([element]))
+        splitter = HtmlPageSplitter(complex_html, target_page_size=target_size)
+        pages = list(splitter.pages())
 
         print("\nSplit pages content:")
         for i, page in enumerate(pages):
@@ -178,12 +153,6 @@ class TestEpubContentSplitting:
             print(page)
 
         for i, page in enumerate(pages, 1):
-            # Try parsing each page as standalone HTML - should not raise exceptions
-            try:
-                soup = BeautifulSoup(page, "html.parser")
-            except Exception as e:
-                pytest.fail(f"Page {i} is not valid HTML: {e}")
-
             # Each page should be wrapped in the same set of parent tags as they appear in that position
             # in the original document (in this case, always <p>)
             assert page.lstrip().startswith("<p>"), f"Page {i} doesn't start with opening <p> tag"
