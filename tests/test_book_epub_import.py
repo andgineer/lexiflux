@@ -384,11 +384,14 @@ def test_extract_title_no_title_or_headers(book_epub_loader):
         </body>
     </html>
     """
-    mock_item = MagicMock(get_body_content=lambda: content.encode("utf-8"))
+    mock_item = MagicMock(
+        get_body_content=lambda: content.encode("utf-8"),
+        get_name=lambda: "chapter1.xhtml",
+    )
 
     loader = book_epub_loader
     extracted_title = loader.extract_title(mock_item)
-    assert extracted_title is None, "No title should be extracted when no suitable tags are found"
+    assert extracted_title == "chapter1"
 
 
 @allure.epic("Book import")
@@ -426,6 +429,7 @@ def test_generate_toc_fallback_to_spine_item_name(book_epub_loader):
         get_name=lambda: "chapter1.xhtml",  # Mock the get_name() method
         file_name="chapter1.xhtml",  # Mock the file_name attribute
         get_type=lambda: ITEM_DOCUMENT,  # Ensure the item is treated as a document
+        get_id=lambda: "item_1",  # Add get_id method
     )
 
     mock_epub = MagicMock()

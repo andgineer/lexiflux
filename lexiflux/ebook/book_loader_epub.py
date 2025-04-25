@@ -8,13 +8,13 @@ from collections import defaultdict
 from collections.abc import Iterable, Iterator
 from typing import Any, Optional
 
-from bs4 import BeautifulSoup
 from django.db import transaction
 from ebooklib import ITEM_DOCUMENT, ITEM_IMAGE, epub
 
 from lexiflux.ebook.book_loader_base import BookLoaderBase, MetadataField
 from lexiflux.ebook.clear_html import clear_html
 from lexiflux.ebook.html_page_splitter import HtmlPageSplitter
+from lexiflux.ebook.web_page_metadata import MetadataExtractor
 from lexiflux.models import Book, BookImage
 
 log = logging.getLogger()
@@ -121,7 +121,10 @@ class BookLoaderEpub(BookLoaderBase):
                     item.file_name,
                 )
                 content = item.get_body_content().decode("utf-8")
-                page_splitter = HtmlPageSplitter(content, target_page_size=TARGET_PAGE_SIZE)
+                page_splitter = HtmlPageSplitter(
+                    content,
+                    target_page_size=TARGET_PAGE_SIZE,
+                )
                 if page_num < PAGES_NUM_TO_DEBUG:
                     log.debug(f"Content: {content}")
                 if len(content) > MAX_ITEM_SIZE:
@@ -197,56 +200,15 @@ class BookLoaderEpub(BookLoaderBase):
             item: epub.EpubItem = self.epub.get_item_with_id(spine_id[0])
             log.debug(f"Spine item: {item.get_name()}")
             if item.get_type() == ITEM_DOCUMENT:
-                # Extract title from the document's metadata or content
-                title = self.extract_title(item) or os.path.splitext(item.get_name())[0]
                 file_name = item.file_name
-                result[file_name]["#"] = title
+                result[file_name]["#"] = self.extract_title(item)
         log.debug("Generated TOC from spine: %s", result)
         return result
 
-    def extract_title(self, item: epub.EpubItem) -> Optional[str]:
+    def extract_title(self, item: epub.EpubItem) -> str:
         """Extract the title from the EPUB item."""
-        try:
-            soup = BeautifulSoup(item.get_body_content().decode("utf-8"), "html.parser")
-
-            # todo: use ExtractMetadata class
-            # Prioritize standard <title> tag in the <head>
-            title_tag = soup.find("title")
-            if title_tag and title_tag.get_text(strip=True):
-                log.debug(
-                    "Extracted title from <title> tag in item %s: %s",
-                    item.get_id(),
-                    title_tag.get_text(separator=" ", strip=True),
-                )
-                return title_tag.get_text(separator=" ", strip=True)  # type: ignore
-
-            # Search for common heading tags in the body
-            for heading in ["h1", "h2", "h3", "h4", "h5", "h6"]:
-                heading_tag = soup.find(heading)
-                if heading_tag and heading_tag.get_text(strip=True):
-                    log.debug(
-                        "Extracted title from <%s> tag in item %s: %s",
-                        heading,
-                        item.get_id(),
-                        heading_tag.get_text(separator=" ", strip=True),
-                    )
-                    return heading_tag.get_text(separator=" ", strip=True)  # type: ignore
-
-            # Check for other common patterns that might indicate a title
-            potential_titles = soup.find_all(attrs={"class": re.compile(r"title", re.IGNORECASE)})
-            for tag in potential_titles:
-                if tag.get_text(strip=True):
-                    log.debug(
-                        "Extracted title from class 'title' in item %s: %s",
-                        item.get_id(),
-                        tag.get_text(separator=" ", strip=True),
-                    )
-                    return tag.get_text(separator=" ", strip=True)  # type: ignore
-
-            log.warning("No title found for item %s", item.get_id())
-        except Exception as e:  # noqa: BLE001
-            log.error("Error extracting title from item %s: %s", item.get_id(), e)
-        return None
+        extractor = MetadataExtractor(item.get_body_content().decode("utf-8"))
+        return extractor.extract_part_title() or os.path.splitext(item.get_name())[0]
 
     def get_random_words(self, words_num: int = 15) -> str:
         """Get random words from the book."""

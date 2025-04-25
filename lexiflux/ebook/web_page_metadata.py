@@ -1,31 +1,11 @@
-import io
 import json
-from typing import Any, Optional
+from typing import Any, Callable, Optional
 from urllib.parse import urlparse
 
-from lxml import etree, html
+from lxml import etree
 
 from lexiflux.ebook.book_loader_base import MetadataField
-
-
-def parse_partial_html(input_html):
-    """Parse string with HTML fragment into an lxml tree.
-
-    Supports partial HTML content.
-    Removes comments.
-    """
-    if not input_html:
-        return None
-    open_count = input_html.count("<!--")
-    close_count = input_html.count("-->")
-
-    # If counts don't match, escape all opening comment tags
-    if open_count != close_count:
-        input_html = input_html.replace("<!--", "&lt;!--")
-
-    parser = etree.HTMLParser(recover=True, remove_comments=True, remove_pis=True)
-    tree = html.parse(io.StringIO(input_html), parser=parser)
-    return tree.getroot()
+from lexiflux.ebook.clear_html import parse_partial_html
 
 
 class MetadataExtractor:
@@ -35,7 +15,7 @@ class MetadataExtractor:
         self,
         html_content: str | None = None,
         *,
-        url: str,
+        url: str = "",
         tree: Optional[etree.Element] = None,
     ) -> None:
         """
@@ -89,6 +69,17 @@ class MetadataExtractor:
                 return content.strip()
         return None
 
+    def _get_first_match(self, sources: list[Callable]) -> Optional[Any]:
+        """Return the first non-None result."""
+        for source in sources:
+            try:
+                if result := source():
+                    return result
+            except (AttributeError, TypeError, IndexError):
+                continue
+
+        return None
+
     def _extract_title(self) -> None:
         """Extract title using multiple methods."""
         if self.metadata.get(MetadataField.TITLE):
@@ -109,13 +100,41 @@ class MetadataExtractor:
             .capitalize(),  # URL fallback
         ]
 
-        for source in title_sources:
-            try:
-                if title := source():
-                    self.metadata[MetadataField.TITLE] = title
-                    break
-            except (AttributeError, TypeError, IndexError):
-                continue
+        if title := self._get_first_match(title_sources):
+            self.metadata[MetadataField.TITLE] = title
+
+    def extract_part_title(self) -> Optional[str]:
+        """Extract title from part of a book."""
+        title_sources = [
+            lambda: self._get_meta_content(name="dc.title"),  # Dublin Core
+            lambda: self._get_meta_content(property="og:title"),  # Open Graph
+            lambda: self._get_meta_content(name="twitter:title"),  # Twitter Card
+            lambda: self.tree.xpath("//title/text()")[0].strip()
+            if self.tree.xpath("//title/text()")
+            else None,
+            # HTML title
+            # Check all heading tags h1-h6 in a single lambda
+            lambda: next(
+                (
+                    self.tree.xpath(f"//{h}/text()")[0].strip()
+                    for h in ["h1", "h2", "h3", "h4", "h5", "h6"]
+                    if self.tree.xpath(f"//{h}/text()")
+                ),
+                None,
+            ),
+            # title class elements - get all text nodes recursively
+            lambda: " ".join(
+                [
+                    text.strip()
+                    for text in self.tree.xpath("//*[contains(@class, 'title')]//text()")
+                    if text.strip()
+                ],
+            )
+            if self.tree.xpath("//*[contains(@class, 'title')]//text()")
+            else None,
+        ]
+
+        return self._get_first_match(title_sources)
 
     def _extract_author(self) -> None:
         """Extract author using multiple methods."""
@@ -130,13 +149,8 @@ class MetadataExtractor:
             lambda: urlparse(self.url).netloc,  # Domain fallback
         ]
 
-        for source in author_sources:
-            try:
-                if author := source():
-                    self.metadata[MetadataField.AUTHOR] = author
-                    break
-            except (AttributeError, TypeError):
-                continue
+        if author := self._get_first_match(author_sources):
+            self.metadata[MetadataField.AUTHOR] = author
 
     def _extract_language(self) -> None:
         """Extract language using multiple methods."""
@@ -148,14 +162,7 @@ class MetadataExtractor:
             lambda: self._get_meta_content(name="content-language"),  # Content-language
         ]
 
-        for source in language_sources:
-            try:
-                if language := source():
-                    self.metadata[MetadataField.LANGUAGE] = language
-                    return
-            except (AttributeError, TypeError, IndexError):
-                continue
-        self.metadata[MetadataField.LANGUAGE] = None  # Default to None if no language found
+        self.metadata[MetadataField.LANGUAGE] = self._get_first_match(language_sources)
 
     def _extract_html_lang(self) -> Optional[str]:
         """Extract language from HTML lang attribute."""
@@ -181,14 +188,8 @@ class MetadataExtractor:
             lambda: self._get_meta_content(name="date"),  # Generic
         ]
 
-        for source in date_sources:
-            try:
-                if date := source():
-                    # Add date standardization here if needed
-                    self.metadata[MetadataField.RELEASED] = date
-                    break
-            except (AttributeError, TypeError):
-                continue
+        if date := self._get_first_match(date_sources):
+            self.metadata[MetadataField.RELEASED] = date
 
     def _extract_credits(self) -> None:
         """Extract credits using multiple methods."""
@@ -200,13 +201,8 @@ class MetadataExtractor:
             lambda: self._get_meta_content(property="og:site_name"),  # Open Graph site name
         ]
 
-        for source in credit_sources:
-            try:
-                if credit := source():
-                    self.metadata[MetadataField.CREDITS] = credit
-                    break
-            except (AttributeError, TypeError):
-                continue
+        if credit := self._get_first_match(credit_sources):
+            self.metadata[MetadataField.CREDITS] = credit
 
     def _extract_description(self) -> None:
         """Extract description using multiple methods."""
@@ -218,13 +214,8 @@ class MetadataExtractor:
             lambda: self._get_meta_content(name="description"),  # HTML meta description
         ]
 
-        for source in description_sources:
-            try:
-                if description := source():
-                    self.metadata["description"] = description
-                    break
-            except (AttributeError, TypeError):
-                continue
+        if description := self._get_first_match(description_sources):
+            self.metadata["description"] = description
 
     def _extract_image(self) -> None:
         """Extract main image using multiple methods."""
@@ -246,13 +237,8 @@ class MetadataExtractor:
             else None,  # Common image classes
         ]
 
-        for source in image_sources:
-            try:
-                if image := source():
-                    self.metadata["image"] = image
-                    break
-            except (AttributeError, TypeError, IndexError):
-                continue
+        if image := self._get_first_match(image_sources):
+            self.metadata["image"] = image
 
     def _extract_json_ld(self) -> None:
         """Extract and parse JSON-LD structured data."""
