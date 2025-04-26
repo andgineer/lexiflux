@@ -17,4 +17,13 @@ export default {
       tsconfig: 'tsconfig.json',
     }],
   },
+  // Coverage configuration here
+  collectCoverage: true,
+  coverageDirectory: "coverage",
+  coverageReporters: ["text", "lcov", "html"],
+  collectCoverageFrom: [
+    "lexiflux/viewport/**/*.ts",
+    "!**/node_modules/**",
+    "!**/*.d.ts"
+  ],
 };
