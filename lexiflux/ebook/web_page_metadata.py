@@ -33,7 +33,7 @@ class MetadataExtractor:
 
     def extract_all(self) -> dict[str, Any]:
         """Extract all metadata from the page and return as a dictionary."""
-        if not self.tree:
+        if self.tree is None:
             return {}
         # Extract structured data
         self._extract_json_ld()
