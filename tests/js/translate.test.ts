@@ -222,6 +222,91 @@ describe('translate.ts tests', () => {
     });
   });
 
+    describe('Lexical Panel Error Handling', () => {
+      test('should display an error alert in the lexical panel when translation request fails', async () => {
+        // Import the module inside the test
+        const translateModule = require('../../lexiflux/viewport/translate');
+
+        // Set up DOM with the correct lexical panel structure
+        document.body.innerHTML = `
+          <div id="lexical-panel" class="show"></div>
+          <div id="lexicalPanelContent">
+            <div class="tab-pane active" id="lexical-article-1">
+              <div id="lexical-content-1" class="lexical-content">Initial content</div>
+              <iframe id="lexical-frame-1" src="test.html"></iframe>
+            </div>
+          </div>
+          <div id="book-page-scroller">
+            <div id="words-container">
+              <span id="word-1" class="word">Word 1</span>
+              <span id="word-2" class="word">Word 2</span>
+            </div>
+          </div>
+        `;
+
+        // Configure viewport mock for this specific test
+        mockViewport.bookCode = 'error-test-book';
+        mockViewport.pageNumber = 10;
+
+        // Mock a proper selection range
+        const mockRange = {
+          startContainer: document.getElementById('word-1'),
+          endContainer: document.getElementById('word-2'),
+          collapsed: false,
+          selectNodeContents: jest.fn()
+        };
+
+        // Override window.getSelection to return our specific range
+        (window.getSelection as jest.Mock).mockReturnValue({
+          rangeCount: 1,
+          getRangeAt: jest.fn().mockReturnValue(mockRange),
+          removeAllRanges: jest.fn(),
+          addRange: jest.fn()
+        });
+
+        // Override the fetch mock specifically for this test
+        // Clear previous mocks
+        fetchMock.resetMocks();
+
+        // Mock fetch to respond with error status code
+        fetchMock.mockResponse(req => {
+          // Check if this is a translation request
+          if (req.url.includes('/translate')) {
+            // Return an error response
+            return Promise.resolve({
+              status: 500,
+              body: JSON.stringify({ error: 'Server error' })
+            });
+          }
+          // For other requests, return a success response
+          return Promise.resolve({
+            status: 200,
+            body: JSON.stringify({ success: true })
+          });
+        });
+
+        // Spy on console.error to verify it's called
+        const consoleErrorSpy = jest.spyOn(console, 'error');
+
+        // Call the function
+        translateModule.sendTranslationRequest(mockRange as any);
+
+        // Wait for all promises to resolve
+        await new Promise(resolve => setTimeout(resolve, 100));
+
+        // Verify console.error was called with an error
+        expect(consoleErrorSpy).toHaveBeenCalled();
+
+        // Verify the lexical panel shows error message
+        const contentDiv = document.getElementById('lexical-content-1');
+        expect(contentDiv).not.toBeNull();
+        expect(contentDiv?.innerHTML).toContain('alert-danger');
+        expect(contentDiv?.innerHTML).toContain('Failed to load lexical article');
+
+        // Restore console.error
+        consoleErrorSpy.mockRestore();
+      });
+    });
   // Translation span tests
   describe('Translation Span Handling', () => {
     test('hideTranslation should properly restore original content', () => {
