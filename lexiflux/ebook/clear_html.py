@@ -119,10 +119,10 @@ def clear_html(  # noqa: PLR0915,PLR0912,PLR0913,C901
     Returns:
         Cleaned HTML string
     """
-    if not input_html and not root:
+    if not input_html and root is None:
         return ""
 
-    if not root:
+    if root is None:
         try:
             root = parse_partial_html(input_html)
         except Exception:

@@ -1,9 +1,13 @@
 """Fill the database with languages from Google Translate."""
 
 import json
+import logging
 from typing import Any, Optional
 
 from django.apps import apps as django_apps
+
+log = logging.getLogger()
+
 
 SPECIAL_LANGUAGE_CODE_MAPPING = {
     "zh-CN": "zh",  # Chinese (Simplified)
@@ -54,9 +58,8 @@ def populate_language_groups(apps: Optional[django_apps] = None, *args: Any) -> 
     try:
         language_class = get_model("lexiflux", "Language")
         language_group_class = get_model("lexiflux", "LanguageGroup")
-    except LookupError as e:
-        print(f"Error: {e}")
-        print("Skipping language group population.")
+    except LookupError:
+        log.exception("Skipping language group population.")
         return
 
     for group_name, languages in LANGUAGE_GROUPS.items():
@@ -68,11 +71,10 @@ def populate_language_groups(apps: Optional[django_apps] = None, *args: Any) -> 
                     language = language_class.objects.get(name=lang_name)
                     group.languages.add(language)
                 except language_class.DoesNotExist:
-                    print(
+                    log.warning(
                         f"Warning: {lang_name} not found in the database for group {group_name}.",
                     )
 
             group.save()
-            print(f"{group_name} language group created successfully.")
         else:
-            print(f"{group_name} language group already exists.")
+            log.warning(f"{group_name} language group already exists.")

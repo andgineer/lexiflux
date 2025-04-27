@@ -25,7 +25,7 @@ class MetadataExtractor:
             html_content: HTML content as string
             url: Original URL of the content
         """
-        self.tree = tree or parse_partial_html(html_content)
+        self.tree = tree if tree is not None else parse_partial_html(html_content)
         # todo: add metadata from trafilature.extract_metadata()
 
         self.url = url

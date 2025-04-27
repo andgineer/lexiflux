@@ -190,6 +190,7 @@ class BookLoaderURL(BookLoaderHtml):
 
     def pages(self):
         """Extends parent's pages method to add anchor processing."""
+        # todo: use HtmlSplitter like in epub import instead of PageSplitter in the parent
         for page_num, content in enumerate(super().pages(), start=1):
             self._process_anchors(page_num, content)
             yield content
