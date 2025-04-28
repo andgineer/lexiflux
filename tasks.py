@@ -187,14 +187,22 @@ def buildjs(c: Context):
     c.run("npm run build")
 
 
-@task
-def test(c: Context):
-    """Run tests and create Allure report"""
+@task(help={"k": "Pytest filter expression (-k)"})
+def test(c: Context, k=None):
+    """Run tests and create Allure report."""
     c.run("rm -rf allure-results")
-    c.run("python -m pytest --alluredir=allure-results tests", warn=True)
-    c.run("ALLURE_LABEL_EPIC='viewport.ts' npm test", warn=True)
+
+    # Build the pytest command with the filter if provided
+    pytest_cmd = "python -m pytest --alluredir=allure-results"
+    if k:
+        pytest_cmd += f" -k {k}"
+    pytest_cmd += " tests"
+
+    c.run(pytest_cmd, warn=True)
+
+    # c.run("ALLURE_LABEL_EPIC='viewport.ts' npm test", warn=True)
     c.run(
-        "docker compose run --rm -it allure allure generate /allure-results "
+        "docker compose run --rm -i allure allure generate /allure-results "
         "-o /allure-report --clean",
     )
     c.run("docker compose restart allure")

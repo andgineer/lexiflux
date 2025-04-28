@@ -5,6 +5,7 @@ from django.contrib.auth.views import LogoutView
 from django.urls import include, path
 
 import lexiflux.views.ai_settings_views
+import lexiflux.views.import_views
 import lexiflux.views.language_preferences_views
 import lexiflux.views.lexical_views
 import lexiflux.views.library_views
@@ -111,7 +112,7 @@ urlpatterns = [
 # library partials
 urlpatterns += [
     path("library/books/", lexiflux.views.library_views.books_list, name="books_list"),
-    path("library/import/", lexiflux.views.library_views.import_modal, name="import_modal"),
+    path("library/import/", lexiflux.views.import_views.import_modal, name="import_modal"),
     path(
         "modals/edit-book/<int:book_id>/",
         EditBookModalPartial.as_view(),
@@ -122,7 +123,7 @@ urlpatterns += [
         lexiflux.views.library_views.search_authors,
         name="search_authors",
     ),
-    path("api/import-book/", lexiflux.views.library_views.import_book, name="import_book"),
+    path("api/import-book/", lexiflux.views.import_views.import_book, name="import_book"),
 ]
 
 if settings.DEBUGGER_TOOLBAR:

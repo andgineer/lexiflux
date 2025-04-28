@@ -105,77 +105,86 @@ class BookLoaderEpub(BookLoaderBase):
         self.book_start, self.book_end = 0, -1  # todo: detect start/finish of the book
         return self.meta, self.book_start, self.book_end
 
-    def pages(self) -> Iterator[str]:  ## noqa: C901,PLR0912  # todo: refactor
-        """Split a text into pages of approximately equal length."""
-        self.toc = []
-        page_num = 1
-        for spine_id in self.epub.spine:  # pylint: disable=too-many-nested-blocks
+    def spine(self) -> Iterator[tuple[str, str, str, str]]:
+        """Items in the EPUB spine."""
+        for spine_id in self.epub.spine:
             item: epub.EpubItem = self.epub.get_item_with_id(spine_id[0])
             if item.get_type() == ITEM_DOCUMENT:
                 log.debug(
-                    "Processing page: %s, name = %s, type = %s, id = %s, file_name = %s",
+                    "Processing spine: %s, name = %s, type = %s, id = %s, file_name = %s",
                     spine_id[0],
                     item.get_name(),
                     item.get_type(),
                     item.get_id(),
                     item.file_name,
                 )
-                content = item.get_body_content().decode("utf-8")
-                page_splitter = HtmlPageSplitter(
-                    content,
-                    target_page_size=TARGET_PAGE_SIZE,
+                yield (
+                    item.get_body_content().decode("utf-8"),
+                    item.file_name,
+                    item.get_id(),
+                    item.get_name(),
                 )
-                if page_num < PAGES_NUM_TO_DEBUG:
-                    log.debug(f"Content: {content}")
-                if len(content) > MAX_ITEM_SIZE:
-                    for sub_page in page_splitter.pages():
-                        if sub_page.strip():  # Only process non-empty pages
-                            if page_num < PAGES_NUM_TO_DEBUG:
-                                log.debug(f"SubPage {page_num}: {sub_page}")
-                            cleaned_content = clear_html(
-                                sub_page,
-                                ids_to_keep=self.keep_ids,
-                            ).strip()
-                            if page_num < PAGES_NUM_TO_DEBUG:
-                                log.debug(f"Cleaned SubPage {page_num}: {cleaned_content}")
-                            if cleaned_content:
-                                self._process_anchors(
-                                    page_num,
-                                    cleaned_content,
-                                    item.file_name,
-                                    item.get_id(),
-                                    item.get_name(),
-                                )
-                                if page_num < PAGES_NUM_TO_DEBUG:
-                                    log.debug(f"SubPage {page_num}: {cleaned_content}")
-                                yield cleaned_content
-                                page_num += 1
-                            else:
-                                log.warning(
-                                    f"Empty page generated for {item.file_name}, page {page_num}",
-                                )
-                        else:
-                            log.warning(f"Empty sub-page skipped for {item.file_name}")
-                else:
-                    if page_num < PAGES_NUM_TO_DEBUG:
-                        log.debug(f"Content {page_num}: {content}")
-                    cleaned_content = clear_html(content, ids_to_keep=self.keep_ids).strip()
-                    if page_num < PAGES_NUM_TO_DEBUG:
-                        log.debug(f"Cleaned SubPage {page_num}: {cleaned_content}")
-                    if cleaned_content:
-                        self._process_anchors(
-                            page_num,
-                            cleaned_content,
-                            item.file_name,
-                            item.get_id(),
-                            item.get_name(),
-                        )
+
+    def pages(self) -> Iterator[str]:  ## noqa: C901,PLR0912  # todo: refactor
+        """Split a text into pages of approximately equal length."""
+        self.toc = []
+        page_num = 1
+        for content, item_filename, item_id, item_name in self.spine():  # pylint: disable=too-many-nested-blocks
+            page_splitter = HtmlPageSplitter(
+                content,
+                target_page_size=TARGET_PAGE_SIZE,
+            )
+            if page_num < PAGES_NUM_TO_DEBUG:
+                log.debug(f"Content: {content}")
+            if len(content) > MAX_ITEM_SIZE:
+                for sub_page in page_splitter.pages():
+                    if sub_page.strip():  # Only process non-empty pages
                         if page_num < PAGES_NUM_TO_DEBUG:
-                            log.debug(f"Page {page_num}: {cleaned_content}")
-                        yield cleaned_content
-                        page_num += 1
+                            log.debug(f"SubPage {page_num}: {sub_page}")
+                        cleaned_content = clear_html(
+                            sub_page,
+                            ids_to_keep=self.keep_ids,
+                        ).strip()
+                        if page_num < PAGES_NUM_TO_DEBUG:
+                            log.debug(f"Cleaned SubPage {page_num}: {cleaned_content}")
+                        if cleaned_content:
+                            self._process_anchors(
+                                page_num,
+                                cleaned_content,
+                                item_filename,
+                                item_id,
+                                item_name,
+                            )
+                            if page_num < PAGES_NUM_TO_DEBUG:
+                                log.debug(f"SubPage {page_num}: {cleaned_content}")
+                            yield cleaned_content
+                            page_num += 1
+                        else:
+                            log.warning(
+                                f"Empty page generated for {item_filename}, page {page_num}",
+                            )
                     else:
-                        log.warning(f"Empty page skipped for {item.file_name}")
+                        log.warning(f"Empty sub-page skipped for {item_filename}")
+            else:
+                if page_num < PAGES_NUM_TO_DEBUG:
+                    log.debug(f"Content {page_num}: {content}")
+                cleaned_content = clear_html(content, ids_to_keep=self.keep_ids).strip()
+                if page_num < PAGES_NUM_TO_DEBUG:
+                    log.debug(f"Cleaned SubPage {page_num}: {cleaned_content}")
+                if cleaned_content:
+                    self._process_anchors(
+                        page_num,
+                        cleaned_content,
+                        item_filename,
+                        item_id,
+                        item_name,
+                    )
+                    if page_num < PAGES_NUM_TO_DEBUG:
+                        log.debug(f"Page {page_num}: {cleaned_content}")
+                    yield cleaned_content
+                    page_num += 1
+                else:
+                    log.warning(f"Empty page skipped for {item_filename}")
 
         # Process TOC after all pages have been processed
         self._process_toc()

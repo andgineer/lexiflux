@@ -13,7 +13,7 @@ from lexiflux.ebook.book_loader_base import MetadataField
 
 from bs4 import BeautifulSoup
 
-from lexiflux.views.library_views import import_book
+from lexiflux.views.import_views import import_book
 
 
 @pytest.fixture
@@ -640,7 +640,7 @@ def test_detect_meta_no_text_attribute():
 
 @allure.epic("Book import")
 @allure.feature("URL import: import_book view")
-@patch("lexiflux.views.library_views.BookLoaderURL")
+@patch("lexiflux.views.import_views.BookLoaderURL")
 def test_import_book_from_url_success(mock_book_loader_url):
     """Test successful book import from URL."""
 
@@ -661,7 +661,7 @@ def test_import_book_from_url_success(mock_book_loader_url):
     mock_book_loader_url.return_value = mock_book_instance
 
     with (
-        patch("lexiflux.views.library_views.render") as mock_render,
+        patch("lexiflux.views.import_views.render") as mock_render,
         patch("lexiflux.decorators.login_required", lambda f: f),
     ):  # Bypass decorator
         response = import_book(request)
@@ -678,7 +678,7 @@ def test_import_book_from_url_success(mock_book_loader_url):
 
 @allure.epic("Book import")
 @allure.feature("URL import: import_book view")
-@patch("lexiflux.views.library_views.BookLoaderURL")
+@patch("lexiflux.views.import_views.BookLoaderURL")
 def test_import_book_from_url_with_aggressive_cleaning(mock_book_loader_url):
     """Test URL import with aggressive cleaning level."""
     request = MagicMock(spec=HttpRequest)
@@ -717,7 +717,7 @@ def test_import_book_from_url_invalid_url():
     request.POST = {"importType": "url", "url": "not-a-valid-url", "cleaning_level": "moderate"}
 
     with (
-        patch("lexiflux.views.library_views.render") as mock_render,
+        patch("lexiflux.views.import_views.render") as mock_render,
         patch("lexiflux.decorators.login_required", lambda f: f),
     ):  # Bypass decorator
         response = import_book(request)
@@ -743,7 +743,7 @@ def test_import_book_from_url_empty_url(mock_validator):
     }
 
     with (
-        patch("lexiflux.views.library_views.render") as mock_render,
+        patch("lexiflux.views.import_views.render") as mock_render,
         patch("lexiflux.decorators.login_required", lambda f: f),
     ):  # Bypass decorator
         response = import_book(request)
@@ -759,7 +759,7 @@ def test_import_book_from_url_empty_url(mock_validator):
 @allure.epic("Book import")
 @allure.feature("Paste import: import_book view")
 @patch("tempfile.NamedTemporaryFile")
-@patch("lexiflux.views.library_views.BookLoaderPlainText")
+@patch("lexiflux.views.import_views.BookLoaderPlainText")
 def test_import_book_from_paste_text_success(mock_book_loader, mock_temp_file):
     """Test successful book import from pasted text content."""
     request = MagicMock(spec=HttpRequest)
@@ -800,7 +800,7 @@ def test_import_book_from_paste_text_success(mock_book_loader, mock_temp_file):
 @allure.epic("Book import")
 @allure.feature("Paste import: import_book view")
 @patch("tempfile.NamedTemporaryFile")
-@patch("lexiflux.views.library_views.BookLoaderHtml")
+@patch("lexiflux.views.import_views.BookLoaderHtml")
 def test_import_book_from_paste_html_success(mock_book_loader, mock_temp_file):
     """Test successful book import from pasted HTML content."""
     request = MagicMock(spec=HttpRequest)
@@ -852,7 +852,7 @@ def test_import_book_from_paste_empty_content():
     }
 
     with (
-        patch("lexiflux.views.library_views.render") as mock_render,
+        patch("lexiflux.views.import_views.render") as mock_render,
         patch("lexiflux.decorators.login_required", lambda f: f),
     ):  # Bypass decorator
         response = import_book(request)
@@ -877,7 +877,7 @@ def test_import_book_from_paste_whitespace_only():
     }
 
     with (
-        patch("lexiflux.views.library_views.render") as mock_render,
+        patch("lexiflux.views.import_views.render") as mock_render,
         patch("lexiflux.decorators.login_required", lambda f: f),
     ):  # Bypass decorator
         response = import_book(request)
@@ -905,7 +905,7 @@ def test_import_book_from_paste_file_cleanup(mock_temp_file):
 
     # Mock os.unlink to verify it's called
     with (
-        patch("lexiflux.views.library_views.BookLoaderPlainText") as mock_loader,
+        patch("lexiflux.views.import_views.BookLoaderPlainText") as mock_loader,
         patch("os.unlink") as mock_unlink,
         patch("lexiflux.views.library_views.render"),
         patch("lexiflux.decorators.login_required", lambda f: f),
@@ -938,7 +938,7 @@ def test_import_book_from_paste_with_exception_still_cleans_up(mock_temp_file):
 
     # Mock BookLoaderPlainText to raise an exception
     with (
-        patch("lexiflux.views.library_views.BookLoaderPlainText") as mock_loader,
+        patch("lexiflux.views.import_views.BookLoaderPlainText") as mock_loader,
         patch("os.unlink") as mock_unlink,
         patch("lexiflux.views.library_views.render"),
         patch("lexiflux.decorators.login_required", lambda f: f),
@@ -962,7 +962,7 @@ def test_import_book_unknown_type():
     }
 
     with (
-        patch("lexiflux.views.library_views.render") as mock_render,
+        patch("lexiflux.views.import_views.render") as mock_render,
         patch("lexiflux.decorators.login_required", lambda f: f),
     ):  # Bypass decorator
         response = import_book(request)
@@ -977,7 +977,7 @@ def test_import_book_unknown_type():
 class TestImportIntegration:
     @allure.epic("Book import")
     @allure.feature("URL import: integration")
-    @patch("lexiflux.views.library_views.BookLoaderURL")
+    @patch("lexiflux.views.import_views.BookLoaderURL")
     def test_url_import_integration(self, mock_book_loader_url, client, approved_user, book):
         """Test URL import flow with Django test client."""
         client.force_login(approved_user)
@@ -1013,7 +1013,7 @@ class TestImportIntegration:
         """Test paste import flow with Django test client."""
         client.force_login(approved_user)
 
-        with patch("lexiflux.views.library_views.BookLoaderPlainText") as mock_loader:
+        with patch("lexiflux.views.import_views.BookLoaderPlainText") as mock_loader:
             # Set up mock loader to return the existing book fixture
             mock_instance = MagicMock()
             mock_instance.create.return_value = book
