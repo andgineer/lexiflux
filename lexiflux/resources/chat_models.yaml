@@ -33,32 +33,22 @@ llama3.2:
   model: Ollama
   suffix: 🦙3.2
 
-# zephyr:
-#   title: Zephyr 7B
-#   model: Ollama
-#   suffix: 🌬️7B
-
-# gemini-pro:
-#   title: Gemini Pro
-#   model: ChatGoogleGenerativeAI
-#   suffix: 🌀
-
 mistral-medium:
   title: Mistral Medium
   model: ChatMistralAI
   suffix: 🌪️
 
-gemini-1.5-flash:
-  title: Gemini 1.5 Flash
-  model: ChatGoogle
-  suffix: 🌀1.5f
-
-gemini-2.0-flash-exp:
-  title: Gemini 2.0 Flash
+gemini-2.0-flash:
+  title: Gemini 2.5 Flash
   model: ChatGoogle
   suffix: 🌀2.0f
 
-gemini-1.5-pro:
-  title: Gemini 1.5 Pro
+gemini-2.5-flash-preview-04-17:
+  title: Gemini 2.5 Flash Preview April
   model: ChatGoogle
-  suffix: 🌀1.5p
+  suffix: 🌀2.5fp
+
+gemini-2.5-pro-preview-03-25:
+  title: Gemini 2.5 Pro Preview March
+  model: ChatGoogle
+  suffix: 🌀2.5pp
