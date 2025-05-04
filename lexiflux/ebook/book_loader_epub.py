@@ -131,67 +131,61 @@ class BookLoaderEpub(BookLoaderBase):
         self.toc = []
         page_num = 1
         for content, item_filename, item_id, item_name in self.spine():  # pylint: disable=too-many-nested-blocks
-            page_splitter = HtmlPageSplitter(
-                content,
-            )
             if page_num < PAGES_NUM_TO_DEBUG:
-                log.debug(f"Content: {content}")
+                log.debug(f"Content {item_filename}, page {page_num}:\n{content}")
             if len(content) > MAX_ITEM_SIZE:
+                page_splitter = HtmlPageSplitter(
+                    content,
+                )
                 for sub_page in page_splitter.pages():
-                    if sub_page.strip():  # Only process non-empty pages
-                        if page_num < PAGES_NUM_TO_DEBUG:
-                            log.debug(f"SubPage {page_num}: {sub_page}")
-                        root = parse_partial_html(sub_page)
-                        self.keep_ids |= self.extract_ids_from_internal_links(root)
-                        cleaned_content = clear_html(
-                            root=root,
-                            ids_to_keep=self.keep_ids,
-                        ).strip()
-                        if page_num < PAGES_NUM_TO_DEBUG:
-                            log.debug(f"Cleaned SubPage {page_num}: {cleaned_content}")
-                        if cleaned_content:
-                            self._process_anchors(
-                                page_num,
-                                cleaned_content,
-                                item_filename,
-                                item_id,
-                                item_name,
-                            )
-                            if page_num < PAGES_NUM_TO_DEBUG:
-                                log.debug(f"SubPage {page_num}: {cleaned_content}")
-                            yield cleaned_content
-                            page_num += 1
-                        else:
-                            log.warning(
-                                f"Empty page generated for {item_filename}, page {page_num}",
-                            )
-                    else:
-                        log.warning(f"Empty sub-page skipped for {item_filename}")
-            else:
-                if page_num < PAGES_NUM_TO_DEBUG:
-                    log.debug(f"Content {page_num}: {content}")
-                root = parse_partial_html(content)
-                self.keep_ids |= self.extract_ids_from_internal_links(root)
-                cleaned_content = clear_html(root=root, ids_to_keep=self.keep_ids).strip()
-                if page_num < PAGES_NUM_TO_DEBUG:
-                    log.debug(f"Cleaned SubPage {page_num}: {cleaned_content}")
-                if cleaned_content:
-                    self._process_anchors(
-                        page_num,
-                        cleaned_content,
+                    if cleaned_content := self.clear_page(
+                        sub_page,
                         item_filename,
                         item_id,
                         item_name,
-                    )
-                    if page_num < PAGES_NUM_TO_DEBUG:
-                        log.debug(f"Page {page_num}: {cleaned_content}")
-                    yield cleaned_content
-                    page_num += 1
-                else:
-                    log.warning(f"Empty page skipped for {item_filename}")
+                        page_num,
+                    ):
+                        yield cleaned_content
+                        page_num += 1
+            elif cleaned_content := self.clear_page(
+                content,
+                item_filename,
+                item_id,
+                item_name,
+                page_num,
+            ):
+                yield cleaned_content
+                page_num += 1
 
         # Process TOC after all pages have been processed
         self._process_toc()
+
+    def clear_page(
+        self,
+        content: str,
+        item_filename,
+        item_id,
+        item_name,
+        page_num,
+    ) -> Optional[str]:
+        if not content.strip():
+            log.warning(f"Empty page in {item_filename} was skipped")
+        root = parse_partial_html(content)
+        self.keep_ids |= self.extract_ids_from_internal_links(root)
+        cleaned_content = clear_html(root=root, ids_to_keep=self.keep_ids).strip()
+        if page_num < PAGES_NUM_TO_DEBUG:
+            log.debug(f"Cleaned {item_filename}, page {page_num}:\n{cleaned_content}")
+        if cleaned_content:
+            self._process_anchors(
+                page_num,
+                cleaned_content,
+                item_filename,
+                item_id,
+                item_name,
+            )
+            return cleaned_content
+        log.warning(f"Non-empty page cleaned to nothing: {item_filename}, page {page_num}")
+        return None
 
     def _process_toc(self) -> None:
         """Process table of contents using the anchor_map."""
