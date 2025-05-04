@@ -2,7 +2,6 @@
 
 import logging
 import os
-from urllib.parse import unquote
 
 from bs4 import BeautifulSoup, Tag
 from django.core.cache import cache
@@ -13,6 +12,7 @@ from django.urls import reverse
 from django.views.decorators.http import require_POST
 
 from lexiflux.decorators import smart_login_required
+from lexiflux.ebook.book_loader_base import normalize_path
 from lexiflux.models import (
     Book,
     BookImage,
@@ -26,22 +26,6 @@ from lexiflux.models import (
 MAX_SEARCH_RESULTS = 10
 
 log = logging.getLogger()
-
-
-def normalize_path(path: str) -> str:
-    """Normalize the image path by removing '..' and extra '/'."""
-    path = unquote(path)
-    components = path.split("/")
-    normalized: list[str] = []
-    for component in components:
-        if component == "." or not component:
-            continue
-        if component == "..":
-            if normalized:
-                normalized.pop()
-        else:
-            normalized.append(component)
-    return "/".join(normalized)
 
 
 def rewire_epub_references(content: str, book: Book) -> str:

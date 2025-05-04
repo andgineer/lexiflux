@@ -91,11 +91,12 @@ class BookLoaderURL(BookLoaderHtml):
                 self.tree_root = parse_partial_html(self.html_content)
                 self.detect_meta()
 
+            with timing("Extracting IDs with internal links"):
+                self.keep_ids = self.extract_ids_from_internal_links(self.tree_root)
+                log.info(f"Keeping IDs: {self.keep_ids}")
+
             with timing("Extracting readable HTML"):
                 extracted_content = self.extract_readable_html()
-
-            with timing("Extracting IDs with internal links"):
-                self.keep_ids = self.extract_ids_with_internal_links()
 
             with timing("Parse extracted HTML"):
                 self.tree_root = parse_partial_html(extracted_content)
@@ -129,10 +130,10 @@ class BookLoaderURL(BookLoaderHtml):
                 include_links=True,
                 include_images=True,
             )
+            if extracted_content is None:
+                metadata = trafilatura.core.extract_metadata(self.html_content)
+                log.info("Metadata extraction result: %s", pformat(metadata.as_dict()))
         if extracted_content is None:
-            metadata = trafilatura.core.extract_metadata(self.html_content)
-            log.info("Metadata extraction result: %s", pformat(metadata.as_dict()))
-
             log.info("Using original HTML")
             extracted_content = self.html_content
         return extracted_content
@@ -187,13 +188,6 @@ class BookLoaderURL(BookLoaderHtml):
             self.meta[MetadataField.LANGUAGE] = self.detect_language()
 
         return self.meta, self.book_start, self.book_end
-
-    def pages(self):
-        """Extends parent's pages method to add anchor processing."""
-        # todo: use HtmlSplitter like in epub import instead of PageSplitter in the parent
-        for page_num, content in enumerate(super().pages(), start=1):
-            self._process_anchors(page_num, content)
-            yield content
 
     def create(self, owner_email, forced_language=None):
         """Include anchor_map in the book object."""

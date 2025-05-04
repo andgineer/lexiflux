@@ -9,8 +9,8 @@ from lexiflux.ebook.book_loader_epub import (
     extract_headings,
     BookLoaderEpub,
     href_hierarchy,
-    TARGET_PAGE_SIZE,
 )
+from lexiflux.ebook.html_page_splitter import TARGET_PAGE_SIZE
 
 
 @allure.epic("Book import")
@@ -212,7 +212,7 @@ def medium_page_size(monkeypatch):
 @allure.feature("EPUB: parse pages")
 def test_pages_with_anchors(book_epub):
     # Modify the last item (page_19.xhtml) to have an anchor
-    content = "<h1 id='chapter1'>Chapter 1</h1><p>Content</p>"
+    content = "<a href='#chapter1'>Link</a><h1 id='chapter1'>Chapter 1</h1><p>Content</p>"
     mock_item = book_epub.epub.get_items()[-1]  # Use the last item from the fixture
     mock_item.get_body_content = lambda: content.encode("utf-8")
 

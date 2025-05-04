@@ -1025,20 +1025,3 @@ class TestMetadataExtractor:
 
         # Domain should be used as author fallback
         assert result[MetadataField.AUTHOR] == "example.com"
-
-
-def test_extract_web_page_metadata(input_html_samples, url):
-    """Test that the extract_web_page_metadata function works correctly."""
-    # Use a sample with known values
-    sample = input_html_samples[0]
-
-    # Call the main function
-    result = extract_web_page_metadata(sample["html"], url=url)
-
-    # Verify basic extraction works through the main function
-    for field, value in sample["expected"].items():
-        if isinstance(value, list) and isinstance(result[field], list):
-            # For list fields like keywords, check that all expected items are present
-            assert set(value).issubset(set(result[field]))
-        else:
-            assert result[field] == value

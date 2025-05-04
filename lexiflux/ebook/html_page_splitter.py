@@ -7,6 +7,10 @@ from typing import Any, Optional
 
 from bs4 import BeautifulSoup, NavigableString, Tag
 
+TARGET_PAGE_SIZE = 3000
+
+PAGES_NUM_TO_DEBUG = 3  # number of page for detailed tracing
+
 
 @dataclass
 class SplitterContext:
@@ -29,7 +33,9 @@ class SplitterContext:
 class HtmlPageSplitter:
     """Split HTML content into pages of approximately equal length."""
 
-    def __init__(self, content: str, target_page_size: int) -> None:
+    # todo: use lxml instead of bs4
+
+    def __init__(self, content: str, target_page_size: int = TARGET_PAGE_SIZE) -> None:
         self.content = content
         self.soup = BeautifulSoup(self.content, "html.parser")
         self.target_page_size = target_page_size

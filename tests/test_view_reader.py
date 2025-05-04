@@ -298,7 +298,7 @@ def test_reader_access_denied(client, book):
 @allure.feature("Reader")
 @pytest.mark.django_db
 def test_normalize_path_removes_dots_and_slashes():
-    from lexiflux.views.reader_views import normalize_path
+    from lexiflux.ebook.book_loader_base import normalize_path
 
     test_cases = [
         ("../path/to/file.jpg", "path/to/file.jpg"),

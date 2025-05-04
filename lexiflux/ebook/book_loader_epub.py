@@ -12,21 +12,22 @@ from django.db import transaction
 from ebooklib import ITEM_DOCUMENT, ITEM_IMAGE, epub
 
 from lexiflux.ebook.book_loader_base import BookLoaderBase, MetadataField
-from lexiflux.ebook.clear_html import clear_html
-from lexiflux.ebook.html_page_splitter import HtmlPageSplitter
+from lexiflux.ebook.clear_html import clear_html, parse_partial_html
+from lexiflux.ebook.html_page_splitter import PAGES_NUM_TO_DEBUG, HtmlPageSplitter
 from lexiflux.ebook.web_page_metadata import MetadataExtractor
 from lexiflux.models import Book, BookImage
 
 log = logging.getLogger()
 
 MAX_ITEM_SIZE = 6000
-TARGET_PAGE_SIZE = 3000
-
-PAGES_NUM_TO_DEBUG = 3  # number of page for detailed tracing
 
 
 class BookLoaderEpub(BookLoaderBase):
-    """Import ebook from EPUB."""
+    """Import ebook from EPUB.
+
+    Save only forward links or backward links to <a> tags - we do not parse
+    twice to collect internal links backward targets and place them into `keep_id`.
+    """
 
     epub: Any
     book_start: int
@@ -132,7 +133,6 @@ class BookLoaderEpub(BookLoaderBase):
         for content, item_filename, item_id, item_name in self.spine():  # pylint: disable=too-many-nested-blocks
             page_splitter = HtmlPageSplitter(
                 content,
-                target_page_size=TARGET_PAGE_SIZE,
             )
             if page_num < PAGES_NUM_TO_DEBUG:
                 log.debug(f"Content: {content}")
@@ -141,8 +141,10 @@ class BookLoaderEpub(BookLoaderBase):
                     if sub_page.strip():  # Only process non-empty pages
                         if page_num < PAGES_NUM_TO_DEBUG:
                             log.debug(f"SubPage {page_num}: {sub_page}")
+                        root = parse_partial_html(sub_page)
+                        self.keep_ids |= self.extract_ids_from_internal_links(root)
                         cleaned_content = clear_html(
-                            sub_page,
+                            root=root,
                             ids_to_keep=self.keep_ids,
                         ).strip()
                         if page_num < PAGES_NUM_TO_DEBUG:
@@ -168,7 +170,9 @@ class BookLoaderEpub(BookLoaderBase):
             else:
                 if page_num < PAGES_NUM_TO_DEBUG:
                     log.debug(f"Content {page_num}: {content}")
-                cleaned_content = clear_html(content, ids_to_keep=self.keep_ids).strip()
+                root = parse_partial_html(content)
+                self.keep_ids |= self.extract_ids_from_internal_links(root)
+                cleaned_content = clear_html(root=root, ids_to_keep=self.keep_ids).strip()
                 if page_num < PAGES_NUM_TO_DEBUG:
                     log.debug(f"Cleaned SubPage {page_num}: {cleaned_content}")
                 if cleaned_content:

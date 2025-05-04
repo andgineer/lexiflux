@@ -4,7 +4,8 @@ import logging
 import os
 from collections import Counter
 from collections.abc import Iterator
-from typing import IO, Any, Optional, Union
+from typing import IO, Any, Optional, Union, cast
+from urllib.parse import unquote
 
 from django.core.management import CommandError
 from lxml import etree
@@ -246,17 +247,16 @@ class BookLoaderBase:
         """
         try:
             html_tree = parse_partial_html(content)
-            if "chap03" in content:
-                log.warning(f"Found anchor ID in the _process_anchors: {page_num}")
-            # Find all elements with id attributes
-            # todo: store only used in links - see extract_ids_with_internal_links()
-            for element in html_tree.xpath("//*[@id]"):
+            for element in cast(etree.Element, html_tree.xpath("//*[@id]")):
                 if anchor_id := element.get("id"):
+                    link = f"{normalize_path(file_name)}#{anchor_id}"
+                    if anchor_id not in self.keep_ids and element.tag != "a":
+                        continue
                     current_item_id = item_id or anchor_id
                     element_text = element.text.strip() if element.text else ""
                     current_item_name = item_name or element_text[:100]
 
-                    self.anchor_map[f"{file_name}#{anchor_id}"] = {
+                    self.anchor_map[link] = {
                         "page": page_num,
                         "item_id": current_item_id,
                         "item_name": current_item_name,
@@ -275,16 +275,43 @@ class BookLoaderBase:
         except Exception:
             log.exception("Error processing anchors")
 
-    def extract_ids_with_internal_links(self) -> set[str]:
-        """Extract from self.tree_root IDs that have internal links to them."""
-        ids_to_keep = set()
+    @staticmethod
+    def extract_ids_from_internal_links(root: Optional[etree.Element]) -> set[str]:
+        """Extract from self.tree_root IDs that have internal links to them.
 
-        # Find all internal links (href starting with #)
-        for link in self.tree_root.xpath('//a[starts-with(@href, "#")]'):
+        Extract both "#anchor" (as "anchor") and "filename#anchor" (as "anchor") formats
+        as internal links, while ignoring external links like "http://..." or "https://...".
+        """
+        ids_to_keep: set[str] = set()
+        if root is None:
+            return ids_to_keep
+
+        for link in root.xpath("//a[@href]"):
             href = link.get("href", "")
-            # Extract the ID from the href (remove the leading #)
-            if href.startswith("#"):  # noqa: SIM102
-                if target_id := href[1:]:
-                    ids_to_keep.add(target_id)
+            if not href:
+                continue
+
+            if href.startswith(("http://", "https://", "ftp://", "mailto:")):
+                continue
+
+            element_id = href.split("#")[-1] if "#" in href else href
+            if element_id:
+                ids_to_keep.add(element_id)
 
         return ids_to_keep
+
+
+def normalize_path(path: str) -> str:
+    """Normalize the image path by processing '.' / '..' and removing leading '/'."""
+    path = unquote(path)
+    components = path.split("/")
+    normalized: list[str] = []
+    for component in components:
+        if component == "." or not component:
+            continue
+        if component == "..":
+            if normalized:
+                normalized.pop()
+        else:
+            normalized.append(component)
+    return "/".join(normalized)

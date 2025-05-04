@@ -3,8 +3,7 @@ import re
 import allure
 import pytest
 
-from lexiflux.ebook.book_loader_epub import TARGET_PAGE_SIZE
-from lexiflux.ebook.html_page_splitter import HtmlPageSplitter
+from lexiflux.ebook.html_page_splitter import HtmlPageSplitter, TARGET_PAGE_SIZE
 
 
 @allure.epic("Book import")

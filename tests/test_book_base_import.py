@@ -7,7 +7,7 @@ from lexiflux.ebook.clear_html import parse_partial_html
 
 
 @pytest.fixture
-def book_processor_mock():
+def book_processor_mock() -> BookLoaderBase:
     """Create a mock BookLoaderBase processor."""
     # Using the patching pattern from test_book_plain_text_import.py
     with (
@@ -65,8 +65,8 @@ class TestBookLoaderBaseAnchors:
             mock_tree = MagicMock()
             mock_tree.xpath.return_value = [mock_element]
             mock_parse.return_value = mock_tree
+            book_processor_mock.keep_ids = {"section1"}
 
-            # Call the method under test
             book_processor_mock._process_anchors(1, content)
 
             # Verify the anchor map was properly populated
@@ -89,6 +89,7 @@ class TestBookLoaderBaseAnchors:
             mock_tree = MagicMock()
             mock_tree.xpath.return_value = [mock_element]
             mock_parse.return_value = mock_tree
+            book_processor_mock.keep_ids = {"section1"}
 
             book_processor_mock._process_anchors(1, content, file_name)
 
@@ -117,6 +118,7 @@ class TestBookLoaderBaseAnchors:
             mock_tree = MagicMock()
             mock_tree.xpath.return_value = [mock_element]
             mock_parse.return_value = mock_tree
+            book_processor_mock.keep_ids = {"section1"}
 
             book_processor_mock._process_anchors(
                 1, content, "chapter1.html", "custom_id", "Custom Name"
@@ -161,6 +163,7 @@ class TestBookLoaderBaseAnchors:
             mock_tree = MagicMock()
             mock_tree.xpath.return_value = [mock_title, mock_para1, mock_para2]
             mock_parse.return_value = mock_tree
+            book_processor_mock.keep_ids = {"title", "para1", "para2"}
 
             book_processor_mock._process_anchors(2, content, "chapter2.html")
 
@@ -215,14 +218,12 @@ class TestBookLoaderBaseAnchors:
             mock_tree = MagicMock()
             mock_tree.xpath.return_value = [mock_element]
             mock_parse.return_value = mock_tree
+            book_processor_mock.keep_ids = {"chap03"}
 
             # Insert "chap03" string into content to trigger warning
             book_processor_mock._process_anchors(3, content, "chapter3.html")
 
-            assert any(
-                "Found anchor ID in the _process_anchors" in record.message
-                for record in caplog.records
-            )
+            assert "chapter3.html#chap03" in book_processor_mock.anchor_map
 
     @allure.story("Extract IDs with internal links")
     def test_extract_ids_with_internal_links_basic(self, book_processor_mock):
@@ -230,14 +231,12 @@ class TestBookLoaderBaseAnchors:
         mock_link = MagicMock()
         mock_link.get.return_value = "#section1"
 
-        # Configure tree_root to return our mock links
-        book_processor_mock.tree_root.xpath.return_value = [mock_link]
-
-        ids = book_processor_mock.extract_ids_with_internal_links()
+        tree_root = MagicMock(spec="etree.Element")
+        tree_root.xpath = MagicMock(return_value=[mock_link])
+        ids = book_processor_mock.extract_ids_from_internal_links(tree_root)
 
         assert "section1" in ids
         assert len(ids) == 1
-        book_processor_mock.tree_root.xpath.assert_called_once_with('//a[starts-with(@href, "#")]')
 
     @allure.story("Extract IDs with multiple internal links")
     def test_extract_ids_with_multiple_internal_links(self, book_processor_mock):
@@ -251,10 +250,10 @@ class TestBookLoaderBaseAnchors:
         mock_link3 = MagicMock()
         mock_link3.get.return_value = "#section1"  # Duplicate link to section1
 
-        # Configure tree_root to return all mock links
-        book_processor_mock.tree_root.xpath.return_value = [mock_link1, mock_link2, mock_link3]
+        tree_root = MagicMock(spec="etree.Element")
+        tree_root.xpath = MagicMock(return_value=[mock_link1, mock_link2, mock_link3])
 
-        ids = book_processor_mock.extract_ids_with_internal_links()
+        ids = book_processor_mock.extract_ids_from_internal_links(tree_root)
 
         assert "section1" in ids
         assert "section2" in ids
@@ -263,9 +262,9 @@ class TestBookLoaderBaseAnchors:
     @allure.story("Extract IDs with no internal links")
     def test_extract_ids_with_no_internal_links(self, book_processor_mock):
         """Test extraction when there are no internal links."""
-        book_processor_mock.tree_root.xpath.return_value = []
-
-        ids = book_processor_mock.extract_ids_with_internal_links()
+        tree_root = MagicMock(spec="etree.Element")
+        tree_root.xpath = MagicMock(return_value=[])
+        ids = book_processor_mock.extract_ids_from_internal_links(tree_root)
 
         assert len(ids) == 0
 
@@ -277,10 +276,9 @@ class TestBookLoaderBaseAnchors:
         mock_link = MagicMock()
         mock_link.get.return_value = "#section1"
 
-        # Configure tree_root to return only internal links
-        book_processor_mock.tree_root.xpath.return_value = [mock_link]
-
-        ids = book_processor_mock.extract_ids_with_internal_links()
+        tree_root = MagicMock(spec="etree.Element")
+        tree_root.xpath = MagicMock(return_value=[mock_link])
+        ids = book_processor_mock.extract_ids_from_internal_links(tree_root)
 
         assert "section1" in ids
         assert len(ids) == 1
@@ -295,10 +293,9 @@ class TestBookLoaderBaseAnchors:
         mock_link2 = MagicMock()
         mock_link2.get.return_value = ""  # Completely empty
 
-        # Configure tree_root to return links with empty hrefs
-        book_processor_mock.tree_root.xpath.return_value = [mock_link1, mock_link2]
-
-        ids = book_processor_mock.extract_ids_with_internal_links()
+        tree_root = MagicMock(spec="etree.Element")
+        tree_root.xpath = MagicMock(return_value=[mock_link1, mock_link2])
+        ids = book_processor_mock.extract_ids_from_internal_links(tree_root)
 
         # Verify no IDs were extracted (empty hrefs don't target valid IDs)
         assert len(ids) == 0

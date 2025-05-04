@@ -141,12 +141,12 @@ def clear_html(  # noqa: PLR0915,PLR0912,PLR0913,C901
     unwrap_unknow_tags(allowed_tags_set, ids_to_keep_set, root)
     process_class_and_style(root, tags_with_classes)
     remove_empty_elements(ids_to_keep_set, keep_empty_tags_set, root)
-    collapse_consecutive_br(root, keep_empty_tags_set)
+    collapse_consecutive_br(root, keep_empty_tags_set, ids_to_keep_set)
 
     return re.sub(r"\s+", " ", etree_to_str(root)).strip()
 
 
-def collapse_consecutive_br(root, keep_empty_tags_set):  # noqa: C901,PLR0912,PLR0915
+def collapse_consecutive_br(root, keep_empty_tags_set, ids_to_keep_set):  # noqa: C901,PLR0912,PLR0915
     """From <br> tags sequence, keep only the first one.
 
     This function searches for consecutive <br> tags and removes all but the first one
@@ -184,6 +184,7 @@ def collapse_consecutive_br(root, keep_empty_tags_set):  # noqa: C901,PLR0912,PL
             elif (child.text and child.text.strip()) or has_meaningful_content(
                 child,
                 keep_empty_tags_set,
+                ids_to_keep_set,
             ):
                 last_br = None
 
@@ -240,7 +241,7 @@ def remove_empty_elements(ids_to_keep_set, keep_empty_tags_set, root):  # noqa: 
             if element.tag in keep_empty_tags_set:
                 continue
 
-            if not has_meaningful_content(element, keep_empty_tags_set - {"br"}):
+            if not has_meaningful_content(element, keep_empty_tags_set - {"br"}, ids_to_keep_set):
                 # Get the parent and prepare to remove this element
                 parent = element.getparent()
                 if parent is not None:
@@ -252,7 +253,12 @@ def remove_empty_elements(ids_to_keep_set, keep_empty_tags_set, root):  # noqa: 
 
             # Check if element is completely empty
             if (  # noqa: SIM102
-                not has_meaningful_content(element, keep_empty_tags_set, check_tail=False)
+                not has_meaningful_content(
+                    element,
+                    keep_empty_tags_set,
+                    ids_to_keep_set,
+                    check_tail=False,
+                )
                 and element.getparent() is not None
             ):
                 tail = element.tail
@@ -277,7 +283,6 @@ def remove_empty_elements(ids_to_keep_set, keep_empty_tags_set, root):  # noqa: 
                         parent.text = tail
 
                 # We need to preserve the content of any children before removing
-                # This is a major fix - we need to preserve all text from children
                 for child in element:
                     # If the child has tail text, we need to preserve it
                     if child.tail and child.tail.strip():
@@ -303,9 +308,13 @@ def remove_empty_elements(ids_to_keep_set, keep_empty_tags_set, root):  # noqa: 
     return elements_to_remove
 
 
-def has_meaningful_content(element, keep_empty_tags_set, check_tail=True):
+def has_meaningful_content(element, keep_empty_tags_set, ids_to_keep_set, check_tail=True):
     """Check if element/children has non-whitespace content or in the `keep_empty_tags_set`."""
     if element.tag in keep_empty_tags_set:
+        return True
+
+    element_id = element.get("id", "")
+    if element_id in ids_to_keep_set:
         return True
 
     if element.text and element.text.strip():
@@ -314,7 +323,9 @@ def has_meaningful_content(element, keep_empty_tags_set, check_tail=True):
     if check_tail and element.tail and element.tail.strip():
         return True
 
-    return any(has_meaningful_content(child, keep_empty_tags_set) for child in element)
+    return any(
+        has_meaningful_content(child, keep_empty_tags_set, ids_to_keep_set) for child in element
+    )
 
 
 def process_class_and_style(root, tags_with_classes):
