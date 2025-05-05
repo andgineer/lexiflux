@@ -93,7 +93,6 @@ class BookLoaderURL(BookLoaderHtml):
 
             with timing("Extracting IDs with internal links"):
                 self.keep_ids = self.extract_ids_from_internal_links(self.tree_root)
-                log.info(f"Keeping IDs: {self.keep_ids}")
 
             with timing("Extracting readable HTML"):
                 extracted_content = self.extract_readable_html()

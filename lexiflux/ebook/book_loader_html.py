@@ -4,7 +4,9 @@ import logging
 from collections.abc import Iterator
 
 from lexiflux.ebook.book_loader_plain_text import BookLoaderPlainText
-from lexiflux.ebook.html_page_splitter import PAGES_NUM_TO_DEBUG, HtmlPageSplitter
+from lexiflux.ebook.html_page_splitter import HtmlPageSplitter
+
+PAGES_NUM_TO_DEBUG = 3
 
 log = logging.getLogger(__name__)
 

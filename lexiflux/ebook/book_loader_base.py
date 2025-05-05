@@ -13,6 +13,7 @@ from lxml import etree
 from lexiflux.ebook.clear_html import parse_partial_html
 from lexiflux.language.detect_language_fasttext import language_detector
 from lexiflux.models import Author, Book, BookPage, CustomUser, Language, Toc
+from lexiflux.timing import timing
 
 log = logging.getLogger()
 
@@ -109,9 +110,12 @@ class BookLoaderBase:
         else:
             book_instance.public = True
 
-        # Iterate over pages and save them
-        for i, page_content in enumerate(self.pages(), start=1):
-            BookPage.objects.create(book=book_instance, number=i, content=page_content)
+        with timing("Iterate over pages and save them"):
+            if pages_to_add := [
+                BookPage(book=book_instance, number=i, content=page_content)
+                for i, page_content in enumerate(self.pages(), start=1)
+            ]:
+                BookPage.objects.bulk_create(pages_to_add)
 
         # must be after page iteration so the headings are collected
         book_instance.toc = self.toc

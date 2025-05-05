@@ -13,13 +13,14 @@ from ebooklib import ITEM_DOCUMENT, ITEM_IMAGE, epub
 
 from lexiflux.ebook.book_loader_base import BookLoaderBase, MetadataField
 from lexiflux.ebook.clear_html import clear_html, parse_partial_html
-from lexiflux.ebook.html_page_splitter import PAGES_NUM_TO_DEBUG, HtmlPageSplitter
+from lexiflux.ebook.html_page_splitter import HtmlPageSplitter
 from lexiflux.ebook.web_page_metadata import MetadataExtractor
 from lexiflux.models import Book, BookImage
 
 log = logging.getLogger()
 
 MAX_ITEM_SIZE = 6000
+PAGES_NUM_TO_DEBUG = 3
 
 
 class BookLoaderEpub(BookLoaderBase):

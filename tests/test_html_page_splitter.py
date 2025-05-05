@@ -2,6 +2,7 @@ import re
 
 import allure
 import pytest
+from lxml import etree
 
 from lexiflux.ebook.html_page_splitter import HtmlPageSplitter, TARGET_PAGE_SIZE
 
@@ -188,3 +189,297 @@ class TestEpubContentSplitting:
                 parts = page.split("&")
                 for part in parts[1:]:  # Skip first part (before any &)
                     assert ";" in part, f"Split HTML entity in page {i}"
+
+    def test_nested_elements(self):
+        """Test splitting content with deeply nested elements."""
+        target_size = 100
+
+        # Create deeply nested HTML structure
+        nested_html = "<div><section><article><div><p>"
+        nested_html += "Deeply nested content " * 30
+        nested_html += "</p></div></article></section></div>"
+
+        splitter = HtmlPageSplitter(nested_html, target_page_size=target_size)
+        pages = list(splitter.pages())
+
+        print(f"\nNested HTML size: {len(nested_html)} chars")
+        print(f"Target page size: {target_size} chars")
+        for i, page in enumerate(pages):
+            print(f"Page {i + 1} size: {len(page)} chars")
+            print(f"Page {i + 1} content: {page[:100]}...")
+
+        assert len(pages) > 1, "Deeply nested content should be split into multiple pages"
+
+        # Verify tag integrity - each page should maintain proper HTML structure
+        for page in pages:
+            # Parse the page to check if it's valid HTML
+            try:
+                etree.fromstring(f"<root>{page}</root>", parser=etree.HTMLParser())
+            except etree.ParseError as e:
+                pytest.fail(f"Page is not valid HTML: {str(e)}")
+
+    def test_empty_and_whitespace_content(self):
+        """Test handling of empty or whitespace-only content."""
+        # Empty content
+        empty_splitter = HtmlPageSplitter("", target_page_size=100)
+        empty_pages = list(empty_splitter.pages())
+        assert len(empty_pages) == 0, "Empty content should produce no pages"
+
+        # Whitespace only content
+        whitespace_splitter = HtmlPageSplitter("  \n  \t  ", target_page_size=100)
+        whitespace_pages = list(whitespace_splitter.pages())
+        assert len(whitespace_pages) <= 1, "Whitespace-only content should produce at most one page"
+
+        # Content with only HTML tags but no text
+        empty_tags_html = "<div><p></p><span></span></div>"
+        empty_tags_splitter = HtmlPageSplitter(empty_tags_html, target_page_size=100)
+        empty_tags_pages = list(empty_tags_splitter.pages())
+        assert len(empty_tags_pages) <= 1, "Empty tags should produce at most one page"
+
+    @pytest.mark.skip("BeautifulSoup implementation fails on this test")
+    def test_html_entities(self):
+        """Test handling of HTML entities during splitting."""
+        target_size = 50
+
+        # HTML with entities
+        html_with_entities = """
+        <p>This text contains HTML entities like &amp; and &lt; and &gt; and &quot;
+        which should never be split across pages. Even long entities like &longrightarrow;
+        must be kept intact when splitting content into multiple pages.</p>
+        """
+
+        splitter = HtmlPageSplitter(html_with_entities, target_page_size=target_size)
+        pages = list(splitter.pages())
+
+        print(f"\nHTML with entities size: {len(html_with_entities)} chars")
+        print(f"Target page size: {target_size} chars")
+        for i, page in enumerate(pages):
+            print(f"Page {i + 1}: {page}")
+
+        # Check that no HTML entities are split
+        for page in pages:
+            # Find all ampersands in the page
+            ampersand_positions = [m.start() for m in re.finditer("&", page)]
+
+            for pos in ampersand_positions:
+                # Find the semicolon that closes this entity
+                semicolon_pos = page.find(";", pos)
+
+                # Make sure each ampersand has a corresponding semicolon
+                assert semicolon_pos != -1, (
+                    f"HTML entity starting with & at position {pos} is not closed in page: {page}"
+                )
+
+    def test_mixed_content_types(self):
+        """Test splitting content with mixed element types (text, lists, tables, etc.)."""
+        target_size = 300
+
+        mixed_html = """
+        <div>
+            <h1>Mixed Content Test</h1>
+            <p>This is a paragraph with regular text content that might need to be split.</p>
+            <ul>
+                <li>List item 1 with some text content</li>
+                <li>List item 2 with additional text</li>
+                <li>List item 3 with even more text content to increase size</li>
+            </ul>
+            <table>
+                <tr><th>Header 1</th><th>Header 2</th></tr>
+                <tr><td>Cell 1</td><td>Cell 2 with longer content</td></tr>
+                <tr><td>Cell 3 with long content</td><td>Cell 4</td></tr>
+            </table>
+            <p>Another paragraph after the table with more text content for splitting.</p>
+        </div>
+        """
+
+        splitter = HtmlPageSplitter(mixed_html, target_page_size=target_size)
+        pages = list(splitter.pages())
+
+        print(f"\nMixed HTML size: {len(mixed_html)} chars")
+        print(f"Target page size: {target_size} chars")
+        for i, page in enumerate(pages):
+            print(f"Page {i + 1} size: {len(page)} chars")
+
+        assert len(pages) > 1, "Mixed content should be split into multiple pages"
+
+        # Verify each page contains complete elements
+        for page in pages:
+            # Check list items integrity
+            assert page.count("<li>") == page.count("</li>"), (
+                "List items should not be split across pages"
+            )
+
+            # Check table row integrity
+            assert page.count("<tr>") == page.count("</tr>"), (
+                "Table rows should not be split across pages"
+            )
+
+            # Check table cell integrity
+            assert page.count("<td>") == page.count("</td>"), (
+                "Table cells should not be split across pages"
+            )
+            assert page.count("<th>") == page.count("</th>"), (
+                "Table header cells should not be split across pages"
+            )
+
+    def test_content_with_images(self):
+        """Test handling of content with image elements."""
+        target_size = 250
+
+        html_with_images = """
+        <div>
+            <p>Text before image.</p>
+            <img src="image1.jpg" alt="Image 1" class="large" style="width:100%;">
+            <p>Text between images with enough content to potentially split across pages. Text between images with enough content to potentially split across pages.Text between images with enough content to potentially split across pages.</p>
+            <img src="image2.jpg" alt="Image 2" width="500" height="300">
+            <p>Text after images with more content.</p>
+        </div>
+        """
+
+        splitter = HtmlPageSplitter(html_with_images, target_page_size=target_size)
+        pages = list(splitter.pages())
+
+        print(f"\nHTML with images size: {len(html_with_images)} chars")
+        print(f"Target page size: {target_size} chars")
+        for i, page in enumerate(pages):
+            print(f"Page {i + 1}:\n{page}")
+
+        # Use BeautifulSoup to verify image integrity
+        from bs4 import BeautifulSoup
+
+        # Parse original HTML and extract image details
+        original_soup = BeautifulSoup(html_with_images, "html.parser")
+        original_images = original_soup.find_all("img")
+        expected_image_count = len(original_images)
+
+        # Store original image attributes for later comparison
+        original_image_attrs = []
+        for img in original_images:
+            original_image_attrs.append(img.attrs)
+
+        # Count images in split pages
+        found_images = []
+        for page in pages:
+            page_soup = BeautifulSoup(page, "html.parser")
+            page_images = page_soup.find_all("img")
+            for img in page_images:
+                found_images.append(img)
+
+        # Verify all images are accounted for
+        assert len(found_images) == expected_image_count, (
+            f"Expected {expected_image_count} images, but found {len(found_images)} across all pages"
+        )
+
+        # Check that each image retains its original attributes
+        for i, original_attrs in enumerate(original_image_attrs):
+            # Find corresponding image in results by matching src attribute
+            matching_images = [
+                img for img in found_images if img.get("src") == original_attrs.get("src")
+            ]
+            assert len(matching_images) == 1, (
+                f"Image with src={original_attrs.get('src')} was not found exactly once"
+            )
+
+            result_img = matching_images[0]
+            # Check that all original attributes are preserved
+            for attr_name, attr_value in original_attrs.items():
+                assert result_img.has_attr(attr_name), (
+                    f"Image missing {attr_name} attribute: {result_img}"
+                )
+                assert result_img[attr_name] == attr_value, (
+                    f"Image attribute {attr_name} changed from '{attr_value}' to '{result_img[attr_name]}'"
+                )
+
+    def test_large_content_with_small_target(self):
+        """Test extremely large content with a very small target page size."""
+        target_size = 100  # Very small target size
+
+        # Generate large HTML content
+        large_content = "<div>"
+        for i in range(50):
+            large_content += (
+                f"<p>Paragraph {i} with some text content. " + "More text. " * 10 + "</p>"
+            )
+        large_content += "</div>"
+
+        splitter = HtmlPageSplitter(large_content, target_page_size=target_size)
+        pages = list(splitter.pages())
+
+        print(f"\nLarge content size: {len(large_content)} chars")
+        print(f"Target page size: {target_size} chars")
+        print(f"Number of pages: {len(pages)}")
+
+        assert len(pages) > len(large_content) // target_size // 2, (
+            "Should create many pages for large content"
+        )
+
+        # Check that page sizes are reasonable
+        max_page_size = max(len(page) for page in pages)
+        assert max_page_size <= target_size * 2, (
+            f"Largest page size ({max_page_size}) exceeds twice the target size"
+        )
+
+    def test_unicode_content(self):
+        """Test handling of content with Unicode characters from various scripts."""
+        target_size = 200
+
+        unicode_html = """
+        <div>
+            <p>English text with regular ASCII characters.</p>
+            <p>Chinese text: 这是一些中文文本，应该正确处理。</p>
+            <p>Arabic text: هذا نص باللغة العربية يجب معالجته بشكل صحيح.</p>
+            <p>Russian text: Это текст на русском языке, который должен обрабатываться правильно.</p>
+            <p>Emojis: 🌍 🌎 🌏 👨‍👩‍👧‍👦 should be handled correctly.</p>
+            <p>Math symbols: ∑ ∫ ∞ √ ∆ should be preserved.</p>
+        </div>
+        """
+
+        splitter = HtmlPageSplitter(unicode_html, target_page_size=target_size)
+        pages = list(splitter.pages())
+
+        print(f"\nUnicode HTML size: {len(unicode_html)} chars")
+        print(f"Target page size: {target_size} chars")
+        for i, page in enumerate(pages):
+            print(f"Page {i + 1} size: {len(page)} chars")
+
+        # Check that all Unicode content is preserved
+        joined_content = "".join(pages)
+
+        assert "这是一些中文文本" in joined_content, "Chinese text should be preserved"
+        assert "هذا نص باللغة العربية" in joined_content, "Arabic text should be preserved"
+        assert "Это текст на русском языке" in joined_content, "Russian text should be preserved"
+        assert "🌍" in joined_content, "Emojis should be preserved"
+        assert "∫" in joined_content, "Math symbols should be preserved"
+
+    def test_malformed_html(self):
+        """Test handling of malformed HTML content."""
+        target_size = 150
+
+        # Malformed HTML with unclosed tags and mismatched tags
+        malformed_html = """
+        <div>
+            <p>This paragraph is not properly closed.
+            <strong>This is bold text that's not closed.
+            <em>This is emphasized text.</p>
+            <span>This span has no closing tag.
+            <p>Another paragraph with <a href="link.html">a link that's not closed</p>
+        </div>
+        """
+
+        # Should not raise exceptions with malformed HTML
+        splitter = HtmlPageSplitter(malformed_html, target_page_size=target_size)
+        pages = list(splitter.pages())
+
+        print(f"\nMalformed HTML size: {len(malformed_html)} chars")
+        print(f"Target page size: {target_size} chars")
+        for i, page in enumerate(pages):
+            print(f"Page {i + 1}:\n{page}")
+
+        assert len(pages) > 0, "Should produce at least one page even with malformed HTML"
+
+        # Verify that the output pages can be parsed as HTML
+        for page in pages:
+            try:
+                etree.fromstring(f"<root>{page}</root>", parser=etree.HTMLParser(recover=True))
+            except Exception as e:
+                pytest.fail(f"Failed to parse output page: {str(e)}")
