@@ -319,9 +319,9 @@ def test_empty_html():
     url = "https://example.com/empty"
     metadata = extract_web_page_metadata(html, url=url)
 
-    # Should fall back to URL-based title
-    assert metadata.get(MetadataField.TITLE) is None
-    assert metadata.get(MetadataField.AUTHOR) is None
+    # Should fall back to URL-based title and domain-based author
+    assert metadata.get(MetadataField.TITLE) == "Empty"
+    assert metadata.get(MetadataField.AUTHOR) == "example.com"
 
 
 @allure.epic("Book import")

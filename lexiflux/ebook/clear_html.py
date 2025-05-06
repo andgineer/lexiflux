@@ -59,7 +59,7 @@ CDATA_END = "]]>"
 logger = logging.getLogger(__name__)
 
 
-def parse_partial_html(input_html):
+def parse_partial_html(input_html) -> Optional[etree.Element]:
     """Parse string with HTML fragment into an lxml tree.
 
     Supports partial HTML content.

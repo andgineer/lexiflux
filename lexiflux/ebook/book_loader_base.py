@@ -12,7 +12,7 @@ from lxml import etree
 
 from lexiflux.ebook.clear_html import parse_partial_html
 from lexiflux.language.detect_language_fasttext import language_detector
-from lexiflux.models import Author, Book, BookPage, CustomUser, Language, Toc
+from lexiflux.models import Author, Book, BookPage, CustomUser, Language, Toc, normalize_for_search
 from lexiflux.timing import timing
 
 log = logging.getLogger()
@@ -112,7 +112,12 @@ class BookLoaderBase:
 
         with timing("Iterate over pages and save them"):
             if pages_to_add := [
-                BookPage(book=book_instance, number=i, content=page_content)
+                BookPage(
+                    book=book_instance,
+                    number=i,
+                    content=page_content,
+                    normalized_content=normalize_for_search(page_content),
+                )
                 for i, page_content in enumerate(self.pages(), start=1)
             ]:
                 BookPage.objects.bulk_create(pages_to_add)
@@ -237,10 +242,11 @@ class BookLoaderBase:
         log.debug("Language '%s' detected.", language_name)
         return language_name  # type: ignore
 
-    def _process_anchors(
+    def _process_anchors(  # noqa: PLR0913
         self,
         page_num: int,
-        content: str,
+        content: Optional[str] = None,
+        html_tree: Optional[etree._Element] = None,
         file_name: str = "",
         item_id: Optional[str] = None,
         item_name: Optional[str] = None,
@@ -250,7 +256,12 @@ class BookLoaderBase:
         Store in self.anchor_map.
         """
         try:
-            html_tree = parse_partial_html(content)
+            if content is not None:
+                html_tree = parse_partial_html(content)
+            elif html_tree is None:
+                raise ValueError("content and html_tree is None")
+            if not html_tree:
+                return
             for element in cast(etree.Element, html_tree.xpath("//*[@id]")):
                 if anchor_id := element.get("id"):
                     link = f"{normalize_path(file_name)}#{anchor_id}"

@@ -4,6 +4,7 @@ import logging
 from collections.abc import Iterator
 
 from lexiflux.ebook.book_loader_plain_text import BookLoaderPlainText
+from lexiflux.ebook.clear_html import parse_partial_html
 from lexiflux.ebook.html_page_splitter import HtmlPageSplitter
 
 PAGES_NUM_TO_DEBUG = 3
@@ -16,13 +17,17 @@ class BookLoaderHtml(BookLoaderPlainText):
 
     escape_html = False
 
+    def load_text(self) -> None:
+        super().load_text()
+        self.tree_root = parse_partial_html(self.text)
+
     def pages(self) -> Iterator[str]:
         """Split a text into pages of approximately equal length.
 
         Also clear headings and recollect them during pages generation.
         """
         page_splitter = HtmlPageSplitter(
-            self.text,
+            root=self.tree_root,
         )
         for page_num, page_html in enumerate(page_splitter.pages(), start=1):
             if page_html.strip():  # Only process non-empty pages

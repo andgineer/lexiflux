@@ -10,6 +10,7 @@ from typing import Any, Optional
 
 from django.db import transaction
 from ebooklib import ITEM_DOCUMENT, ITEM_IMAGE, epub
+from lxml import etree
 
 from lexiflux.ebook.book_loader_base import BookLoaderBase, MetadataField
 from lexiflux.ebook.clear_html import clear_html, parse_partial_html
@@ -134,26 +135,28 @@ class BookLoaderEpub(BookLoaderBase):
         for content, item_filename, item_id, item_name in self.spine():  # pylint: disable=too-many-nested-blocks
             if page_num < PAGES_NUM_TO_DEBUG:
                 log.debug(f"Content {item_filename}, page {page_num}:\n{content}")
+            root = parse_partial_html(content)
             if len(content) > MAX_ITEM_SIZE:
                 page_splitter = HtmlPageSplitter(
-                    content,
+                    root=root,
                 )
                 for sub_page in page_splitter.pages():
+                    page_root = parse_partial_html(sub_page)
                     if cleaned_content := self.clear_page(
-                        sub_page,
-                        item_filename,
-                        item_id,
-                        item_name,
-                        page_num,
+                        root=page_root,
+                        item_filename=item_filename,
+                        item_id=item_id,
+                        item_name=item_name,
+                        page_num=page_num,
                     ):
                         yield cleaned_content
                         page_num += 1
             elif cleaned_content := self.clear_page(
-                content,
-                item_filename,
-                item_id,
-                item_name,
-                page_num,
+                root=root,
+                item_filename=item_filename,
+                item_id=item_id,
+                item_name=item_name,
+                page_num=page_num,
             ):
                 yield cleaned_content
                 page_num += 1
@@ -161,17 +164,17 @@ class BookLoaderEpub(BookLoaderBase):
         # Process TOC after all pages have been processed
         self._process_toc()
 
-    def clear_page(
+    def clear_page(  # noqa: PLR0913
         self,
-        content: str,
-        item_filename,
-        item_id,
-        item_name,
-        page_num,
+        content: Optional[str] = None,
+        root: Optional[etree._Element] = None,
+        item_filename: str = "",
+        item_id: str = "",
+        item_name: str = "",
+        page_num: int = 0,
     ) -> Optional[str]:
-        if not content.strip():
-            log.warning(f"Empty page in {item_filename} was skipped")
-        root = parse_partial_html(content)
+        if content is not None:
+            root = parse_partial_html(content)
         self.keep_ids |= self.extract_ids_from_internal_links(root)
         cleaned_content = clear_html(root=root, ids_to_keep=self.keep_ids).strip()
         if page_num < PAGES_NUM_TO_DEBUG:
@@ -179,10 +182,10 @@ class BookLoaderEpub(BookLoaderBase):
         if cleaned_content:
             self._process_anchors(
                 page_num,
-                cleaned_content,
-                item_filename,
-                item_id,
-                item_name,
+                html_tree=root,
+                file_name=item_filename,
+                item_id=item_id,
+                item_name=item_name,
             )
             return cleaned_content
         log.warning(f"Non-empty page cleaned to nothing: {item_filename}, page {page_num}")

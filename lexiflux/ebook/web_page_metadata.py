@@ -25,7 +25,8 @@ class MetadataExtractor:
             html_content: HTML content as string
             url: Original URL of the content
         """
-        self.tree = tree if tree is not None else parse_partial_html(html_content)
+        parsed_tree = tree if tree is not None else parse_partial_html(html_content)
+        self.tree: etree.Element = parsed_tree if parsed_tree is not None else etree.Element("html")
         # todo: add metadata from trafilature.extract_metadata()
 
         self.url = url
@@ -33,8 +34,6 @@ class MetadataExtractor:
 
     def extract_all(self) -> dict[str, Any]:
         """Extract all metadata from the page and return as a dictionary."""
-        if self.tree is None:
-            return {}
         # Extract structured data
         self._extract_json_ld()
 

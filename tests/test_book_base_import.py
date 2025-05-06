@@ -67,7 +67,7 @@ class TestBookLoaderBaseAnchors:
             mock_parse.return_value = mock_tree
             book_processor_mock.keep_ids = {"section1"}
 
-            book_processor_mock._process_anchors(1, content)
+            book_processor_mock._process_anchors(page_num=1, content=content)
 
             # Verify the anchor map was properly populated
             assert "#section1" in book_processor_mock.anchor_map
@@ -91,7 +91,7 @@ class TestBookLoaderBaseAnchors:
             mock_parse.return_value = mock_tree
             book_processor_mock.keep_ids = {"section1"}
 
-            book_processor_mock._process_anchors(1, content, file_name)
+            book_processor_mock._process_anchors(page_num=1, content=content, file_name=file_name)
 
             # Verify specific anchor entry with filename
             assert f"{file_name}#section1" in book_processor_mock.anchor_map
@@ -121,7 +121,11 @@ class TestBookLoaderBaseAnchors:
             book_processor_mock.keep_ids = {"section1"}
 
             book_processor_mock._process_anchors(
-                1, content, "chapter1.html", "custom_id", "Custom Name"
+                page_num=1,
+                content=content,
+                file_name="chapter1.html",
+                item_id="custom_id",
+                item_name="Custom Name",
             )
 
             # Verify custom values were used
@@ -165,7 +169,9 @@ class TestBookLoaderBaseAnchors:
             mock_parse.return_value = mock_tree
             book_processor_mock.keep_ids = {"title", "para1", "para2"}
 
-            book_processor_mock._process_anchors(2, content, "chapter2.html")
+            book_processor_mock._process_anchors(
+                page_num=2, content=content, file_name="chapter2.html"
+            )
 
             # Verify all elements were processed
             assert "chapter2.html#title" in book_processor_mock.anchor_map
@@ -184,7 +190,7 @@ class TestBookLoaderBaseAnchors:
             book_processor_mock.anchor_map = {}
 
             # The method should handle None result from parse_partial_html
-            book_processor_mock._process_anchors(1, "", "empty.html")
+            book_processor_mock._process_anchors(page_num=1, content="", file_name="empty.html")
 
             # The file entry might not be added due to the exception,
             # so we're checking that it's handled gracefully
@@ -201,7 +207,9 @@ class TestBookLoaderBaseAnchors:
             book_processor_mock.anchor_map = {}
 
             with patch("lexiflux.ebook.book_loader_base.log") as mock_log:
-                book_processor_mock._process_anchors(1, "any content", "invalid.html")
+                book_processor_mock._process_anchors(
+                    page_num=1, content="any content", file_name="invalid.html"
+                )
                 mock_log.exception.assert_called_once_with("Error processing anchors")
 
     @allure.story("Process anchors - specific test for chap03")
@@ -221,7 +229,9 @@ class TestBookLoaderBaseAnchors:
             book_processor_mock.keep_ids = {"chap03"}
 
             # Insert "chap03" string into content to trigger warning
-            book_processor_mock._process_anchors(3, content, "chapter3.html")
+            book_processor_mock._process_anchors(
+                page_num=3, content=content, file_name="chapter3.html"
+            )
 
             assert "chapter3.html#chap03" in book_processor_mock.anchor_map
 
