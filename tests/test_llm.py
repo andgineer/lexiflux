@@ -74,7 +74,7 @@ def llm_instance():
     return Llm()
 
 
-@allure.epic("Language Processing")
+@allure.epic("Language Tools")
 @allure.feature("Term and Sentence Marking")
 def test_mark_term_and_sentence_success(mock_book_page, llm_instance):
     # Prepare test data
@@ -106,7 +106,7 @@ def test_mark_term_and_sentence_success(mock_book_page, llm_instance):
     assert result == expected_result
 
 
-@allure.epic("Language Processing")
+@allure.epic("Language Tools")
 @allure.feature("Term and Sentence Marking")
 @pytest.mark.parametrize(
     "term_word_ids, expected_term",
@@ -131,7 +131,7 @@ def test_mark_term_and_sentence_different_terms(
     assert f"{WORD_START_MARK}{expected_term}{WORD_END_MARK}" in result
 
 
-@allure.epic("Language Processing")
+@allure.epic("Language Tools")
 @allure.feature("Term and Sentence Marking")
 @pytest.mark.parametrize(
     "context_words, expected_words_before, expected_words_after",
@@ -172,7 +172,7 @@ def mock_llm():
         yield mock
 
 
-@allure.epic("Language Processing")
+@allure.epic("Language Tools")
 @allure.feature("Term and Sentence Marking")
 def test_get_context_for_translation_history(mock_llm):
     # Setup
@@ -211,7 +211,7 @@ def test_get_context_for_translation_history(mock_llm):
     )
 
 
-@allure.epic("Language Processing")
+@allure.epic("Language Tools")
 @allure.feature("Term and Sentence Marking")
 def test_get_context_for_translation_history_error_handling(mock_llm):
     # Setup
@@ -228,7 +228,7 @@ def test_get_context_for_translation_history_error_handling(mock_llm):
         get_context_for_translation_history(book, book_page, term_word_ids)
 
 
-@allure.epic("Language Processing")
+@allure.epic("Language Tools")
 @allure.feature("Term Detection")
 class TestTermDetection:
     @pytest.mark.parametrize(
@@ -281,7 +281,7 @@ class TestTermDetection:
         assert len(result["word_slices"]) == len(expected["word_slices"])
 
 
-@allure.epic("Language Processing")
+@allure.epic("Language Tools")
 @allure.feature("Model Settings")
 class TestModelSettings:
     def test_get_model_settings_with_user_config(self, db_init, approved_user):
@@ -326,7 +326,7 @@ class TestModelSettings:
             assert settings["api_key"] == "env_key"
 
 
-@allure.epic("Language Processing")
+@allure.epic("Language Tools")
 @allure.feature("Model Management")
 class TestModelManagement:
     def test_get_or_create_model_openai(self, request, approved_user):
@@ -359,7 +359,7 @@ class TestModelManagement:
             llm._get_or_create_model(params)
 
 
-@allure.epic("Language Processing")
+@allure.epic("Language Tools")
 @allure.feature("Article Generation")
 class TestArticleGeneration:
     @pytest.mark.parametrize(
@@ -579,7 +579,7 @@ class TestArticleGeneration:
         assert exc_info.value.model_name == "gpt-4o"
 
 
-@allure.epic("Language Processing")
+@allure.epic("Language Tools")
 @allure.feature("Text Processing")
 class TestTextProcessing:
     @pytest.mark.parametrize(
@@ -617,7 +617,7 @@ class TestTextProcessing:
         assert _extract_sentence(text) == expected
 
 
-@allure.epic("Language Processing")
+@allure.epic("Language Tools")
 @allure.feature("Utility Functions")
 class TestUtilityFunctions:
     @pytest.mark.parametrize(
@@ -652,7 +652,7 @@ class TestUtilityFunctions:
         assert parser.parse(text) == expected
 
 
-@allure.epic("Language Processing")
+@allure.epic("Language Tools")
 @allure.feature("Error Handling")
 class TestErrorHandling:
     def test_ai_model_error(self):

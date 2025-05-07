@@ -2,6 +2,7 @@
 
 from collections.abc import Iterator
 from dataclasses import dataclass
+from html import escape
 from typing import Optional
 
 from lxml import etree
@@ -27,6 +28,10 @@ class SplitterContext:
         """Append content and update size."""
         self.chunks.append(content)
         self.size += len(content)
+
+    def append_text(self, text: str) -> None:
+        """Append text and update size."""
+        self.append_content(escape(text))
 
 
 class HtmlPageSplitter:
@@ -146,7 +151,7 @@ class HtmlPageSplitter:
             if element.text and element.text.strip():
                 text = element.text
                 if context.size + len(text) + len(closing_tag) <= self.target_page_size:
-                    context.append_content(text)
+                    context.append_text(text)
                 else:
                     # Split the text if needed
                     sentences = self._split_into_sentences(text)
@@ -167,7 +172,7 @@ class HtmlPageSplitter:
                                     current_text += word
                                 else:
                                     # Add current text fragment and close the tag
-                                    context.append_content(current_text)
+                                    context.append_text(current_text)
                                     context.append_content(closing_tag)
                                     if chunk := self._non_empty_chunk(context.chunks):
                                         yield chunk
@@ -178,7 +183,7 @@ class HtmlPageSplitter:
                                     current_text = word
 
                             if current_text:
-                                context.append_content(current_text)
+                                context.append_text(current_text)
                         else:
                             # End current chunk with closing tag
                             context.append_content(closing_tag)
@@ -232,7 +237,7 @@ class HtmlPageSplitter:
                 if child.tail and child.tail.strip():
                     tail_text = child.tail
                     if context.size + len(tail_text) + len(closing_tag) <= self.target_page_size:
-                        context.append_content(tail_text)
+                        context.append_text(tail_text)
                     else:
                         yield from self._split_text(context, tail_text, closing_tag, opening_tag)
 
@@ -276,7 +281,7 @@ class HtmlPageSplitter:
         """Handle text content and split if necessary."""
         # If text fits in current chunk, add it
         if context.size + len(text) + len(closing_tag) <= self.target_page_size:
-            context.append_content(text)
+            context.append_text(text)
             return
 
         # Process by sentences
@@ -299,7 +304,7 @@ class HtmlPageSplitter:
                     else:
                         # Finish current chunk
                         if current_text:
-                            context.append_content(current_text)
+                            context.append_text(current_text)
                         if closing_tag:
                             context.append_content(closing_tag)
                         if chunk := self._non_empty_chunk(context.chunks):
@@ -312,7 +317,7 @@ class HtmlPageSplitter:
                         current_text = word
 
                 if current_text:
-                    context.append_content(current_text)
+                    context.append_text(current_text)
             else:
                 # End current chunk
                 if closing_tag:

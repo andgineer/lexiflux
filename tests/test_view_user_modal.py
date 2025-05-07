@@ -4,7 +4,7 @@ from django.urls import reverse
 from lexiflux.models import LanguagePreferences
 
 
-@allure.epic("User Settings")
+@allure.epic("User")
 @allure.feature("User Modal")
 @pytest.mark.django_db
 def test_user_modal_get(client, approved_user, language):
@@ -22,7 +22,7 @@ def test_user_modal_get(client, approved_user, language):
     assert "Save Settings" in content
 
 
-@allure.epic("User Settings")
+@allure.epic("User")
 @allure.feature("User Modal")
 @pytest.mark.django_db
 def test_user_modal_update_language(client, approved_user, language):
@@ -48,7 +48,7 @@ def test_user_modal_update_language(client, approved_user, language):
     assert approved_user.language == non_english
 
 
-@allure.epic("User Settings")
+@allure.epic("User")
 @allure.feature("User Modal")
 @pytest.mark.django_db
 def test_user_modal_update_language_preferences(client, approved_user, language):
@@ -80,7 +80,7 @@ def test_user_modal_update_language_preferences(client, approved_user, language)
     assert language_pref.user_language == non_english
 
 
-@allure.epic("User Settings")
+@allure.epic("User")
 @allure.feature("User Modal")
 @pytest.mark.django_db
 def test_user_modal_update_without_affecting_preferences(client, approved_user, language):
@@ -112,7 +112,7 @@ def test_user_modal_update_without_affecting_preferences(client, approved_user, 
     assert language_pref.user_language == language  # Unchanged
 
 
-@allure.epic("User Settings")
+@allure.epic("User")
 @allure.feature("User Modal")
 @pytest.mark.django_db
 def test_first_time_user_language_selection(client, approved_user, language):
@@ -150,7 +150,7 @@ def test_first_time_user_language_selection(client, approved_user, language):
         assert pref.user_language == english
 
 
-@allure.epic("User Settings")
+@allure.epic("User")
 @allure.feature("User Modal")
 @pytest.mark.django_db
 def test_user_modal_invalid_language(client, approved_user, language):
@@ -163,7 +163,7 @@ def test_user_modal_invalid_language(client, approved_user, language):
     assert response.status_code == 400
 
 
-@allure.epic("User Settings")
+@allure.epic("User")
 @allure.feature("User Modal")
 @pytest.mark.django_db
 def test_user_modal_missing_language(client, approved_user, language):

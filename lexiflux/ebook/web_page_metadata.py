@@ -1,4 +1,5 @@
 import json
+from html import unescape
 from typing import Any, Callable, Optional
 from urllib.parse import urlparse
 
@@ -100,7 +101,7 @@ class MetadataExtractor:
         ]
 
         if title := self._get_first_match(title_sources):
-            self.metadata[MetadataField.TITLE] = title
+            self.metadata[MetadataField.TITLE] = unescape(title)
 
     def extract_part_title(self) -> Optional[str]:
         """Extract title from part of a book."""
@@ -149,7 +150,7 @@ class MetadataExtractor:
         ]
 
         if author := self._get_first_match(author_sources):
-            self.metadata[MetadataField.AUTHOR] = author
+            self.metadata[MetadataField.AUTHOR] = unescape(author)
 
     def _extract_language(self) -> None:
         """Extract language using multiple methods."""
@@ -201,7 +202,7 @@ class MetadataExtractor:
         ]
 
         if credit := self._get_first_match(credit_sources):
-            self.metadata[MetadataField.CREDITS] = credit
+            self.metadata[MetadataField.CREDITS] = unescape(credit)
 
     def _extract_description(self) -> None:
         """Extract description using multiple methods."""
@@ -214,7 +215,7 @@ class MetadataExtractor:
         ]
 
         if description := self._get_first_match(description_sources):
-            self.metadata["description"] = description
+            self.metadata["description"] = unescape(description)
 
     def _extract_image(self) -> None:
         """Extract main image using multiple methods."""
@@ -273,20 +274,20 @@ class MetadataExtractor:
         # Handle Article type
         if schema_type in ["Article", "NewsArticle", "BlogPosting"]:
             if not self.metadata.get(MetadataField.TITLE) and "headline" in item:
-                self.metadata[MetadataField.TITLE] = item["headline"]
+                self.metadata[MetadataField.TITLE] = unescape(item["headline"])
 
             if not self.metadata.get(MetadataField.AUTHOR) and "author" in item:
                 author = item["author"]
                 if isinstance(author, dict) and "name" in author:
-                    self.metadata[MetadataField.AUTHOR] = author["name"]
+                    self.metadata[MetadataField.AUTHOR] = unescape(author["name"])
                 elif isinstance(author, list) and author and "name" in author[0]:
-                    self.metadata[MetadataField.AUTHOR] = author[0]["name"]
+                    self.metadata[MetadataField.AUTHOR] = unescape(author[0]["name"])
 
             if not self.metadata.get(MetadataField.RELEASED) and "datePublished" in item:
                 self.metadata[MetadataField.RELEASED] = item["datePublished"]
 
             if not self.metadata.get("description") and "description" in item:
-                self.metadata["description"] = item["description"]
+                self.metadata["description"] = unescape(item["description"])
 
             if not self.metadata.get("image") and "image" in item:
                 if isinstance(item["image"], dict) and "url" in item["image"]:
@@ -297,15 +298,15 @@ class MetadataExtractor:
         # Handle WebPage type
         elif schema_type == "WebPage":
             if not self.metadata.get(MetadataField.TITLE) and "name" in item:
-                self.metadata[MetadataField.TITLE] = item["name"]
+                self.metadata[MetadataField.TITLE] = unescape(item["name"])
 
             if not self.metadata.get("description") and "description" in item:
-                self.metadata["description"] = item["description"]
+                self.metadata["description"] = unescape(item["description"])
 
         # Handle Organization type (for publisher)
         elif schema_type == "Organization":
             if not self.metadata.get(MetadataField.CREDITS) and "name" in item:
-                self.metadata[MetadataField.CREDITS] = item["name"]
+                self.metadata[MetadataField.CREDITS] = unescape(item["name"])
 
 
 def extract_web_page_metadata(

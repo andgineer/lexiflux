@@ -236,7 +236,6 @@ class TestEpubContentSplitting:
         empty_tags_pages = list(empty_tags_splitter.pages())
         assert len(empty_tags_pages) <= 1, "Empty tags should produce at most one page"
 
-    @pytest.mark.skip("BeautifulSoup implementation fails on this test")
     def test_html_entities(self):
         """Test handling of HTML entities during splitting."""
         target_size = 50
