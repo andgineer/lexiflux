@@ -1,3 +1,5 @@
+import time
+
 import allure
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -73,10 +75,10 @@ class ImportModalPage(BasePage):
 
     @retry_on_stale_element()
     def enter_paste_content(self, content):
-        # First click the overlay to focus the textarea
-        self.wait_for_clickable((By.ID, "pasteOverlay")).click()
+        # Use JavaScript to directly focus the textarea instead of clicking the overlay
+        self.browser.execute_script("document.getElementById('pasteContentInput').focus();")
 
-        # Then enter the text in the actual textarea
+        # Then enter the text in the textarea
         textarea = self.wait_for_element((By.ID, "pasteContentInput"))
         textarea.clear()
         textarea.send_keys(content)
@@ -155,25 +157,37 @@ class ImportModalPage(BasePage):
 
     def save_book_changes(self):
         """Save changes in the edit book modal."""
-        edit_modal = self.wait_for_edit_book_modal()
+        max_attempts = 3
+        for attempt in range(max_attempts):
+            try:
+                edit_modal = self.wait_for_edit_book_modal()
 
-        # Find and click the save button
-        save_button = WebDriverWait(edit_modal, 10).until(
-            EC.element_to_be_clickable((By.CSS_SELECTOR, ".btn-primary"))
-        )
-        save_button.click()
+                # Find and click the save button
+                save_button = WebDriverWait(self.browser, 10).until(
+                    EC.element_to_be_clickable((By.CSS_SELECTOR, "#editBookModal .btn-primary"))
+                )
 
-        # Wait for HTMX request to complete
-        WebDriverWait(self.browser, 10).until(
-            lambda driver: driver.execute_script("return !htmx.requesting")
-        )
+                # Use JavaScript to click the button (more reliable across browsers)
+                self.browser.execute_script("arguments[0].click();", save_button)
 
-        # Wait for the modal to close
-        WebDriverWait(self.browser, 10).until(
-            EC.invisibility_of_element_located((By.ID, "editBookModal"))
-        )
+                # Wait for HTMX request to complete
+                WebDriverWait(self.browser, 10).until(
+                    lambda driver: driver.execute_script("return !htmx.requesting")
+                )
 
-        # Wait for the modal backdrop to disappear
-        WebDriverWait(self.browser, 10).until(
-            EC.invisibility_of_element_located((By.CLASS_NAME, "modal-backdrop"))
-        )
+                # Wait for the modal to close
+                WebDriverWait(self.browser, 10).until(
+                    EC.invisibility_of_element_located((By.ID, "editBookModal"))
+                )
+
+                # Wait for the modal backdrop to disappear
+                WebDriverWait(self.browser, 10).until(
+                    EC.invisibility_of_element_located((By.CLASS_NAME, "modal-backdrop"))
+                )
+                # Success, break out of retry loop
+                break
+
+            except Exception:
+                if attempt == max_attempts - 1:  # Last attempt
+                    raise  # Re-raise the exception if all attempts failed
+                time.sleep(1)  # Wait before retrying

@@ -93,7 +93,6 @@ def test_e2e_library_page_edit_book(browser, approved_user, book, language):
 @pytest.mark.docker
 @pytest.mark.selenium
 @pytest.mark.django_db
-@pytest.mark.skip("Flaky test")
 def test_e2e_library_page_language_selection(browser, approved_user, language):
     approved_user.language = None
     approved_user.save()

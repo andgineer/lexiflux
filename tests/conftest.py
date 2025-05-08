@@ -1,29 +1,35 @@
 import os
-import platform
-from datetime import timedelta
-
-from ebooklib import epub, ITEM_DOCUMENT
-
-from lexiflux.ebook.book_loader_epub import BookLoaderEpub
-from lexiflux.language.google_languages import populate_languages
 
 # Bind Django test server to all network interfaces so Selenium Hub could connect from Docker.
 # For unknown reasons that does not work in pytest.ini so should be here
 # https://github.com/pytest-dev/pytest-django/issues/300
 # strange that DJANGO_SETTINGS_MODULE can be set in pytest.ini
 os.environ["DJANGO_LIVE_TEST_SERVER_ADDRESS"] = "0.0.0.0"
+
 os.environ["LEXIFLUX_SKIP_AUTH"] = "false"
 os.environ["LEXIFLUX_ENV_NAME"] = "test"
 
+from pytest_django.live_server_helper import LiveServer
+from django.test.testcases import LiveServerThread
+from wsgiref.simple_server import WSGIServer  # Non-threaded server
+
+
+from urllib.parse import urlparse
+import platform
+from datetime import timedelta
 import itertools
 import socket
-from urllib.parse import urlparse
 
 import pytest
 from unittest.mock import mock_open, patch, MagicMock
 
+from ebooklib import epub, ITEM_DOCUMENT
 from lexiflux.ebook.book_loader_base import BookLoaderBase, MetadataField
 from lexiflux.ebook.book_loader_plain_text import BookLoaderPlainText
+
+from lexiflux.ebook.book_loader_epub import BookLoaderEpub
+from lexiflux.language.google_languages import populate_languages
+
 from django.contrib.auth import get_user_model
 import django.utils.timezone
 from lexiflux.models import (
@@ -35,7 +41,7 @@ from lexiflux.models import (
     TranslationHistory,
     LanguagePreferences,
 )
-from pytest_django.live_server_helper import LiveServer
+
 import subprocess
 import time
 import allure
@@ -214,6 +220,33 @@ def django_server(live_server: LiveServer) -> DjangoLiveServer:
     yield DjangoLiveServer(
         docker_url=f"http://{get_docker_host_ip()}:{port}", host_url=f"http://0.0.0.0:{port}"
     )
+
+
+@pytest.fixture(scope="session", autouse=True)
+def use_non_threaded_server():
+    """Replace Django's threaded server with a non-threaded version.
+
+    Prevents SQLite database locks in threads spawned by Ajax requests.
+    """
+
+    class NonThreadedWSGIServer(WSGIServer):
+        def __init__(self, *args, **kwargs):
+            # Extract the parameters Django's server expects but our parent doesn't
+            self.connections_override = kwargs.pop("connections_override", None)
+            self.allow_reuse_address = kwargs.pop("allow_reuse_address", True)
+            super().__init__(*args, **kwargs)
+
+        def process_request(self, request, client_address):
+            """Process each request in the same thread."""
+            self.finish_request(request, client_address)
+            self.shutdown_request(request)
+
+    original_server_class = LiveServerThread.server_class
+    LiveServerThread.server_class = NonThreadedWSGIServer
+
+    yield
+
+    LiveServerThread.server_class = original_server_class
 
 
 @pytest.hookimpl(tryfirst=True, hookwrapper=True)

@@ -260,7 +260,7 @@ class BookLoaderBase:
                 html_tree = parse_partial_html(content)
             elif html_tree is None:
                 raise ValueError("content and html_tree is None")
-            if not html_tree:
+            if html_tree is None:
                 return
             for element in cast(etree.Element, html_tree.xpath("//*[@id]")):
                 if anchor_id := element.get("id"):

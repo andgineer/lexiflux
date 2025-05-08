@@ -21,6 +21,9 @@
       <form hx-post="{% url 'edit_book_modal' book.id %}"
             hx-target="body"
             hx-swap="none"
+            {% if not require_delete_confirmation %}
+            hx-on::after-request="window.location.href='{% url 'reader' %}?book-code={{ book.code }}'"
+            {% endif %}
       >
         <div class="modal-body">
           {% if error_message %}
@@ -115,8 +118,7 @@
               <i class="bi bi-check-lg me-1"></i>Save
             </button>
             {% else %}
-            <button type="submit" class="btn btn-primary" data-bs-dismiss="modal"
-                    onclick="window.location.href='{% url 'reader' %}?book-code={{ book.code }}'">
+            <button type="submit" class="btn btn-primary" data-bs-dismiss="modal">
               <i class="bi bi-book me-1"></i>Open
             </button>
             {% endif %}
