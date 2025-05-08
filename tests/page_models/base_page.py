@@ -31,3 +31,28 @@ class BasePage:
                 Vue.nextTick(resolve);
             });
         """)
+
+    def wait_for_htmx_loaded(self, timeout=10):
+        """Wait for HTMX to be fully loaded on the page."""
+        try:
+            WebDriverWait(self.browser, timeout).until(
+                lambda driver: driver.execute_script("return typeof htmx !== 'undefined'")
+            )
+            return True
+        except Exception:
+            return False
+
+    def wait_for_htmx_requests_complete(self, timeout=10):
+        """Wait for any HTMX requests to complete."""
+        if not self.wait_for_htmx_loaded(timeout):
+            # If HTMX isn't loaded after timeout, just wait a moment and continue
+            self.browser.implicitly_wait(1)
+            return
+
+        try:
+            WebDriverWait(self.browser, timeout).until(
+                lambda driver: driver.execute_script("return !htmx.requesting")
+            )
+        except Exception:
+            # If there's an issue checking the status, just wait a moment
+            self.browser.implicitly_wait(1)

@@ -104,10 +104,7 @@ class LibraryPage(BasePage):
         )
         save_button.click()
 
-        # Wait for HTMX request to complete
-        WebDriverWait(self.browser, 10).until(
-            lambda driver: driver.execute_script("return !htmx.requesting")
-        )
+        self.wait_for_htmx_requests_complete()
 
         # Wait for modal to disappear
         WebDriverWait(self.browser, 10).until(
