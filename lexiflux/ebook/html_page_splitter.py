@@ -16,6 +16,10 @@ TARGET_PAGE_SIZE = 3000
 class SplitterContext:
     """Context for holding mutable state during HTML splitting."""
 
+    # todo: it is crazily complex and need refactor
+    # it does not break long words so some broken text without spaces will be one huge page
+    # and probably freeze brawser
+
     size: int
     chunks: list[str]
 
@@ -107,7 +111,7 @@ class HtmlPageSplitter:
             context = SplitterContext(size=0, chunks=[])
 
         for element in elements:
-            # Handle the element itself
+            # Handle the element itself (but not its tail)
             yield from self._split_tag(context, element)
 
             # Handle tail text (text after the closing tag)
@@ -119,8 +123,12 @@ class HtmlPageSplitter:
             if chunk := self._non_empty_chunk(context.chunks):
                 yield chunk
 
-    def _split_tag(self, context: SplitterContext, element: etree._Element) -> Iterator[str]:  # noqa: C901,PLR0912,PLR0915
-        """Convert tag to string and process it based on size."""
+    def _split_tag(self, context: SplitterContext, element: etree._Element) -> Iterator[str]:  # noqa: PLR0915,PLR0912,C901
+        """Convert tag to string and process it based on size.
+
+        IMPORTANT: This method now only processes the element itself, NOT its tail.
+        Tail processing is handled in _split_elements to avoid duplication.
+        """
         tag_html = etree_to_str(element)
         tag_size = len(tag_html)
 
@@ -233,13 +241,7 @@ class HtmlPageSplitter:
                     else:
                         context.append_content(child_str)
 
-                # Handle child's tail text if any
-                if child.tail and child.tail.strip():
-                    tail_text = child.tail
-                    if context.size + len(tail_text) + len(closing_tag) <= self.target_page_size:
-                        context.append_text(tail_text)
-                    else:
-                        yield from self._split_text(context, tail_text, closing_tag, opening_tag)
+                    # DO NOT handle child's tail text here - it's handled by _split_elements
 
             # Add closing tag to last chunk
             context.append_content(closing_tag)
@@ -316,8 +318,19 @@ class HtmlPageSplitter:
                             context.append_content(opening_tag)
                         current_text = word
 
+                # Add the last accumulated text to the context AFTER the word loop
                 if current_text:
                     context.append_text(current_text)
+
+                # After adding all words, check if we need to yield a chunk
+                if context.size + len(closing_tag) > self.target_page_size:
+                    if closing_tag:
+                        context.append_content(closing_tag)
+                    if chunk := self._non_empty_chunk(context.chunks):
+                        yield chunk
+                    context.clear_chunk()
+                    if opening_tag:
+                        context.append_content(opening_tag)
             else:
                 # End current chunk
                 if closing_tag:
@@ -330,3 +343,10 @@ class HtmlPageSplitter:
                 if opening_tag:
                     context.append_content(opening_tag)
                 context.append_content(sentence)
+
+        # Make sure to yield any remaining content after processing all sentences
+        if context.chunks:  # Simplified check
+            if closing_tag and not context.chunks[-1].endswith(closing_tag):
+                context.append_content(closing_tag)
+            if chunk := self._non_empty_chunk(context.chunks):
+                yield chunk
