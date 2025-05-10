@@ -1,0 +1,3 @@
+INFO     lexiflux.signals:signals.py:57 Successfully created language preferences for user testuser (ID: 10)
+INFO     root:apps.py:36 Lexiflux 1.21.4 is ready.
+INFO     lexiflux.views.words_export:words_export.py:49 No translations found for the user

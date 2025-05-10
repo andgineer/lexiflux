@@ -1,0 +1,3 @@
+INFO     lexiflux.signals:signals.py:57 Successfully created language preferences for user testuser (ID: 13)
+INFO     lexiflux.views.words_export:words_export.py:246 Words exported for English: 1 words
+INFO     lexiflux.views.words_export:words_export.py:273 Words exported for English: 1 words using ankiConnect

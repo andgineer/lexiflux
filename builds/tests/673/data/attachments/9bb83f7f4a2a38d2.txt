@@ -1,0 +1,3 @@
+2025-04-26 05:57:38,929 INFO signals Successfully created language preferences for user testuser (ID: 25)
+2025-04-26 05:57:38,935 WARNING log Bad Request: /api/user/
+2025-04-26 05:57:38,935 WARNING log Bad Request: /api/user/

@@ -1,0 +1,1 @@
+2025-05-07 04:13:42,273 WARNING google_languages Warning: Egyptian Arabic not found in the database for group Arabic.

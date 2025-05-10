@@ -1,0 +1,3 @@
+INFO     lexiflux.signals:signals.py:57 Successfully created language preferences for user testuser (ID: 13)
+WARNING  django.request:log.py:248 Method Not Allowed (GET): /api/import-book/
+WARNING  django.request:log.py:248 Method Not Allowed: /api/import-book/

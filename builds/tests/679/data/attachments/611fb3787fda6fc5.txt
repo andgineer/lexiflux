@@ -1,0 +1,7 @@
+2025-05-03 06:09:21,973 WARNING google_languages Warning: Egyptian Arabic not found in the database for group Arabic.
+2025-05-03 06:09:22,290 INFO signals Successfully created language preferences for user testuser (ID: 24)
+2025-05-03 06:09:22,330 INFO apps Lexiflux 1.21.4 is ready.
+2025-05-03 06:09:23,515 INFO words_export For language en last export datetime: 2025-01-01 00:00:00
+2025-05-03 06:09:23,677 INFO words_export Words exported for English: 1 words
+2025-05-03 06:09:23,679 INFO words_export Words exported for English: 1 words using ankiConnect
+2025-05-03 06:09:23,691 INFO words_export For language en last export datetime: 2025-05-03 06:09:23.677894+00:00

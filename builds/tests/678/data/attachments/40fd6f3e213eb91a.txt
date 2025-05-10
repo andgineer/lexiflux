@@ -1,0 +1,2 @@
+Goto URL: from host http://0.0.0.0:56911/library from docker: http://10.1.1.151:56911/library
+Skipping JavaScript log check for Firefox

@@ -1,0 +1,2 @@
+INFO     lexiflux.signals:signals.py:57 Successfully created language preferences for user testuser (ID: 25)
+INFO     lexiflux.views.words_export:words_export.py:184 For language 76 last export datetime: 2025-04-25 04:32:31.071616+00:00

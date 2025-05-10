@@ -1,0 +1,7 @@
+
+Mixed HTML size: 749 chars
+Target page size: 300 chars
+Page 1 size: 145 chars
+Page 2 size: 246 chars
+Page 3 size: 262 chars
+Page 4 size: 98 chars

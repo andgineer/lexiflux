@@ -1,0 +1,5 @@
+2025-04-26 05:57:45,283 ERROR library_views Error importing book
+Traceback (most recent call last):
+  File "/home/runner/work/lexiflux/lexiflux/lexiflux/views/library_views.py", line 255, in import_book
+    raise ValueError("No content pasted")
+ValueError: No content pasted

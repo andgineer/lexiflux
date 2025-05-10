@@ -1,0 +1,5 @@
+Serbo-Croatian language group created successfully.
+Chinese language group created successfully.
+Warning: Egyptian Arabic not found in the database for group Arabic.
+Arabic language group created successfully.
+Goto URL: from host http://0.0.0.0:60415/reader?book-code=some-book-code from docker: http://10.1.0.51:60415/reader?book-code=some-book-code

@@ -1,0 +1,3 @@
+2025-04-25 04:17:08,949 INFO signals Successfully created language preferences for user testuser (ID: 16)
+2025-04-25 04:17:09,012 INFO apps Lexiflux 1.21.4 is ready.
+2025-04-25 04:17:10,227 INFO words_export For language en last export datetime: 2025-04-24 04:17:00+00:00
