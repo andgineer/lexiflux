@@ -1,41 +1,9 @@
-"""Split HTML content into pages of approximately equal length."""
-
+import copy
 from collections.abc import Iterator
-from dataclasses import dataclass
-from html import escape
-from typing import Optional
 
 from lxml import etree
 
-from lexiflux.ebook.clear_html import etree_to_str, parse_partial_html
-
-TARGET_PAGE_SIZE = 3000
-
-
-@dataclass
-class SplitterContext:
-    """Context for holding mutable state during HTML splitting."""
-
-    # todo: it is crazily complex and need refactor
-    # it does not break long words so some broken text without spaces will be one huge page
-    # and probably freeze brawser
-
-    size: int
-    chunks: list[str]
-
-    def clear_chunk(self) -> None:
-        """Clear the current chunks and reset size."""
-        self.chunks.clear()
-        self.size = 0
-
-    def append_content(self, content: str) -> None:
-        """Append content and update size."""
-        self.chunks.append(content)
-        self.size += len(content)
-
-    def append_text(self, text: str) -> None:
-        """Append text and update size."""
-        self.append_content(escape(text))
+TARGET_PAGE_SIZE = 3000  # Default target page size in characters
 
 
 class HtmlPageSplitter:
@@ -44,8 +12,8 @@ class HtmlPageSplitter:
     def __init__(
         self,
         content: str = "",
-        target_page_size: int = TARGET_PAGE_SIZE,
-        root: Optional[etree._Element] = None,
+        target_page_size: int = 3000,
+        root: etree._Element | None = None,
     ) -> None:
         """Initialize the HTML page splitter.
 
@@ -55,298 +23,265 @@ class HtmlPageSplitter:
             root: Parsed lxml element tree root (optional if content is provided)
         """
         self.target_page_size = target_page_size
+        self.min_size = int(target_page_size * 0.5)
+        self.max_size = int(target_page_size * 1.1)
 
         if root is not None:
             self.root = root
-        elif content is not None:
-            self.root = parse_partial_html(content)
-        else:
-            raise ValueError("Either content or root must be provided")
+        elif content is not None and content.strip():
+            parser = etree.HTMLParser(recover=True, encoding="utf-8")
+            doc = etree.fromstring(content.encode("utf-8"), parser)  # noqa: S320
 
-        # Find the body element or use the root if no body
-        if self.root is None:
-            self.elements = []
+            # Extract body content if it exists
+            body = doc.find(".//body")
+            if body is not None:
+                self.root = body
+            else:
+                self.root = doc
         else:
-            body = self.root.find(".//body")
-            self.elements = list(body) if body is not None else list(self.root)
+            self.root = None
 
     def pages(self) -> Iterator[str]:
         """Split content into pages."""
-        yield from self._split_elements(self.elements)
+        if self.root is None:
+            return
+        current_page: list = []
+        current_size = 0
 
-    def _has_content(self, html: str) -> bool:
-        """Check if HTML contains any text content or images."""
-        root = parse_partial_html(html)
-        if root is None:
-            return False
-        # Get all text from the document and check if there's any content
-        text_content = self._get_text_content(root).strip()
-        has_image = root.find(".//img") is not None
-        return bool(text_content or has_image)
+        for element in self._split_element(self.root):
+            element_size = self._get_element_size(element)
 
-    def _get_text_content(self, element: etree._Element) -> str:
-        """Extract all text content from an element and its children."""
-        result = element.text or ""
-        for child in element:
-            result += self._get_text_content(child)
-            if child.tail:
-                result += child.tail
-        return result
+            # Check if adding this element would exceed page size
+            if current_size + element_size > self.target_page_size and current_page:
+                yield self._render_page(current_page)
+                current_page = []
+                current_size = 0
 
-    def _non_empty_chunk(self, current_chunk: list[str]) -> Optional[str]:
-        """Return chunk content if non-empty, otherwise None."""
-        if current_chunk:
-            chunk = "".join(current_chunk)
-            if self._has_content(chunk):
-                return chunk
-        return None
+            current_page.append(element)
+            current_size += element_size
 
-    def _split_elements(
-        self,
-        elements: list[etree._Element],
-        context: Optional[SplitterContext] = None,
-    ) -> Iterator[str]:
-        """Recursively split elements into chunks of appropriate size."""
-        if context is None:
-            context = SplitterContext(size=0, chunks=[])
+        # Yield final page if there's content
+        if current_page:
+            yield self._render_page(current_page)
 
-        for element in elements:
-            # Handle the element itself (but not its tail)
-            yield from self._split_tag(context, element)
+    def _split_element(self, element: etree._Element) -> Iterator[etree._Element]:  # noqa: PLR0915,PLR0912,C901
+        """Recursively split an element if it's too large."""
+        element_size = self._get_element_size(element)
 
-            # Handle tail text (text after the closing tag)
-            if element.tail and element.tail.strip():
-                yield from self._split_text(context, element.tail)
-
-        # Yield any remaining content
-        if context.chunks:  # noqa: SIM102
-            if chunk := self._non_empty_chunk(context.chunks):
-                yield chunk
-
-    def _split_tag(self, context: SplitterContext, element: etree._Element) -> Iterator[str]:  # noqa: PLR0915,PLR0912,C901
-        """Convert tag to string and process it based on size.
-
-        IMPORTANT: This method now only processes the element itself, NOT its tail.
-        Tail processing is handled in _split_elements to avoid duplication.
-        """
-        tag_html = etree_to_str(element)
-        tag_size = len(tag_html)
-
-        # If the entire tag is small enough, keep it together
-        if tag_size <= self.target_page_size * 1.5:  # Allow slightly larger for complete tags
-            if context.size + tag_size > self.target_page_size and context.chunks:
-                if chunk := self._non_empty_chunk(context.chunks):
-                    yield chunk
-                context.clear_chunk()
-
-            context.append_content(tag_html)
-        else:
-            # Split large tags while preserving tag structure
-            # Create opening and closing tags
-            opening_tag = self._create_opening_tag(element)
-            closing_tag = f"</{element.tag}>"
-
-            # If current chunk exists and adding opening tag would exceed size, yield it
-            if context.chunks and context.size + len(opening_tag) > self.target_page_size:
-                if chunk := self._non_empty_chunk(context.chunks):
-                    yield chunk
-                context.clear_chunk()
-
-            # Add opening tag to new chunk
-            context.append_content(opening_tag)
-
-            # First handle element's direct text content if it exists
-            if element.text and element.text.strip():
-                text = element.text
-                if context.size + len(text) + len(closing_tag) <= self.target_page_size:
-                    context.append_text(text)
-                else:
-                    # Split the text if needed
-                    sentences = self._split_into_sentences(text)
-                    for sentence in sentences:
-                        if context.size + len(sentence) + len(closing_tag) <= self.target_page_size:
-                            context.append_content(sentence)
-                        # If the sentence itself is too large, split by words
-                        elif len(sentence) > self.target_page_size:
-                            words = sentence.split()
-                            current_text = ""
-                            for word in words:
-                                if (
-                                    len(current_text) + len(word) + 1 + len(closing_tag)
-                                    <= self.target_page_size
-                                ):
-                                    if current_text:
-                                        current_text += " "
-                                    current_text += word
-                                else:
-                                    # Add current text fragment and close the tag
-                                    context.append_text(current_text)
-                                    context.append_content(closing_tag)
-                                    if chunk := self._non_empty_chunk(context.chunks):
-                                        yield chunk
-
-                                    # Start a new chunk with opening tag
-                                    context.chunks = [opening_tag]
-                                    context.size = len(opening_tag)
-                                    current_text = word
-
-                            if current_text:
-                                context.append_text(current_text)
-                        else:
-                            # End current chunk with closing tag
-                            context.append_content(closing_tag)
-                            if chunk := self._non_empty_chunk(context.chunks):
-                                yield chunk
-
-                            # Start new chunk with opening tag and the sentence
-                            context.chunks = [opening_tag, sentence]
-                            context.size = len(opening_tag) + len(sentence)
-
-            # Now process child elements
-            for child in element:
-                child_str = etree_to_str(child)
-                child_size = len(child_str)
-
-                if context.size + child_size + len(closing_tag) <= self.target_page_size:
-                    context.append_content(child_str)
-                else:
-                    # End current chunk with closing tag
-                    context.append_content(closing_tag)
-                    if chunk := self._non_empty_chunk(context.chunks):
-                        yield chunk
-
-                    # Start new chunk with opening tag
-                    context.chunks = [opening_tag]
-                    context.size = len(opening_tag)
-
-                    # Process this child element
-                    if child_size > self.target_page_size:
-                        # Process the child element recursively if it's too large
-                        for child_content in self._split_elements([child]):
-                            # If child_content is small enough, add it to the current chunk
-                            if (
-                                context.size + len(child_content) + len(closing_tag)
-                                <= self.target_page_size
-                            ):
-                                context.append_content(child_content)
-                            else:
-                                # End current chunk with closing tag
-                                context.append_content(closing_tag)
-                                if chunk := self._non_empty_chunk(context.chunks):
-                                    yield chunk
-
-                                # Start new chunk with opening tag and the child content
-                                context.chunks = [opening_tag, child_content]
-                                context.size = len(opening_tag) + len(child_content)
-                    else:
-                        context.append_content(child_str)
-
-                    # DO NOT handle child's tail text here - it's handled by _split_elements
-
-            # Add closing tag to last chunk
-            context.append_content(closing_tag)
-
-    def _create_opening_tag(self, element: etree._Element) -> str:
-        """Create the opening tag with attributes."""
-        attrs = []
-        for key, value in element.attrib.items():
-            attrs.append(f'{key}="{value}"')
-
-        attrs_str = " ".join(attrs)
-        if attrs_str:
-            return f"<{element.tag} {attrs_str}>"
-        return f"<{element.tag}>"
-
-    def _split_into_sentences(self, text: str) -> list[str]:
-        """Split text into sentences using punctuation as separators."""
-        result = []
-        current = ""
-
-        for char in text:
-            current += char
-            if char in ".!?":
-                result.append(current)
-                current = ""
-
-        if current:
-            result.append(current)
-
-        return result if result else [text]
-
-    def _split_text(  # noqa: C901,PLR0912
-        self,
-        context: SplitterContext,
-        text: str,
-        closing_tag: str = "",
-        opening_tag: str = "",
-    ) -> Iterator[str]:
-        """Handle text content and split if necessary."""
-        # If text fits in current chunk, add it
-        if context.size + len(text) + len(closing_tag) <= self.target_page_size:
-            context.append_text(text)
+        # If element is small enough, yield it as is
+        if element_size <= self.target_page_size:
+            yield copy.deepcopy(element)
             return
 
-        # Process by sentences
-        sentences = self._split_into_sentences(text)
-        for sentence in sentences:
-            if context.size + len(sentence) + len(closing_tag) <= self.target_page_size:
-                context.append_content(sentence)
-            # If sentence is too long, split by words
-            elif len(sentence) > self.target_page_size:
-                words = sentence.split()
-                current_text = ""
-                for word in words:
-                    if (
-                        len(current_text) + len(word) + 1 + len(closing_tag)
-                        <= self.target_page_size
-                    ):
-                        if current_text:
-                            current_text += " "
-                        current_text += word
-                    else:
-                        # Finish current chunk
-                        if current_text:
-                            context.append_text(current_text)
-                        if closing_tag:
-                            context.append_content(closing_tag)
-                        if chunk := self._non_empty_chunk(context.chunks):
-                            yield chunk
+        # Element is too large - try to split it
 
-                        # Start new chunk
-                        context.clear_chunk()
-                        if opening_tag:
-                            context.append_content(opening_tag)
-                        current_text = word
+        # If element has no children, it must have large text content or tail
+        if len(element) == 0:
+            yield from self._split_text_element(element)
+            return
 
-                # Add the last accumulated text to the context AFTER the word loop
-                if current_text:
-                    context.append_text(current_text)
+        # Element has children - we need to handle:
+        # 1. element.text (before first child)
+        # 2. each child and its tail text
+        # We'll build up a list of content items and then group them into pages
 
-                # After adding all words, check if we need to yield a chunk
-                if context.size + len(closing_tag) > self.target_page_size:
-                    if closing_tag:
-                        context.append_content(closing_tag)
-                    if chunk := self._non_empty_chunk(context.chunks):
-                        yield chunk
-                    context.clear_chunk()
-                    if opening_tag:
-                        context.append_content(opening_tag)
+        content_items = []
+
+        # Handle text before first child
+        if element.text and element.text.strip():
+            if len(element.text) > self.target_page_size:
+                # Split the text
+                text_chunks = self._split_text(element.text)
+                for chunk in text_chunks:
+                    content_items.append(("text", chunk))
             else:
-                # End current chunk
-                if closing_tag:
-                    context.append_content(closing_tag)
-                if chunk := self._non_empty_chunk(context.chunks):
-                    yield chunk
+                content_items.append(("text", element.text))
 
-                # Start new chunk
-                context.clear_chunk()
-                if opening_tag:
-                    context.append_content(opening_tag)
-                context.append_content(sentence)
+        # Process each child and its tail
+        for child in element:
+            # Recursively split the child
+            for split_child in self._split_element(child):
+                content_items.append(("element", split_child))
 
-        # Make sure to yield any remaining content after processing all sentences
-        if context.chunks:  # Simplified check
-            if closing_tag and not context.chunks[-1].endswith(closing_tag):
-                context.append_content(closing_tag)
-            if chunk := self._non_empty_chunk(context.chunks):
-                yield chunk
+            # Handle tail text of the original child
+            if child.tail and child.tail.strip():
+                if len(child.tail) > self.target_page_size:
+                    # Split the tail text
+                    tail_chunks = self._split_text(child.tail)
+                    for chunk in tail_chunks:
+                        content_items.append(("tail", chunk))
+                else:
+                    content_items.append(("tail", child.tail))
+
+        # Now group content items into pages
+        current_shell = etree.Element(element.tag)
+        if element.attrib:
+            current_shell.attrib.update(element.attrib)
+        current_size = 0
+
+        for item_type, item_content in content_items:
+            if item_type == "text":
+                # This is text that goes at the beginning of the element
+                if not current_shell.text:
+                    current_shell.text = item_content
+                else:
+                    current_shell.text += item_content
+                item_size = len(item_content)
+            elif item_type == "element":
+                # This is a child element
+                item_size = self._get_element_size(item_content)
+                if current_size + item_size > self.target_page_size and (
+                    len(current_shell) > 0 or current_shell.text
+                ):
+                    # Yield current shell and start a new one
+                    yield current_shell
+                    current_shell = etree.Element(element.tag)
+                    if element.attrib:
+                        current_shell.attrib.update(element.attrib)
+                    current_size = 0
+                current_shell.append(item_content)
+            elif item_type == "tail":
+                # This is tail text that should follow the last child
+                item_size = len(item_content)
+                if current_size + item_size > self.target_page_size and (
+                    len(current_shell) > 0 or current_shell.text
+                ):
+                    # Yield current shell and start a new one
+                    yield current_shell
+                    current_shell = etree.Element(element.tag)
+                    if element.attrib:
+                        current_shell.attrib.update(element.attrib)
+                    current_size = 0
+
+                if len(current_shell) > 0:
+                    # Add as tail to the last child
+                    last_child = current_shell[-1]
+                    if last_child.tail:
+                        last_child.tail += item_content
+                    else:
+                        last_child.tail = item_content
+                # No children yet, add as text
+                elif current_shell.text:
+                    current_shell.text += item_content
+                else:
+                    current_shell.text = item_content
+
+            current_size += item_size
+
+        # Yield final shell if it has content
+        if len(current_shell) > 0 or current_shell.text:
+            yield current_shell
+
+    def _split_text_element(self, element: etree._Element) -> Iterator[etree._Element]:
+        """Split an element that has only text content."""
+        text = element.text or ""
+        if not text:
+            yield copy.deepcopy(element)
+            return
+
+        chunks = self._split_text(text)
+        for chunk in chunks:
+            new_elem = etree.Element(element.tag)
+            if element.attrib:
+                new_elem.attrib.update(element.attrib)
+            new_elem.text = chunk
+            yield new_elem
+
+    def _split_text(self, text: str) -> list[str]:
+        """Split text into chunks that fit within page size."""
+        if not text or len(text) <= self.target_page_size:
+            return [text]
+
+        chunks = []
+        start = 0
+
+        while start < len(text):
+            # Find end position for this chunk
+            end = start + self.target_page_size
+
+            if end >= len(text):
+                chunks.append(text[start:])
+                break
+
+            # Find a good break point
+            break_pos = self._find_break_point(text, start, end)
+            chunks.append(text[start:break_pos])
+            start = break_pos
+
+        return chunks
+
+    def _find_break_point(self, text: str, start: int, target_end: int) -> int:
+        """Find the best position to break text."""
+        if target_end >= len(text):
+            return len(text)
+
+        # Look for break points in order of preference
+        break_sequences = [
+            "\n\n",  # Paragraph break
+            ".\n",  # Sentence end with newline
+            "!\n",  # Exclamation with newline
+            "?\n",  # Question with newline
+            ". ",  # Sentence end
+            "! ",  # Exclamation
+            "? ",  # Question
+            "\n",  # Line break
+            "; ",  # Semicolon
+            ", ",  # Comma
+            " ",  # Space
+        ]
+
+        # Search within a reasonable range
+        search_start = max(start, target_end - 100)
+        search_end = min(len(text), target_end + 50)
+
+        for break_seq in break_sequences:
+            # Search backward from target
+            for pos in range(target_end, search_start, -1):
+                if text[pos : pos + len(break_seq)] == break_seq:
+                    return pos + len(break_seq)
+
+            # Search forward from target (but not too far to avoid exceeding limits)
+            for pos in range(target_end, search_end):
+                if text[pos : pos + len(break_seq)] == break_seq:
+                    return pos + len(break_seq)
+
+        # No good break point found - break at target
+        return target_end
+
+    def _get_element_size(self, element: etree._Element) -> int:
+        """Calculate the size of an element in characters."""
+        return len(etree.tostring(element, method="text", encoding="unicode").strip())
+
+    def _render_page(self, elements: list[etree._Element]) -> str:
+        """Render a page from a list of elements."""
+        if not elements:
+            return ""
+
+        if len(elements) == 1:
+            html = etree.tostring(elements[0], method="html", encoding="unicode", pretty_print=True)
+        else:
+            # Create wrapper for multiple elements
+            wrapper = etree.Element("div")
+            for elem in elements:
+                wrapper.append(elem)
+            html = etree.tostring(wrapper, method="html", encoding="unicode", pretty_print=True)
+
+        return self._clean_html(html)
+
+    def _clean_html(self, html: str) -> str:
+        """Remove unnecessary wrapper tags added by lxml."""
+        html = html.strip()
+
+        # Remove DOCTYPE
+        if html.startswith("<!DOCTYPE"):
+            html = html.split(">", 1)[1].strip()
+
+        # Remove html/body tags
+        for tag in ["html", "body"]:
+            if html.startswith(f"<{tag}"):
+                html = html.split(">", 1)[1]
+                if html.endswith(f"</{tag}>"):
+                    html = html.rsplit(f"</{tag}>", 1)[0]
+            html = html.strip()
+
+        return html

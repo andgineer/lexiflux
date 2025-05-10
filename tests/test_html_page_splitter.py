@@ -5,7 +5,37 @@ import pytest
 from lxml import etree
 
 from lexiflux.ebook.html_page_splitter import HtmlPageSplitter, TARGET_PAGE_SIZE
-from lexiflux.ebook.html_page_splitter import SplitterContext
+
+
+def html_to_normalized_text(html: str):
+    html_text = etree.tostring(
+        etree.fromstring(html.encode("utf-8"), parser=etree.HTMLParser()),
+        method="text",
+        encoding="unicode",
+    )
+    text_normalized = " ".join(html_text.split())
+    print(f"Input normalized text:\n{text_normalized}")
+    return text_normalized
+
+
+def pages_to_normalized_text(pages):
+    """Extract text from all pages and combine"""
+    parser = etree.HTMLParser(recover=True)
+    all_page_texts = []
+    for page in pages:
+        page_tree = etree.fromstring(page.encode("utf-8"), parser)
+        page_text = etree.tostring(page_tree, method="text", encoding="unicode")
+        all_page_texts.append(page_text)
+    pages_text = " ".join(all_page_texts)
+    text_normalized = " ".join(pages_text.split())
+    print(f"Pages normalized text:\n{text_normalized}")
+    return text_normalized
+
+
+def assert_text(html: str, pages: list):
+    input_text = html_to_normalized_text(html)
+    pages_text = pages_to_normalized_text(pages)
+    assert input_text == pages_text, "Pages should preserve all input text"
 
 
 @allure.epic("Book import")
@@ -33,11 +63,13 @@ def test_multiple_paragraphs_near_limit():
 
     assert len(pages) > 1, "Content should be split into multiple pages"
 
+    assert_text(content, pages)
+
     for page in pages[:-1]:
-        # Check page size
-        assert len(page) <= target_size * 1.1, (
-            f"Page size ({len(page)}) significantly exceeds target size ({target_size})"
-        )
+        page_tree = etree.fromstring(page.encode("utf-8"), parser=etree.HTMLParser())
+        assert (
+            len(etree.tostring(page_tree, method="text", encoding="unicode")) <= target_size * 1.1
+        ), f"Page size ({len(page)}) significantly exceeds target size ({target_size})"
         # Verify complete paragraphs
         assert page.count("<p>") == page.count("</p>"), (
             "Paragraphs should not be split across pages"
@@ -66,6 +98,8 @@ class TestEpubContentSplitting:
             "No HTML page should be more than twice the TARGET_PAGE_SIZE"
         )
 
+        assert_text(large_html, html_pages)
+
         large_p_element = "<p>" + "Large content " * 1000 + "</p>"
         splitter = HtmlPageSplitter(large_p_element, target_page_size=TARGET_PAGE_SIZE)
         p_pages = list(splitter.pages())
@@ -77,6 +111,8 @@ class TestEpubContentSplitting:
 
         print(f"HTML element pages: {len(html_pages)}: {[len(page) for page in html_pages]}")
         print(f"Large paragraph pages: {len(p_pages)}, sizes: {[len(page) for page in p_pages]}")
+
+        assert_text(large_p_element, p_pages)
 
     def test_split_large_element_sentence_boundaries(self):
         """Test that content is split at sentence boundaries with realistic text."""
@@ -113,6 +149,8 @@ class TestEpubContentSplitting:
                 f"Page should end with a complete sentence, but got: {stripped_page[-50:]}"
             )
 
+        assert_text(russian_text, pages)
+
     def test_very_long_single_sentence(self):
         """Test handling of sentences longer than page size."""
         target_size = 50
@@ -130,6 +168,8 @@ class TestEpubContentSplitting:
         assert all(len(page) <= target_size * 1.2 for page in pages[:-1]), (
             "Split pages should not significantly exceed target size"
         )
+
+        assert_text(long_sentence, pages)
 
     def test_html_tag_integrity(self):
         """Test that HTML tags are never split across pages. Each page must be valid HTML."""
@@ -191,6 +231,8 @@ class TestEpubContentSplitting:
                 for part in parts[1:]:  # Skip first part (before any &)
                     assert ";" in part, f"Split HTML entity in page {i}"
 
+            assert_text(complex_html, pages)
+
     def test_nested_elements(self):
         """Test splitting content with deeply nested elements."""
         target_size = 100
@@ -218,6 +260,8 @@ class TestEpubContentSplitting:
                 etree.fromstring(f"<root>{page}</root>", parser=etree.HTMLParser())
             except etree.ParseError as e:
                 pytest.fail(f"Page is not valid HTML: {str(e)}")
+
+        assert_text(nested_html, pages)
 
     def test_empty_and_whitespace_content(self):
         """Test handling of empty or whitespace-only content."""
@@ -270,6 +314,8 @@ class TestEpubContentSplitting:
                     f"HTML entity starting with & at position {pos} is not closed in page: {page}"
                 )
 
+        assert_text(html_with_entities, pages)
+
     def test_mixed_content_types(self):
         """Test splitting content with mixed element types (text, lists, tables, etc.)."""
         target_size = 300
@@ -284,9 +330,9 @@ class TestEpubContentSplitting:
                 <li>List item 3 with even more text content to increase size</li>
             </ul>
             <table>
-                <tr><th>Header 1</th><th>Header 2</th></tr>
-                <tr><td>Cell 1</td><td>Cell 2 with longer content</td></tr>
-                <tr><td>Cell 3 with long content</td><td>Cell 4</td></tr>
+                <tr><th>Header 1</th> <th>Header 2</th></tr>
+                <tr><td>Cell 1</td> <td>Cell 2 with longer content</td></tr>
+                <tr><td>Cell 3 with long content</td> <td>Cell 4</td></tr>
             </table>
             <p>Another paragraph after the table with more text content for splitting.</p>
         </div>
@@ -321,6 +367,8 @@ class TestEpubContentSplitting:
             assert page.count("<th>") == page.count("</th>"), (
                 "Table header cells should not be split across pages"
             )
+
+        assert_text(mixed_html, pages)
 
     def test_content_with_images(self):
         """Test handling of content with image elements."""
@@ -390,6 +438,8 @@ class TestEpubContentSplitting:
                     f"Image attribute {attr_name} changed from '{attr_value}' to '{result_img[attr_name]}'"
                 )
 
+        assert_text(html_with_images, pages)
+
     def test_large_content_with_small_target(self):
         """Test extremely large content with a very small target page size."""
         target_size = 100  # Very small target size
@@ -418,6 +468,8 @@ class TestEpubContentSplitting:
         assert max_page_size <= target_size * 2, (
             f"Largest page size ({max_page_size}) exceeds twice the target size"
         )
+
+        assert_text(large_content, pages)
 
     def test_unicode_content(self):
         """Test handling of content with Unicode characters from various scripts."""
@@ -451,6 +503,8 @@ class TestEpubContentSplitting:
         assert "🌍" in joined_content, "Emojis should be preserved"
         assert "∫" in joined_content, "Math symbols should be preserved"
 
+        assert_text(unicode_html, pages)
+
     def test_malformed_html(self):
         """Test handling of malformed HTML content."""
         target_size = 150
@@ -475,7 +529,7 @@ class TestEpubContentSplitting:
         for i, page in enumerate(pages):
             print(f"Page {i + 1}:\n{page}")
 
-        assert len(pages) > 0, "Should produce at least one page even with malformed HTML"
+        assert pages, "Should produce at least one page even with malformed HTML"
 
         # Verify that the output pages can be parsed as HTML
         for page in pages:
@@ -484,14 +538,14 @@ class TestEpubContentSplitting:
             except Exception as e:
                 pytest.fail(f"Failed to parse output page: {str(e)}")
 
+        assert_text(malformed_html, pages)
+
 
 def test_split_text_long_sentence_simplified():
-    """Simplified test for splitting long text that ensures all content is preserved.
-    Uses lxml for proper HTML parsing instead of regex.
-    """
+    """Test that ensures all content is preserved and in the correct order."""
     from lxml import etree
 
-    # Test content with a long sentence
+    # Test content with a long sentence in the tail
     content = """
     <div>
         <span>Short span content</span>
@@ -500,6 +554,10 @@ def test_split_text_long_sentence_simplified():
     </div>
     """
     target_size = 50  # Very small target to force splitting
+
+    # Parse the original content to extract text
+    parser = etree.HTMLParser(recover=True)
+    original_tree = etree.fromstring(content.encode("utf-8"), parser)
 
     # Split the content
     splitter = HtmlPageSplitter(content, target_page_size=target_size)
@@ -511,67 +569,18 @@ def test_split_text_long_sentence_simplified():
     print(f"Number of pages: {len(pages)}")
     for i, page in enumerate(pages):
         print(f"Page {i + 1} size: {len(page)} chars")
-        print(f"Page {i + 1} content: {page}\n")
+        print(f"Page {i + 1} content: {page}")
 
-    # Verify we have multiple pages
+    assert_text(content, pages)
+
+    # Also check that we have multiple pages
     assert len(pages) > 1, "Long content should be split into multiple pages"
 
-    # Check page sizes (allow reasonable tolerance)
+    # Check that page sizes are reasonable
     for page in pages[:-1]:  # All pages except the last
         assert len(page) <= target_size * 2, (
             f"Page size ({len(page)}) significantly exceeds target size ({target_size})"
         )
-
-    # Extract text content from the original HTML using lxml
-    def get_text_content(html_string):
-        # Parse HTML
-        root = etree.fromstring(f"<root>{html_string}</root>", parser=etree.HTMLParser())
-
-        # Extract all text (including element text and tail text)
-        text_content = ""
-
-        def extract_text(element):
-            nonlocal text_content
-            # Add element's text if it exists
-            if element.text:
-                text_content += element.text + " "
-
-            # Process children
-            for child in element:
-                extract_text(child)
-
-            # Add element's tail if it exists
-            if element.tail:
-                text_content += element.tail + " "
-
-        extract_text(root)
-
-        # Normalize whitespace and convert to lowercase
-        return " ".join(text_content.split()).lower()
-
-    # Get original text content and words
-    original_text = get_text_content(content)
-    original_words = set(original_text.split())
-
-    # Extract text from all pages using lxml
-    combined_text = get_text_content("".join(pages))
-    output_words = set(combined_text.split())
-
-    # Check that all words from original content are in output
-    missing_words = original_words - output_words
-    assert len(missing_words) == 0, f"All words should be preserved. Missing: {missing_words}"
-
-    # Check for any extra words (might indicate duplication)
-    extra_words = output_words - original_words
-    assert len(extra_words) == 0, f"No extra words should be added. Extra: {extra_words}"
-
-    # Additional debug info
-    print(f"Original words count: {len(original_words)}")
-    print(f"Output words count: {len(output_words)}")
-    if missing_words:
-        print(f"Missing words: {missing_words}")
-    if extra_words:
-        print(f"Extra words: {extra_words}")
 
 
 @allure.epic("Book import")
@@ -585,31 +594,172 @@ def test_direct_split_text_method():
     # Create very long text with individual words that exceed target page size
     long_text = "ThisIsAVeryLongWord ThatExceedsTargetSize AnotherLongWord AndSomeMoreText"
 
-    # Create a context to pass to _split_text
-    context = SplitterContext(size=0, chunks=[])
-
-    # Add closing tag to force chunking
-    closing_tag = "</div>"
-
-    # Collect pages generated by _split_text
-    generated_pages = []
-    for page in splitter._split_text(context, long_text, closing_tag=closing_tag):
-        generated_pages.append(page)
-        assert len(page) <= splitter.target_page_size * 3, (
-            f"Page size ({len(page)}) exceeds target size ({splitter.target_page_size})"
-        )
+    # Test the _split_text method directly
+    text_chunks = splitter._split_text(long_text)
 
     # Print the results for visual inspection
     print("\nDirect _split_text test:")
     print(f"Long text: '{long_text}'")
     print(f"Target page size: {splitter.target_page_size} chars")
-    print(f"Number of pages: {len(generated_pages)}")
-    for i, page in enumerate(generated_pages):
-        print(f"Page {i + 1} size: {len(page)} chars")
-        print(f"Page {i + 1} content: {page}\n")
+    print(f"Number of chunks: {len(text_chunks)}")
+    for i, chunk in enumerate(text_chunks):
+        print(f"Chunk {i + 1} size: {len(chunk)} chars")
+        print(f"Chunk {i + 1} content: {chunk}\n")
 
-    # Extract text from all pages
-    combined_output = " ".join(generated_pages)
-    output_text = combined_output.replace("<div>", "").replace("</div>", "").strip()
+    # Verify all text is preserved
+    combined_text = "".join(text_chunks)
+    assert combined_text == long_text, "Split text should preserve all content"
 
-    assert output_text == long_text, "Output text should match input text"
+    assert len(text_chunks) == 5, "With target size 10, we should have 5 chunks"
+
+
+def test_preserve_empty_tags():
+    """Test that tags with no text content (like img, br, hr) are preserved during splitting."""
+    target_size = 100
+
+    html_with_empty_tags = """
+    <div>
+        <p>Text before image.</p>
+        <img src="image1.jpg" alt="First Image" />
+        <p>Text after image.</p>
+        <br />
+        <hr />
+        <p>Text after break and horizontal rule.</p>
+        <input type="text" name="test" />
+        <meta charset="UTF-8" />
+        <p>More text content that might cause splitting.</p>
+        <img src="image2.jpg" alt="Second Image" width="200" height="100" />
+        <br />
+        <p>Final paragraph with more content to exceed the page size limit and force splitting across multiple pages.</p>
+    </div>
+    """
+
+    # Parse original HTML to count empty tags
+    parser = etree.HTMLParser(recover=True)
+    original_tree = etree.fromstring(html_with_empty_tags.encode("utf-8"), parser)
+
+    # Count original empty tags
+    empty_tags = ["img", "br", "hr", "input", "meta"]
+    original_counts = {}
+    for tag in empty_tags:
+        original_counts[tag] = len(original_tree.xpath(f".//{tag}"))
+
+    print(f"\nOriginal tag counts: {original_counts}")
+
+    # Split the content
+    splitter = HtmlPageSplitter(html_with_empty_tags, target_page_size=target_size)
+    pages = list(splitter.pages())
+
+    print(f"Target page size: {target_size} chars")
+    print(f"Number of pages: {len(pages)}")
+
+    # Count empty tags in all pages
+    combined_counts = {tag: 0 for tag in empty_tags}
+    for i, page in enumerate(pages):
+        print(f"\nPage {i + 1}:\n{page}")
+
+        page_tree = etree.fromstring(page.encode("utf-8"), parser)
+        for tag in empty_tags:
+            count = len(page_tree.xpath(f".//{tag}"))
+            combined_counts[tag] += count
+            if count > 0:
+                print(f"  Found {count} {tag} tag(s)")
+
+    print(f"\nTotal counts after splitting: {combined_counts}")
+
+    # Verify all empty tags are preserved
+    for tag in empty_tags:
+        assert combined_counts[tag] == original_counts[tag], (
+            f"Lost {tag} tags during splitting: original={original_counts[tag]}, "
+            f"after split={combined_counts[tag]}"
+        )
+
+    # Also verify specific attributes are preserved
+    # Check that img tags retain their attributes
+    original_imgs = original_tree.xpath(".//img")
+    all_split_imgs = []
+    for page in pages:
+        page_tree = etree.fromstring(page.encode("utf-8"), parser)
+        all_split_imgs.extend(page_tree.xpath(".//img"))
+
+    assert len(all_split_imgs) == len(original_imgs), "Number of img tags should be preserved"
+
+    # Check that attributes are preserved for each img
+    for orig_img in original_imgs:
+        src = orig_img.get("src")
+        matching_imgs = [img for img in all_split_imgs if img.get("src") == src]
+        assert len(matching_imgs) == 1, f"Image with src={src} should appear exactly once"
+
+        # Check all attributes are preserved
+        for attr, value in orig_img.attrib.items():
+            assert matching_imgs[0].get(attr) == value, (
+                f"Attribute {attr} not preserved for img with src={src}"
+            )
+
+    assert_text(html_with_empty_tags, pages)
+
+
+def test_empty_tags_edge_cases():
+    """Test edge cases for empty tags preservation."""
+    target_size = 50
+
+    # Test with empty tags at various positions
+    edge_case_html = """
+    <div>
+        <br />  <!-- Empty tag at start -->
+        <p>Small text.</p>
+        <img src="test.jpg" />  <!-- Empty tag in middle -->
+        <p>More text content here that might cause splitting.</p>
+        <hr />  <!-- Empty tag at potential split point -->
+        <p>Final text content.</p>
+        <br />  <!-- Empty tag at end -->
+    </div>
+    """
+
+    splitter = HtmlPageSplitter(edge_case_html, target_page_size=target_size)
+    pages = list(splitter.pages())
+
+    # Count br and hr tags in original and split content
+    parser = etree.HTMLParser(recover=True)
+    original_tree = etree.fromstring(edge_case_html.encode("utf-8"), parser)
+
+    original_br_count = len(original_tree.xpath(".//br"))
+    original_hr_count = len(original_tree.xpath(".//hr"))
+    original_img_count = len(original_tree.xpath(".//img"))
+
+    split_br_count = 0
+    split_hr_count = 0
+    split_img_count = 0
+
+    for page in pages:
+        page_tree = etree.fromstring(page.encode("utf-8"), parser)
+        split_br_count += len(page_tree.xpath(".//br"))
+        split_hr_count += len(page_tree.xpath(".//hr"))
+        split_img_count += len(page_tree.xpath(".//img"))
+
+    assert split_br_count == original_br_count, "BR tags should be preserved"
+    assert split_hr_count == original_hr_count, "HR tags should be preserved"
+    assert split_img_count == original_img_count, "IMG tags should be preserved"
+
+    assert_text(edge_case_html, pages)
+
+    # Test with multiple empty tags together
+    multiple_empty_html = """
+    <div>
+        <p>Text before multiple empty tags.</p>
+        <br /><br /><hr /><img src="test.jpg" /><br />
+        <p>Text after multiple empty tags.</p>
+    </div>
+    """
+
+    splitter2 = HtmlPageSplitter(multiple_empty_html, target_page_size=target_size)
+    pages2 = list(splitter2.pages())
+
+    # Verify the sequence of empty tags is maintained
+    print(f"\nMultiple empty tags test:\n{pages2}")
+    combined_html = "".join(pages2)
+    assert '<br><br><hr><img src="test.jpg"><br>' in combined_html.replace("\n", ""), (
+        "Sequence of empty tags should be preserved"
+    )
+
+    assert_text(multiple_empty_html, pages2)
