@@ -1,2 +1,0 @@
-HTML element pages: 5: [3012, 3015, 531, 3017, 2017]
-Large paragraph pages: 5, sizes: [3002, 3002, 3002, 3002, 2022]

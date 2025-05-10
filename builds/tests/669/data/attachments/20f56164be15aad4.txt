@@ -1,2 +1,0 @@
-INFO     root:book_loader_url.py:134 Metadata extraction result: {'title': 'Test'}
-INFO     root:book_loader_url.py:136 Using original HTML

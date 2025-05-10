@@ -1,9 +1,0 @@
-Serbo-Croatian language group created successfully.
-Chinese language group created successfully.
-Warning: Egyptian Arabic not found in the database for group Arabic.
-Arabic language group created successfully.
-Jumping to 2 30
-Jumping to 4 50
-After update: page_number=5, word=10
-jump_history=[{'page_number': 2, 'word': 30}, {'page_number': 5, 'word': 10}]
-current_jump=1
