@@ -1,9 +1,12 @@
 import copy
 from collections.abc import Iterator
+from typing import Any
 
 from lxml import etree
 
-TARGET_PAGE_SIZE = 3000  # Default target page size in characters
+from lexiflux.ebook.clear_html import etree_to_str
+
+TARGET_PAGE_SIZE = 3000
 
 
 class HtmlPageSplitter:
@@ -12,19 +15,21 @@ class HtmlPageSplitter:
     def __init__(
         self,
         content: str = "",
-        target_page_size: int = 3000,
         root: etree._Element | None = None,
+        target_page_size: int = TARGET_PAGE_SIZE,
+        page_size_tolerance: float = 0.25,
     ) -> None:
         """Initialize the HTML page splitter.
 
         Args:
             content: HTML content string to split (optional if root is provided)
-            target_page_size: Target size for each page in characters
             root: Parsed lxml element tree root (optional if content is provided)
+            target_page_size: Target size for each page in characters
+            page_size_tolerance: Tolerance for page size variation (default 0.25)
         """
         self.target_page_size = target_page_size
-        self.min_size = int(target_page_size * 0.5)
-        self.max_size = int(target_page_size * 1.1)
+        self.max_size = int(target_page_size * (1 + page_size_tolerance))
+        self.max_error = self.max_size - target_page_size
 
         if root is not None:
             self.root = root
@@ -34,10 +39,7 @@ class HtmlPageSplitter:
 
             # Extract body content if it exists
             body = doc.find(".//body")
-            if body is not None:
-                self.root = body
-            else:
-                self.root = doc
+            self.root = body if body is not None else doc
         else:
             self.root = None
 
@@ -52,7 +54,7 @@ class HtmlPageSplitter:
             element_size = self._get_element_size(element)
 
             # Check if adding this element would exceed page size
-            if current_size + element_size > self.target_page_size and current_page:
+            if current_size + element_size > self.max_size and current_page:
                 yield self._render_page(current_page)
                 current_page = []
                 current_size = 0
@@ -69,11 +71,22 @@ class HtmlPageSplitter:
         element_size = self._get_element_size(element)
 
         # If element is small enough, yield it as is
-        if element_size <= self.target_page_size:
+        if element_size <= self.max_size:
+            # Special handling for body elements - yield their children instead
+            if getattr(element, "tag", None) == "body":
+                for child in element:
+                    yield copy.deepcopy(child)
+                return
             yield copy.deepcopy(element)
             return
 
         # Element is too large - try to split it
+
+        if getattr(element, "tag", None) == "body":
+            # Treat body's children as if they were at the root level
+            for child in element:
+                yield from self._split_element(child)
+            return
 
         # If element has no children, it must have large text content or tail
         if len(element) == 0:
@@ -85,31 +98,29 @@ class HtmlPageSplitter:
         # 2. each child and its tail text
         # We'll build up a list of content items and then group them into pages
 
-        content_items = []
+        content_items: list[tuple[str, Any]] = []
 
         # Handle text before first child
         if element.text and element.text.strip():
-            if len(element.text) > self.target_page_size:
+            if len(element.text) > self.max_size:
                 # Split the text
                 text_chunks = self._split_text(element.text)
-                for chunk in text_chunks:
-                    content_items.append(("text", chunk))
+                content_items.extend(("text", chunk) for chunk in text_chunks)
             else:
                 content_items.append(("text", element.text))
 
         # Process each child and its tail
         for child in element:
             # Recursively split the child
-            for split_child in self._split_element(child):
-                content_items.append(("element", split_child))
-
+            content_items.extend(
+                ("element", split_child) for split_child in self._split_element(child)
+            )
             # Handle tail text of the original child
             if child.tail and child.tail.strip():
                 if len(child.tail) > self.target_page_size:
                     # Split the tail text
                     tail_chunks = self._split_text(child.tail)
-                    for chunk in tail_chunks:
-                        content_items.append(("tail", chunk))
+                    content_items.extend(("tail", chunk) for chunk in tail_chunks)
                 else:
                     content_items.append(("tail", child.tail))
 
@@ -230,9 +241,8 @@ class HtmlPageSplitter:
             " ",  # Space
         ]
 
-        # Search within a reasonable range
-        search_start = max(start, target_end - 100)
-        search_end = min(len(text), target_end + 50)
+        search_start = max(start, target_end - self.max_error)
+        search_end = min(len(text), target_end + self.max_error)
 
         for break_seq in break_sequences:
             # Search backward from target
@@ -258,30 +268,12 @@ class HtmlPageSplitter:
             return ""
 
         if len(elements) == 1:
-            html = etree.tostring(elements[0], method="html", encoding="unicode", pretty_print=True)
+            html = etree_to_str(elements[0])
         else:
             # Create wrapper for multiple elements
-            wrapper = etree.Element("div")
+            wrapper = etree.Element("root")
             for elem in elements:
                 wrapper.append(elem)
-            html = etree.tostring(wrapper, method="html", encoding="unicode", pretty_print=True)
-
-        return self._clean_html(html)
-
-    def _clean_html(self, html: str) -> str:
-        """Remove unnecessary wrapper tags added by lxml."""
-        html = html.strip()
-
-        # Remove DOCTYPE
-        if html.startswith("<!DOCTYPE"):
-            html = html.split(">", 1)[1].strip()
-
-        # Remove html/body tags
-        for tag in ["html", "body"]:
-            if html.startswith(f"<{tag}"):
-                html = html.split(">", 1)[1]
-                if html.endswith(f"</{tag}>"):
-                    html = html.rsplit(f"</{tag}>", 1)[0]
-            html = html.strip()
+            html = etree_to_str(wrapper)
 
         return html

@@ -85,7 +85,7 @@ def parse_partial_html(input_html) -> Optional[etree.Element]:
 
 
 def etree_to_str(root):
-    if root.tag in ["root", "html"]:
+    if root.tag in ["root", "html", "body"]:
         # If it's our artificial root, only return its contents
         result = root.text if root.text else ""
         for child in root:

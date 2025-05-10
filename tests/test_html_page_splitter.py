@@ -38,6 +38,14 @@ def assert_text(html: str, pages: list):
     assert input_text == pages_text, "Pages should preserve all input text"
 
 
+def assert_html_text_len(html_str: str, max_len: float) -> None:
+    tree = etree.fromstring(html_str, parser=etree.HTMLParser())
+    assert len(etree.tostring(tree, method="text", encoding="unicode")) <= max_len, (
+        f"HTML text length ({len(etree.tostring(tree, method='text', encoding='unicode'))}) "
+        f"exceeds maximum length ({max_len})"
+    )
+
+
 @allure.epic("Book import")
 @allure.feature("EPUB: parse pages")
 def test_multiple_paragraphs_near_limit():
@@ -68,7 +76,7 @@ def test_multiple_paragraphs_near_limit():
     for page in pages[:-1]:
         page_tree = etree.fromstring(page.encode("utf-8"), parser=etree.HTMLParser())
         assert (
-            len(etree.tostring(page_tree, method="text", encoding="unicode")) <= target_size * 1.1
+            len(etree.tostring(page_tree, method="text", encoding="unicode")) <= target_size * 1.25
         ), f"Page size ({len(page)}) significantly exceeds target size ({target_size})"
         # Verify complete paragraphs
         assert page.count("<p>") == page.count("</p>"), (
@@ -117,11 +125,14 @@ class TestEpubContentSplitting:
     def test_split_large_element_sentence_boundaries(self):
         """Test that content is split at sentence boundaries with realistic text."""
         target_size = 300
+        tolerance = 0.4
 
         russian_text = """
         <p class="p1">Моя мать не боялась загробной жизни. Как и большинство евреев, она имела очень смутное представление о том, что ждет человека, попавшего в могилу, и она старалась не думать об этом. Ее страшили само умирание, безвозвратность ухода из жизни. Я до сих пор не могу забыть, с какой одержимостью она говорила о неизбежности конца, особенно в моменты расставаний. Все мое существование было наполнено экзальтированными и драматическими сценами прощаний. И когда они с отцом уезжали из Бостона в Нью-Йорк на уик-энд, и когда мать провожала меня в летний лагерь, и даже когда я уходил в школу, она прижималась ко мне и со слезами говорила о том, как она ослабла, предупреждая, что мы можем больше не увидеться. Если мы шли вместе куда-нибудь, она вдруг останавливалась, словно теряя сознание. Иногда она показывала мне вену на шее, брала меня за руку и просила пощупать пульс, чтобы удостовериться в том, как неровно бьется ее сердце.</p>
         """
-        splitter = HtmlPageSplitter(russian_text, target_page_size=target_size)
+        splitter = HtmlPageSplitter(
+            russian_text, target_page_size=target_size, page_size_tolerance=tolerance
+        )
 
         pages = list(splitter.pages())
 
@@ -134,11 +145,8 @@ class TestEpubContentSplitting:
         # Verify we get multiple pages due to small target size
         assert len(pages) > 1, "Text should be split into multiple pages"
 
-        # Check that each page (except possibly the last) is close to but not over target size
-        for page in pages[:-1]:
-            assert len(page) <= target_size * 1.1, (
-                f"Page size ({len(page)}) significantly exceeds target size ({target_size})"
-            )
+        for page in pages:
+            assert_html_text_len(page, target_size * (1 + tolerance))
 
         # Check that each page ends with a complete sentence
         sentence_endings = r"[.!?](\s|</p>|$)"
@@ -231,7 +239,7 @@ class TestEpubContentSplitting:
                 for part in parts[1:]:  # Skip first part (before any &)
                     assert ";" in part, f"Split HTML entity in page {i}"
 
-            assert_text(complex_html, pages)
+        assert_text(complex_html, pages)
 
     def test_nested_elements(self):
         """Test splitting content with deeply nested elements."""
@@ -576,11 +584,8 @@ def test_split_text_long_sentence_simplified():
     # Also check that we have multiple pages
     assert len(pages) > 1, "Long content should be split into multiple pages"
 
-    # Check that page sizes are reasonable
-    for page in pages[:-1]:  # All pages except the last
-        assert len(page) <= target_size * 2, (
-            f"Page size ({len(page)}) significantly exceeds target size ({target_size})"
-        )
+    for page in pages:
+        assert_html_text_len(page, target_size * 2)
 
 
 @allure.epic("Book import")
@@ -589,7 +594,9 @@ def test_direct_split_text_method():
     """Test the _split_text method directly with a simple text comparison."""
     # Create a minimal HTML for testing
     html_content = "<div>test</div>"
-    splitter = HtmlPageSplitter(html_content, target_page_size=10)  # Very small target size
+
+    # Very small target size with tolerance enough to find word boundaries
+    splitter = HtmlPageSplitter(html_content, target_page_size=10, page_size_tolerance=1.5)
 
     # Create very long text with individual words that exceed target page size
     long_text = "ThisIsAVeryLongWord ThatExceedsTargetSize AnotherLongWord AndSomeMoreText"
