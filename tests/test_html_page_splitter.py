@@ -47,7 +47,7 @@ def assert_html_text_len(html_str: str, max_len: float) -> None:
 
 
 @allure.epic("Book import")
-@allure.feature("EPUB: parse pages")
+@allure.feature("HTML split pages")
 def test_multiple_paragraphs_near_limit():
     """Test handling of multiple paragraphs near the page size limit."""
     content = """
@@ -89,7 +89,7 @@ def test_multiple_paragraphs_near_limit():
 
 
 @allure.epic("Book import")
-@allure.feature("EPUB: parse pages")
+@allure.feature("HTML split pages")
 class TestEpubContentSplitting:
     """Test suite for EPUB content splitting functionality."""
 
@@ -549,6 +549,8 @@ class TestEpubContentSplitting:
         assert_text(malformed_html, pages)
 
 
+@allure.epic("Book import")
+@allure.feature("HTML split pages")
 def test_split_text_long_sentence_simplified():
     """Test that ensures all content is preserved and in the correct order."""
     from lxml import etree
@@ -589,7 +591,7 @@ def test_split_text_long_sentence_simplified():
 
 
 @allure.epic("Book import")
-@allure.feature("EPUB: parse pages")
+@allure.feature("HTML split pages")
 def test_direct_split_text_method():
     """Test the _split_text method directly with a simple text comparison."""
     # Create a minimal HTML for testing
@@ -620,6 +622,8 @@ def test_direct_split_text_method():
     assert len(text_chunks) == 5, "With target size 10, we should have 5 chunks"
 
 
+@allure.epic("Book import")
+@allure.feature("HTML split pages")
 def test_preserve_empty_tags():
     """Test that tags with no text content (like img, br, hr) are preserved during splitting."""
     target_size = 100
@@ -706,6 +710,8 @@ def test_preserve_empty_tags():
     assert_text(html_with_empty_tags, pages)
 
 
+@allure.epic("Book import")
+@allure.feature("HTML split pages")
 def test_empty_tags_edge_cases():
     """Test edge cases for empty tags preservation."""
     target_size = 50
