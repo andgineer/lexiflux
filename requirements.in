@@ -28,6 +28,7 @@ beautifulsoup4
 lxml
 fasttext
 nltk
+pagesmith
 psutil
 pyjwt
 unidecode

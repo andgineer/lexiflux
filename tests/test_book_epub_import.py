@@ -10,7 +10,7 @@ from lexiflux.ebook.book_loader_epub import (
     BookLoaderEpub,
     href_hierarchy,
 )
-from lexiflux.ebook.html_page_splitter import TARGET_PAGE_SIZE
+from pagesmith.html_page_splitter import TARGET_PAGE_SIZE
 
 
 @allure.epic("Book import")
@@ -283,7 +283,7 @@ def test_pages_with_toc_processing(book_epub):
 
 @allure.epic("Book import")
 @allure.feature("EPUB: parse pages")
-@patch("lexiflux.ebook.book_loader_epub.clear_html")
+@patch("lexiflux.ebook.book_loader_epub.refine_html")
 def test_pages_with_html_cleaning(mock_clear_html, book_epub):
     mock_clear_html.return_value = "Cleaned content"
 

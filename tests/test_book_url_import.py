@@ -5,7 +5,7 @@ from unittest.mock import patch, MagicMock, ANY
 from django.http import HttpRequest
 from lxml import etree
 
-from lexiflux.ebook.clear_html import etree_to_str, parse_partial_html
+from pagesmith import etree_to_str, parse_partial_html
 from lexiflux.models import Author, Book, Language
 from django.core.management import CommandError
 from lexiflux.ebook.book_loader_url import BookLoaderURL, CleaningLevel
@@ -171,7 +171,7 @@ def test_import_url_e2e():
             BookLoaderURL, "__init__", return_value=None
         ),  # Patch __init__ to avoid real initialization
         patch("lexiflux.ebook.book_loader_url.parse_partial_html"),
-        patch("lexiflux.ebook.book_loader_url.clear_html", return_value="<p>Cleaned content</p>"),
+        patch("lexiflux.ebook.book_loader_url.refine_html", return_value="<p>Cleaned content</p>"),
         patch("lexiflux.ebook.web_page_metadata.extract_web_page_metadata") as mock_metadata,
         patch.object(BookLoaderURL, "detect_meta"),
         patch.object(BookLoaderURL, "load_text"),  # Skip load_text to avoid serialization issues
@@ -571,7 +571,7 @@ def test_load_text_request_and_processing():
         patch("requests.get") as mock_get,
         patch.object(BookLoaderURL, "extract_readable_html") as mock_extract,
         patch("lexiflux.ebook.book_loader_url.parse_partial_html") as mock_parse,
-        patch("lexiflux.ebook.book_loader_url.clear_html") as mock_clear,
+        patch("lexiflux.ebook.book_loader_url.refine_html") as mock_clear,
         patch.object(BookLoaderURL, "_add_source_info"),
     ):
         # Setup mock responses

@@ -3,7 +3,7 @@ import allure
 from unittest.mock import patch, MagicMock
 
 from lexiflux.ebook.book_loader_base import BookLoaderBase
-from lexiflux.ebook.clear_html import parse_partial_html
+from pagesmith import parse_partial_html
 
 
 @pytest.fixture
@@ -13,9 +13,7 @@ def book_processor_mock() -> BookLoaderBase:
     with (
         patch("lexiflux.ebook.book_loader_base.language_detector") as mock_detector,
         patch("lexiflux.ebook.book_loader_base.Language.find") as mock_language_find,
-        patch(
-            "lexiflux.ebook.clear_html.parse_partial_html", wraps=parse_partial_html
-        ) as mock_parse,
+        patch("pagesmith.parse_partial_html", wraps=parse_partial_html) as mock_parse,
     ):
         mock_detector.return_value.detect.return_value = "en"
         mock_language_find.return_value = "English"
@@ -55,7 +53,7 @@ class TestBookLoaderBaseAnchors:
         content = '<div id="section1">Section 1</div>'
 
         # Patch parse_partial_html to return a properly structured etree
-        with patch("lexiflux.ebook.clear_html.parse_partial_html") as mock_parse:
+        with patch("pagesmith.parse_partial_html") as mock_parse:
             # Create a mock element with id and text attributes
             mock_element = MagicMock()
             mock_element.get.return_value = "section1"
@@ -81,7 +79,7 @@ class TestBookLoaderBaseAnchors:
         content = '<div id="section1">Section 1</div>'
         file_name = "chapter1.html"
 
-        with patch("lexiflux.ebook.clear_html.parse_partial_html") as mock_parse:
+        with patch("pagesmith.parse_partial_html") as mock_parse:
             mock_element = MagicMock()
             mock_element.get.return_value = "section1"
             mock_element.text = "Section 1"
@@ -110,7 +108,7 @@ class TestBookLoaderBaseAnchors:
         """Test anchor processing with custom item ID and name."""
         content = '<div id="section1">Section 1</div>'
 
-        with patch("lexiflux.ebook.clear_html.parse_partial_html") as mock_parse:
+        with patch("pagesmith.parse_partial_html") as mock_parse:
             mock_element = MagicMock()
             mock_element.get.return_value = "section1"
             mock_element.text = "Section 1"
@@ -149,7 +147,7 @@ class TestBookLoaderBaseAnchors:
         </div>
         """
 
-        with patch("lexiflux.ebook.clear_html.parse_partial_html") as mock_parse:
+        with patch("pagesmith.parse_partial_html") as mock_parse:
             # Create mock elements
             mock_title = MagicMock()
             mock_title.get.return_value = "title"
@@ -183,7 +181,7 @@ class TestBookLoaderBaseAnchors:
     @allure.story("Process anchors with empty content")
     def test_process_anchors_empty_content(self, book_processor_mock):
         """Test processing empty content."""
-        with patch("lexiflux.ebook.clear_html.parse_partial_html") as mock_parse:
+        with patch("pagesmith.parse_partial_html") as mock_parse:
             mock_parse.return_value = None
 
             # Reset the anchor map to ensure it's empty before the test
@@ -217,7 +215,7 @@ class TestBookLoaderBaseAnchors:
         """Test the specific case mentioned in the code about 'chap03'."""
         content = '<div><a id="chap03"></a>Chapter 3</div>'
 
-        with patch("lexiflux.ebook.clear_html.parse_partial_html") as mock_parse:
+        with patch("pagesmith.parse_partial_html") as mock_parse:
             # Configure mock to trigger the chap03 warning
             mock_element = MagicMock()
             mock_element.get.return_value = "chap03"

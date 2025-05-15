@@ -11,10 +11,10 @@ from typing import Any, Optional
 from django.db import transaction
 from ebooklib import ITEM_DOCUMENT, ITEM_IMAGE, epub
 from lxml import etree
+from pagesmith import parse_partial_html, refine_html
+from pagesmith.html_page_splitter import HtmlPageSplitter
 
 from lexiflux.ebook.book_loader_base import BookLoaderBase, MetadataField
-from lexiflux.ebook.clear_html import clear_html, parse_partial_html
-from lexiflux.ebook.html_page_splitter import HtmlPageSplitter
 from lexiflux.ebook.web_page_metadata import MetadataExtractor
 from lexiflux.models import Book, BookImage
 
@@ -176,7 +176,7 @@ class BookLoaderEpub(BookLoaderBase):
         if content is not None:
             root = parse_partial_html(content)
         self.keep_ids |= self.extract_ids_from_internal_links(root)
-        cleaned_content = clear_html(root=root, ids_to_keep=self.keep_ids).strip()
+        cleaned_content = refine_html(root=root, ids_to_keep=self.keep_ids).strip()
         if page_num < PAGES_NUM_TO_DEBUG:
             log.debug(f"Cleaned {item_filename}, page {page_num}:\n{cleaned_content}")
         if cleaned_content:
@@ -236,7 +236,7 @@ class BookLoaderEpub(BookLoaderBase):
             content = random_item.get_body_content().decode("utf-8")
 
             # Clean the content
-            cleaned_content = clear_html(content)
+            cleaned_content = refine_html(content)
 
             expected_length = self.WORD_ESTIMATED_LENGTH * words_num * 2
 

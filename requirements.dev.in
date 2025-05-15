@@ -6,7 +6,7 @@ pytest-cov
 pytest-django
 coveralls
 faker
-selenium
+selenium<4.32
 allure-pytest
 pytz
 django-debug-toolbar

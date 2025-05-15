@@ -9,8 +9,8 @@ from urllib.parse import unquote
 
 from django.core.management import CommandError
 from lxml import etree
+from pagesmith import parse_partial_html
 
-from lexiflux.ebook.clear_html import parse_partial_html
 from lexiflux.language.detect_language_fasttext import language_detector
 from lexiflux.models import Author, Book, BookPage, CustomUser, Language, Toc, normalize_for_search
 from lexiflux.timing import timing

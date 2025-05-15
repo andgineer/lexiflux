@@ -3,9 +3,10 @@
 import logging
 from collections.abc import Iterator
 
+from pagesmith import parse_partial_html
+from pagesmith.html_page_splitter import HtmlPageSplitter
+
 from lexiflux.ebook.book_loader_plain_text import BookLoaderPlainText
-from lexiflux.ebook.clear_html import parse_partial_html
-from lexiflux.ebook.html_page_splitter import HtmlPageSplitter
 
 PAGES_NUM_TO_DEBUG = 3
 

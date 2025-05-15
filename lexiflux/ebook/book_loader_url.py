@@ -10,10 +10,10 @@ from urllib.parse import urlparse
 import requests
 import trafilatura
 from lxml import etree
+from pagesmith import parse_partial_html, refine_html
 
 from lexiflux.ebook.book_loader_base import MetadataField
 from lexiflux.ebook.book_loader_html import BookLoaderHtml
-from lexiflux.ebook.clear_html import clear_html, parse_partial_html
 from lexiflux.ebook.web_page_metadata import extract_web_page_metadata
 from lexiflux.timing import timing
 
@@ -104,7 +104,7 @@ class BookLoaderURL(BookLoaderHtml):
                 self._add_source_info()
 
             with timing("Cleared HTML"):
-                self.text = clear_html(
+                self.text = refine_html(
                     root=self.tree_root,
                     ids_to_keep=self.keep_ids,
                 )

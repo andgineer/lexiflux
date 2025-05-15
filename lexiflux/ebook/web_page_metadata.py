@@ -4,9 +4,9 @@ from typing import Any, Callable, Optional
 from urllib.parse import urlparse
 
 from lxml import etree
+from pagesmith import parse_partial_html
 
 from lexiflux.ebook.book_loader_base import MetadataField
-from lexiflux.ebook.clear_html import parse_partial_html
 
 
 class MetadataExtractor:
