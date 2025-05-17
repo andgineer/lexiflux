@@ -1,0 +1,26 @@
+
+Split pages content:
+
+Page 1:
+<p>Start of text 
+        </p><p><a href="../Text/chapter1.xhtml" class="very-long-class-name-to-force-splitting">
+        This is a link with a very long text that </a></p>
+
+Page 2:
+<p><a href="../Text/chapter1.xhtml" class="very-long-class-name-to-force-splitting">should be split across pages but the tag itself </a></p>
+
+Page 3:
+<p><a href="../Text/chapter1.xhtml" class="very-long-class-name-to-force-splitting">should stay intact
+        </a></p><p><span class="another-long-class-that-should-not-be-split">
+        More text that goes on and on and should </span></p>
+
+Page 4:
+<p><span class="another-long-class-that-should-not-be-split">also be split into multiple pages while preserving </span></p>
+
+Page 5:
+<p><span class="another-long-class-that-should-not-be-split">the HTML structure
+        </span></p>
+Input normalized text:
+Start of text This is a link with a very long text that should be split across pages but the tag itself should stay intact More text that goes on and on and should also be split into multiple pages while preserving the HTML structure
+Pages normalized text:
+Start of text This is a link with a very long text that should be split across pages but the tag itself should stay intact More text that goes on and on and should also be split into multiple pages while preserving the HTML structure

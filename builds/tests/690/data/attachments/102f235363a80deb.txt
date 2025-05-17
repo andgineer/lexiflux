@@ -1,0 +1,13 @@
+
+Long sentence size: 142 chars
+Target page size: 50 chars
+Page 1:
+<p>This is a very long sentence that significantly </p>
+Page 2:
+<p>exceeds our tiny page size limit and will need to </p>
+Page 3:
+<p>be split into multiple pages somehow.</p>
+Input normalized text:
+This is a very long sentence that significantly exceeds our tiny page size limit and will need to be split into multiple pages somehow.
+Pages normalized text:
+This is a very long sentence that significantly exceeds our tiny page size limit and will need to be split into multiple pages somehow.

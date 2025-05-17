@@ -1,0 +1,2 @@
+2025-04-26 09:14:21,857 INFO book_loader_url Metadata extraction result: {'title': 'Test'}
+2025-04-26 09:14:21,858 INFO book_loader_url Using original HTML

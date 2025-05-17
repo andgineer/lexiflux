@@ -1,0 +1,17 @@
+
+Direct _split_text test:
+Long text: 'ThisIsAVeryLongWord ThatExceedsTargetSize AnotherLongWord AndSomeMoreText'
+Target page size: 10 chars
+Number of pages: 4
+Page 1 size: 25 chars
+Page 1 content: ThisIsAVeryLongWord</div>
+
+Page 2 size: 27 chars
+Page 2 content: ThatExceedsTargetSize</div>
+
+Page 3 size: 21 chars
+Page 3 content: AnotherLongWord</div>
+
+Page 4 size: 21 chars
+Page 4 content: AndSomeMoreText</div>
+

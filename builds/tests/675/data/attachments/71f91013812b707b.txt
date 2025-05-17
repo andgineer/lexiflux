@@ -1,0 +1,1 @@
+2025-04-27 10:14:56,488 WARNING book_loader_base Found anchor ID in the _process_anchors: 3

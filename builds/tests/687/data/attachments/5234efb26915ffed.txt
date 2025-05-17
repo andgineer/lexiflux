@@ -1,0 +1,6 @@
+
+Unicode HTML size: 464 chars
+Target page size: 200 chars
+Page 1 size: 124 chars
+Page 2 size: 190 chars
+Page 3 size: 141 chars

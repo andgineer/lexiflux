@@ -1,0 +1,6 @@
+2025-05-04 04:55:48,640 ERROR book_loader_base Error processing anchors
+Traceback (most recent call last):
+  File "/home/runner/work/lexiflux/lexiflux/lexiflux/ebook/book_loader_base.py", line 250, in _process_anchors
+    for element in cast(etree.Element, html_tree.xpath("//*[@id]")):
+                                       ^^^^^^^^^^^^^^^
+AttributeError: 'NoneType' object has no attribute 'xpath'

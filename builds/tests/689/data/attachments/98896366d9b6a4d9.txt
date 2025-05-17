@@ -1,0 +1,11 @@
+Input normalized text:
+Small text. More text content here that might cause splitting. Final text content.
+Pages normalized text:
+Small text. More text content here that might cause splitting. Final text content.
+
+Multiple empty tags test:
+['<div><p>Text before multiple empty tags.</p>\n        <br><br><hr><img src="test.jpg"><br>\n        </div>', '<div><p>Text after multiple empty tags.</p>\n    </div>']
+Input normalized text:
+Text before multiple empty tags. Text after multiple empty tags.
+Pages normalized text:
+Text before multiple empty tags. Text after multiple empty tags.

@@ -1,0 +1,9 @@
+2025-05-15 05:05:31,726 WARNING google_languages Warning: Egyptian Arabic not found in the database for group Arabic.
+2025-05-15 05:05:32,043 INFO signals Successfully created language preferences for user testuser (ID: 6)
+2025-05-15 05:05:34,262 INFO timing Iterate over pages and save them completed in 0.003 seconds
+2025-05-15 05:05:35,317 INFO reader_views Opening book tmph608ppoh-author at page 1 for user testuser
+2025-05-15 05:05:35,334 INFO models Reading location updated for tmph608ppoh-author: 1(1):0/0.0
+[{'page_number': 1, 'word': 0}]/0
+2025-05-15 05:05:35,334 INFO reader_views Jump status: book tmph608ppoh-author, is_first_jump True, is_last_jump True
+2025-05-15 05:05:35,405 INFO reader_views Rendering page 1 of book tmph608ppoh-author
+2025-05-15 05:05:37,587 INFO test_e2e_import_book Redirected to reader page
