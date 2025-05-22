@@ -178,7 +178,11 @@ class Book(models.Model):  # type: ignore
     title = models.CharField(max_length=200)
     author = models.ForeignKey(Author, on_delete=models.CASCADE)
     language = models.ForeignKey(Language, on_delete=models.SET_NULL, null=True)
-    toc = models.JSONField(default=list, blank=True)
+    toc = models.JSONField(
+        default=list,
+        blank=True,
+        help_text="Table of contents: (title, page, word)",
+    )
     anchor_map = models.JSONField(
         default=dict,
         blank=True,
@@ -387,6 +391,23 @@ class BookPage(models.Model):  # type: ignore
                 self._words_cache = self.word_slices
         return self._words_cache  # type: ignore
 
+    def find_word_at_position(self, position: int) -> int:
+        """Find the word id at or after the given position in the page content."""
+        # Ensure words are parsed
+        if not self.words:
+            return 0
+
+        for word_id, (start, end) in enumerate(self.words):
+            if start <= position < end:
+                # Position is within this word
+                return word_id
+            if start > position:
+                # This word starts after the position
+                return word_id
+
+        # If position is after all words, return the last word
+        return len(self.words) - 1
+
     def word_string(self, word_id: int) -> str:
         """Get an unescaped word string by its ID."""
         if 0 <= word_id < len(self.words):
@@ -398,7 +419,9 @@ class BookPage(models.Model):  # type: ignore
         """Parse words from content and save to DB."""
         parsed_words, _ = parse_words(self.content, lang_code=self.book.language.google_code)
         self.word_slices = parsed_words
-        self.save(update_fields=["word_slices"])
+        if self.pk:
+            self.save(update_fields=["word_slices"])
+        # if object have not been saved to DB yet - the word slices will be saved as object save
         self._words_cache = parsed_words
 
     def extract_words(

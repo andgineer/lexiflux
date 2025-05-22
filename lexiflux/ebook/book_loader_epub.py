@@ -49,7 +49,8 @@ class BookLoaderEpub(BookLoaderBase):
     def create(self, owner_email: str, forced_language: Optional[str] = None) -> Book:
         """Save the book to the database."""
         book = super().create(owner_email, forced_language)
-        book.anchor_map = self.anchor_map
+
+        # Save images to the database
         for item in self.epub.get_items():
             if item.get_type() == ITEM_IMAGE:
                 # If Windows path, replace backslashes with slashes
@@ -131,6 +132,7 @@ class BookLoaderEpub(BookLoaderBase):
     def pages(self) -> Iterator[str]:  ## noqa: C901,PLR0912  # todo: refactor
         """Split a text into pages of approximately equal length."""
         self.toc = []
+        self.anchor_map = {}
         page_num = 1
         for content, item_filename, item_id, item_name in self.spine():  # pylint: disable=too-many-nested-blocks
             if page_num < PAGES_NUM_TO_DEBUG:

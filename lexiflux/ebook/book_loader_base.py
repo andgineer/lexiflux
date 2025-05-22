@@ -110,23 +110,33 @@ class BookLoaderBase:
         else:
             book_instance.public = True
 
+        self.toc = []
+        self.anchor_map = {}
         with timing("Iterate over pages and save them"):
             if pages_to_add := [
-                BookPage(
-                    book=book_instance,
-                    number=i,
-                    content=page_content,
-                    normalized_content=normalize_for_search(page_content),
-                )
+                self.create_page(book_instance, i, page_content)
                 for i, page_content in enumerate(self.pages(), start=1)
             ]:
                 BookPage.objects.bulk_create(pages_to_add)
 
-        # must be after page iteration so the headings are collected
+        # must be after page iteration and creation so the headings are collected
         book_instance.toc = self.toc
+        book_instance.anchor_map = self.anchor_map
         log.debug("TOC: %s", book_instance.toc)
 
         return book_instance  # type: ignore
+
+    def create_page(self, book_instance: Book, page_num: int, page_content: str) -> BookPage:
+        """Create a book page instance.
+
+        Can iteratively collect TOC.
+        """
+        return BookPage(
+            book=book_instance,
+            number=page_num,
+            content=page_content,
+            normalized_content=normalize_for_search(page_content),
+        )
 
     @staticmethod
     def guess_title_author(filename: str) -> tuple[str, str]:
@@ -181,6 +191,7 @@ class BookLoaderBase:
         """Split a text into pages of approximately equal length.
 
         Also clear headings and recollect them during pages generation.
+        Usually collect TOC but some loaders do that on iteratively in create_page().
         """
         raise NotImplementedError
 

@@ -3,14 +3,7 @@ import pytest
 from lexiflux.ebook.book_loader_plain_text import (
     BookLoaderPlainText,
 )  # Adjust the import according to your project structure
-
-
-# Helper function to create a temporary file
-def create_temp_file(content, encoding, tmpdir):
-    file_path = tmpdir.join("test_file.txt")
-    with open(file_path, "w", encoding=encoding) as f:
-        f.write(content)
-    return file_path
+from tests.conftest import create_temp_file
 
 
 @allure.epic("Book import")

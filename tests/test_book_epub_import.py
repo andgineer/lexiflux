@@ -10,7 +10,7 @@ from lexiflux.ebook.book_loader_epub import (
     BookLoaderEpub,
     href_hierarchy,
 )
-from pagesmith.html_page_splitter import TARGET_PAGE_SIZE
+from pagesmith.html_page_splitter import PAGE_LENGTH_TARGET
 
 
 @allure.epic("Book import")
@@ -168,7 +168,7 @@ def test_pages_content_splitting(book_epub):
     html_pages = list(book_epub.pages())
 
     assert len(html_pages) > 1, "HTML content should be split into multiple pages"
-    assert all(len(page) <= TARGET_PAGE_SIZE * 2 for page in html_pages), (
+    assert all(len(page) <= PAGE_LENGTH_TARGET * 2 for page in html_pages), (
         "No HTML page should be more than twice the TARGET_PAGE_SIZE"
     )
 
@@ -179,7 +179,7 @@ def test_pages_content_splitting(book_epub):
     text_like_pages = list(book_epub.pages())
 
     assert len(text_like_pages) > 1, "Simple HTML content should be split into multiple pages"
-    assert all(len(page) <= TARGET_PAGE_SIZE * 2 for page in text_like_pages), (
+    assert all(len(page) <= PAGE_LENGTH_TARGET * 2 for page in text_like_pages), (
         "No simple HTML page should be more than twice the TARGET_PAGE_SIZE"
     )
 
@@ -196,7 +196,7 @@ def test_pages_content_splitting(book_epub):
     print(f"No tags pages: {len(no_tags_pages)}, sizes: {[len(page) for page in no_tags_pages]}")
 
     assert len(no_tags_pages) > 1, "Content without tags should be split into multiple pages"
-    assert all(len(page) <= TARGET_PAGE_SIZE * 2 for page in no_tags_pages), (
+    assert all(len(page) <= PAGE_LENGTH_TARGET * 2 for page in no_tags_pages), (
         "No page of content without tags should be more than twice the TARGET_PAGE_SIZE"
     )
 

@@ -306,11 +306,6 @@ def wrong_chapter_pattern(request):
     return request.param
 
 
-@pytest.fixture(scope="function", params=["Hello 123 <br/> word/123 123-<word>\n<br/> and last!"])
-def sentence_6_words(request):
-    return request.param
-
-
 @pytest.fixture
 def book_plain_text():
     # Create a sample data string
@@ -510,3 +505,11 @@ def user_with_translations(approved_user, book, language, translation_history):
 @pytest.fixture
 def book_epub_loader(db_init):
     return BookLoaderEpub("tests/resources/genius.epub")
+
+
+def create_temp_file(content, encoding, tmpdir):
+    """Helper function to create a temporary file"""
+    file_path = tmpdir.join("test_file.txt")
+    with open(file_path, "w", encoding=encoding) as f:
+        f.write(content)
+    return file_path

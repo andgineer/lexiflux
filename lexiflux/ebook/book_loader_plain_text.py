@@ -8,10 +8,10 @@ from html import escape
 from typing import Any
 
 from chardet.universaldetector import UniversalDetector
+from pagesmith import ChapterDetector, PageSplitter
 
 from lexiflux.ebook.book_loader_base import BookLoaderBase, MetadataField
-from lexiflux.ebook.headings import HeadingDetector
-from lexiflux.ebook.page_splitter import PageSplitter
+from lexiflux.models import Book, BookPage
 
 log = logging.getLogger()
 
@@ -99,10 +99,9 @@ class BookLoaderPlainText(BookLoaderBase):  # pylint: disable=too-many-instance-
         """Make later processing more simple."""
         if self.escape_html:
             text = escape(text)
-        text = self.fix_coding(text)
+            # todo: remove <br/> from the start of the page
         text = re.sub(r"(\r?\n|\u2028|\u2029)", " <br/> ", text)
-        text = re.sub(r"\r", "", text)
-        return re.sub(r"[ \t]+", " ", text)
+        return re.sub(r"[ \t]+", " ", self.fix_coding(text))
 
     def fix_coding(self, text: str) -> str:
         """Fix common coding issues in serbian books."""
@@ -119,32 +118,25 @@ class BookLoaderPlainText(BookLoaderBase):  # pylint: disable=too-many-instance-
 
         Also clear headings and recollect them during pages generation.
         """
-        page_splitter = PageSplitter(self.text, self.book_start, self.book_end)
-        heading_detector = HeadingDetector()
+        page_splitter = PageSplitter(self.text, start=self.book_start, end=self.book_end)
+        for page in page_splitter.pages():
+            yield self.normalize(page)
 
-        start = self.book_start
-        self.toc = []
-        page_num = 0
-        while start < self.book_end:
-            page_num += 1
-            end = page_splitter.find_nearest_page_end(start)
-
-            # shift end if found heading near the end
-            if headings := heading_detector.get_headings(
-                page_splitter.text[start + page_splitter.PAGE_MIN_LENGTH : end] + "\n\n",
-                page_num,
-            ):
-                end = (
-                    start + page_splitter.PAGE_MIN_LENGTH + headings[0][1] - 1
-                )  # pos from first heading
-
-            page_text = self.normalize(page_splitter.text[start:end])
-            if headings := heading_detector.get_headings(page_text, page_num):
-                self.toc.extend(headings)
-            # todo: remove <br/> from the start of the page
-            yield page_text
-            assert end > start
-            start = end
+    def create_page(self, book_instance: Book, page_num: int, page_content: str) -> BookPage:
+        page = super().create_page(book_instance, page_num, page_content)
+        if self.escape_html:  # Only for plain text book
+            chapter_detector = ChapterDetector()
+            if chapters := chapter_detector.get_chapters(page_content, page_num):
+                toc_entries = [
+                    (
+                        chapter.title,
+                        page_num,
+                        page.find_word_at_position(chapter.position),
+                    )
+                    for chapter in chapters
+                ]
+                self.toc.extend(toc_entries)
+        return page
 
     def cut_gutenberg_ending(self) -> int:
         """For books from Project Gutenberg cut off licence."""
