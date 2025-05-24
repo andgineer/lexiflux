@@ -8,7 +8,7 @@ aiosignal==1.3.2
     # via aiohttp
 annotated-types==0.7.0
     # via pydantic
-anthropic==0.51.0
+anthropic==0.52.0
     # via langchain-anthropic
 anyio==4.9.0
     # via
@@ -187,7 +187,7 @@ langchain-anthropic==0.3.13
     # via -r requirements.in
 langchain-community==0.3.24
     # via -r requirements.in
-langchain-core==0.3.60
+langchain-core==0.3.61
     # via
     #   -r requirements.in
     #   langchain
@@ -201,7 +201,7 @@ langchain-google-genai==2.1.4
     # via -r requirements.in
 langchain-mistralai==0.2.10
     # via -r requirements.in
-langchain-openai==0.3.17
+langchain-openai==0.3.18
     # via -r requirements.in
 langchain-text-splitters==0.3.8
     # via langchain
@@ -243,7 +243,7 @@ multidict==6.4.4
     # via
     #   aiohttp
     #   yarl
-murmurhash==1.0.12
+murmurhash==1.0.13
     # via
     #   preshed
     #   spacy
@@ -262,7 +262,7 @@ numpy==1.26.4
     #   thinc
 ollama==0.4.8
     # via -r requirements.in
-openai==1.81.0
+openai==1.82.0
     # via
     #   -r requirements.in
     #   langchain-openai
@@ -277,7 +277,7 @@ packaging==24.2
     #   spacy
     #   thinc
     #   weasel
-pagesmith==1.4.2
+pagesmith==1.6.0
     # via -r requirements.in
 preshed==3.0.9
     # via
@@ -310,7 +310,7 @@ pybind11==2.13.6
     # via fasttext
 pycparser==2.22
     # via cffi
-pydantic==2.11.4
+pydantic==2.11.5
     # via
     #   -r requirements.in
     #   anthropic

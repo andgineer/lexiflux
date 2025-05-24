@@ -126,7 +126,7 @@ class BookLoaderPlainText(BookLoaderBase):  # pylint: disable=too-many-instance-
         page = super().create_page(book_instance, page_num, page_content)
         if self.escape_html:  # Only for plain text book
             chapter_detector = ChapterDetector()
-            if chapters := chapter_detector.get_chapters(page_content, page_num):
+            if chapters := chapter_detector.get_chapters(page_content):
                 toc_entries = [
                     (
                         chapter.title,
