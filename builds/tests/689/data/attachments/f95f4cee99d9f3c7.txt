@@ -1,0 +1,14 @@
+
+HTML with images size: 532 chars
+Target page size: 250 chars
+Page 1:
+<div><p>Text before image.</p>
+            <img src="image1.jpg" alt="Image 1" class="large" style="width:100%;">
+            <p>Text between images with enough content to potentially split across pages. Text between images with enough content to potentially split across pages.Text between images with enough content to potentially split across pages.</p>
+            <img src="image2.jpg" alt="Image 2" width="500" height="300">
+            </div><div><p>Text after images with more content.</p>
+        </div>
+Input normalized text:
+Text before image. Text between images with enough content to potentially split across pages. Text between images with enough content to potentially split across pages.Text between images with enough content to potentially split across pages. Text after images with more content.
+Pages normalized text:
+Text before image. Text between images with enough content to potentially split across pages. Text between images with enough content to potentially split across pages.Text between images with enough content to potentially split across pages. Text after images with more content.

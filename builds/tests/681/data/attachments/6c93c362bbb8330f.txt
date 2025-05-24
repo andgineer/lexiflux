@@ -1,0 +1,1 @@
+Skipping JavaScript log check for Firefox

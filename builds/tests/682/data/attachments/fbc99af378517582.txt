@@ -1,0 +1,4 @@
+2025-05-05 04:12:41,051 WARNING google_languages Warning: Egyptian Arabic not found in the database for group Arabic.
+2025-05-05 04:12:41,461 INFO signals Successfully created language preferences for user testuser (ID: 15)
+2025-05-05 04:12:41,482 INFO models Reading location updated for some-book-code: 5(5):10/100.0
+[{'page_number': 2, 'word': 30}, {'page_number': 5, 'word': 10}]/1

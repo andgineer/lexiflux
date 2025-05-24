@@ -1,0 +1,16 @@
+
+Malformed HTML size: 329 chars
+Target page size: 150 chars
+Page 1:
+<div><p>This paragraph is not properly closed.
+            <strong>This is bold text that's not closed.
+            <em>This is emphasized text.</em></strong></p>
+            </div>
+Page 2:
+<div><span>This span has no closing tag.
+            <p>Another paragraph with <a href="link.html">a link that's not closed</a></p>
+        </span></div>
+Input normalized text:
+This paragraph is not properly closed. This is bold text that's not closed. This is emphasized text. This span has no closing tag. Another paragraph with a link that's not closed
+Pages normalized text:
+This paragraph is not properly closed. This is bold text that's not closed. This is emphasized text. This span has no closing tag. Another paragraph with a link that's not closed

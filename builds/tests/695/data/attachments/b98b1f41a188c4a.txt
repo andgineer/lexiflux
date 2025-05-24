@@ -1,0 +1,5 @@
+2025-05-24 04:47:21,708 ERROR import_views Error importing book
+Traceback (most recent call last):
+  File "/home/runner/work/lexiflux/lexiflux/lexiflux/views/import_views.py", line 43, in import_book
+    raise ValueError(f"Unknown import type: {import_type}")
+ValueError: Unknown import type: unknown_type
