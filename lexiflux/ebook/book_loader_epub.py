@@ -92,6 +92,7 @@ class BookLoaderEpub(BookLoaderBase):
         if not self.heading_hrefs:
             log.warning("No TOC found in EPUB. Generating TOC from spine.")
             self.heading_hrefs = self.generate_toc_from_spine()
+        self.keep_ids = extract_ids_from_headings(self.heading_hrefs)
 
         self.meta = {
             MetadataField.TITLE: (
@@ -308,7 +309,7 @@ def flatten_list(
 def href_hierarchy(input_dict: dict[str, str]) -> dict[str, dict[str, str]]:
     """Convert a flat TOC hrefs to a hierarchy.
 
-    result: {"epub item file name": {"": "title", "#anchor-inside-the-file": "sub_title" ...}, ...}
+    result: {"epub item file name": {"#": "title", "#anchor-inside-the-file": "sub_title" ...}, ...}
     """
     result: dict[str, dict[str, str]] = defaultdict(dict)
     for key, value in input_dict.items():
@@ -317,3 +318,12 @@ def href_hierarchy(input_dict: dict[str, str]) -> dict[str, dict[str, str]]:
         anchor = f"#{parts[1]}" if len(parts) > 1 else "#"
         result[page][anchor] = value
     return result
+
+
+def extract_ids_from_headings(heading_hrefs: dict[str, dict[str, str]]) -> set[str]:
+    ids = set()
+    for file_hrefs in heading_hrefs.values():
+        for anchor in file_hrefs:
+            if anchor.startswith("#"):
+                ids.add(anchor[1:])
+    return ids
