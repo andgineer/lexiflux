@@ -317,7 +317,7 @@ httpx-sse==0.4.0
     #   -r requirements.txt
     #   langchain-community
     #   langchain-mistralai
-huggingface-hub==0.32.2
+huggingface-hub==0.32.3
     # via
     #   -r requirements.txt
     #   tokenizers
@@ -638,7 +638,7 @@ packaging==24.2
     #   spacy
     #   thinc
     #   weasel
-pagesmith==2.0.0
+pagesmith==2.1.0
     # via -r requirements.txt
 paginate==0.5.7
     # via mkdocs-material

@@ -157,7 +157,7 @@ httpx-sse==0.4.0
     # via
     #   langchain-community
     #   langchain-mistralai
-huggingface-hub==0.32.2
+huggingface-hub==0.32.3
     # via tokenizers
 hyperframe==6.1.0
     # via h2
@@ -279,7 +279,7 @@ packaging==24.2
     #   spacy
     #   thinc
     #   weasel
-pagesmith==2.0.0
+pagesmith==2.1.0
     # via -r requirements.in
 preshed==3.0.10
     # via

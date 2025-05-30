@@ -162,13 +162,11 @@ class BookLoaderURL(BookLoaderHtml):
         hr = etree.Element("hr")
         source_div.append(hr)
 
-        # Insert at the beginning of the body or document
-        body = self.tree_root.find("body")
-        if body is not None:
-            # If there's a body tag, insert at the beginning of the body
-            body.insert(0, source_div)
+        if body := self.tree_root.xpath(".//body"):
+            body[0].insert(0, source_div)
+        elif html := self.tree_root.xpath(".//html"):
+            html[0].insert(0, source_div)
         else:
-            # If there's no body tag, insert at the beginning of the root
             self.tree_root.insert(0, source_div)
 
     def detect_meta(self) -> tuple[dict[str, Any], int, int]:

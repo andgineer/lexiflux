@@ -430,6 +430,7 @@ def test_add_source_info_no_body():
         loader.tree_root = parse_partial_html(html_content)
         loader._add_source_info()
         result = etree_to_str(loader.tree_root)
+        print(result)
 
         parsed_doc = etree.fromstring(result, etree.HTMLParser())
 
