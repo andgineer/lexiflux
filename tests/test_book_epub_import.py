@@ -12,6 +12,8 @@ from lexiflux.ebook.book_loader_epub import (
 )
 from pagesmith.html_page_splitter import PAGE_LENGTH_TARGET
 
+from lexiflux.models import Book
+
 
 @allure.epic("Book import")
 @allure.feature("EPUB: Flatten list")
@@ -273,12 +275,67 @@ def test_pages_non_document_item(book_epub):
 
 @allure.epic("Book import")
 @allure.feature("EPUB: parse pages")
+@pytest.mark.django_db
 def test_pages_with_toc_processing(book_epub):
     # Set up a simple TOC structure
     book_epub.heading_hrefs = {"page_0.xhtml": {"#": "Chapter 1"}}
 
-    list(book_epub.pages())  # Process pages
+    # Mock a book instance to simulate the create_page behavior
+    from lexiflux.models import Author, Language
+
+    author, _ = Author.objects.get_or_create(name="Test Author")
+    language, _ = Language.objects.get_or_create(name="English")
+    book_instance = Book.objects.create(title="Test Book", author=author, language=language)
+
+    # Set up anchor map and pending TOC entries
+    book_epub.anchor_map = {
+        "page_0.xhtml": {"page": 1, "item_id": "item_0", "item_name": "page_0.xhtml"}
+    }
+    book_epub._pending_toc_entries = [("Chapter 1", "page_0.xhtml")]
+
+    # Process pages and create page objects to trigger TOC creation
+    pages = list(book_epub.pages())
+    for i, page_content in enumerate(pages[:1], start=1):  # Just process first page
+        book_epub.create_page(book_instance, i, page_content)
+
     assert book_epub.toc == [("Chapter 1", 1, 0)]
+
+
+@allure.epic("Book import")
+@allure.feature("EPUB: parse pages")
+@pytest.mark.django_db
+def test_create_page_with_toc_processing(book_epub):
+    # This replaces the old test_process_toc test
+    book_epub.heading_hrefs = {
+        "page_0.xhtml": {"#": "Chapter 1", "#section1": "Section 1"},
+        "page_1.xhtml": {"#": "Chapter 2"},
+    }
+    book_epub.anchor_map = {
+        "page_0.xhtml": {"page": 1, "item_id": "item_0", "item_name": "page_0.xhtml"},
+        "page_0.xhtml#section1": {"page": 2, "item_id": "item_0", "item_name": "page_0.xhtml"},
+        "page_1.xhtml": {"page": 3, "item_id": "item_1", "item_name": "page_1.xhtml"},
+    }
+
+    # Create mock book instance
+    from lexiflux.models import Author, Language
+
+    author, _ = Author.objects.get_or_create(name="Test Author")
+    language, _ = Language.objects.get_or_create(name="English")
+    book_instance = Book.objects.create(title="Test Book", author=author, language=language)
+
+    # Prepare pending TOC entries (simulate what _prepare_toc_entries does)
+    book_epub._pending_toc_entries = [
+        ("Chapter 1", "page_0.xhtml"),
+        ("Section 1", "page_0.xhtml#section1"),
+        ("Chapter 2", "page_1.xhtml"),
+    ]
+
+    # Create pages to trigger TOC building
+    book_epub.create_page(book_instance, 1, "<p>Content 1</p>")
+    book_epub.create_page(book_instance, 2, "<p>Content 2</p>")
+    book_epub.create_page(book_instance, 3, "<p>Content 3</p>")
+
+    assert book_epub.toc == [("Chapter 1", 1, 0), ("Section 1", 2, 0), ("Chapter 2", 3, 0)]
 
 
 @allure.epic("Book import")
@@ -290,23 +347,6 @@ def test_pages_with_html_cleaning(mock_clear_html, book_epub):
     pages = list(book_epub.pages())
     assert all(page == "Cleaned content" for page in pages)
     assert mock_clear_html.call_count == 20  # Called for each of the 20 pages
-
-
-@allure.epic("Book import")
-@allure.feature("EPUB: parse pages")
-def test_process_toc(book_epub):
-    book_epub.heading_hrefs = {
-        "page_0.xhtml": {"#": "Chapter 1", "#section1": "Section 1"},
-        "page_1.xhtml": {"#": "Chapter 2"},
-    }
-    book_epub.anchor_map = {
-        "page_0.xhtml": {"page": 1, "item_id": "item_0", "item_name": "page_0.xhtml"},
-        "page_0.xhtml#section1": {"page": 2, "item_id": "item_0", "item_name": "page_0.xhtml"},
-        "page_1.xhtml": {"page": 3, "item_id": "item_1", "item_name": "page_1.xhtml"},
-    }
-
-    book_epub._process_toc()
-    assert book_epub.toc == [("Chapter 1", 1, 0), ("Section 1", 2, 0), ("Chapter 2", 3, 0)]
 
 
 @allure.epic("Book import")

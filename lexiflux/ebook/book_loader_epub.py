@@ -16,7 +16,7 @@ from pagesmith.html_page_splitter import HtmlPageSplitter
 
 from lexiflux.ebook.book_loader_base import BookLoaderBase, MetadataField
 from lexiflux.ebook.web_page_metadata import MetadataExtractor
-from lexiflux.models import Book, BookImage
+from lexiflux.models import Book, BookImage, BookPage
 
 log = logging.getLogger()
 
@@ -35,6 +35,9 @@ class BookLoaderEpub(BookLoaderBase):
     book_start: int
     book_end: int
     heading_hrefs: dict[str, dict[str, str]]
+    _pending_toc_entries: list[
+        tuple[str, str]
+    ]  # List of (title, anchor_key) waiting to be resolved
 
     WORD_ESTIMATED_LENGTH = 30
     MIN_RANDOM_WORDS = 3
@@ -44,10 +47,15 @@ class BookLoaderEpub(BookLoaderBase):
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
+        self._pending_toc_entries = []
 
     @transaction.atomic  # type: ignore
     def create(self, owner_email: str, forced_language: Optional[str] = None) -> Book:
         """Save the book to the database."""
+        # Prepare TOC entries before iterating pages
+        self._prepare_toc_entries()
+
+        # Create the book and pages (parent's create will call our create_page)
         book = super().create(owner_email, forced_language)
 
         # Save images to the database
@@ -68,6 +76,43 @@ class BookLoaderEpub(BookLoaderBase):
                     filename=normalized_filename,
                 )
         return book
+
+    def _prepare_toc_entries(self) -> None:
+        """Prepare TOC entries from heading_hrefs before page iteration."""
+        self._pending_toc_entries = []
+        for file_name, anchors in self.heading_hrefs.items():
+            for anchor, title in anchors.items():
+                anchor_key = file_name if anchor == "#" else f"{file_name}{anchor}"
+                self._pending_toc_entries.append((title, anchor_key))
+
+    def create_page(self, book_instance: Book, page_num: int, page_content: str) -> BookPage:
+        """Update TOC entries if they point to this page."""
+        page = super().create_page(book_instance, page_num, page_content)
+
+        for title, anchor_key in self._pending_toc_entries:
+            if anchor_key in self.anchor_map and self.anchor_map[anchor_key]["page"] == page_num:
+                word_num = 0
+                if "#" in anchor_key:
+                    # has a specific ID (not just the file)
+                    anchor_id = anchor_key.split("#")[-1]
+                    # do not use HTML parser - tricky to get found element position in the text
+                    anchor_pattern = f'id="{anchor_id}"'
+                    anchor_pos = page_content.find(anchor_pattern)
+
+                    if anchor_pos == -1:
+                        # Try single quotes
+                        anchor_pattern = f"id='{anchor_id}'"
+                        anchor_pos = page_content.find(anchor_pattern)
+
+                    if anchor_pos != -1:
+                        word_num = page.find_word_at_position(anchor_pos)
+                    else:
+                        log.warning(
+                            f"Anchor '{anchor_id}' not found in page {page_num} content\n\n"
+                            f"{page_content}",
+                        )
+                self.toc.append((title, page_num, word_num))
+        return page
 
     def load_text(self) -> None:
         self.epub = epub.read_epub(self.file_path)
@@ -164,9 +209,6 @@ class BookLoaderEpub(BookLoaderBase):
                 yield cleaned_content
                 page_num += 1
 
-        # Process TOC after all pages have been processed
-        self._process_toc()
-
     def clear_page(  # noqa: PLR0913
         self,
         content: Optional[str] = None,
@@ -193,19 +235,6 @@ class BookLoaderEpub(BookLoaderBase):
             return cleaned_content
         log.warning(f"Non-empty page cleaned to nothing: {item_filename}, page {page_num}")
         return None
-
-    def _process_toc(self) -> None:
-        """Process table of contents using the anchor_map."""
-        for file_name, anchors in self.heading_hrefs.items():
-            for anchor, title in anchors.items():
-                full_anchor = f"{file_name}{anchor}"
-                if full_anchor in self.anchor_map:
-                    page_num = self.anchor_map[full_anchor]["page"]
-                    self.toc.append((title, page_num, 0))
-                elif file_name in self.anchor_map and anchor == "#":
-                    # Handle the case where the anchor is for the start of the file
-                    page_num = self.anchor_map[file_name]["page"]
-                    self.toc.append((title, page_num, 0))
 
     def generate_toc_from_spine(self) -> dict[str, dict[str, str]]:
         """Generate TOC from the EPUB spine when no TOC is present."""

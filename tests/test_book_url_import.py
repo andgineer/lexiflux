@@ -377,8 +377,11 @@ def test_add_source_info_body_placement():
         loader.text = html_content
         loader.book_start, loader.book_end = 0, len(loader.text)
         loader.tree_root = parse_partial_html(html_content)
+        result = etree_to_str(loader.tree_root)
+        print(result)
         loader._add_source_info()
         result = etree_to_str(loader.tree_root)
+        print(result)
 
         # Parse the result
         soup = BeautifulSoup(result, "html.parser")
