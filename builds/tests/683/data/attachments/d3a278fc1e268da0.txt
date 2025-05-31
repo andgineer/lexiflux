@@ -1,0 +1,1 @@
+2025-05-06 04:20:37,278 ERROR anki_connect Unexpected error when adding notes to Anki: 502 Bad Gateway

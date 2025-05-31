@@ -1,0 +1,9 @@
+
+Mixed HTML size: 752 chars
+Target page size: 300 chars
+Page 1 size: 380 chars
+Page 2 size: 352 chars
+Input normalized text:
+Mixed Content Test This is a paragraph with regular text content that might need to be split. List item 1 with some text content List item 2 with additional text List item 3 with even more text content to increase size Header 1 Header 2 Cell 1 Cell 2 with longer content Cell 3 with long content Cell 4 Another paragraph after the table with more text content for splitting.
+Pages normalized text:
+Mixed Content Test This is a paragraph with regular text content that might need to be split. List item 1 with some text content List item 2 with additional text List item 3 with even more text content to increase size Header 1 Header 2 Cell 1 Cell 2 with longer content Cell 3 with long content Cell 4 Another paragraph after the table with more text content for splitting.

@@ -1,0 +1,31 @@
+
+Content size: 545 chars
+Target page size: 50 chars
+Number of pages: 10
+Page 1 size: 103 chars
+Page 1 content: <div><span>Short span content</span></div><div>
+        This is a very long sentence in the tail </div>
+Page 2 size: 62 chars
+Page 2 content: <div>of the span element that significantly exceeds the </div>
+Page 3 size: 59 chars
+Page 3 content: <div>tiny page size limit and must be split by words </div>
+Page 4 size: 60 chars
+Page 4 content: <div>rather than sentences because it continues for a </div>
+Page 5 size: 61 chars
+Page 5 content: <div>long time without any punctuation or breaks so it </div>
+Page 6 size: 62 chars
+Page 6 content: <div>will force the code to enter the sentence-too-long </div>
+Page 7 size: 62 chars
+Page 7 content: <div>condition in the _split_text method which needs to </div>
+Page 8 size: 57 chars
+Page 8 content: <div>be tested specifically to ensure word-by-word </div>
+Page 9 size: 45 chars
+Page 9 content: <div>splitting works properly.
+        </div>
+Page 10 size: 65 chars
+Page 10 content: <div><p>Another paragraph after the long sentence.</p>
+    </div>
+Input normalized text:
+Short span content This is a very long sentence in the tail of the span element that significantly exceeds the tiny page size limit and must be split by words rather than sentences because it continues for a long time without any punctuation or breaks so it will force the code to enter the sentence-too-long condition in the _split_text method which needs to be tested specifically to ensure word-by-word splitting works properly. Another paragraph after the long sentence.
+Pages normalized text:
+Short span content This is a very long sentence in the tail of the span element that significantly exceeds the tiny page size limit and must be split by words rather than sentences because it continues for a long time without any punctuation or breaks so it will force the code to enter the sentence-too-long condition in the _split_text method which needs to be tested specifically to ensure word-by-word splitting works properly. Another paragraph after the long sentence.

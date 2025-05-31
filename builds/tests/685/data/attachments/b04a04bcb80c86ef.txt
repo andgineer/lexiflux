@@ -1,0 +1,11 @@
+
+Long sentence size: 142 chars
+Target page size: 50 chars
+Page 1:
+<p>This is a very long sentence that</p>
+Page 2:
+<p>significantly exceeds our tiny page size limit</p>
+Page 3:
+<p>and will need to be split into multiple pages</p>
+Page 4:
+<p>somehow.</p>

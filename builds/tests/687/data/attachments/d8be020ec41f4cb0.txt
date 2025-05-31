@@ -1,0 +1,8 @@
+
+HTML with entities size: 260 chars
+Target page size: 50 chars
+Page 1: <p>This text contains HTML entities like &amp; and &lt;</p>
+Page 2: <p>and &gt; and &quot; which should never be split across</p>
+Page 3: <p>pages.Even long entities like &amp;longrightarrow; must</p>
+Page 4: <p>be kept intact when splitting content into</p>
+Page 5: <p>multiple pages.</p>

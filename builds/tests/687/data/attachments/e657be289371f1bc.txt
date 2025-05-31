@@ -1,0 +1,39 @@
+
+Content size: 545 chars
+Target page size: 50 chars
+Number of pages: 11
+Page 1 size: 89 chars
+Page 1 content: <div><span>Short span content</span>This is a very long sentence in the tail of the</div>
+
+Page 2 size: 59 chars
+Page 2 content: <div>span element that significantly exceeds the tiny</div>
+
+Page 3 size: 60 chars
+Page 3 content: <div>page size limit and must be split by words rather</div>
+
+Page 4 size: 57 chars
+Page 4 content: <div>than sentences because it continues for a long</div>
+
+Page 5 size: 60 chars
+Page 5 content: <div>time without any punctuation or breaks so it will</div>
+
+Page 6 size: 56 chars
+Page 6 content: <div>force the code to enter the sentence-too-long</div>
+
+Page 7 size: 61 chars
+Page 7 content: <div>condition in the _split_text method which needs to</div>
+
+Page 8 size: 56 chars
+Page 8 content: <div>be tested specifically to ensure word-by-word</div>
+
+Page 9 size: 45 chars
+Page 9 content: <div>splitting works properly.         </div>
+
+Page 10 size: 45 chars
+Page 10 content: <div>splitting works properly.         </div>
+
+Page 11 size: 65 chars
+Page 11 content: <div><p>Another paragraph after the long sentence.</p>     </div>
+
+Original words count: 63
+Output words count: 63
