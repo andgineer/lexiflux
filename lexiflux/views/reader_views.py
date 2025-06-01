@@ -12,7 +12,7 @@ from django.urls import reverse
 from django.views.decorators.http import require_POST
 
 from lexiflux.decorators import smart_login_required
-from lexiflux.ebook.book_loader_base import normalize_path
+from lexiflux.ebook.book_loader_base import BookLoaderBase, normalize_path
 from lexiflux.models import (
     Book,
     BookImage,
@@ -354,30 +354,12 @@ def get_jump_status(request: HttpRequest) -> HttpResponse:
 
 
 def find_closest_word_for_anchor(book_page: BookPage, link: str) -> int:
-    """Find the word closest to the anchor in the given link."""
-    closest_word = 0
+    """Find the word closest to the anchor in the given link using direct string search."""
+    anchor_id = link.split("#", 1)[1] if "#" in link else None
+    if not anchor_id:
+        return 0
 
-    try:
-        anchor_id = link.split("#", 1)[1] if "#" in link else None
-        if not anchor_id:
-            return closest_word
-
-        soup = BeautifulSoup(book_page.content, "html.parser")
-        anchor_element = soup.find(id=anchor_id)
-
-        if not anchor_element:
-            return closest_word
-
-        anchor_position = book_page.content.find(str(anchor_element))
-        if anchor_position < 0:
-            return closest_word
-
-        return find_closest_word_index(book_page.words, anchor_position)
-
-    except Exception as e:  # noqa: BLE001
-        log.warning(f"Error finding closest word for anchor: {e}")
-
-    return closest_word
+    return BookLoaderBase.find_anchor_word_position(book_page, anchor_id)
 
 
 def find_closest_word_index(positions: list[tuple[int, int]], target_position: int) -> int:  # noqa: PLR0911

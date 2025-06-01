@@ -326,6 +326,27 @@ class BookLoaderBase:
 
         return ids_to_keep
 
+    @staticmethod
+    def find_anchor_word_position(page: BookPage, anchor_id: str) -> int:
+        """Find word position for anchor ID in page content."""
+        if not anchor_id:
+            return 0
+
+        # Search for id attribute in various formats
+        search_patterns = [
+            f'id="{anchor_id}"',
+            f"id='{anchor_id}'",
+            f"id={anchor_id}",  # unquoted (less common but possible)
+        ]
+
+        for pattern in search_patterns:
+            anchor_pos = page.content.find(pattern)
+            if anchor_pos != -1:
+                return page.find_word_at_position(anchor_pos)
+
+        log.warning(f"Anchor '{anchor_id}' not found in page {page.number} content")
+        return 0
+
 
 def normalize_path(path: str) -> str:
     """Normalize the image path by processing '.' / '..' and removing leading '/'."""

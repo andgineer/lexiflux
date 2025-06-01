@@ -95,22 +95,7 @@ class BookLoaderEpub(BookLoaderBase):
                 if "#" in anchor_key:
                     # has a specific ID (not just the file)
                     anchor_id = anchor_key.split("#")[-1]
-                    # do not use HTML parser - tricky to get found element position in the text
-                    anchor_pattern = f'id="{anchor_id}"'
-                    anchor_pos = page_content.find(anchor_pattern)
-
-                    if anchor_pos == -1:
-                        # Try single quotes
-                        anchor_pattern = f"id='{anchor_id}'"
-                        anchor_pos = page_content.find(anchor_pattern)
-
-                    if anchor_pos != -1:
-                        word_num = page.find_word_at_position(anchor_pos)
-                    else:
-                        log.warning(
-                            f"Anchor '{anchor_id}' not found in page {page_num} content\n\n"
-                            f"{page_content}",
-                        )
+                    word_num = self.find_anchor_word_position(page, anchor_id)
                 self.toc.append((title, page_num, word_num))
         return page
 
