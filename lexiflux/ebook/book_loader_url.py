@@ -150,7 +150,12 @@ class BookLoaderURL(BookLoaderHtml):
 
         # Add source URL info
         source_p = etree.Element("p")
-        source_p.text = f"Source: {self.url}"
+        source_p.text = "Source: "
+
+        # Create clickable link element
+        source_link = etree.Element("a", attrib={"href": self.url, "target": "_blank"})
+        source_link.text = self.url
+        source_p.append(source_link)
         source_div.append(source_p)
 
         # Add date info

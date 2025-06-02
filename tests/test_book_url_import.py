@@ -304,7 +304,16 @@ def test_add_source_info_title_and_source():
         # Check source URL
         source_p = source_div.find_all("p")[0]
         assert source_p is not None, "Source paragraph not found"
-        assert "https://example.com/test-article" in source_p.text, "Source URL not found in text"
+        assert "Source: " in source_p.text, "Source label not found in text"
+
+        # Check for clickable link
+        source_link = source_p.find("a")
+        assert source_link is not None, "Source link not found"
+        assert source_link.get("href") == "https://example.com/test-article", (
+            "Link href doesn't match URL"
+        )
+        assert source_link.get("target") == "_blank", "Link should open in new tab"
+        assert source_link.text == "https://example.com/test-article", "Link text doesn't match URL"
 
 
 @allure.epic("Book import")
