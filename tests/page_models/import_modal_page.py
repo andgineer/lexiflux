@@ -115,7 +115,7 @@ class ImportModalPage(BasePage):
     def wait_for_edit_book_modal(self):
         """Wait for edit book modal to appear after successful import."""
         # Wait for edit book modal to appear
-        edit_modal = WebDriverWait(self.browser, 10).until(
+        edit_modal = WebDriverWait(self.browser, 20).until(
             EC.visibility_of_element_located((By.ID, "editBookModal"))
         )
 

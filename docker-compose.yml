@@ -16,9 +16,11 @@ services:
       - SE_EVENT_BUS_HOST=hub
       - SE_EVENT_BUS_PUBLISH_PORT=4442
       - SE_EVENT_BUS_SUBSCRIBE_PORT=4443
+      - HUB_HOST=hub
+      - HUB_PORT=4444
 
   edge:
-    image: selenium/node-edge:4.8.3-20230404
+    image: selenium/node-edge:4.9.1-20230508
     shm_size: 2gb
     depends_on:
       - hub
@@ -26,6 +28,8 @@ services:
       - SE_EVENT_BUS_HOST=hub
       - SE_EVENT_BUS_PUBLISH_PORT=4442
       - SE_EVENT_BUS_SUBSCRIBE_PORT=4443
+      - HUB_HOST=hub
+      - HUB_PORT=4444
 
   firefox:
     image: seleniarm/node-firefox
@@ -36,10 +40,10 @@ services:
       - SE_EVENT_BUS_HOST=hub
       - SE_EVENT_BUS_PUBLISH_PORT=4442
       - SE_EVENT_BUS_SUBSCRIBE_PORT=4443
+      - HUB_HOST=hub
+      - HUB_PORT=4444
 
   hub:
     image: seleniarm/hub
     ports:
-      - "4442:4442"
-      - "4443:4443"
       - "4444:4444"

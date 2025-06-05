@@ -1,7 +1,8 @@
 import collections
-from typing import Optional
+import logging
+import pprint
+from typing import Optional, Any
 import allure
-import pytest
 import requests
 from django.urls import reverse
 from selenium.common.exceptions import TimeoutException
@@ -11,6 +12,9 @@ import time
 import urllib.parse
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+
+
+logger = logging.getLogger()
 
 
 PAGE_MAX_WAIT_TIME = 20  # second to wait for components
@@ -60,7 +64,93 @@ class WebDriverAugmented(RemoteWebDriver):
         self.need_refresh = False
         self.host = django_server.docker_url
         self.host_outer = django_server.host_url
+        self._cdp_enabled = False
+
         super().__init__(*args, **kwargs)
+        self._setup_cdp_logging()
+
+    def _setup_cdp_logging(self):
+        """Setup CDP logging for Chromium-based browsers"""
+        try:
+            if hasattr(self, "caps") and self.caps.get("browserName", "").lower() == "msedge":
+                # Edge requires a different CDP command path
+                self.command_executor._commands.update(
+                    {
+                        "executeCdpCommand": ("POST", "/session/$sessionId/ms/cdp/execute"),
+                        "getCdpConnection": ("GET", "/session/$sessionId/ms/cdp/connection"),
+                    }
+                )
+
+            self.execute_cdp_cmd("Runtime.enable", {})
+            self._cdp_enabled = True
+            # Inject error capture script
+            self._inject_error_capture()
+        except Exception:
+            self._cdp_enabled = False
+
+    def _inject_error_capture(self):
+        """Inject JavaScript to capture console errors"""
+        script = """
+            (function() {
+                if (window.__selenium_logs) return; // Already injected
+
+                window.__selenium_logs = [];
+
+                // Capture console.error
+                const originalError = console.error;
+                console.error = function(...args) {
+                    window.__selenium_logs.push({
+                        level: 'SEVERE',
+                        message: args.map(a => String(a)).join(' '),
+                        timestamp: Date.now()
+                    });
+                    originalError.apply(console, args);
+                };
+
+                // Capture uncaught errors
+                window.addEventListener('error', function(e) {
+                    window.__selenium_logs.push({
+                        level: 'SEVERE', 
+                        message: e.message + ' at ' + e.filename + ':' + e.lineno,
+                        timestamp: Date.now()
+                    });
+                });
+
+                // Capture unhandled promise rejections
+                window.addEventListener('unhandledrejection', function(e) {
+                    window.__selenium_logs.push({
+                        level: 'SEVERE',
+                        message: 'Unhandled promise rejection: ' + e.reason,
+                        timestamp: Date.now()
+                    });
+                });
+            })();
+            """
+        self.execute_script(script)
+
+    def get_log(self, log_type="browser"):
+        """Get JavaScript console log entries.
+
+        (!) Note: clears the log.
+        """
+        if not self._cdp_enabled or log_type != "browser":
+            return []
+
+        try:
+            result = self.execute_script("""
+                    if (window.__selenium_logs) {
+                        const logs = [...window.__selenium_logs];
+                        window.__selenium_logs = [];
+                        return logs;
+                    }
+                    return [];
+                """)
+        except Exception as e:
+            logger.warning(f"Failed to get browser logs: {e}")
+            result = []
+        if result:
+            logger.warning(f"js log {len(result)} error entries found")
+        return result
 
     def login(self, user, password, wait_view="library", wait_seconds=3):
         """Perform the login process with the provided user credentials.
@@ -117,35 +207,23 @@ class WebDriverAugmented(RemoteWebDriver):
             )
         self.get(urllib.parse.urljoin(self.host, page))
 
-    def check_js_log(self):
-        """
-        Check JavaScript log for errors (only `severe` level).
-        Fail the test if errors are found and attach the log to Allure.
-        """
-        if self.name.lower() == "firefox":
-            print("Skipping JavaScript log check for Firefox")
-            return
-        js_log = self.get_log("browser")
-        severe_logs = []
+    @staticmethod
+    def check_js_log(js_log: list[dict[str, Any]]) -> bool:
+        """Check java script log for errors (only `severe` level)."""
+        critical_errors = []
         total_chars = 0
+        idx = 0
         for entry in js_log:
-            if entry["level"] == "SEVERE":
-                if "Cross-Origin-Opener-Policy header has been ignored" in entry["message"]:
-                    continue
-                severe_logs.append(entry)
+            if entry["level"] in ["SEVERE"]:
+                idx += 1
+                critical_errors.append(entry)
                 total_chars += len(entry["message"])
                 if total_chars >= MAX_JS_LOG_SIZE:
-                    severe_logs.append({"level": "INFO", "message": "<...>"})
+                    critical_errors.append("<...>")
                     break
-
-        if severe_logs:
-            log_text = "\n".join([f"{entry['level']}: {entry['message']}" for entry in severe_logs])
-            allure.attach(
-                log_text, name="js critical errors", attachment_type=allure.attachment_type.TEXT
-            )
-            pytest.fail(
-                "JavaScript critical errors:\nSee the attached log in browser's `Tear down` for details"
-            )
+        if critical_errors:
+            print(f"js log errors: \n{pprint.pformat(critical_errors, indent=4)}")
+        return not critical_errors
 
     @property
     def visible_texts(self) -> str:

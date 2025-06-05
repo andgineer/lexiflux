@@ -4,7 +4,7 @@ aiohappyeyeballs==2.6.1
     # via
     #   -r requirements.txt
     #   aiohttp
-aiohttp==3.12.4
+aiohttp==3.12.6
     # via
     #   -r requirements.txt
     #   langchain-community
@@ -20,7 +20,7 @@ annotated-types==0.7.0
     # via
     #   -r requirements.txt
     #   pydantic
-anthropic==0.52.1
+anthropic==0.52.2
     # via
     #   -r requirements.txt
     #   langchain-anthropic
@@ -195,7 +195,7 @@ django==5.2.1
     #   django-allauth
     #   django-debug-toolbar
     #   django-extensions
-django-allauth==65.8.1
+django-allauth==65.9.0
     # via -r requirements.txt
 django-debug-toolbar==5.2.0
     # via -r requirements.dev.in
@@ -269,12 +269,12 @@ googletrans==4.0.2
     # via -r requirements.txt
 griffe==1.7.3
     # via mkdocstrings-python
-grpcio==1.71.0
+grpcio==1.72.1
     # via
     #   -r requirements.txt
     #   google-api-core
     #   grpcio-status
-grpcio-status==1.62.3
+grpcio-status==1.72.1
     # via
     #   -r requirements.txt
     #   google-api-core
@@ -606,7 +606,7 @@ numpy==1.26.4
     #   langchain-community
     #   spacy
     #   thinc
-ollama==0.5.0
+ollama==0.5.1
     # via -r requirements.txt
 openai==1.82.1
     # via
@@ -884,7 +884,7 @@ rsa==4.9.1
     # via
     #   -r requirements.txt
     #   google-auth
-selenium==4.31.0
+selenium==4.33.0
     # via -r requirements.dev.in
 send2trash==1.8.3
     # via

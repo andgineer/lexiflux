@@ -184,7 +184,6 @@ def browser(request, with_selenium, django_server: DjangoLiveServer) -> WebDrive
     # driver.implicitly_wait(Config().WEB_DRIVER_IMPLICITE_WAIT)
     webdrv.maximize_window()
     yield webdrv
-    webdrv.check_js_log()
 
 
 def get_docker_host_ip():
@@ -249,6 +248,38 @@ def use_non_threaded_server():
     LiveServerThread.server_class = original_server_class
 
 
+def pytest_configure(config):
+    """Register custom markers."""
+    config.addinivalue_line(
+        "markers", "skip_js_errors: mark test to skip JavaScript error checking"
+    )
+
+
+@pytest.hookimpl(hookwrapper=True)
+def pytest_runtest_call(item):
+    """Hook that runs during test execution to check JS errors."""
+    outcome = yield
+    try:
+        if "browser" not in item.fixturenames:
+            return
+
+        web_driver = item.funcargs["browser"]
+        skip_js_errors = bool(item.get_closest_marker("skip_js_errors"))
+
+        if web_driver.browser_name != FIREFOX_BROWSER_NAME:
+            js_logs = web_driver.get_log("browser")
+            log_entries = [f"{entry['level']}: {entry['message']}" for entry in js_logs]
+            allure.attach(
+                "\n".join(log_entries),
+                name="js console log:",
+                attachment_type=allure.attachment_type.TEXT,
+            )
+            if not skip_js_errors and not WebDriverAugmented.check_js_log(js_logs):
+                pytest.fail("Critical JavaScript errors detected in browser console")
+    except Exception:
+        log.exception("Failed to check js log")
+
+
 @pytest.hookimpl(tryfirst=True, hookwrapper=True)
 def pytest_runtest_makereport(item, call):
     outcome = yield
@@ -264,16 +295,6 @@ def pytest_runtest_makereport(item, call):
                 name="post-mortem screenshot",
                 attachment_type=allure.attachment_type.PNG,
             )
-            if web_driver.browser_name != FIREFOX_BROWSER_NAME:
-                # Firefox do not support js logs: https://github.com/SeleniumHQ/selenium/issues/2972
-                js_logs = web_driver.get_log("browser")
-                log_entries = [f"{entry['level']}: {entry['message']}" for entry in js_logs]
-                allure.attach(
-                    "\n".join(log_entries),
-                    name="js console log:",
-                    attachment_type=allure.attachment_type.TEXT,
-                )
-
         except Exception as e:
             print(f"Fail to attach browser artifacts: {e}")
 
