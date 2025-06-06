@@ -4,6 +4,7 @@ import json
 import logging
 from unittest.mock import MagicMock, patch
 
+import allure
 import pytest
 from django.contrib.auth import get_user_model
 from django.test import Client
@@ -16,6 +17,8 @@ from lexiflux.models import Author, Book, BookPage, Language, ReadingLoc
 logger = logging.getLogger(__name__)
 
 
+@allure.epic("Book import")
+@allure.feature("EPUB import integration tests")
 @pytest.mark.django_db
 class TestEpubTocIntegration:
     """Integration tests for EPUB TOC creation during import."""

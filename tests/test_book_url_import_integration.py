@@ -2,14 +2,18 @@
 
 from unittest.mock import MagicMock, patch
 
+import allure
 import pytest
 from django.contrib.auth import get_user_model
 
 from django.test import Client
+
 from lexiflux.ebook.book_loader_url import BookLoaderURL
 from lexiflux.models import ReadingLoc
 
 
+@allure.epic("Book import")
+@allure.feature("URL import integration tests")
 @pytest.mark.django_db
 class TestUrlImportIntegration:
     """Integration tests for URL import anchor map creation and internal link handling."""
