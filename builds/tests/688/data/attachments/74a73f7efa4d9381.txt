@@ -1,1 +1,0 @@
-INFO     root:apps.py:36 Lexiflux 1.21.4 is ready.

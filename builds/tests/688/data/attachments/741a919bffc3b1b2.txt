@@ -1,2 +1,0 @@
-Detected button text: No words to export
-Skipping JavaScript log check for Firefox

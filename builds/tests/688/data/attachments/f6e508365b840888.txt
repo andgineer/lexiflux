@@ -1,3 +1,0 @@
-Detected button text: No words to export
-Export button became disabled
-Skipping JavaScript log check for Firefox

@@ -1,9 +1,0 @@
-
-Unicode HTML size: 464 chars
-Target page size: 200 chars
-Page 1 size: 202 chars
-Page 2 size: 244 chars
-Input normalized text:
-English text with regular ASCII characters. Chinese text: è¿æ¯ä¸äºä¸­æææ¬ï¼åºè¯¥æ­£ç¡®å¤çã Arabic text: ÙØ°Ø§ ÙØµ Ø¨Ø§ÙÙØºØ© Ø§ÙØ¹Ø±Ø¨ÙØ© ÙØ¬Ø¨ Ù Ø¹Ø§ÙØ¬ØªÙ Ø¨Ø´ÙÙ ØµØ­ÙØ­. Russian text: Ð­ÑÐ¾ ÑÐµÐºÑÑ Ð½Ð° ÑÑÑÑÐºÐ¾Ð¼ ÑÐ·ÑÐºÐµ, ÐºÐ¾ÑÐ¾ÑÑÐ¹ Ð´Ð¾Ð»Ð¶ÐµÐ½ Ð¾Ð±ÑÐ°Ð±Ð°ÑÑÐ²Ð°ÑÑÑÑ Ð¿ÑÐ°Ð²Ð¸Ð»ÑÐ½Ð¾. Emojis: ð ð ð ð¨âð©âð§âð¦ should be handled correctly. Math symbols: â â« â â â should be preserved.
-Pages normalized text:
-English text with regular ASCII characters. Chinese text: è¿æ¯ä¸äºä¸­æææ¬ï¼åºè¯¥æ­£ç¡®å¤çã Arabic text: ÙØ°Ø§ ÙØµ Ø¨Ø§ÙÙØºØ© Ø§ÙØ¹Ø±Ø¨ÙØ© ÙØ¬Ø¨ Ù Ø¹Ø§ÙØ¬ØªÙ Ø¨Ø´ÙÙ ØµØ­ÙØ­. Russian text: Ð­ÑÐ¾ ÑÐµÐºÑÑ Ð½Ð° ÑÑÑÑÐºÐ¾Ð¼ ÑÐ·ÑÐºÐµ, ÐºÐ¾ÑÐ¾ÑÑÐ¹ Ð´Ð¾Ð»Ð¶ÐµÐ½ Ð¾Ð±ÑÐ°Ð±Ð°ÑÑÐ²Ð°ÑÑÑÑ Ð¿ÑÐ°Ð²Ð¸Ð»ÑÐ½Ð¾. Emojis: ð ð ð ð¨âð©âð§âð¦ should be handled correctly. Math symbols: â â« â â â should be preserved.
