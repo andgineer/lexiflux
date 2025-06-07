@@ -5,7 +5,6 @@ from typing import Optional, Any
 import allure
 import requests
 from django.urls import reverse
-from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webdriver import WebDriver as RemoteWebDriver
 import time
@@ -85,17 +84,24 @@ class WebDriverAugmented(RemoteWebDriver):
             self._cdp_enabled = True
             # Inject error capture script
             self._inject_error_capture()
-        except Exception:
+        except Exception as e:
             self._cdp_enabled = False
+            logger.error(f"Failed to enable CDP logging: {e}")
 
     def _inject_error_capture(self):
         """Inject JavaScript to capture console errors"""
+        if not self._cdp_enabled:
+            return
+
         script = """
             (function() {
-                if (window.__selenium_logs) return; // Already injected
-
+                if (window.__selenium_logs) {
+                    return;  // Already injected
+                }
+    
                 window.__selenium_logs = [];
-
+                window.__selenium_logs_ready = false;
+    
                 // Capture console.error
                 const originalError = console.error;
                 console.error = function(...args) {
@@ -106,16 +112,38 @@ class WebDriverAugmented(RemoteWebDriver):
                     });
                     originalError.apply(console, args);
                 };
-
+    
+                // Capture console.warn
+                const originalWarn = console.warn;
+                console.warn = function(...args) {
+                    window.__selenium_logs.push({
+                        level: 'WARNING',
+                        message: args.map(a => String(a)).join(' '),
+                        timestamp: Date.now()
+                    });
+                    originalWarn.apply(console, args);
+                };
+    
+                // Capture console.log
+                const originalLog = console.log;
+                console.log = function(...args) {
+                    window.__selenium_logs.push({
+                        level: 'INFO',
+                        message: args.map(a => String(a)).join(' '),
+                        timestamp: Date.now()
+                    });
+                    originalLog.apply(console, args);
+                };
+    
                 // Capture uncaught errors
                 window.addEventListener('error', function(e) {
                     window.__selenium_logs.push({
-                        level: 'SEVERE', 
+                        level: 'SEVERE',
                         message: e.message + ' at ' + e.filename + ':' + e.lineno,
                         timestamp: Date.now()
                     });
                 });
-
+    
                 // Capture unhandled promise rejections
                 window.addEventListener('unhandledrejection', function(e) {
                     window.__selenium_logs.push({
@@ -124,9 +152,14 @@ class WebDriverAugmented(RemoteWebDriver):
                         timestamp: Date.now()
                     });
                 });
+    
+                window.__selenium_logs_ready = true;
             })();
             """
-        self.execute_script(script)
+        try:
+            self.execute_script(script)
+        except Exception as e:
+            logger.error(f"Failed to inject error capture: {e}")
 
     def get_log(self, log_type="browser"):
         """Get JavaScript console log entries.
@@ -210,19 +243,22 @@ class WebDriverAugmented(RemoteWebDriver):
     @staticmethod
     def check_js_log(js_log: list[dict[str, Any]]) -> bool:
         """Check java script log for errors (only `severe` level)."""
+        log_entries = []
         critical_errors = []
         total_chars = 0
-        idx = 0
         for entry in js_log:
             if entry["level"] in ["SEVERE"]:
-                idx += 1
                 critical_errors.append(entry)
-                total_chars += len(entry["message"])
-                if total_chars >= MAX_JS_LOG_SIZE:
-                    critical_errors.append("<...>")
-                    break
+            log_entries.append(entry)
+            total_chars += len(entry["message"])
+            if total_chars >= MAX_JS_LOG_SIZE:
+                log_entries.append("<...>")
+                break
+
+        if log_entries:
+            print(f"js log entries: \n{pprint.pformat(log_entries, indent=4)}")
         if critical_errors:
-            print(f"js log errors: \n{pprint.pformat(critical_errors, indent=4)}")
+            print(f"js critical errors: \n{pprint.pformat(critical_errors, indent=4)}")
         return not critical_errors
 
     @property
@@ -247,11 +283,13 @@ class WebDriverAugmented(RemoteWebDriver):
                 EC.presence_of_element_located((By.CSS_SELECTOR, ".alert.alert-danger")),
                 message="Expected error panels.",
             )
-
-        error_panels = self.find_elements(By.CSS_SELECTOR, ".alert.alert-danger")
-        if not error_panels and no_errors_exception:
-            raise TimeoutException("No error panels found.")
-        return "".join(panel.text for panel in error_panels if panel.text.strip())
+        return "\n".join(
+            [
+                element.text
+                for element in self.find_elements(By.CSS_SELECTOR, ".alert.alert-danger")
+                if element.text.strip()
+            ]
+        )
 
     @property
     def errors_text(self) -> str:
@@ -267,3 +305,12 @@ class WebDriverAugmented(RemoteWebDriver):
         allure.attach(
             self.get_screenshot_as_png(), name=name, attachment_type=allure.attachment_type.PNG
         )
+
+    def get(self, url):
+        """ensure log capture is injected."""
+        super().get(url)
+        # Wait for page load
+        WebDriverWait(self, 10).until(
+            lambda d: d.execute_script("return document.readyState") == "complete"
+        )
+        self._inject_error_capture()
