@@ -1,0 +1,38 @@
+
+Original tag counts: {'img': 2, 'br': 2, 'hr': 1, 'input': 1, 'meta': 1}
+Target page size: 100 chars
+Number of pages: 3
+
+Page 1:
+<div><p>Text before image.</p>
+        <img src="image1.jpg" alt="First Image">
+        <p>Text after image.</p>
+        <br>
+        <hr>
+        <p>Text after break and horizontal rule.</p>
+        <input type="text" name="test">
+        <meta charset="UTF-8">
+        </div>
+  Found 1 img tag(s)
+  Found 1 br tag(s)
+  Found 1 hr tag(s)
+  Found 1 input tag(s)
+  Found 1 meta tag(s)
+
+Page 2:
+<div><p>More text content that might cause splitting.</p>
+        <img src="image2.jpg" alt="Second Image" width="200" height="100">
+        <br>
+        </div>
+  Found 1 img tag(s)
+  Found 1 br tag(s)
+
+Page 3:
+<div><p>Final paragraph with more content to exceed the page size limit and force splitting across multiple pages.</p>
+    </div>
+
+Total counts after splitting: {'img': 2, 'br': 2, 'hr': 1, 'input': 1, 'meta': 1}
+Input normalized text:
+Text before image. Text after image. Text after break and horizontal rule. More text content that might cause splitting. Final paragraph with more content to exceed the page size limit and force splitting across multiple pages.
+Pages normalized text:
+Text before image. Text after image. Text after break and horizontal rule. More text content that might cause splitting. Final paragraph with more content to exceed the page size limit and force splitting across multiple pages.

@@ -1,0 +1,3 @@
+WARNING  root:book_loader_epub.py:110 Anchor 'section1' not found in page 2 content
+
+<p>Content 2</p>

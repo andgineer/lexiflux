@@ -1,0 +1,8 @@
+2025-06-01 07:26:31,739 INFO timing Loading from https://example.com/source-info-test completed in 0.000 seconds
+2025-06-01 07:26:31,740 INFO timing Extract metadata completed in 0.001 seconds
+2025-06-01 07:26:31,740 INFO timing Extracting IDs with internal links completed in 0.000 seconds
+2025-06-01 07:26:31,748 INFO timing Extracting readable HTML completed in 0.007 seconds
+2025-06-01 07:26:31,748 INFO timing Parse extracted HTML completed in 0.000 seconds
+2025-06-01 07:26:31,748 INFO timing Adding source info completed in 0.000 seconds
+2025-06-01 07:26:31,748 INFO timing Cleared HTML completed in 0.000 seconds
+2025-06-01 07:26:31,755 INFO timing Iterate over pages and save them completed in 0.001 seconds

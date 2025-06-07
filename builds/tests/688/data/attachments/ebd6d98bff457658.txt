@@ -1,0 +1,20 @@
+
+Direct _split_text test:
+Long text: 'ThisIsAVeryLongWord ThatExceedsTargetSize AnotherLongWord AndSomeMoreText'
+Target page size: 10 chars
+Number of chunks: 5
+Chunk 1 size: 20 chars
+Chunk 1 content: ThisIsAVeryLongWord 
+
+Chunk 2 size: 22 chars
+Chunk 2 content: ThatExceedsTargetSize 
+
+Chunk 3 size: 16 chars
+Chunk 3 content: AnotherLongWord 
+
+Chunk 4 size: 10 chars
+Chunk 4 content: AndSomeMor
+
+Chunk 5 size: 5 chars
+Chunk 5 content: eText
+

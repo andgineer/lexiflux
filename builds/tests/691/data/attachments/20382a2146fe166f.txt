@@ -1,0 +1,18 @@
+
+Total content size: 288 chars
+Target page size: 165 chars
+Page 1 size: 191 chars
+Page 1 paragraph count: 2
+Page 1 content: <div><p>First paragraph with a complete sentence. Another sentence here.</p>
+        <p>Second paragraph that contains several sentences. Here is one more. And another one.</p>
+        </div>
+
+Page 2 size: 89 chars
+Page 2 paragraph count: 1
+Page 2 content: <div><p>Third paragraph with some content. More text here. Final sentence.</p>
+    </div>
+
+Input normalized text:
+First paragraph with a complete sentence. Another sentence here. Second paragraph that contains several sentences. Here is one more. And another one. Third paragraph with some content. More text here. Final sentence.
+Pages normalized text:
+First paragraph with a complete sentence. Another sentence here. Second paragraph that contains several sentences. Here is one more. And another one. Third paragraph with some content. More text here. Final sentence.

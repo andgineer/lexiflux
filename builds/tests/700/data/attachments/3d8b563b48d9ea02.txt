@@ -1,0 +1,2 @@
+2025-05-31 05:30:11,538 WARNING google_languages Warning: Egyptian Arabic not found in the database for group Arabic.
+2025-05-31 05:30:11,562 INFO timing Iterate over pages and save them completed in 0.015 seconds
