@@ -133,10 +133,6 @@ def get_options(browser: str) -> Options:
     options.add_argument("--disable-client-side-phishing-detection")
     options.add_argument("--no-sandbox")
     options.add_argument("--headless")
-
-    # Enable logging
-    options.set_capability("goog:loggingPrefs", {"browser": "ALL"})
-
     return options
 
 
