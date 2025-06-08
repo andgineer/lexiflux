@@ -201,6 +201,8 @@ class TestEpubTocIntegration:
             assert title in toc_titles, f"Expected '{title}' in TOC titles: {toc_titles}"
 
 
+@allure.epic("Book import")
+@allure.feature("EPUB import integration tests")
 @pytest.mark.django_db
 class TestInternalLinkClicking:
     """Integration tests for internal link clicking functionality."""
