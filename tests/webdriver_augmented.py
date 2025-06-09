@@ -82,7 +82,6 @@ class WebDriverAugmented(RemoteWebDriver):
 
             self.execute_cdp_cmd("Runtime.enable", {})
             self._cdp_enabled = True
-            # Inject error capture script
             self._inject_error_capture()
         except Exception as e:
             self._cdp_enabled = False
@@ -100,7 +99,6 @@ class WebDriverAugmented(RemoteWebDriver):
                 }
     
                 window.__selenium_logs = [];
-                window.__selenium_logs_ready = false;
     
                 // Capture console.error
                 const originalError = console.error;
@@ -152,8 +150,6 @@ class WebDriverAugmented(RemoteWebDriver):
                         timestamp: Date.now()
                     });
                 });
-    
-                window.__selenium_logs_ready = true;
             })();
             """
         try:
@@ -309,8 +305,4 @@ class WebDriverAugmented(RemoteWebDriver):
     def get(self, url):
         """ensure log capture is injected."""
         super().get(url)
-        # Wait for page load
-        WebDriverWait(self, 10).until(
-            lambda d: d.execute_script("return document.readyState") == "complete"
-        )
         self._inject_error_capture()
