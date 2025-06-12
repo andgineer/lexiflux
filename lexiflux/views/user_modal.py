@@ -16,7 +16,7 @@ def user_modal(request: HttpRequest) -> HttpResponse:
     if request.method == "POST":
         language_id = request.POST.get("language")
         # when the checkbox is disable it's not included in the POST data, thus the hack:
-        # we know that is user has no language set, we should update all preferences
+        # we know that iа user has no language set, we should update all preferences
         update_all = (
             request.POST.get("update_all_preferences") == "on" or request.user.language is None
         )
@@ -26,10 +26,14 @@ def user_modal(request: HttpRequest) -> HttpResponse:
                 request.user.language = Language.objects.get(google_code=language_id)
                 request.user.save()
 
-                if update_all or not request.user.language:
+                if update_all:
                     LanguagePreferences.objects.filter(user=request.user).update(
                         user_language=request.user.language,
                     )
+                    if (
+                        request.user.default_language_preferences
+                    ):  # otherwise Django does not use the updated
+                        request.user.default_language_preferences.refresh_from_db()
             return HttpResponse(headers={"HX-Refresh": "true"})
         return HttpResponse(status=400)
 
