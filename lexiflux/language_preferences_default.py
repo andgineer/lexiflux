@@ -43,10 +43,12 @@ def create_default_language_preferences(user: Any) -> Any:  # do not use models 
             "English and / or Serbian language not found in the Language table.",
         ) from exc
 
+    user_language = user.language if user.language else english_language
+
     language_preferences = LanguagePreferences.objects.create(
         user=user,
         language=serbian_language,
-        user_language=english_language,
+        user_language=user_language,
         inline_translation_type="Dictionary",
         inline_translation_parameters={"dictionary": "GoogleTranslator"},
     )
