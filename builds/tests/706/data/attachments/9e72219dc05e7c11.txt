@@ -1,0 +1,4 @@
+2025-06-05 04:11:38,945 WARNING google_languages Warning: Egyptian Arabic not found in the database for group Arabic.
+2025-06-05 04:11:39,365 INFO signals Successfully created language preferences for user testuser (ID: 7)
+2025-06-05 04:11:39,382 WARNING log Bad Request: /api/save-inline-translation/
+2025-06-05 04:11:39,382 WARNING log Bad Request: /api/save-inline-translation/

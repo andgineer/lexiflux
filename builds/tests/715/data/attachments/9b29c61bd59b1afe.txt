@@ -1,0 +1,15 @@
+2025-06-13 14:20:54,564 WARNING google_languages Warning: Egyptian Arabic not found in the database for group Arabic.
+2025-06-13 14:20:54,997 INFO signals Successfully created language preferences for user testuser (ID: 7)
+2025-06-13 14:20:55,010 INFO user_modal User: testuser (ID: 7)
+2025-06-13 14:20:55,011 INFO user_modal User.language: English
+2025-06-13 14:20:55,012 INFO user_modal User.default_language_preferences: LanguagePreferences object (13)
+2025-06-13 14:20:55,013 INFO user_modal Existing language preferences count: 2
+2025-06-13 14:20:55,015 INFO user_modal   - Serbian -> English (ID: 13)
+2025-06-13 14:20:55,016 INFO user_modal   - Afrikaans -> English (ID: 14)
+2025-06-13 14:20:55,017 INFO user_modal POST user_modal - language_id: af
+2025-06-13 14:20:55,017 INFO user_modal POST user_modal - update_all_preferences: None
+2025-06-13 14:20:55,017 INFO user_modal Computed update_all: False
+2025-06-13 14:20:55,017 INFO user_modal User.language is None: False
+2025-06-13 14:20:55,018 INFO user_modal Found language: Afrikaans (af)
+2025-06-13 14:20:55,018 INFO user_modal Old user language: English
+2025-06-13 14:20:55,019 INFO user_modal === USER MODAL DEBUG END (SUCCESS) ===

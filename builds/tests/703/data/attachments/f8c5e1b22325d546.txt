@@ -1,0 +1,25 @@
+2025-06-01 07:26:31,188 INFO timing Loading from https://example.com/content-test completed in 0.000 seconds
+2025-06-01 07:26:31,190 INFO timing Extract metadata completed in 0.002 seconds
+2025-06-01 07:26:31,190 INFO timing Extracting IDs with internal links completed in 0.000 seconds
+2025-06-01 07:26:31,190 INFO book_loader_url Using original HTML
+2025-06-01 07:26:31,190 INFO timing Extracting readable HTML completed in 0.000 seconds
+2025-06-01 07:26:31,191 INFO timing Parse extracted HTML completed in 0.000 seconds
+2025-06-01 07:26:31,192 INFO timing Adding source info completed in 0.001 seconds
+2025-06-01 07:26:31,193 INFO timing Cleared HTML completed in 0.001 seconds
+2025-06-01 07:26:31,204 INFO timing Iterate over pages and save them completed in 0.003 seconds
+2025-06-01 07:26:31,208 INFO timing Loading from https://example.com/content-test completed in 0.000 seconds
+2025-06-01 07:26:31,210 INFO timing Extract metadata completed in 0.001 seconds
+2025-06-01 07:26:31,210 INFO timing Extracting IDs with internal links completed in 0.000 seconds
+2025-06-01 07:26:31,219 INFO timing Extracting readable HTML completed in 0.009 seconds
+2025-06-01 07:26:31,219 INFO timing Parse extracted HTML completed in 0.000 seconds
+2025-06-01 07:26:31,220 INFO timing Adding source info completed in 0.000 seconds
+2025-06-01 07:26:31,220 INFO timing Cleared HTML completed in 0.000 seconds
+2025-06-01 07:26:31,228 INFO timing Iterate over pages and save them completed in 0.002 seconds
+2025-06-01 07:26:31,230 INFO timing Loading from https://example.com/content-test completed in 0.000 seconds
+2025-06-01 07:26:31,231 INFO timing Extract metadata completed in 0.001 seconds
+2025-06-01 07:26:31,232 INFO timing Extracting IDs with internal links completed in 0.000 seconds
+2025-06-01 07:26:31,588 INFO timing Extracting readable HTML completed in 0.357 seconds
+2025-06-01 07:26:31,589 INFO timing Parse extracted HTML completed in 0.000 seconds
+2025-06-01 07:26:31,589 INFO timing Adding source info completed in 0.000 seconds
+2025-06-01 07:26:31,590 INFO timing Cleared HTML completed in 0.000 seconds
+2025-06-01 07:26:31,605 INFO timing Iterate over pages and save them completed in 0.002 seconds

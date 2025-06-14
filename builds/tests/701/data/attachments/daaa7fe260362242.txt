@@ -1,0 +1,9 @@
+2025-05-31 06:59:59,248 INFO signals Successfully created language preferences for user testuser (ID: 1)
+2025-05-31 06:59:59,250 INFO timing Loading from https://example.com/nav-test completed in 0.000 seconds
+2025-05-31 06:59:59,251 INFO timing Extract metadata completed in 0.001 seconds
+2025-05-31 06:59:59,251 INFO timing Extracting IDs with internal links completed in 0.000 seconds
+2025-05-31 06:59:59,255 INFO timing Extracting readable HTML completed in 0.004 seconds
+2025-05-31 06:59:59,256 INFO timing Parse extracted HTML completed in 0.000 seconds
+2025-05-31 06:59:59,256 INFO timing Adding source info completed in 0.000 seconds
+2025-05-31 06:59:59,257 INFO timing Cleared HTML completed in 0.000 seconds
+2025-05-31 06:59:59,265 INFO timing Iterate over pages and save them completed in 0.004 seconds
