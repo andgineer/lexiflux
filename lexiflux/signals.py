@@ -3,7 +3,6 @@
 import logging
 from typing import Any
 
-from django.db import transaction
 from django.db.models import Model
 from django.db.models.signals import post_save
 from django.dispatch import receiver
@@ -39,25 +38,24 @@ def create_language_preferences(
     # Only proceed if this is a new user and they don't have default preferences yet
     if created and not instance.default_language_preferences:
         try:
-            with transaction.atomic():
-                # Ensure languages exist
-                populate_languages()
+            # Ensure languages exist
+            populate_languages()
 
-                # Create default language preferences
-                language_preferences = create_default_language_preferences(instance)
+            # Create default language preferences
+            language_preferences = create_default_language_preferences(instance)
 
-                # Update user with new preferences, but avoid recursive signal
-                CustomUser.objects.filter(pk=instance.pk).update(
-                    default_language_preferences=language_preferences,
-                )
+            # Update user with new preferences, but avoid recursive signal
+            CustomUser.objects.filter(pk=instance.pk).update(
+                default_language_preferences=language_preferences,
+            )
 
-                # Update instance to match database
-                instance.refresh_from_db()
+            # Update instance to match database
+            instance.refresh_from_db()
 
-                logger.info(
-                    f"Successfully created language preferences for user {instance.username} "
-                    f"(ID: {instance.pk})",
-                )
+            logger.info(
+                f"Successfully created language preferences for user {instance.username} "
+                f"(ID: {instance.pk})",
+            )
 
         except Exception as e:
             logger.error(

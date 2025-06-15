@@ -8,7 +8,6 @@ from collections import defaultdict
 from collections.abc import Iterable, Iterator
 from typing import Any, Optional
 
-from django.db import transaction
 from ebooklib import ITEM_DOCUMENT, ITEM_IMAGE, epub
 from lxml import etree
 from pagesmith import parse_partial_html, refine_html
@@ -49,8 +48,7 @@ class BookLoaderEpub(BookLoaderBase):
         super().__init__(*args, **kwargs)
         self._pending_toc_entries = []
 
-    @transaction.atomic  # type: ignore
-    def create(self, owner_email: str, forced_language: Optional[str] = None) -> Book:
+    def create(self, owner_email: str | None, forced_language: Optional[str] = None) -> Book:
         """Save the book to the database."""
         # Prepare TOC entries before iterating pages
         self._prepare_toc_entries()

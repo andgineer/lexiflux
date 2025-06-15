@@ -2,7 +2,6 @@
 
 import logging
 
-from django.db import transaction
 from django.http import HttpRequest, HttpResponse
 from django.template.response import TemplateResponse
 from django.views.decorators.http import require_http_methods
@@ -33,19 +32,18 @@ def user_modal(request: HttpRequest) -> HttpResponse:
             new_language = Language.objects.get(google_code=language_id)
             logger.info(f"New language: {new_language} ({new_language.google_code})")
 
-            with transaction.atomic():
-                old_language = request.user.language
-                logger.info(f"Old user language: {old_language}")
+            old_language = request.user.language
+            logger.info(f"Old user language: {old_language}")
 
-                request.user.language = new_language
-                request.user.save()
+            request.user.language = new_language
+            request.user.save()
 
-                if update_all:
-                    LanguagePreferences.objects.filter(user=request.user).update(
-                        user_language=request.user.language,
-                    )
-                    if not request.user.default_language_preferences:
-                        logger.warning("User has no default_language_preferences!")
+            if update_all:
+                LanguagePreferences.objects.filter(user=request.user).update(
+                    user_language=request.user.language,
+                )
+                if not request.user.default_language_preferences:
+                    logger.warning("User has no default_language_preferences!")
             return HttpResponse(headers={"HX-Refresh": "true"})
         return HttpResponse(status=400)
 

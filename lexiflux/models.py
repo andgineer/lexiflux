@@ -10,7 +10,7 @@ from bs4 import BeautifulSoup
 from django.conf import settings
 from django.contrib.auth.models import AbstractUser
 from django.core.exceptions import ObjectDoesNotExist, PermissionDenied, ValidationError
-from django.db import models, transaction
+from django.db import models
 from django.db.models import Q
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
@@ -712,7 +712,6 @@ class LanguagePreferences(models.Model):  # type: ignore
         super().save(*args, **kwargs)
 
     @classmethod
-    @transaction.atomic  # type: ignore
     def get_or_create_language_preferences(
         cls,
         user: CustomUser,
