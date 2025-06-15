@@ -11,7 +11,7 @@ from django.conf import settings
 from django.contrib.auth.models import AbstractUser
 from django.core.exceptions import ObjectDoesNotExist, PermissionDenied, ValidationError
 from django.db import models
-from django.db.models import Q
+from django.db.models import Q, QuerySet
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from transliterate import get_available_language_codes, translit
@@ -757,9 +757,9 @@ class LanguagePreferences(models.Model):  # type: ignore
             "parameters": self.inline_translation_parameters,
         }
 
-    def get_lexical_articles(self) -> list[LexicalArticle]:
+    def get_lexical_articles(self) -> "QuerySet[LexicalArticle]":
         """Return all lexical articles for this language_preferences."""
-        return self.lexical_articles.all().order_by("order")  # type: ignore
+        return self.lexical_articles.all().order_by("order")
 
 
 class ReadingLoc(models.Model):  # type: ignore  # pylint: disable=too-many-instance-attributes
