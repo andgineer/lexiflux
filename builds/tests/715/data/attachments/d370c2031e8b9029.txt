@@ -1,0 +1,36 @@
+2025-06-13 14:20:55,823 WARNING google_languages Warning: Egyptian Arabic not found in the database for group Arabic.
+2025-06-13 14:20:56,155 INFO signals Successfully created language preferences for user testuser (ID: 7)
+2025-06-13 14:20:56,161 INFO user_modal User: testuser (ID: 7)
+2025-06-13 14:20:56,161 INFO user_modal User.language: English
+2025-06-13 14:20:56,162 INFO user_modal User.default_language_preferences: LanguagePreferences object (13)
+2025-06-13 14:20:56,163 INFO user_modal Existing language preferences count: 1
+2025-06-13 14:20:56,164 INFO user_modal   - Serbian -> English (ID: 13)
+2025-06-13 14:20:56,165 INFO user_modal POST user_modal - language_id: invalid_code
+2025-06-13 14:20:56,165 INFO user_modal POST user_modal - update_all_preferences: None
+2025-06-13 14:20:56,165 INFO user_modal Computed update_all: False
+2025-06-13 14:20:56,165 INFO user_modal User.language is None: False
+2025-06-13 14:20:56,166 ERROR middleware Exception: Language matching query does not exist.
+Traceback (most recent call last):
+  File "/home/runner/work/lexiflux/lexiflux/.venv/lib/python3.12/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/work/lexiflux/lexiflux/lexiflux/decorators.py", line 44, in wrapper
+    return login_required(view_func)(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/work/lexiflux/lexiflux/.venv/lib/python3.12/site-packages/django/contrib/auth/decorators.py", line 59, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/work/lexiflux/lexiflux/.venv/lib/python3.12/site-packages/django/views/decorators/http.py", line 64, in inner
+    return func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/work/lexiflux/lexiflux/lexiflux/views/user_modal.py", line 46, in user_modal
+    new_language = Language.objects.get(google_code=language_id)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/work/lexiflux/lexiflux/.venv/lib/python3.12/site-packages/django/db/models/manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/work/lexiflux/lexiflux/.venv/lib/python3.12/site-packages/django/db/models/query.py", line 633, in get
+    raise self.model.DoesNotExist(
+lexiflux.models.Language.DoesNotExist: Language matching query does not exist.
+2025-06-13 14:20:56,167 WARNING log Bad Request: /api/user/
+2025-06-13 14:20:56,167 WARNING log Bad Request: /api/user/

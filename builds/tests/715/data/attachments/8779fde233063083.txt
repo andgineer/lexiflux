@@ -1,0 +1,24 @@
+2025-06-13 14:20:53,937 WARNING google_languages Warning: Egyptian Arabic not found in the database for group Arabic.
+2025-06-13 14:20:54,403 INFO signals Successfully created language preferences for user testuser (ID: 7)
+2025-06-13 14:20:54,413 INFO user_modal User: testuser (ID: 7)
+2025-06-13 14:20:54,414 INFO user_modal User.language: English
+2025-06-13 14:20:54,415 INFO user_modal User.default_language_preferences: LanguagePreferences object (13)
+2025-06-13 14:20:54,416 INFO user_modal Existing language preferences count: 2
+2025-06-13 14:20:54,418 INFO user_modal   - Serbian -> English (ID: 13)
+2025-06-13 14:20:54,419 INFO user_modal   - Afrikaans -> English (ID: 14)
+2025-06-13 14:20:54,420 INFO user_modal POST user_modal - language_id: af
+2025-06-13 14:20:54,420 INFO user_modal POST user_modal - update_all_preferences: on
+2025-06-13 14:20:54,420 INFO user_modal Computed update_all: True
+2025-06-13 14:20:54,420 INFO user_modal User.language is None: False
+2025-06-13 14:20:54,421 INFO user_modal Found language: Afrikaans (af)
+2025-06-13 14:20:54,421 INFO user_modal Old user language: English
+2025-06-13 14:20:54,421 INFO user_modal Starting update_all prefs...
+2025-06-13 14:20:54,422 INFO user_modal Preferences to update: 2
+2025-06-13 14:20:54,424 INFO user_modal   Before update - Serbian -> English
+2025-06-13 14:20:54,425 INFO user_modal   Before update - Afrikaans -> English
+2025-06-13 14:20:54,425 INFO user_modal Updated 2 language preferences
+2025-06-13 14:20:54,427 INFO user_modal   After update - Serbian -> Afrikaans
+2025-06-13 14:20:54,428 INFO user_modal   After update - Afrikaans -> Afrikaans
+2025-06-13 14:20:54,428 INFO user_modal Refreshing default_language_preferences (ID: 13)
+2025-06-13 14:20:54,430 INFO user_modal Default prefs after refresh: Serbian -> Afrikaans
+2025-06-13 14:20:54,430 INFO user_modal === USER MODAL DEBUG END (SUCCESS) ===

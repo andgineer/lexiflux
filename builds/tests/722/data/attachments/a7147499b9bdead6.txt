@@ -1,0 +1,17 @@
+2025-06-16 04:17:03,335 WARNING google_languages Warning: Egyptian Arabic not found in the database for group Arabic.
+2025-06-16 04:17:03,649 INFO signals Successfully created language preferences for user testuser (ID: 9)
+2025-06-16 04:17:06,715 INFO import_views Pasted content (txt): # Test Book
+
+This is a test book created via paste.
+
+## Chapter 1
+
+Once upon a time, there was a test that needed to be run.
+
+The end....
+2025-06-16 04:17:06,724 INFO timing Iterate over pages and save them completed in 0.002 seconds
+2025-06-16 04:17:07,636 INFO reader_views Opening book pastedtext-author at page 1 for user testuser
+2025-06-16 04:17:07,659 INFO models Reading location updated for pastedtext-author: 1(1):0/0.0
+[{'page_number': 1, 'word': 0}]/0
+2025-06-16 04:17:07,660 INFO reader_views Jump status: book pastedtext-author, is_first_jump True, is_last_jump True
+2025-06-16 04:17:08,246 INFO test_e2e_import_book Redirected to reader page

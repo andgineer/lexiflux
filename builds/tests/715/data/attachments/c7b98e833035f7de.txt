@@ -1,0 +1,26 @@
+2025-06-13 14:21:56,920 WARNING google_languages Warning: Egyptian Arabic not found in the database for group Arabic.
+2025-06-13 14:21:57,240 INFO signals Successfully created language preferences for user testuser (ID: 28)
+2025-06-13 14:21:58,104 INFO user_modal User: testuser (ID: 28)
+2025-06-13 14:21:58,104 INFO user_modal User.language: None
+2025-06-13 14:21:58,105 INFO user_modal User.default_language_preferences: LanguagePreferences object (40)
+2025-06-13 14:21:58,106 INFO user_modal Existing language preferences count: 1
+2025-06-13 14:21:58,109 INFO user_modal   - Serbian -> English (ID: 40)
+2025-06-13 14:21:59,005 INFO user_modal User: testuser (ID: 28)
+2025-06-13 14:21:59,005 INFO user_modal User.language: None
+2025-06-13 14:21:59,007 INFO user_modal User.default_language_preferences: LanguagePreferences object (40)
+2025-06-13 14:21:59,008 INFO user_modal Existing language preferences count: 1
+2025-06-13 14:21:59,010 INFO user_modal   - Serbian -> English (ID: 40)
+2025-06-13 14:21:59,011 INFO user_modal POST user_modal - language_id: es
+2025-06-13 14:21:59,011 INFO user_modal POST user_modal - update_all_preferences: None
+2025-06-13 14:21:59,011 INFO user_modal Computed update_all: True
+2025-06-13 14:21:59,011 INFO user_modal User.language is None: True
+2025-06-13 14:21:59,013 INFO user_modal Found language: Spanish (es)
+2025-06-13 14:21:59,014 INFO user_modal Old user language: None
+2025-06-13 14:21:59,015 INFO user_modal Starting update_all prefs...
+2025-06-13 14:21:59,016 INFO user_modal Preferences to update: 1
+2025-06-13 14:21:59,018 INFO user_modal   Before update - Serbian -> English
+2025-06-13 14:21:59,019 INFO user_modal Updated 1 language preferences
+2025-06-13 14:21:59,023 INFO user_modal   After update - Serbian -> Spanish
+2025-06-13 14:21:59,023 INFO user_modal Refreshing default_language_preferences (ID: 40)
+2025-06-13 14:21:59,026 INFO user_modal Default prefs after refresh: Serbian -> Spanish
+2025-06-13 14:21:59,026 INFO user_modal === USER MODAL DEBUG END (SUCCESS) ===

@@ -1,0 +1,9 @@
+2025-06-01 07:26:31,649 INFO timing Loading from https://example.com/error-test completed in 0.000 seconds
+2025-06-01 07:26:31,650 INFO timing Extract metadata completed in 0.001 seconds
+2025-06-01 07:26:31,650 INFO timing Extracting IDs with internal links completed in 0.000 seconds
+2025-06-01 07:26:31,657 INFO timing Extracting readable HTML completed in 0.007 seconds
+2025-06-01 07:26:31,658 INFO timing Parse extracted HTML completed in 0.000 seconds
+2025-06-01 07:26:31,658 INFO timing Adding source info completed in 0.000 seconds
+2025-06-01 07:26:31,658 INFO timing Cleared HTML completed in 0.000 seconds
+2025-06-01 07:26:31,664 INFO timing Iterate over pages and save them completed in 0.001 seconds
+2025-06-01 07:26:31,666 ERROR book_loader_url Error fetching URL https://example.com/error-test: Network error

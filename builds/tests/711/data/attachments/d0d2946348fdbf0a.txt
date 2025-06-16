@@ -1,0 +1,15 @@
+2025-06-09 05:46:58,050 INFO signals Successfully created language preferences for user testuser (ID: 1)
+2025-06-09 05:46:58,052 INFO timing Loading from https://example.com/internal-links-test completed in 0.000 seconds
+2025-06-09 05:46:58,053 INFO timing Extract metadata completed in 0.001 seconds
+2025-06-09 05:46:58,053 INFO timing Extracting IDs with internal links completed in 0.000 seconds
+2025-06-09 05:46:58,053 INFO book_loader_url Using original HTML
+2025-06-09 05:46:58,053 INFO timing Extracting readable HTML completed in 0.000 seconds
+2025-06-09 05:46:58,054 INFO timing Parse extracted HTML completed in 0.000 seconds
+2025-06-09 05:46:58,054 INFO timing Adding source info completed in 0.000 seconds
+2025-06-09 05:46:58,055 INFO timing Cleared HTML completed in 0.001 seconds
+2025-06-09 05:46:58,067 INFO timing Iterate over pages and save them completed in 0.008 seconds
+2025-06-09 05:46:58,077 INFO reader_views Link clicked: #section1, page_info: {'page': 2, 'item_id': 'section1', 'item_name': 'Section 1: First Topic'}
+2025-06-09 05:46:58,092 INFO reader_views Link clicked: #conclusion, page_info: {'page': 8, 'item_id': 'conclusion', 'item_name': 'Conclusion'}
+2025-06-09 05:46:58,105 INFO reader_views Link clicked: #nonexistent_anchor, page_info: None
+2025-06-09 05:46:58,108 INFO reader_views Link clicked: #introduction, page_info: {'page': 1, 'item_id': 'introduction', 'item_name': 'Introduction'}
+2025-06-09 05:46:58,123 INFO reader_views Link clicked: #section2, page_info: {'page': 4, 'item_id': 'section2', 'item_name': 'Section 2: Second Topic'}
