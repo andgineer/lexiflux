@@ -60,34 +60,45 @@ def docs_task_factory(language: str):
 @task
 def shell(c: Context):
     """Django shell"""
-    c.run("./manage shell")
+    c.run("LEXIFLUX_SKIP_AUTH=true ./manage shell")
 
 
 @task
 def jupyter(c: Context):
     """Run Jupyter Notebook"""
-    c.run("./manage shell_plus --notebook")
+    c.run("LEXIFLUX_SKIP_AUTH=true ./manage shell_plus --notebook")
 
 
 @task
 def migrate(c: Context):
     """Migrate DB to current models"""
-    c.run("./manage makemigrations lexiflux")
-    c.run("./manage migrate")
+    c.run("LEXIFLUX_SKIP_AUTH=true ./manage makemigrations lexiflux")
+    c.run("LEXIFLUX_SKIP_AUTH=true ./manage migrate")
 
 
 @task
 def pages(c: Context):
     """Create random book with random pages"""
-    c.run("./manage add-pages")
+    c.run("LEXIFLUX_SKIP_AUTH=true ./manage add-pages")
 
 
 @task
 def alisa(c: Context):
     """Import Alisa u zemlji cuda"""
     c.run(
-        r"""./manage.py import-text "${HOME}/books/Lewis Carroll/Alice's Adventures """
+        r"""LEXIFLUX_SKIP_AUTH=true ./manage.py"""
+        r""" import-text "${HOME}/books/Lewis Carroll/Alice's Adventures """
         r"""in Wonderland (96)/Alice's Adventures in Wonderland - Lewis Carroll.txt" """,
+    )
+
+
+@task
+def alice(c: Context):
+    """Import Alice's Adventures in Wonderland from Gutenberg Project"""
+    c.run(
+        r"""LEXIFLUX_SKIP_AUTH=true ./manage.py"""
+        r""" import-url "https://www.gutenberg.org/cache/epub/11/pg11-images.html" """
+        r""" --cleaning-level minimal --public""",
     )
 
 
@@ -109,7 +120,7 @@ def admin(c: Context):
 @task
 def user(c: Context):
     """Create default user for auto-login"""
-    c.run("./manage default-user")
+    c.run("LEXIFLUX_SKIP_AUTH=true ./manage default-user")
 
 
 @task(kill_db, migrate, admin, user, alisa)
