@@ -1,0 +1,2 @@
+2025-06-13 14:18:58,369 INFO signals Successfully created language preferences for user lexiflux (ID: 1)
+2025-06-13 14:18:58,369 INFO decorators Created default user: lexiflux@example.com

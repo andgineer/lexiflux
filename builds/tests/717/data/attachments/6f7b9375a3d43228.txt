@@ -1,0 +1,1 @@
+2025-06-14 08:49:34,052 ERROR llm Lexical article 'InvalidArticle' not found., model: gpt-4o, class: ChatOpenAI, show_api_key_info: True

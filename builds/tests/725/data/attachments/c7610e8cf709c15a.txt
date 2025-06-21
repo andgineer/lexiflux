@@ -1,0 +1,2 @@
+2025-06-21 09:49:14,597 INFO timing Loading from https://example.com/test-page completed in 0.000 seconds
+2025-06-21 09:49:14,597 ERROR book_loader_url Error fetching URL https://example.com/test-page: expected string or bytes-like object, got 'MagicMock'

@@ -1,0 +1,9 @@
+2025-06-12 14:19:05,541 INFO timing Loading from https://example.com/test-article completed in 0.000 seconds
+2025-06-12 14:19:05,545 INFO timing Extract metadata completed in 0.004 seconds
+2025-06-12 14:19:05,546 INFO timing Extracting IDs with internal links completed in 0.000 seconds
+2025-06-12 14:19:05,546 INFO book_loader_url Using original HTML
+2025-06-12 14:19:05,546 INFO timing Extracting readable HTML completed in 0.000 seconds
+2025-06-12 14:19:05,546 INFO timing Parse extracted HTML completed in 0.000 seconds
+2025-06-12 14:19:05,546 INFO timing Adding source info completed in 0.000 seconds
+2025-06-12 14:19:05,547 INFO timing Cleared HTML completed in 0.001 seconds
+2025-06-12 14:19:05,554 INFO timing Iterate over pages and save them completed in 0.002 seconds
