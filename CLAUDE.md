@@ -35,10 +35,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `./manage import-epub <file_path>` - Import EPUB file
 - `./manage import-html <file_path>` - Import HTML file
 - `./manage import-text <file_path>` - Import plain text file
-- `./manage import-url <url>` - Import web page from URL
+- `./manage import-url <url>` - Import web page from URL with image support
   - `--cleaning-level {aggressive,moderate,minimal}` - Content cleaning level
   - `--public` - Make book public
   - `--language <lang>` - Force language detection
+  - Automatically downloads and stores images from the web page
+  - Updates image URLs to use Django's serve_book_image view
 
 ## Architecture Overview
 
@@ -62,11 +64,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
   - `TranslationSpanManager.ts` - Manages translation overlays
 
 ### Key Features
-- **Multi-format Book Reading**: EPUB, HTML, plain text, web pages
+- **Multi-format Book Reading**: EPUB, HTML, plain text, web pages with full image support
 - **Real-time Translation**: Click-to-translate with multiple AI models
 - **Language Learning**: Vocabulary tracking, Anki export, lexical analysis
 - **Reading Progress**: Position tracking, bookmarks, reading history
 - **Multi-language Support**: Interface and content in multiple languages
+- **Image Handling**: Automatic download and storage of images from web imports
 
 ### Database Design
 - SQLite for development, configurable for production
@@ -88,6 +91,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - TypeScript interfaces for type safety
 - Vue.js for complex interactive forms
 - HTMX for server-side rendered dynamic content
+- Images stored as BLOBs in BookImage model, served via serve_book_image view
+- URL imports automatically download and rewrite image references
 
 ### Configuration
 - Environment-based settings in `lexiflux_settings.py`
