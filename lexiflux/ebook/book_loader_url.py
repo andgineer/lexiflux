@@ -10,9 +10,8 @@ from urllib.parse import urljoin, urlparse
 
 import requests
 import trafilatura
-from bs4 import BeautifulSoup, Tag
 from lxml import etree
-from pagesmith import parse_partial_html, refine_html
+from pagesmith import etree_to_str, parse_partial_html, refine_html
 
 from lexiflux.ebook.book_loader_base import MetadataField
 from lexiflux.ebook.book_loader_html import BookLoaderHtml
@@ -209,13 +208,13 @@ class BookLoaderURL(BookLoaderHtml):
 
     def _prepare_images_for_download(self):
         """Prepare image metadata for download without actually downloading yet."""
-        if not hasattr(self, "text") or not self.text:
-            log.warning("No text content available for image processing")
+        if not hasattr(self, "tree_root") or self.tree_root is None:
+            log.warning("No tree_root available for image processing")
             return
 
         self.image_mapping = {}  # Maps original src to new filename
-        soup = BeautifulSoup(self.text, "html.parser")
-        images = soup.find_all("img")
+
+        images = self.tree_root.xpath(".//img")
 
         if not images:
             log.info("No images found in the content")
@@ -224,9 +223,6 @@ class BookLoaderURL(BookLoaderHtml):
         log.info(f"Found {len(images)} images to prepare for download")
 
         for img_idx, img in enumerate(images):
-            if not isinstance(img, Tag):
-                continue
-
             src = img.get("src")
             if not src:
                 continue
@@ -249,15 +245,10 @@ class BookLoaderURL(BookLoaderHtml):
                 "filename": filename,
             }
 
-        # Update image URLs in the text to point to our serve view
-        # We'll use placeholder URLs that will be updated once we have the book code
-        for img in images:
-            src = img.get("src")
-            if src in self.image_mapping:
-                # Use a placeholder that we'll replace later
-                img["src"] = f"__BOOK_IMAGE__{self.image_mapping[src]['filename']}"
+            # Update the img src to use placeholder
+            img.set("src", f"__BOOK_IMAGE__{filename}")
 
-        self.text = str(soup)
+        self.text = etree_to_str(self.tree_root)
 
     def _download_and_save_images(self, book):
         """Download images from the web page and save them to the database."""
