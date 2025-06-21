@@ -1,12 +1,17 @@
 """Tests for URL import image functionality."""
 
 from unittest.mock import patch, MagicMock
+
+import allure
 from django.test import TestCase
 
 from lexiflux.ebook.book_loader_url import BookLoaderURL
+from lexiflux.ebook.book_loader_base import MetadataField
 from lexiflux.models import Language, Author
 
 
+@allure.epic("Book import")
+@allure.feature("URL import images")
 class TestURLImportImages(TestCase):
     """Test image downloading and processing in URL imports."""
 
@@ -20,9 +25,15 @@ class TestURLImportImages(TestCase):
     @patch("requests.get")
     def test_image_preparation_and_mapping(self, mock_requests):
         """Test that images are properly identified and mapped for download."""
-        # Mock the main page request
-        mock_main_response = MagicMock()
-        mock_main_response.text = """
+        from pagesmith import parse_partial_html
+
+        # Mock the main page request to avoid HTTP call
+        mock_response = MagicMock()
+        mock_response.text = "<html><body><h1>Test</h1></body></html>"
+        mock_response.raise_for_status.return_value = None
+        mock_requests.return_value = mock_response
+
+        html_content = """
         <html>
         <body>
             <h1>Test Article</h1>
@@ -33,27 +44,30 @@ class TestURLImportImages(TestCase):
         </body>
         </html>
         """
-        mock_main_response.raise_for_status.return_value = None
 
-        # Configure requests.get to return different responses based on URL
-        def mock_get_side_effect(url, **kwargs):
-            if url == "https://example.com/test-page":
-                return mock_main_response
-            else:
-                # For image requests
-                mock_img_response = MagicMock()
-                mock_img_response.content = b"fake_image_data"
-                mock_img_response.headers = {"content-type": "image/jpeg"}
-                mock_img_response.raise_for_status.return_value = None
-                return mock_img_response
+        # Create loader and mock the constructor chain
+        with (
+            patch.object(BookLoaderURL, "load_text"),
+            patch.object(
+                BookLoaderURL,
+                "detect_meta",
+                return_value=(
+                    {
+                        MetadataField.TITLE: "Test Article",
+                        MetadataField.AUTHOR: "Test Author",
+                        MetadataField.LANGUAGE: "English",
+                    },
+                    0,
+                    100,
+                ),
+            ),
+        ):
+            loader = BookLoaderURL("https://example.com/test-page")
 
-        mock_requests.side_effect = mock_get_side_effect
-
-        loader = BookLoaderURL("https://example.com/test-page")
-
-        # Mock the text processing that normally happens in load_text
-        loader.text = mock_main_response.text
-        loader.html_content = mock_main_response.text
+        # Set up the required attributes that load_text() would normally set
+        loader.tree_root = parse_partial_html(html_content)
+        loader.url = "https://example.com/test-page"
+        loader.text = html_content
 
         # Test image preparation
         loader._prepare_images_for_download()
@@ -110,20 +124,23 @@ class TestURLImportImages(TestCase):
     @patch("requests.get")
     def test_download_image_success(self, mock_requests):
         """Test successful image download."""
-        # Mock image response
+        # Mock image response (needs to be > 100 bytes for size check)
         mock_response = MagicMock()
-        mock_response.content = b"fake_image_data_that_is_long_enough"
+        mock_response.content = b"x" * 150  # 150 bytes, well over the 100 byte minimum
         mock_response.headers = {"content-type": "image/jpeg"}
         mock_response.raise_for_status.return_value = None
         mock_requests.return_value = mock_response
 
-        loader = BookLoaderURL("https://example.com/test-page")
+        # Create loader instance manually to avoid constructor calls
+        loader = BookLoaderURL.__new__(BookLoaderURL)
+        loader.headers = {"User-Agent": "Test"}
 
+        # The _download_image method makes its own requests.get call
         image_data, content_type, filename = loader._download_image(
             "https://example.com/test.jpg", "test.jpg"
         )
 
-        self.assertEqual(image_data, b"fake_image_data_that_is_long_enough")
+        self.assertEqual(image_data, b"x" * 150)
         self.assertEqual(content_type, "image/jpeg")
         self.assertEqual(filename, "test.jpg")
 
@@ -137,7 +154,9 @@ class TestURLImportImages(TestCase):
         mock_response.raise_for_status.return_value = None
         mock_requests.return_value = mock_response
 
-        loader = BookLoaderURL("https://example.com/test-page")
+        # Create loader instance manually to avoid constructor calls
+        loader = BookLoaderURL.__new__(BookLoaderURL)
+        loader.headers = {"User-Agent": "Test"}
 
         image_data, content_type, filename = loader._download_image(
             "https://example.com/test.jpg", "test.jpg"
@@ -150,7 +169,8 @@ class TestURLImportImages(TestCase):
 
     def test_sanitize_filename(self):
         """Test filename sanitization."""
-        loader = BookLoaderURL("https://example.com/test-page")
+        # Create loader instance manually to avoid constructor calls
+        loader = BookLoaderURL.__new__(BookLoaderURL)
 
         # Test normal filename
         self.assertEqual(loader._sanitize_filename("test.jpg"), "test.jpg")
