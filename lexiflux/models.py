@@ -797,7 +797,7 @@ class ReadingLoc(models.Model):  # type: ignore  # pylint: disable=too-many-inst
 
     def jump(self, page_number: int, word: int) -> None:
         """Jump to a new reading location."""
-        print("Jumping to", page_number, word)
+        log.info(f"Jumping to {page_number}#{word}")
         self.jump_history = self.jump_history[: self.current_jump + 1]
         self.jump_history.append({"page_number": page_number, "word": word})
         self.current_jump = len(self.jump_history) - 1

@@ -158,11 +158,6 @@ function handleReaderSettingsSubmit(): void {
   }
 }
 
-function handleReaderSettingsButtonClick(event: Event): void {
-  event.preventDefault();
-  showModal('fontSettingsModal');
-}
-
 function handleFontSelectChange(event: Event): void {
   const select = event.target as HTMLSelectElement;
   const previewText = document.getElementById('fontPreviewText');
@@ -209,12 +204,6 @@ export function initializeReaderSettings(): void {
   }
 }
 export function initializeReaderEventListeners(): void {
-  let fontSettingsButton = document.getElementById('font-settings-button');
-  if (fontSettingsButton) {
-    fontSettingsButton.removeEventListener('click', handleReaderSettingsButtonClick);
-    fontSettingsButton.addEventListener('click', handleReaderSettingsButtonClick);
-  }
-
   const fontSettingsSubmit = document.getElementById('fontSettingsSubmit');
   if (fontSettingsSubmit) {
     fontSettingsSubmit.removeEventListener('click', handleReaderSettingsSubmit);

@@ -131,12 +131,6 @@ async function goToPage(pageNum: number, topWord: number): Promise<void> {
 }
 
 
-
-function handleGoToPageButtonClick(event: Event): void {
-    event.preventDefault();
-    showModal('goToPageModal');
-}
-
 function handleModalSubmit(modalId: string, inputId: string, action: (value: string) => void): void {
     const modal = document.getElementById(modalId);
     const input = document.getElementById(inputId) as HTMLInputElement;
@@ -218,12 +212,6 @@ function reInitDom(): void {
                 lexicalPanelSwitched(activeTab.id);
             }
         });
-    }
-
-    let goToPageButton = document.getElementById('page-number');
-    if (goToPageButton) {
-        goToPageButton.removeEventListener('click', handleGoToPageButtonClick);
-        goToPageButton.addEventListener('click', handleGoToPageButtonClick);
     }
 
     // Close buttons for modals

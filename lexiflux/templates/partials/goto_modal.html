@@ -1,19 +1,27 @@
-<div id="goToPageModal" class="modal fade" aria-hidden="true" aria-labelledby="goToPageModalLabel" role="dialog">
+<div
+        id="goToPageModal"
+        class="modal fade"
+        data-bs-keyboard="true"
+        aria-hidden="true"
+        aria-labelledby="goToPageModalLabel"
+        role="dialog">
   <div class="modal-dialog" role="document">
     <div class="modal-content">
       <div class="modal-header">
         <h5 id="goToPageModalLabel" class="modal-title">Go to Page</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
-      <div class="modal-body">
-        <div class="mb-3">
-            <label for="pageNumberInput">Enter page number (1-<span id="maxPageNumber"></span>):</label>
-            <input type="number" id="pageNumberInput" min="1" required>
+      <form>
+        <div class="modal-body">
+          <div class="mb-3">
+              <label for="pageNumberInput">Enter page number (1-<span id="maxPageNumber"></span>):</label>
+              <input name="page" type="number" id="pageNumberInput" min="1" required autofocus>
+          </div>
         </div>
-      </div>
-      <div class="modal-footer">
-        <button type="button" id="goToPageSubmit" class="btn btn-primary">Go</button>
-      </div>
+        <div class="modal-footer">
+          <button type="submit" id="goToPageSubmit" class="btn btn-primary" data-bs-dismiss="modal" >Go</button>
+        </div>
+      </form>
     </div>
   </div>
 </div>

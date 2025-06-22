@@ -66,6 +66,8 @@
                 </button>
                 <button id="font-settings-button"
                         class="nav-item btn btn-outline-secondary ms-2"
+                        data-bs-toggle="modal"
+                        data-bs-target="#fontSettingsModal"
                         type="button"
                         title="Font Settings">
                     <i class="bi bi-type"></i>
@@ -112,7 +114,14 @@
                         <div class="col-4">
                             <ul class="navbar-nav d-flex align-items-center mb-0 w-100">
                                 <li class="nav-item">
-                                    <button id="page-number" class="btn btn-outline-primary btn-sm d-flex align-items-center me-2" title="Go to page">
+                                    <button
+                                            id="page-number"
+                                            class="btn btn-outline-primary btn-sm d-flex align-items-center me-2"
+                                            type="button"
+                                            title="Go to page"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#goToPageModal"
+                                    >
                                         <span class="page-number-text fw-bold me-1">{{ page.number }}</span>
                                         <i class="bi bi-arrow-up-right-circle"></i>
                                     </button>

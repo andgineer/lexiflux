@@ -1,10 +1,11 @@
 <div id="searchModal"
      class="modal fade"
-     tabindex="-1"
+     tabindex="1"
+     data-bs-focus="true"
      aria-hidden="true"
      aria-labelledby="searchModalLabel"
      role="dialog"
-     data-bs-focus="true">
+     data-bs-keyboard="true">
   <div class="modal-dialog modal-dialog-centered" role="document">
     <div class="modal-content">
       <div class="modal-header">
@@ -25,7 +26,7 @@
                      hx-post="{% url 'search' %}"
                      hx-trigger="keyup[this.value.length >= 3] changed delay:500ms"
                      hx-target="#search-results-body"
-                     hx-include="#whole-words,#from-current"/>
+                     hx-include="#whole-words,#from-current">
           </div>
           <div class="form-check mb-3">
               <input type="checkbox"
