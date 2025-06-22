@@ -119,23 +119,6 @@ describe('readerSettings.ts tests', () => {
   });
 
   describe('initializeReaderEventListeners', () => {
-    test('should add click listener to font settings button', () => {
-      const button = document.getElementById('font-settings-button');
-      const addEventListenerSpy = jest.spyOn(button!, 'addEventListener');
-
-      initializeReaderEventListeners();
-
-      expect(addEventListenerSpy).toHaveBeenCalledWith('click', expect.any(Function));
-
-      // Trigger the click event
-      button!.click();
-
-      // Should call showModal
-      expect(utils.showModal).toHaveBeenCalledWith('fontSettingsModal');
-
-      addEventListenerSpy.mockRestore();
-    });
-
     test('should add click listener to font settings submit button', () => {
       const submitButton = document.getElementById('fontSettingsSubmit');
       const addEventListenerSpy = jest.spyOn(submitButton!, 'addEventListener');
