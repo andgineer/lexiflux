@@ -1,1 +1,0 @@
-2025-06-08 08:18:26,586 WARNING book_loader_base Anchor 'section1' not found in page 2 content
