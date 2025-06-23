@@ -1,0 +1,1 @@
+2025-06-21 09:14:28,557 ERROR book_loader_url Error fetching URL https://example.com/test-page: 404 Client Error: Not Found for url: https://example.com/test-page

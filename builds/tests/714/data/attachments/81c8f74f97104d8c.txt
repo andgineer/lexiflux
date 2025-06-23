@@ -1,0 +1,1 @@
+{"html": "<span class=\"word\" id=\"word-0\">Content</span> <span class=\"word\" id=\"word-1\">of</span> <span class=\"word\" id=\"word-2\">page</span> <span class=\"word\" id=\"word-3\">5</span>", "data": {"bookCode": "some-book-code", "pageNumber": 5}}

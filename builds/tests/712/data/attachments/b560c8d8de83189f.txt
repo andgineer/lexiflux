@@ -1,0 +1,17 @@
+2025-06-12 14:19:07,362 INFO signals Successfully created language preferences for user contentuser (ID: 1)
+2025-06-12 14:19:07,364 INFO timing Loading from https://example.com/content-nav-test completed in 0.000 seconds
+2025-06-12 14:19:07,366 INFO timing Extract metadata completed in 0.002 seconds
+2025-06-12 14:19:07,367 INFO timing Extracting IDs with internal links completed in 0.000 seconds
+2025-06-12 14:19:07,367 INFO book_loader_url Using original HTML
+2025-06-12 14:19:07,367 INFO timing Extracting readable HTML completed in 0.000 seconds
+2025-06-12 14:19:07,368 INFO timing Parse extracted HTML completed in 0.001 seconds
+2025-06-12 14:19:07,368 INFO timing Adding source info completed in 0.000 seconds
+2025-06-12 14:19:07,370 INFO timing Cleared HTML completed in 0.002 seconds
+2025-06-12 14:19:07,386 INFO timing Iterate over pages and save them completed in 0.009 seconds
+2025-06-12 14:19:07,420 INFO reader_views Link clicked: #chapter1, page_info: {'page': 1, 'item_id': 'chapter1', 'item_name': 'Chapter 1: The Beginning'}
+2025-06-12 14:19:07,427 INFO reader_views Link clicked: #important_note, page_info: {'page': 4, 'item_id': 'important_note', 'item_name': 'Important Note About Something'}
+2025-06-12 14:19:07,434 INFO reader_views Link clicked: #chapter3, page_info: {'page': 6, 'item_id': 'chapter3', 'item_name': 'Chapter 3: The Final Section'}
+2025-06-12 14:19:07,440 INFO reader_views Link clicked: #chapter1, page_info: {'page': 1, 'item_id': 'chapter1', 'item_name': 'Chapter 1: The Beginning'}
+2025-06-12 14:19:07,446 INFO reader_views Link clicked: #chapter2, page_info: {'page': 2, 'item_id': 'chapter2', 'item_name': 'Chapter 2: The Middle Part'}
+2025-06-12 14:19:07,453 INFO reader_views Link clicked: #chapter2, page_info: {'page': 2, 'item_id': 'chapter2', 'item_name': 'Chapter 2: The Middle Part'}
+2025-06-12 14:19:07,459 INFO reader_views Link clicked: #chapter2, page_info: {'page': 2, 'item_id': 'chapter2', 'item_name': 'Chapter 2: The Middle Part'}

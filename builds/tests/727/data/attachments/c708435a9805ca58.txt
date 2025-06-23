@@ -1,0 +1,3 @@
+2025-06-21 15:03:57,552 WARNING google_languages Warning: Egyptian Arabic not found in the database for group Arabic.
+2025-06-21 15:03:57,874 INFO signals Successfully created language preferences for user testuser (ID: 10)
+2025-06-21 15:03:57,897 ERROR llm 'book_code', model: gpt-4o, class: ChatOpenAI, show_api_key_info: True

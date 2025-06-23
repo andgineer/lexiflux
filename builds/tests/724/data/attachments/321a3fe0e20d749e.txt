@@ -1,0 +1,1 @@
+ERROR    root:book_loader_url.py:116 Error fetching URL https://example.com/test-page: 404 Client Error: Not Found for url: https://example.com/test-page

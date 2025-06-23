@@ -1,0 +1,19 @@
+2025-06-21 09:48:04,715 INFO signals Successfully created language preferences for user contentuser (ID: 1)
+2025-06-21 09:48:04,717 INFO timing Loading from https://example.com/content-nav-test completed in 0.000 seconds
+2025-06-21 09:48:04,718 INFO timing Extract metadata completed in 0.001 seconds
+2025-06-21 09:48:04,718 INFO timing Extracting IDs with internal links completed in 0.000 seconds
+2025-06-21 09:48:04,718 INFO book_loader_url Using original HTML
+2025-06-21 09:48:04,718 INFO timing Extracting readable HTML completed in 0.000 seconds
+2025-06-21 09:48:04,719 INFO timing Parse extracted HTML completed in 0.000 seconds
+2025-06-21 09:48:04,719 INFO timing Adding source info completed in 0.000 seconds
+2025-06-21 09:48:04,720 INFO timing Cleared HTML completed in 0.001 seconds
+2025-06-21 09:48:04,722 INFO book_loader_url No images found in the content
+2025-06-21 09:48:04,730 INFO timing Iterate over pages and save them completed in 0.006 seconds
+2025-06-21 09:48:04,730 INFO book_loader_url No images to download
+2025-06-21 09:48:04,759 INFO reader_views Link clicked: #chapter1, page_info: {'page': 1, 'item_id': 'chapter1', 'item_name': 'Chapter 1: The Beginning'}
+2025-06-21 09:48:04,766 INFO reader_views Link clicked: #important_note, page_info: {'page': 4, 'item_id': 'important_note', 'item_name': 'Important Note About Something'}
+2025-06-21 09:48:04,773 INFO reader_views Link clicked: #chapter3, page_info: {'page': 6, 'item_id': 'chapter3', 'item_name': 'Chapter 3: The Final Section'}
+2025-06-21 09:48:04,780 INFO reader_views Link clicked: #chapter1, page_info: {'page': 1, 'item_id': 'chapter1', 'item_name': 'Chapter 1: The Beginning'}
+2025-06-21 09:48:04,786 INFO reader_views Link clicked: #chapter2, page_info: {'page': 2, 'item_id': 'chapter2', 'item_name': 'Chapter 2: The Middle Part'}
+2025-06-21 09:48:04,793 INFO reader_views Link clicked: #chapter2, page_info: {'page': 2, 'item_id': 'chapter2', 'item_name': 'Chapter 2: The Middle Part'}
+2025-06-21 09:48:04,799 INFO reader_views Link clicked: #chapter2, page_info: {'page': 2, 'item_id': 'chapter2', 'item_name': 'Chapter 2: The Middle Part'}
