@@ -80,6 +80,18 @@
                 Paste
               </button>
             </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link"
+                      id="calibre-tab"
+                      data-bs-toggle="tab"
+                      data-bs-target="#calibre-pane"
+                      type="button"
+                      role="tab"
+                      aria-controls="calibre-pane"
+                      aria-selected="false">
+                Calibre
+              </button>
+            </li>
           </ul>
 
           <div class="tab-content" id="importTabsContent">
@@ -106,7 +118,12 @@
               </div>
 
               <small class="form-text text-muted d-block mb-3">
-                Supported formats: EPUB, TXT, HTML (defined by file extension)
+                Supported Formats: (defined by file extension)
+                <div class="d-flex gap-2">
+                  <span class="badge bg-primary">EPUB</span>
+                  <span class="badge bg-primary">HTML</span>
+                  <span class="badge bg-primary">TXT</span>
+                </div>
               </small>
             </div>
 
@@ -192,6 +209,62 @@
                   <small>Select the format that best matches your pasted content</small>
                 </div>
               </div>
+            </div>
+
+            <!-- Calibre Integration Tab -->
+            <div class="tab-pane fade"
+                 id="calibre-pane"
+                 role="tabpanel"
+                 aria-labelledby="calibre-tab">
+              <div class="alert alert-info" role="alert">
+                <h6 class="alert-heading">
+                  <i class="bi bi-info-circle me-1"></i>
+                  How to Import Books from Calibre
+                </h6>
+                <p class="mb-2">
+                  You can send books directly from <a href="https://calibre-ebook.com/" target="_blank" class="alert-link">Calibre</a>
+                  to Lexiflux using a simple plugin.
+                </p>
+                <small class="text-muted">
+                  Don't have Calibre? It's a free e-book management application -
+                  <a href="https://calibre-ebook.com/" target="_blank" class="alert-link">download it here</a>.
+                </small>
+              </div>
+
+              <div class="mb-4">
+                <h6>Setup Instructions:</h6>
+                <ol class="mb-3">
+                  <li class="mb-2">
+                    <strong>Download Lexiflux Plugin:</strong>
+                    <a href="{% url 'download_calibre_plugin' %}" class="btn btn-sm btn-outline-primary ms-2">
+                      <i class="bi bi-download"></i> Download Plugin
+                    </a>
+                  </li>
+                  <li class="mb-2">
+                    <strong>Install:</strong> Calibre → Preferences → Plugins → Load plugin from file
+                  </li>
+                  <li class="mb-2">
+                    <strong>Restart:</strong> Restart Calibre after installation
+                  </li>
+                  <li class="mb-2">
+                    <strong>Use:</strong> Select books → Right-click → "Send to Lexiflux" or keyboard shortcut Cmd+Shift+L (Mac) / Ctrl+Shift+L (Windows/Linux)
+                  </li>
+                  <li class="mb-2">
+                    <strong>Alternative:</strong> Check Calibre's main menu bar or toolbar for "Send to Lexiflux" option
+                  </li>
+                </ol>
+
+              </div>
+
+              <div class="mb-3">
+                <h6>Supported Formats:</h6>
+                <div class="d-flex gap-2">
+                  <span class="badge bg-primary">EPUB</span>
+                  <span class="badge bg-primary">HTML</span>
+                  <span class="badge bg-primary">TXT</span>
+                </div>
+              </div>
+
             </div>
           </div>
         </div>
