@@ -1,0 +1,1 @@
+2025-06-21 10:17:19,151 ERROR anki_connect Failed to parse AnkiConnect response: Invalid JSON: line 1 column 1 (char 0)

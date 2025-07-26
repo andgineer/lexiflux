@@ -1,0 +1,2 @@
+2025-06-21 15:03:00,213 INFO signals Successfully created language preferences for user testuser (ID: 1)
+2025-06-21 15:03:01,466 INFO words_export For language en last export datetime: 2025-06-20 15:03:00+00:00

@@ -1,0 +1,21 @@
+2025-06-22 10:33:23,333 WARNING google_languages Warning: Egyptian Arabic not found in the database for group Arabic.
+2025-06-22 10:33:23,782 INFO signals Successfully created language preferences for user testuser (ID: 4)
+2025-06-22 10:33:27,408 INFO timing Loading from https://example.com/test-book.html completed in 0.001 seconds
+2025-06-22 10:33:27,409 INFO timing Extract metadata completed in 0.001 seconds
+2025-06-22 10:33:27,409 INFO timing Extracting IDs with internal links completed in 0.000 seconds
+2025-06-22 10:33:27,418 INFO timing Extracting readable HTML completed in 0.009 seconds
+2025-06-22 10:33:27,420 INFO timing Parse extracted HTML completed in 0.000 seconds
+2025-06-22 10:33:27,420 INFO timing Adding source info completed in 0.000 seconds
+2025-06-22 10:33:27,420 INFO timing Cleared HTML completed in 0.000 seconds
+2025-06-22 10:33:27,424 INFO book_loader_url No images found in the content
+2025-06-22 10:33:27,429 INFO timing Iterate over pages and save them completed in 0.002 seconds
+2025-06-22 10:33:27,430 INFO book_loader_url No images to download
+2025-06-22 10:33:28,087 INFO test_e2e_import_book Book title extracted correctly
+2025-06-22 10:33:28,113 INFO test_e2e_import_book Author input field is displayed
+2025-06-22 10:33:28,177 INFO test_e2e_import_book Book saved successfully
+2025-06-22 10:33:28,197 INFO reader_views Opening book pride-prejudice-examplecom at page 1 for user testuser
+2025-06-22 10:33:28,222 INFO models Reading location updated for pride-prejudice-examplecom: 1(1):0/0.0
+[{'page_number': 1, 'word': 0}]/0
+2025-06-22 10:33:28,223 INFO reader_views Jump status: book pride-prejudice-examplecom, is_first_jump True, is_last_jump True
+2025-06-22 10:33:28,300 INFO reader_views Rendering page 1 of book pride-prejudice-examplecom
+2025-06-22 10:33:28,302 INFO test_e2e_import_book Redirected to reader page

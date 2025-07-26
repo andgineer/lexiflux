@@ -1,0 +1,8 @@
+2025-06-21 09:49:15,088 INFO timing Loading from https://example.com/test-page completed in 0.000 seconds
+2025-06-21 09:49:15,089 INFO timing Extract metadata completed in 0.001 seconds
+2025-06-21 09:49:15,090 INFO timing Extracting IDs with internal links completed in 0.000 seconds
+2025-06-21 09:49:15,095 INFO timing Extracting readable HTML completed in 0.006 seconds
+2025-06-21 09:49:15,096 INFO timing Parse extracted HTML completed in 0.000 seconds
+2025-06-21 09:49:15,096 INFO timing Adding source info completed in 0.000 seconds
+2025-06-21 09:49:15,096 INFO timing Cleared HTML completed in 0.000 seconds
+2025-06-21 09:49:15,098 INFO book_loader_url No images found in the content
