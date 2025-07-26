@@ -1,4 +1,0 @@
-('word77 word78 word79 word80 word81 word82 word83 word84 word85 word86 word87 '
- 'word88 word89 word90 word91')
-('word51 word52 word53 word54 word55 word56 word57 word58 word59 word60 word61 '
- 'word62 word63 word64 word65')
