@@ -5,6 +5,7 @@ from django.contrib.auth.views import LogoutView
 from django.urls import include, path
 
 import lexiflux.views.ai_settings_views
+import lexiflux.views.calibre_views
 import lexiflux.views.import_views
 import lexiflux.views.language_preferences_views
 import lexiflux.views.lexical_views
@@ -107,6 +108,18 @@ urlpatterns = [
     path("api/word-count/", lexiflux.views.words_export.word_count, name="word_count"),
     # user settings
     path("api/user/", user_modal, name="user-modal"),
+    # calibre integration
+    path(
+        "calibre/handshake/",
+        lexiflux.views.calibre_views.calibre_handshake,
+        name="calibre_handshake",
+    ),
+    path(
+        "calibre/upload/",
+        lexiflux.views.calibre_views.calibre_upload_book,
+        name="calibre_upload_book",
+    ),
+    path("calibre/status/", lexiflux.views.calibre_views.calibre_status, name="calibre_status"),
 ]
 
 # library partials
@@ -124,6 +137,11 @@ urlpatterns += [
         name="search_authors",
     ),
     path("api/import-book/", lexiflux.views.import_views.import_book, name="import_book"),
+    path(
+        "api/calibre-plugin/",
+        lexiflux.views.import_views.download_calibre_plugin,
+        name="download_calibre_plugin",
+    ),
 ]
 
 if settings.DEBUGGER_TOOLBAR:

@@ -3,7 +3,8 @@ exclude: |
       .venv/|
       ^tests/resources/|
       migrations/|
-      experiments/
+      experiments/|
+      lexiflux/calibre_plugin
   )
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks

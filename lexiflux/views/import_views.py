@@ -1,5 +1,7 @@
+import io
 import logging
 import tempfile
+import zipfile
 
 from django.core.exceptions import ValidationError
 from django.core.files.uploadedfile import TemporaryUploadedFile
@@ -23,7 +25,10 @@ from lexiflux.views.library_views import logger
 @require_GET  # type: ignore
 def import_modal(request: HttpRequest) -> HttpResponse:
     """Return the import modal partial."""
-    return render(request, "partials/import_modal.html")
+    context = {
+        "skip_auth": settings.lexiflux.skip_auth,
+    }
+    return render(request, "partials/import_modal.html", context)
 
 
 @smart_login_required
@@ -171,3 +176,68 @@ def import_url(request: HttpRequest) -> Book:
     book = book_processor.create(request.user.email)
     book.save()
     return book
+
+
+@smart_login_required
+@require_GET  # type: ignore
+def download_calibre_plugin(request: HttpRequest) -> HttpResponse:
+    """Generate and download Calibre plugin."""
+    import os
+
+    from django.conf import settings as django_settings
+
+    # Get the calibre_plugin directory path
+    calibre_plugin_dir = os.path.join(
+        django_settings.BASE_DIR,
+        "lexiflux",
+        "calibre_plugin",
+    )
+
+    # Ensure the directory exists
+    if not os.path.exists(calibre_plugin_dir):
+        raise ValueError(
+            "Calibre plugin directory not found. "
+            "Please create the calibre_plugin directory with the plugin files.",
+        )
+
+    # Get server URL from request
+    server_url = request.build_absolute_uri("/")[:-1]  # Remove trailing slash
+
+    # Create ZIP file in memory
+    zip_buffer = io.BytesIO()
+
+    with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zip_file:
+        # Walk through the calibre_plugin directory
+        for root, _dirs, files in os.walk(calibre_plugin_dir):
+            for file in files:
+                file_path = os.path.join(root, file)
+                # Calculate relative path for ZIP
+                arcname = os.path.relpath(file_path, calibre_plugin_dir)
+
+                # Read file content
+                with open(file_path, "rb") as f:
+                    content = f.read()
+
+                # If it's ui.py, replace the server URL placeholder
+                if file == "ui.py":
+                    content_str = content.decode("utf-8")
+                    # Replace server URL placeholder if it exists
+                    content_str = content_str.replace("{{SERVER_URL}}", server_url)
+                    content = content_str.encode("utf-8")
+
+                # Add file to ZIP
+                zip_file.writestr(arcname, content)
+
+        # Ensure plugin-import-name file exists
+        import_name_file = "plugin-import-name-lexiflux.txt"
+        if import_name_file not in [
+            f for _, _, files in os.walk(calibre_plugin_dir) for f in files
+        ]:
+            # Create empty file if it doesn't exist
+            zip_file.writestr(import_name_file, "")
+
+    zip_buffer.seek(0)
+
+    response = HttpResponse(zip_buffer.getvalue(), content_type="application/zip")
+    response["Content-Disposition"] = 'attachment; filename="Lexiflux_Calibre_Plugin.zip"'
+    return response
