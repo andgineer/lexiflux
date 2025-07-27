@@ -25,30 +25,35 @@ PREFERRED_FORMATS = ["epub", "html", "txt"]
 
 
 def _get_authenticated_user_email(request: HttpRequest) -> Optional[str]:
-    """Get authenticated user email from request."""
-    from lexiflux.lexiflux_settings import settings
+    """Get authenticated user email from request. Always requires valid token."""
+    # For Calibre uploads, we ALWAYS require token authentication
+    # skip_auth does NOT bypass API authentication
 
-    # In skip_auth mode, use default email
-    if settings.lexiflux.skip_auth:
-        return "admin@lexiflux.local"
-
-    # Check Bearer token authentication
     auth_header = request.META.get("HTTP_AUTHORIZATION", "")
-    if auth_header.startswith("Bearer "):
-        # token = auth_header[7:]  # Remove 'Bearer ' prefix
-        # TODO: Implement proper token validation
-        # For now, accept any token and use authenticated user's email
-        if request.user.is_authenticated:
-            return request.user.email
-        # In a real implementation, you'd validate the token against a token store
-        # and return the associated user email
+    if not auth_header.startswith("Bearer "):
+        logger.warning("No Bearer token provided for Calibre upload")
         return None
 
-    # Check session authentication
-    if request.user.is_authenticated:
-        return request.user.email
+    token = auth_header[7:]  # Remove 'Bearer ' prefix
 
-    return None
+    # Validate token against database
+    from lexiflux.models import APIToken
+
+    try:
+        api_token = APIToken.objects.select_related("user").get(
+            token=token,
+            is_active=True,
+        )
+
+        # Update last used timestamp
+        api_token.touch()
+
+        logger.info(f"Calibre upload authenticated for user {api_token.user.email}")
+        return api_token.user.email
+
+    except APIToken.DoesNotExist:
+        logger.error(f"Invalid or inactive API token: {token[:10]}...")
+        return None
 
 
 @csrf_exempt

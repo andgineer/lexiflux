@@ -2,6 +2,7 @@
 
 import logging
 import re
+import secrets
 from datetime import timedelta
 from html import unescape
 from typing import Any, Optional, TypeAlias
@@ -1031,3 +1032,39 @@ class WordsExport(models.Model):  # type: ignore
         if last_export:
             return last_export.export_format  # type: ignore
         return "ankiConnect"
+
+
+class APIToken(models.Model):
+    """API tokens for external access (Calibre plugin, etc)."""
+
+    user = models.ForeignKey("CustomUser", on_delete=models.CASCADE, related_name="api_tokens")
+    token = models.CharField(max_length=64, unique=True, db_index=True)
+    name = models.CharField(max_length=100, default="Calibre Plugin")
+    created_at = models.DateTimeField(auto_now_add=True)
+    last_used = models.DateTimeField(null=True, blank=True)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        db_table = "lexiflux_api_token"
+
+    @classmethod
+    def generate_for_user(cls, user, name="Calibre Plugin"):
+        """Generate a new API token for the user."""
+        # Revoke any existing Calibre tokens for this user
+        cls.objects.filter(user=user, name=name).update(is_active=False)
+
+        # Generate new token
+        token = f"lex_{secrets.token_urlsafe(32)}"
+        return cls.objects.create(
+            user=user,
+            token=token,
+            name=name,
+        )
+
+    def touch(self):
+        """Update last_used timestamp."""
+        self.last_used = timezone.now()
+        self.save(update_fields=["last_used"])
+
+    def __str__(self):
+        return f"{self.name} - {self.user.email}"

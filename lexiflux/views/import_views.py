@@ -181,10 +181,12 @@ def import_url(request: HttpRequest) -> Book:
 @smart_login_required
 @require_GET  # type: ignore
 def download_calibre_plugin(request: HttpRequest) -> HttpResponse:
-    """Generate and download Calibre plugin."""
+    """Generate and download Calibre plugin with API token."""
     import os
 
     from django.conf import settings as django_settings
+
+    from lexiflux.models import APIToken
 
     # Get the calibre_plugin directory path
     calibre_plugin_dir = os.path.join(
@@ -203,6 +205,12 @@ def download_calibre_plugin(request: HttpRequest) -> HttpResponse:
     # Get server URL from request
     server_url = request.build_absolute_uri("/")[:-1]  # Remove trailing slash
 
+    # Generate API token for this user
+    api_token_obj = APIToken.generate_for_user(request.user, name="Calibre Plugin")
+    api_token = api_token_obj.token
+
+    logger.info(f"Generated Calibre plugin token for user {request.user.email}")
+
     # Create ZIP file in memory
     zip_buffer = io.BytesIO()
 
@@ -218,11 +226,16 @@ def download_calibre_plugin(request: HttpRequest) -> HttpResponse:
                 with open(file_path, "rb") as f:
                     content = f.read()
 
-                # If it's ui.py, replace the server URL placeholder
+                # If it's ui.py, replace placeholders
                 if file == "ui.py":
                     content_str = content.decode("utf-8")
-                    # Replace server URL placeholder if it exists
+                    # Replace server URL placeholder
                     content_str = content_str.replace("{{SERVER_URL}}", server_url)
+                    # Set the API token as default
+                    content_str = content_str.replace(
+                        'prefs.defaults["api_token"] = ""',
+                        f'prefs.defaults["api_token"] = "{api_token}"',
+                    )
                     content = content_str.encode("utf-8")
 
                 # Add file to ZIP

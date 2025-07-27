@@ -368,12 +368,13 @@ class InterfacePlugin(InterfaceAction):
                 show=True,
             )
 
-        # Check configuration
-        if not self.server_url:
+        # Check configuration - just check if URL exists and is valid
+        if not self.server_url or not self.server_url.startswith(('http://', 'https://')):
             return error_dialog(
                 self.gui,
                 "Configuration Required",
-                "Please configure the Lexiflux server URL in plugin preferences.",
+                "Please configure the Lexiflux server URL in plugin preferences.\n"
+                "Current URL: " + (self.server_url if self.server_url else "Not set"),
                 show=True,
             )
 
