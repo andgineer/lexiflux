@@ -284,7 +284,7 @@ def _import_book_file(file, filename: str, metadata: dict[str, Any], user_email:
     return book
 
 
-def _import_book_from_path(
+def _import_book_from_path(  # noqa: C901
     file_path: str,
     filename: str,
     metadata: dict[str, Any],
@@ -312,7 +312,24 @@ def _import_book_from_path(
         if "title" in metadata and metadata["title"]:
             book.title = metadata["title"]
         if "authors" in metadata and metadata["authors"]:
-            book.author = ", ".join(metadata["authors"])
+            from lexiflux.models import Author
+
+            author_names = metadata["authors"]
+            if author_names:
+                # For now, just use the first author
+                # You might want to handle multiple authors differently
+                author_name = author_names[0] if isinstance(author_names, list) else author_names
+
+                # Get or create the author
+                author, created = Author.objects.get_or_create(
+                    name=author_name,
+                    defaults={"name": author_name},
+                )
+
+                book.author = author
+                if created:
+                    logger.info(f"Created new author: {author_name}")
+
         if "language" in metadata and metadata["language"]:
             # Try to match language code to existing Language model
             from lexiflux.models import Language
