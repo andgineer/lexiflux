@@ -130,6 +130,7 @@ class UploadThread(QThread):
         """Upload a single book to server."""
         try:
             import mimetypes
+            import ssl
 
             url = self.server_url.rstrip("/") + "/calibre/upload/"
 
@@ -175,7 +176,15 @@ class UploadThread(QThread):
                 headers["Authorization"] = f"Bearer {self.api_token}"
 
             req = Request(url, data=body, headers=headers)
-            response = urlopen(req, timeout=30)
+            
+            # Handle SSL verification for localhost/development
+            if url.startswith("https://") and ("localhost" in url or "127.0.0.1" in url):
+                ssl_context = ssl.create_default_context()
+                ssl_context.check_hostname = False
+                ssl_context.verify_mode = ssl.CERT_NONE
+                response = urlopen(req, timeout=30, context=ssl_context)
+            else:
+                response = urlopen(req, timeout=30)
 
             if response.status == 200:
                 return True, None
@@ -345,9 +354,11 @@ class InterfacePlugin(InterfaceAction):
 
     def load_settings(self):
         """Load plugin settings."""
+        from calibre_plugins.lexiflux import LexifluxPlugin
+        
         prefs = JSONConfig("plugins/lexiflux")
-        prefs.defaults["server_url"] = "{{SERVER_URL}}"  # Default from server
-        prefs.defaults["api_token"] = ""
+        # Use plugin's default preferences
+        prefs.defaults.update(LexifluxPlugin.default_prefs)
 
         self.server_url = prefs["server_url"]
         self.api_token = prefs["api_token"]

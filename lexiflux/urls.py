@@ -142,6 +142,11 @@ urlpatterns += [
         lexiflux.views.import_views.download_calibre_plugin,
         name="download_calibre_plugin",
     ),
+    path(
+        "api/generate-token/",
+        lexiflux.views.import_views.generate_api_token,
+        name="generate_api_token",
+    ),
 ]
 
 if settings.DEBUGGER_TOOLBAR:

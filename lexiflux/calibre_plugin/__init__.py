@@ -15,6 +15,12 @@ class LexifluxPlugin(InterfaceActionBase):
 
     # Points to the actual UI implementation
     actual_plugin = "calibre_plugins.lexiflux.ui:InterfacePlugin"
+    
+    # Placeholder replaced in plugin download - do not change even formatting (see constants.py)
+    default_prefs = {
+        'server_url': 'https://your-lexiflux-server.com',
+        'api_token': '',
+    }
 
     def is_customizable(self):
         """Plugin has configuration dialog."""

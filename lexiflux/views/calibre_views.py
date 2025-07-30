@@ -346,9 +346,18 @@ def _import_book_from_path(  # noqa: C901
 
 @csrf_exempt
 @require_GET
-def calibre_status(request: HttpRequest) -> JsonResponse:  # noqa: ARG001
-    """Return Calibre device status."""
+def calibre_status(request: HttpRequest) -> JsonResponse:
+    """Return Calibre device status with authentication check."""
     try:
+        # Check authentication if token is provided
+        auth_header = request.META.get("HTTP_AUTHORIZATION", "")
+        authenticated_user = None
+
+        if auth_header.startswith("Bearer "):
+            authenticated_user = _get_authenticated_user_email(request)
+            if authenticated_user is None:
+                return JsonResponse({"error": "Invalid or expired token"}, status=401)
+
         # Get basic status information
         from lexiflux.models import Book, CustomUser
 
@@ -362,6 +371,8 @@ def calibre_status(request: HttpRequest) -> JsonResponse:  # noqa: ARG001
             "book_count": book_count,
             "user_count": user_count,
             "preferred_formats": PREFERRED_FORMATS,
+            "authenticated": authenticated_user is not None,
+            "user_email": authenticated_user,
             "timestamp": str(uuid.uuid4()),  # Simple timestamp/session marker
         }
 

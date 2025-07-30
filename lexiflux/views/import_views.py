@@ -1,4 +1,5 @@
 import io
+import json
 import logging
 import tempfile
 import zipfile
@@ -6,7 +7,7 @@ import zipfile
 from django.core.exceptions import ValidationError
 from django.core.files.uploadedfile import TemporaryUploadedFile
 from django.core.validators import URLValidator
-from django.http import HttpRequest, HttpResponse
+from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import render
 from django.views.decorators.http import require_GET, require_POST
 
@@ -205,6 +206,12 @@ def download_calibre_plugin(request: HttpRequest) -> HttpResponse:
     # Get server URL from request
     server_url = request.build_absolute_uri("/")[:-1]  # Remove trailing slash
 
+    # Debug: Let's see what we're getting
+    logger.info(f"request.is_secure(): {request.is_secure()}")
+    logger.info(f"request.scheme: {request.scheme}")
+    logger.info(f"request.META.get('wsgi.url_scheme'): {request.META.get('wsgi.url_scheme')}")
+    logger.info(f"server_url: {server_url}")
+
     # Generate API token for this user
     api_token_obj = APIToken.generate_for_user(request.user, name="Calibre Plugin")
     api_token = api_token_obj.token
@@ -226,16 +233,26 @@ def download_calibre_plugin(request: HttpRequest) -> HttpResponse:
                 with open(file_path, "rb") as f:
                     content = f.read()
 
-                # If it's ui.py, replace placeholders
-                if file == "ui.py":
-                    content_str = content.decode("utf-8")
-                    # Replace server URL placeholder
-                    content_str = content_str.replace("{{SERVER_URL}}", server_url)
-                    # Set the API token as default
-                    content_str = content_str.replace(
-                        'prefs.defaults["api_token"] = ""',
-                        f'prefs.defaults["api_token"] = "{api_token}"',
+                # If it's __init__.py, set server-specific defaults
+                if file == "__init__.py":
+                    # Constants for replacement - must match exactly what's in __init__.py
+                    default_server_url_placeholder = (
+                        "'server_url': 'https://your-lexiflux-server.com'"
                     )
+                    default_api_token_placeholder = "'api_token': ''"  #  noqa: S105
+
+                    content_str = content.decode("utf-8")
+                    # Replace default server URL with actual server URL
+                    content_str = content_str.replace(
+                        default_server_url_placeholder,
+                        f"'server_url': '{server_url}'",
+                    )
+                    # Set the API token as default if provided
+                    if api_token:
+                        content_str = content_str.replace(
+                            default_api_token_placeholder,
+                            f"'api_token': '{api_token}'",
+                        )
                     content = content_str.encode("utf-8")
 
                 # Add file to ZIP
@@ -254,3 +271,45 @@ def download_calibre_plugin(request: HttpRequest) -> HttpResponse:
     response = HttpResponse(zip_buffer.getvalue(), content_type="application/zip")
     response["Content-Disposition"] = 'attachment; filename="Lexiflux_Calibre_Plugin.zip"'
     return response
+
+
+@require_POST
+@smart_login_required  # type: ignore
+def generate_api_token(request: HttpRequest) -> JsonResponse:
+    """Generate a new API token for the user, removing old ones with the same name."""
+    try:
+        from lexiflux.models import APIToken
+
+        data = json.loads(request.body)
+        name = data.get("name", "API Token")
+
+        # Remove existing tokens with the same name for this user
+        old_tokens_count = APIToken.objects.filter(user=request.user, name=name).count()
+        APIToken.objects.filter(user=request.user, name=name).delete()
+
+        # Generate new token
+        api_token_obj = APIToken.generate_for_user(request.user, name=name)
+
+        logger.info(
+            f"Generated new API token '{name}' for user {request.user.email}, "
+            f"removed {old_tokens_count} old tokens",
+        )
+
+        return JsonResponse(
+            {
+                "success": True,
+                "token": api_token_obj.token,
+                "name": name,
+                "replaced_count": old_tokens_count,
+            },
+        )
+
+    except Exception as e:  # noqa: BLE001
+        logger.error(f"Error generating API token: {e}")
+        return JsonResponse(
+            {
+                "success": False,
+                "error": "Failed to generate token",
+            },
+            status=500,
+        )

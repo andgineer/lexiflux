@@ -64,9 +64,14 @@ class ConfigWidget(QWidget):
 
     def initialize(self):
         """Load current settings."""
+        from calibre_plugins.lexiflux import LexifluxPlugin
+        
         prefs = JSONConfig("plugins/lexiflux")
-        self.server_url.setText(prefs.get("server_url", ""))
-        self.api_token.setText(prefs.get("api_token", ""))
+        # Use plugin's default preferences
+        prefs.defaults.update(LexifluxPlugin.default_prefs)
+        
+        self.server_url.setText(prefs.get("server_url"))
+        self.api_token.setText(prefs.get("api_token"))
 
     def save_settings(self):
         """Save settings to config."""
@@ -84,6 +89,7 @@ class ConfigWidget(QWidget):
         """Test connection to server."""
         from urllib.error import HTTPError, URLError
         from urllib.request import Request, urlopen
+        import ssl
 
         url = self.server_url.text().strip()
         if not url:
@@ -106,7 +112,15 @@ class ConfigWidget(QWidget):
                 headers["Authorization"] = f"Bearer {token}"
 
             req = Request(status_url, headers=headers)
-            response = urlopen(req, timeout=10)
+            
+            # Create SSL context that ignores certificate verification for localhost/development
+            if url.startswith("https://") and ("localhost" in url or "127.0.0.1" in url):
+                ssl_context = ssl.create_default_context()
+                ssl_context.check_hostname = False
+                ssl_context.verify_mode = ssl.CERT_NONE
+                response = urlopen(req, timeout=10, context=ssl_context)
+            else:
+                response = urlopen(req, timeout=10)
 
             if response.status == 200:
                 self.status_label.setText("✅ Connection successful!")

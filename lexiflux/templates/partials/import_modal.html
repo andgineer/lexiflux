@@ -18,6 +18,9 @@
             hx-target="#importModal"
             hx-swap="outerHTML">
 
+        <!-- CSRF Token -->
+        {% csrf_token %}
+
         <!-- Hidden import type field, updated by tabs -->
         <input type="hidden" id="importType" name="importType" value="file">
 
@@ -231,37 +234,106 @@
                 </small>
               </div>
 
-              <div class="mb-4">
-                <h6>Setup Instructions:</h6>
-                <ol class="mb-3">
-                  <li class="mb-2">
-                    <strong>Download Lexiflux Plugin:</strong>
-                    <a href="{% url 'download_calibre_plugin' %}" class="btn btn-sm btn-outline-primary ms-2">
-                      <i class="bi bi-download"></i> Download Plugin
-                    </a>
-                  </li>
-                  <li class="mb-2">
-                    <strong>Install:</strong> Calibre → Preferences → Plugins → Load plugin from file
-                  </li>
-                  <li class="mb-2">
-                    <strong>Restart:</strong> Restart Calibre after installation
-                  </li>
-                  <li class="mb-2">
-                    <strong>Use:</strong> Select books → Right-click → "Send to Lexiflux" or keyboard shortcut Cmd+Shift+L (Mac) / Ctrl+Shift+L (Windows/Linux)
-                  </li>
-                  <li class="mb-2">
-                    <strong>Alternative:</strong> Check Calibre's main menu bar or toolbar for "Send to Lexiflux" option
-                  </li>
-                </ol>
+              <!-- Sub-tabs for Calibre -->
+              <ul class="nav nav-pills nav-fill mb-3" id="calibreTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                  <button class="nav-link active" id="setup-tab" data-bs-toggle="pill"
+                          data-bs-target="#setup-pane" type="button" role="tab"
+                          aria-controls="setup-pane" aria-selected="true">
+                    <i class="bi bi-download me-1"></i> First Time Setup
+                  </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                  <button class="nav-link" id="config-tab" data-bs-toggle="pill"
+                          data-bs-target="#config-pane" type="button" role="tab"
+                          aria-controls="config-pane" aria-selected="false">
+                    <i class="bi bi-gear me-1"></i> Update Settings
+                  </button>
+                </li>
+              </ul>
 
-              </div>
+              <div class="tab-content" id="calibreTabsContent">
+                <!-- Setup Instructions Section -->
+                <div class="tab-pane fade show active" id="setup-pane" role="tabpanel" aria-labelledby="setup-tab">
+                  <div class="mb-4">
+                    <h6>Setup Instructions:</h6>
+                    <ol class="mb-3">
+                      <li class="mb-2">
+                        <strong>Download Lexiflux Plugin:</strong>
+                        <a href="{% url 'download_calibre_plugin' %}" class="btn btn-sm btn-outline-primary ms-2">
+                          <i class="bi bi-download"></i> Download Plugin
+                        </a>
+                      </li>
+                      <li class="mb-2">
+                        <strong>Install:</strong> Calibre → Preferences → Plugins → Load plugin from file
+                      </li>
+                      <li class="mb-2">
+                        <strong>Restart:</strong> Restart Calibre after installation
+                      </li>
+                      <li class="mb-2">
+                        <strong>Use:</strong> Select books → Right-click → "Send to Lexiflux" or keyboard shortcut Cmd+Shift+L (Mac) / Ctrl+Shift+L (Windows/Linux)
+                      </li>
+                      <li class="mb-2">
+                        <strong>Alternative:</strong> Check Calibre's main menu bar or toolbar for "Send to Lexiflux" option
+                      </li>
+                    </ol>
+                  </div>
 
-              <div class="mb-3">
-                <h6>Supported Formats:</h6>
-                <div class="d-flex gap-2">
-                  <span class="badge bg-primary">EPUB</span>
-                  <span class="badge bg-primary">HTML</span>
-                  <span class="badge bg-primary">TXT</span>
+                  <div class="mb-3">
+                    <h6>Supported Formats:</h6>
+                    <div class="d-flex gap-2">
+                      <span class="badge bg-primary">EPUB</span>
+                      <span class="badge bg-primary">HTML</span>
+                      <span class="badge bg-primary">TXT</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Configuration Section -->
+                <div class="tab-pane fade" id="config-pane" role="tabpanel" aria-labelledby="config-tab">
+                  <div class="alert alert-warning" role="alert">
+                    <h6 class="alert-heading">
+                      <i class="bi bi-gear me-1"></i>
+                      Update Plugin Settings
+                    </h6>
+                    <p class="mb-2">
+                      If you already have the plugin installed but need to update the server settings,
+                      go to Calibre → <strong>Preferences → Plugins → Send to Lexiflux → Customize plugin</strong>
+                      and update these values:
+                    </p>
+
+                    <div class="row g-2">
+                      <div class="col-12">
+                        <label class="form-label fw-bold small">Server URL:</label>
+                        <div class="input-group input-group-sm">
+                          <input type="text" class="form-control font-monospace"
+                                 value="{{ request.scheme }}://{{ request.get_host }}"
+                                 id="serverUrl" readonly>
+                          <button class="btn btn-outline-secondary" type="button"
+                                  onclick="copyToClipboard('serverUrl', this)">
+                            <i class="bi bi-clipboard"></i>
+                          </button>
+                        </div>
+                      </div>
+                      <div class="col-12">
+                        <label class="form-label fw-bold small">API Token:</label>
+                        <div class="input-group input-group-sm">
+                          <input type="password" class="form-control font-monospace"
+                                 value="Click 'Show' to generate new token"
+                                 id="apiToken" readonly>
+                          <button class="btn btn-outline-secondary" type="button"
+                                  onclick="generateApiToken(this)">
+                            Show
+                          </button>
+                          <button class="btn btn-outline-secondary" type="button"
+                                  onclick="copyToClipboard('apiToken', this)" style="display: none;"
+                                  id="copyTokenBtn">
+                            <i class="bi bi-clipboard"></i>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -318,4 +390,50 @@
     // This will be updated by the oninput handler after paste completes
     setTimeout(() => updatePasteStatus(this.value), 100);
   });
+
+  // Function to copy text to clipboard
+  function copyToClipboard(inputId, button) {
+    const input = document.getElementById(inputId);
+    input.select();
+    input.setSelectionRange(0, 99999); // For mobile devices
+    navigator.clipboard.writeText(input.value).then(() => {
+      const icon = button.querySelector('i');
+      const originalClass = icon.className;
+      icon.className = 'bi bi-check-circle-fill text-success';
+      setTimeout(() => {
+        icon.className = originalClass;
+      }, 2000);
+    });
+  }
+
+  // Function to generate API token
+  function generateApiToken(button) {
+    button.disabled = true;
+    button.textContent = 'Loading...';
+
+    fetch('{% url "generate_api_token" %}', {
+      method: 'POST',
+      headers: {
+        'X-CSRFToken': document.querySelector('input[name="csrfmiddlewaretoken"]').value,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({name: 'Calibre Plugin'})
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.token) {
+        document.getElementById('apiToken').value = data.token;
+        document.getElementById('apiToken').type = 'text';
+        document.getElementById('copyTokenBtn').style.display = 'inline-block';
+        button.textContent = 'Regenerate';
+        button.disabled = false;
+      }
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      button.textContent = 'Error - Try Again';
+      button.disabled = false;
+    });
+  }
+
 </script>
