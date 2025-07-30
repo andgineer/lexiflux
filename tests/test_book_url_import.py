@@ -795,6 +795,7 @@ def test_import_book_from_paste_text_success(mock_book_loader, mock_temp_file):
     request.method = "POST"  # Add method attribute for require_POST decorator
     request.user = MagicMock()
     request.user.email = "test@example.com"
+    request.META = {}  # Add META for CSRF token processing
     request.POST = {
         "importType": "paste",
         "pasted_content": "This is some pasted text content for the book.",
@@ -836,6 +837,7 @@ def test_import_book_from_paste_html_success(mock_book_loader, mock_temp_file):
     request.method = "POST"  # Add method attribute for require_POST decorator
     request.user = MagicMock()
     request.user.email = "test@example.com"
+    request.META = {}  # Add META for CSRF token processing
     request.POST = {
         "importType": "paste",
         "pasted_content": "<html><body><h1>Book Title</h1><p>Content</p></body></html>",
@@ -874,6 +876,7 @@ def test_import_book_from_paste_empty_content():
     request = MagicMock(spec=HttpRequest)
     request.method = "POST"  # Add method attribute for require_POST decorator
     request.user = MagicMock()
+    request.META = {}  # Add META for CSRF token processing
     request.POST = {
         "importType": "paste",
         "pasted_content": "",  # Empty content
@@ -899,6 +902,7 @@ def test_import_book_from_paste_whitespace_only():
     request = MagicMock(spec=HttpRequest)
     request.method = "POST"  # Add method attribute for require_POST decorator
     request.user = MagicMock()
+    request.META = {}  # Add META for CSRF token processing
     request.POST = {
         "importType": "paste",
         "pasted_content": "   \n  \t  ",  # Whitespace-only content
@@ -926,6 +930,7 @@ def test_import_book_from_paste_file_cleanup(mock_temp_file):
     request.method = "POST"  # Add method attribute for require_POST decorator
     request.user = MagicMock()
     request.user.email = "test@example.com"
+    request.META = {}  # Add META for CSRF token processing
     request.POST = {"importType": "paste", "pasted_content": "Test content", "paste_format": "txt"}
 
     mock_file = MagicMock()
@@ -959,6 +964,7 @@ def test_import_book_from_paste_with_exception_still_cleans_up(mock_temp_file):
     request.method = "POST"  # Add method attribute for require_POST decorator
     request.user = MagicMock()
     request.user.email = "test@example.com"
+    request.META = {}  # Add META for CSRF token processing
     request.POST = {"importType": "paste", "pasted_content": "Test content", "paste_format": "txt"}
 
     mock_file = MagicMock()

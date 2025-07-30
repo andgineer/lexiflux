@@ -206,12 +206,6 @@ def download_calibre_plugin(request: HttpRequest) -> HttpResponse:
     # Get server URL from request
     server_url = request.build_absolute_uri("/")[:-1]  # Remove trailing slash
 
-    # Debug: Let's see what we're getting
-    logger.info(f"request.is_secure(): {request.is_secure()}")
-    logger.info(f"request.scheme: {request.scheme}")
-    logger.info(f"request.META.get('wsgi.url_scheme'): {request.META.get('wsgi.url_scheme')}")
-    logger.info(f"server_url: {server_url}")
-
     # Generate API token for this user
     api_token_obj = APIToken.generate_for_user(request.user, name="Calibre Plugin")
     api_token = api_token_obj.token
