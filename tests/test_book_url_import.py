@@ -677,6 +677,7 @@ def test_import_book_from_url_success(mock_book_loader_url):
     request.method = "POST"  # Add method attribute for require_POST decorator
     request.user = MagicMock()
     request.user.email = "test@example.com"
+    request.META = {}  # Add META for CSRF token processing
     request.POST = {
         "importType": "url",
         "url": "https://example.com/book",
@@ -744,6 +745,7 @@ def test_import_book_from_url_invalid_url():
     request = MagicMock(spec=HttpRequest)
     request.method = "POST"  # Add method attribute for require_POST decorator
     request.user = MagicMock()
+    request.META = {}  # Add META for CSRF token processing
     request.POST = {"importType": "url", "url": "not-a-valid-url", "cleaning_level": "moderate"}
 
     with (
@@ -766,6 +768,7 @@ def test_import_book_from_url_empty_url(mock_validator):
     request = MagicMock(spec=HttpRequest)
     request.method = "POST"  # Add method attribute for require_POST decorator
     request.user = MagicMock()
+    request.META = {}  # Add META for CSRF token processing
     request.POST = {
         "importType": "url",
         "url": "",  # Empty URL
@@ -993,6 +996,7 @@ def test_import_book_unknown_type():
     request = MagicMock(spec=HttpRequest)
     request.method = "POST"  # Add method attribute for require_POST decorator
     request.user = MagicMock()
+    request.META = {}  # Add META for CSRF token processing
     request.POST = {
         "importType": "unknown_type"  # Invalid import type
     }
