@@ -714,6 +714,7 @@ def test_import_book_from_url_with_aggressive_cleaning(mock_book_loader_url):
     request.method = "POST"  # Add method attribute for require_POST decorator
     request.user = MagicMock()
     request.user.email = "test@example.com"
+    request.META = {}  # Add META for CSRF token processing
     request.POST = {
         "importType": "url",
         "url": "https://example.com/book",
