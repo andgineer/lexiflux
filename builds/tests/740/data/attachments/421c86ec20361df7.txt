@@ -1,0 +1,3 @@
+2025-08-01 04:13:08,263 WARNING google_languages Warning: Egyptian Arabic not found in the database for group Arabic.
+2025-08-01 04:13:08,754 INFO signals Successfully created language preferences for user testuser (ID: 4)
+2025-08-01 04:13:08,768 INFO calibre_views Successfully imported book from Calibre: Alice in Wonderland
