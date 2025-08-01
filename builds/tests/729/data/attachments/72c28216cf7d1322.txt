@@ -1,0 +1,8 @@
+2025-06-22 10:33:01,606 INFO timing Loading from https://example.com/test-page completed in 0.000 seconds
+2025-06-22 10:33:01,610 INFO timing Extract metadata completed in 0.004 seconds
+2025-06-22 10:33:01,610 INFO timing Extracting IDs with internal links completed in 0.000 seconds
+2025-06-22 10:33:01,818 INFO timing Extracting readable HTML completed in 0.207 seconds
+2025-06-22 10:33:01,818 INFO timing Parse extracted HTML completed in 0.000 seconds
+2025-06-22 10:33:01,818 INFO timing Adding source info completed in 0.000 seconds
+2025-06-22 10:33:01,819 INFO timing Cleared HTML completed in 0.000 seconds
+2025-06-22 10:33:01,831 INFO timing Iterate over pages and save them completed in 0.001 seconds

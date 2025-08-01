@@ -1,0 +1,2 @@
+INFO     root:timing.py:14 Loading from https://example.com/test-page completed in 0.000 seconds
+ERROR    root:book_loader_url.py:115 Error fetching URL https://example.com/test-page: expected string or bytes-like object, got 'MagicMock'

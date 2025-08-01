@@ -1,0 +1,6 @@
+2025-06-21 09:48:30,441 WARNING google_languages Warning: Egyptian Arabic not found in the database for group Arabic.
+2025-06-21 09:48:30,815 INFO signals Successfully created language preferences for user testuser (ID: 2)
+2025-06-21 09:48:32,302 INFO words_export For language en last export datetime: 2025-01-01 00:00:00
+2025-06-21 09:48:32,481 INFO words_export Words exported for English: 1 words
+2025-06-21 09:48:32,484 INFO words_export Words exported for English: 1 words using ankiConnect
+2025-06-21 09:48:32,499 INFO words_export For language en last export datetime: 2025-06-21 09:48:32.482200+00:00
