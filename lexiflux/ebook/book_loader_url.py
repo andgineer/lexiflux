@@ -10,6 +10,7 @@ from urllib.parse import urljoin, urlparse
 
 import requests
 import trafilatura
+from django.urls import reverse
 from lxml import etree
 from pagesmith import etree_to_str, parse_partial_html, refine_html
 
@@ -309,7 +310,6 @@ class BookLoaderURL(BookLoaderHtml):
 
     def _update_page_image_urls(self, book):
         """Update all book pages to replace placeholder image URLs with actual URLs."""
-        from django.urls import reverse
 
         for page in book.pages.all():
             content = page.content

@@ -343,7 +343,7 @@ class TestCalibreBookImport:
             _import_book_file(unsupported_file, "test.pdf", {}, approved_user.email)
 
     @patch("lexiflux.views.calibre_views.BookLoaderEpub")
-    @patch("lexiflux.models.Author")
+    @patch("lexiflux.views.calibre_views.Author")
     def test_import_with_metadata_override(
         self, MockAuthor, MockLoader, mock_epub_file, approved_user, language
     ):

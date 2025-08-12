@@ -331,7 +331,7 @@ class TestModelSettings:
 class TestModelManagement:
     def test_get_or_create_model_openai(self, request, approved_user):
         llm = Llm()
-        params = {"model": "gpt-4o", "user": approved_user}
+        params = {"model": "gpt-5", "user": approved_user}
 
         mock_settings = {"api_key": "test_key", "temperature": 0.7}
         with patch.object(Llm, "get_model_settings", return_value=mock_settings):
@@ -347,7 +347,7 @@ class TestModelManagement:
 
                     # Verify the model was created with correct parameters
                     mock_openai.assert_called_once_with(
-                        model="gpt-4o", openai_api_key="test_key", temperature=0.7
+                        model="gpt-5", openai_api_key="test_key", temperature=0.7
                     )
                     assert model is mock_chat
 
@@ -383,7 +383,7 @@ class TestArticleGeneration:
         expected_prompt_file,
     ):
         # Prepare test data
-        params = {"model": "gpt-4o", "user": approved_user}
+        params = {"model": "gpt-5", "user": approved_user}
         data = {
             "book_code": mock_book_page.book.code,
             "book_page_number": mock_book_page.number,
@@ -448,7 +448,7 @@ class TestArticleGeneration:
                     # Verify ChatOpenAI was initialized correctly
                     mock_openai.assert_called_once()
                     call_kwargs = mock_openai.call_args.kwargs
-                    assert call_kwargs["model"] == "gpt-4o"
+                    assert call_kwargs["model"] == "gpt-5"
                     assert "temperature" in call_kwargs
             finally:
                 # Restore the original factory function
@@ -459,7 +459,7 @@ class TestArticleGeneration:
     ):
         # Prepare test data
         params = {
-            "model": "gpt-4o",
+            "model": "gpt-5",
             "user": approved_user,
             "prompt": "Custom system prompt for AI article",
         }
@@ -513,7 +513,7 @@ class TestArticleGeneration:
                     # Verify ChatOpenAI was initialized correctly
                     mock_openai.assert_called_once()
                     call_kwargs = mock_openai.call_args.kwargs
-                    assert call_kwargs["model"] == "gpt-4o"
+                    assert call_kwargs["model"] == "gpt-5"
                     assert "temperature" in call_kwargs
             finally:
                 # Restore the original factory function
@@ -521,7 +521,7 @@ class TestArticleGeneration:
 
     def test_generate_article_cached_invalid_article(self, llm_instance, approved_user):
         # Prepare test data
-        params = {"model": "gpt-4o", "user": approved_user}
+        params = {"model": "gpt-5", "user": approved_user}
         data = {"text": "Sample text", "text_language": "en", "user_language": "fr"}
 
         with pytest.raises(ValueError, match="Lexical article 'InvalidArticle' not found"):
@@ -534,20 +534,20 @@ class TestArticleGeneration:
     def test_generate_article_error_handling(self, approved_user):
         llm = Llm()
         article_name = "Translate"
-        params = {"model": "gpt-4o", "user": approved_user}
+        params = {"model": "gpt-5", "user": approved_user}
         data = {"text": "Test text"}
 
         with patch.object(Llm, "_generate_article_cached", side_effect=Exception("Test error")):
             with pytest.raises(AIModelError) as exc_info:
                 llm.generate_article(article_name, params, data)
 
-            assert exc_info.value.model_name == "gpt-4o"
+            assert exc_info.value.model_name == "gpt-5"
             assert "Test error" in str(exc_info.value)
 
     def test_generate_article_invalid_article(self):
         llm = Llm()
         article_name = "InvalidArticle"
-        params = {"model": "gpt-4o", "user": MagicMock()}
+        params = {"model": "gpt-5", "user": MagicMock()}
         data = {"text": "Test text"}
 
         with pytest.raises(AIModelError) as exc_info:
@@ -559,7 +559,7 @@ class TestArticleGeneration:
     def test_generate_article_api_error(self, mock_chat_openai, approved_user, book):
         llm = Llm()
         article_name = "Translate"
-        params = {"model": "gpt-4o", "user": approved_user}
+        params = {"model": "gpt-5", "user": approved_user}
         data = {
             "text": "Test text",
             "text_language": "en",
@@ -576,7 +576,7 @@ class TestArticleGeneration:
             llm.generate_article(article_name, params, data)
 
         assert "'book_code'" in str(exc_info.value)
-        assert exc_info.value.model_name == "gpt-4o"
+        assert exc_info.value.model_name == "gpt-5"
 
 
 @allure.epic("Language Tools")
@@ -656,8 +656,8 @@ class TestUtilityFunctions:
 @allure.feature("Error Handling")
 class TestErrorHandling:
     def test_ai_model_error(self):
-        error = AIModelError("gpt-4o", "ChatOpenAI", "API error")
-        assert error.model_name == "gpt-4o"
+        error = AIModelError("gpt-5", "ChatOpenAI", "API error")
+        assert error.model_name == "gpt-5"
         assert error.model_class == "ChatOpenAI"
         assert error.error_message == "API error"
-        assert str(error) == "AI class `ChatOpenAI` error for model `gpt-4o`: API error"
+        assert str(error) == "AI class `ChatOpenAI` error for model `gpt-5`: API error"

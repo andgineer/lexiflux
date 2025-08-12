@@ -5,17 +5,17 @@ from typing import Any
 from django.apps import apps
 
 DEFAULT_LEXICAL_ARTICLES = [
-    {"type": "Explain", "title": "Explain", "parameters": {"model": "gpt-4o-mini"}},
-    {"type": "Origin", "title": "Origin", "parameters": {"model": "gpt-4o-mini"}},
+    {"type": "Explain", "title": "Explain", "parameters": {"model": "gpt-5-mini"}},
+    {"type": "Origin", "title": "Origin", "parameters": {"model": "gpt-5-mini"}},
     {
         "type": "Lexical",
         "title": "Lexical",
-        "parameters": {"model": "gpt-4o-mini"},
+        "parameters": {"model": "gpt-5-mini"},
     },
     {
         "type": "Sentence",
         "title": "Sentence",
-        "parameters": {"model": "gpt-4o-mini"},
+        "parameters": {"model": "gpt-5-mini"},
     },
     {
         "type": "Site",

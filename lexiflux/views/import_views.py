@@ -1,9 +1,11 @@
 import io
 import json
 import logging
+import os
 import tempfile
 import zipfile
 
+from django.conf import settings as django_settings
 from django.core.exceptions import ValidationError
 from django.core.files.uploadedfile import TemporaryUploadedFile
 from django.core.validators import URLValidator
@@ -18,7 +20,7 @@ from lexiflux.ebook.book_loader_html import BookLoaderHtml
 from lexiflux.ebook.book_loader_plain_text import BookLoaderPlainText
 from lexiflux.ebook.book_loader_url import BookLoaderURL
 from lexiflux.lexiflux_settings import settings
-from lexiflux.models import Book, Language
+from lexiflux.models import APIToken, Book, Language
 from lexiflux.views.library_views import logger
 
 
@@ -151,8 +153,6 @@ def import_clipboard(request: HttpRequest) -> Book:
             book.save()
         finally:
             # Make sure we clean up the temporary file
-            import os
-
             try:
                 os.unlink(tmp_file.name)
             except Exception:  # noqa: BLE001
@@ -183,11 +183,6 @@ def import_url(request: HttpRequest) -> Book:
 @require_GET  # type: ignore
 def download_calibre_plugin(request: HttpRequest) -> HttpResponse:
     """Generate and download Calibre plugin with API token."""
-    import os
-
-    from django.conf import settings as django_settings
-
-    from lexiflux.models import APIToken
 
     # Get the calibre_plugin directory path
     calibre_plugin_dir = os.path.join(
@@ -272,8 +267,6 @@ def download_calibre_plugin(request: HttpRequest) -> HttpResponse:
 def generate_api_token(request: HttpRequest) -> JsonResponse:
     """Generate a new API token for the user, removing old ones with the same name."""
     try:
-        from lexiflux.models import APIToken
-
         data = json.loads(request.body)
         name = data.get("name", "API Token")
 

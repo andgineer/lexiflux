@@ -97,10 +97,7 @@ class BookLoaderBase:
                     + (f" (found: {', '.join(user.email for user in users)})" if users else ""),
                 )
 
-        if forced_language:
-            language_name = forced_language
-        else:
-            language_name = self.meta.get(MetadataField.LANGUAGE, "Unknown Language")
+        language_name = forced_language or self.meta.get(MetadataField.LANGUAGE, "Unknown Language")
         language, _ = Language.objects.get_or_create(name=language_name)
 
         book_instance = Book.objects.create(title=title, author=author, language=language)

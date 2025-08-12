@@ -18,15 +18,15 @@ class LexifluxConfig(AppConfig):  # type: ignore
 
     def ready(self) -> None:
         """Run when the app is ready."""
-        from django.db.backends.signals import (
-            connection_created,  # pylint: disable=import-outside-toplevel
+        from django.db.backends.signals import (  # noqa: PLC0415
+            connection_created,
         )
 
         connection_created.connect(self.on_db_connection, dispatch_uid="validate")
 
     def on_db_connection(self, sender: Any, connection: Any, **kwargs: Any) -> None:  # noqa: ARG002
         """Run when the database connection is created."""
-        from lexiflux.lexiflux_settings import settings  # pylint: disable=import-outside-toplevel
+        from lexiflux.lexiflux_settings import settings  # noqa: PLC0415
 
         try:
             settings.lexiflux.validate()

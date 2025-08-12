@@ -1,7 +1,9 @@
 """Views for Calibre Smart Device integration."""
 
+import base64
 import json
 import logging
+import os
 import tempfile
 import uuid
 from typing import Any, Optional
@@ -14,7 +16,7 @@ from lexiflux.ebook.book_loader_base import BookLoaderBase
 from lexiflux.ebook.book_loader_epub import BookLoaderEpub
 from lexiflux.ebook.book_loader_html import BookLoaderHtml
 from lexiflux.ebook.book_loader_plain_text import BookLoaderPlainText
-from lexiflux.models import Book
+from lexiflux.models import APIToken, Author, Book, CustomUser, Language
 
 logger = logging.getLogger(__name__)
 
@@ -37,8 +39,6 @@ def _get_authenticated_user_email(request: HttpRequest) -> Optional[str]:
     token = auth_header[7:]  # Remove 'Bearer ' prefix
 
     # Validate token against database
-    from lexiflux.models import APIToken
-
     try:
         api_token = APIToken.objects.select_related("user").get(
             token=token,
@@ -166,15 +166,11 @@ def _handle_json_upload(request: HttpRequest, user_email: str) -> JsonResponse:
         if not file_content:
             return JsonResponse({"error": "No book content provided"}, status=400)
 
-        # Decode base64 content and save to temporary file
-        import base64
-
         try:
             decoded_content = base64.b64decode(file_content)
         except Exception as e:  # noqa: BLE001
             return JsonResponse({"error": f"Invalid base64 content: {e}"}, status=400)
 
-        # Create temporary file
         with tempfile.NamedTemporaryFile(
             delete=False,
             suffix=f".{filename.split('.')[-1]}",
@@ -184,10 +180,6 @@ def _handle_json_upload(request: HttpRequest, user_email: str) -> JsonResponse:
 
             # Import the book
             book = _import_book_from_path(tmp_file.name, filename, metadata, user_email)
-
-            # Clean up temp file
-            import os
-
             try:
                 os.unlink(tmp_file.name)
             except Exception:  # noqa: BLE001
@@ -234,10 +226,6 @@ def _import_book_file(file, filename: str, metadata: dict[str, Any], user_email:
             tmp_file.flush()
 
             book_processor = book_class(tmp_file.name, original_filename=filename)
-
-            # Clean up temp file after processing
-            import os
-
             try:
                 os.unlink(tmp_file.name)
             except Exception:  # noqa: BLE001
@@ -252,7 +240,6 @@ def _import_book_file(file, filename: str, metadata: dict[str, Any], user_email:
             book.title = metadata["title"]
         if "authors" in metadata and metadata["authors"]:
             # Handle authors properly - create or get Author instances
-            from lexiflux.models import Author
 
             author_names = metadata["authors"]
             if author_names:
@@ -272,7 +259,6 @@ def _import_book_file(file, filename: str, metadata: dict[str, Any], user_email:
 
         if "language" in metadata and metadata["language"]:
             # Try to match language code to existing Language model
-            from lexiflux.models import Language
 
             try:
                 language = Language.objects.get(google_code=metadata["language"])
@@ -312,8 +298,6 @@ def _import_book_from_path(  # noqa: C901
         if "title" in metadata and metadata["title"]:
             book.title = metadata["title"]
         if "authors" in metadata and metadata["authors"]:
-            from lexiflux.models import Author
-
             author_names = metadata["authors"]
             if author_names:
                 # For now, just use the first author
@@ -332,7 +316,6 @@ def _import_book_from_path(  # noqa: C901
 
         if "language" in metadata and metadata["language"]:
             # Try to match language code to existing Language model
-            from lexiflux.models import Language
 
             try:
                 language = Language.objects.get(google_code=metadata["language"])
@@ -359,8 +342,6 @@ def calibre_status(request: HttpRequest) -> JsonResponse:
                 return JsonResponse({"error": "Invalid or expired token"}, status=401)
 
         # Get basic status information
-        from lexiflux.models import Book, CustomUser
-
         book_count = Book.objects.count()
         user_count = CustomUser.objects.count()
 
