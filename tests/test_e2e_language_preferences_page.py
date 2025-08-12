@@ -47,7 +47,7 @@ def test_e2e_language_preferences_page_inline_translation(browser, user_preferen
         browser.take_screenshot("Initial")
 
     with allure.step("Verify initial page state"):
-        assert "Language Preferences" in page.get_page_title()
+        assert "Dictionary & AI Insights Settings" in page.get_page_title()
         assert "English" in page.get_selected_language()
 
     with allure.step("Open and configure Translate in inline translation"):

@@ -6,7 +6,7 @@ Lexiflux use AI models to create `Lexical Articles` in `Sidebar`
 Also you can use AI for inline text translation. By default
 it uses Google Translate.
 
-To configure Sidebar and inline translation see [Language Preferences](http://localhost:6100/language-preferences/).
+To configure Sidebar and inline translation see [Dictionary & AI Insights Settings](http://localhost:6100/language-preferences/).
 There are separate settings for each language, so you can configure
 different settings for different languages.
 
@@ -34,7 +34,7 @@ This is controlled by `open in new window` parameter.
 
 To use commercial AI providers you need `API KEY`.
 
-See [AI Settings](http://localhost:6100/ai-settings/) section how to get one for different AI providers.
+See [AI Connections](http://localhost:6100/ai-settings/) section how to get one for different AI providers.
 
 ## Ollama
 You can [install](docker.md#local-ollama-ai) in the docker local AI [Ollama](https://github.com/jmorganca/ollama) model.

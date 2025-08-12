@@ -347,7 +347,7 @@ class TestModelManagement:
 
                     # Verify the model was created with correct parameters
                     mock_openai.assert_called_once_with(
-                        model="gpt-5", openai_api_key="test_key", temperature=0.7
+                        model="gpt-5", api_key="test_key", temperature=0.7
                     )
                     assert model is mock_chat
 
