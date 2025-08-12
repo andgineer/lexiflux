@@ -400,15 +400,7 @@ class Llm:  # pylint: disable=too-few-public-methods
     def get_model_settings(self, user: CustomUser, model_class: str) -> dict[str, Any]:
         """Get AI model settings for the given user and model"""
         ai_model_config = AIModelConfig.get_or_create_ai_model_config(user, model_class)
-        settings_dict = ai_model_config.settings.copy()
-
-        if not settings_dict.get(AIModelSettings.API_KEY):  # noqa: SIM102
-            # If there's no API key in the database, try to get it from env vars
-            if env_var_name := AI_MODEL_API_KEY_ENV_VAR.get(model_class):  # noqa: SIM102
-                if api_key := getattr(settings, env_var_name, None):
-                    settings_dict[AIModelSettings.API_KEY] = api_key
-
-        return settings_dict  # type: ignore
+        return ai_model_config.settings.copy()
 
     def _get_or_create_model(self, params: dict[str, Any]) -> Any:
         """Get or create AI model instance.
@@ -436,7 +428,7 @@ class Llm:  # pylint: disable=too-few-public-methods
                 if model_class == "ChatOpenAI":
                     self._model_cache[model_key] = ChatOpenAI(  # type: ignore
                         model=model_name,
-                        openai_api_key=model_settings.get(AIModelSettings.API_KEY),
+                        api_key=model_settings.get(AIModelSettings.API_KEY),
                         **common_params,  # type: ignore
                     )
                 elif model_class == "Ollama":
@@ -445,11 +437,20 @@ class Llm:  # pylint: disable=too-few-public-methods
                         **common_params,
                     )
                 elif model_class == "ChatAnthropic":
-                    self._model_cache[model_key] = ChatAnthropic(
-                        model=model_name,  # type: ignore
-                        api_key=model_settings.get(AIModelSettings.API_KEY),  # type: ignore
-                        **common_params,  # type: ignore
-                    )
+                    api_key = model_settings.get(AIModelSettings.API_KEY)
+                    if api_key:
+                        # If we have an API key from database, use it explicitly
+                        self._model_cache[model_key] = ChatAnthropic(
+                            model=model_name,  # type: ignore
+                            api_key=api_key,  # type: ignore
+                            **common_params,  # type: ignore
+                        )
+                    else:
+                        # Let Anthropic SDK auto-load from ANTHROPIC_API_KEY environment variable
+                        self._model_cache[model_key] = ChatAnthropic(
+                            model=model_name,  # type: ignore
+                            **common_params,  # type: ignore
+                        )
                 elif model_class == "ChatGoogle":
                     self._model_cache[model_key] = ChatGoogleGenerativeAI(  # type: ignore
                         model=model_name,
