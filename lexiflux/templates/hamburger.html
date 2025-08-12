@@ -3,10 +3,10 @@
     <span class="navbar-toggler-icon"></span>
   </button>
   <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton1">
-    <li><a class="dropdown-item {% if current_page == 'language-preferences' %}text-secondary{% endif %}" href="{% url 'language-preferences' %}">Language Preferences</a></li>
+    <li><a class="dropdown-item {% if current_page == 'language-preferences' %}text-secondary{% endif %}" href="{% url 'language-preferences' %}">Dictionary & AI Insights Settings</a></li>
     <li><a class="dropdown-item {% if current_page == 'library' %}text-secondary{% endif %}" href="{% url 'library' %}">Library</a></li>
     <li><a class="dropdown-item {% if current_page == 'reader' %}text-secondary{% endif %}" href="{% url 'reader' %}">Reader</a></li>
-    <li><a class="dropdown-item {% if current_page == 'ai-settings' %}text-secondary{% endif %}" href="{% url 'ai-settings' %}">AI Settings</a></li>
+    <li><a class="dropdown-item {% if current_page == 'ai-settings' %}text-secondary{% endif %}" href="{% url 'ai-settings' %}">AI Connections</a></li>
     <li><a class="dropdown-item {% if current_page == 'words-export' %}text-secondary{% endif %}" href="{% url 'words-export' %}">Words Export</a></li>
   </ul>
 </div>

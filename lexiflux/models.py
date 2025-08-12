@@ -654,10 +654,10 @@ class LexicalArticle(models.Model):  # type: ignore
 
 
 class LanguagePreferences(models.Model):  # type: ignore
-    """Language Preferences.
+    """Dictionary & AI Insights Settings.
 
-    Like target language to translate this language to,
-    inline translation dictionary, Lexical Sidebar Config.
+    Configuration for inline translation dictionary, AI insights (lexical analysis,
+    word origins, explanations), and sidebar display preferences.
     """
 
     user = models.ForeignKey(
@@ -718,7 +718,7 @@ class LanguagePreferences(models.Model):  # type: ignore
         user: CustomUser,
         language: Language,
     ) -> "LanguagePreferences":
-        """Get or create a Language Preferences for the given user and language."""
+        """Get or create Dictionary & AI Insights Settings for the given user and language."""
         default = user.default_language_preferences
         if default is None:
             # Use the first existing record or create a new default
