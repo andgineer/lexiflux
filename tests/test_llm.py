@@ -548,7 +548,7 @@ class TestArticleGeneration:
         with pytest.raises(AIModelError) as exc_info:
             llm.generate_article(article_name, params, data)
 
-        assert "Lexical article 'InvalidArticle' not found" in str(exc_info.value)
+        assert "AI insight 'InvalidArticle' not found" in str(exc_info.value)
 
     @patch("lexiflux.language.llm.ChatOpenAI")
     def test_generate_article_api_error(self, mock_chat_openai, approved_user, book):

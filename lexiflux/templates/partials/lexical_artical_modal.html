@@ -17,7 +17,7 @@
                                :class="{ 'text-muted': !form.title }" required>
                     </div>
                     <div class="mb-3">
-                        <label for="articleType" class="form-label">Article Type</label>
+                        <label for="articleType" class="form-label">Insight Type</label>
                         <select id="article-type-select" v-model="form.type" class="form-select" @change="updateParameters">
                             <option value="">Select type</option>
                             {% for value, label in lexical_article_types %}

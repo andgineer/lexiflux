@@ -1,6 +1,6 @@
 # AI Models
 
-Lexiflux use AI models to create `Lexical Articles` in `Sidebar`
+Lexiflux use AI models to create `AI Insights` in `Sidebar`
 (you open it with blue binocular icon).
 
 Also you can use AI for inline text translation. By default
@@ -10,10 +10,10 @@ To configure Sidebar and inline translation see [Dictionary & AI Insights Settin
 There are separate settings for each language, so you can configure
 different settings for different languages.
 
-## Lexical Articles Types
+## AI Insights Types
 
 ### AI Powered (Translate, Lexical, Origin, Explain, Sentence)
-They use predefined prompts to generate articles.
+They use predefined prompts to generate insights.
 You can select AI model (ChatGPT, Claude etc) to run them.
 
 #### Custom AI

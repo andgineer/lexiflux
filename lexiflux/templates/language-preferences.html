@@ -93,7 +93,7 @@
 
             <div class="col-md-6">
                 <h5 class="card-header">
-                    Lexical Articles Sidebar
+                    AI Insights Sidebar
                     <i class="bi bi-binoculars"></i>
                 </h5>
               <div class="card-body pb-4">
@@ -131,11 +131,11 @@
                 </draggable>
                 <div class="mt-4">
                   <button type="button" class="btn btn-primary mb-3" @click="openModal('add')">
-                      Add New Article
+                      Add New Insight
                   </button>
                   <p class="text-muted mb-0">
                     <i class="bi bi-info-circle me-2"></i>
-                    You can rearrange articles by dragging them using the <span class="fw-bold">☰</span> handle.
+                    You can rearrange insights by dragging them using the <span class="fw-bold">☰</span> handle.
                   </p>
                 </div>
                </div>
@@ -155,7 +155,7 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <p>Are you sure you want to delete the article: <strong>"[[ deleteArticleTitle ]]"</strong>?</p>
+                    <p>Are you sure you want to delete the insight: <strong>"[[ deleteArticleTitle ]]"</strong>?</p>
                     <div class="alert alert-danger" v-if="deleteErrorMessage" role="alert">
                         [[ deleteErrorMessage ]]
                     </div>

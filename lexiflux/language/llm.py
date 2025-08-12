@@ -245,7 +245,7 @@ class Llm:  # pylint: disable=too-few-public-methods
         data["article_name"] = article_name
 
         if article_name not in self._article_pipelines_factory:
-            raise ValueError(f"Lexical article '{article_name}' not found.")
+            raise ValueError(f"AI insight '{article_name}' not found.")
 
         if article_name == "AI":
             # Add the prompt to the data dictionary for the "AI" type

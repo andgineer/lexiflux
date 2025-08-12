@@ -47,7 +47,7 @@ def normalize_for_search(text: str) -> str:
 
 
 class LexicalArticleType(models.TextChoices):  # type: ignore  # pylint: disable=too-many-ancestors
-    """Types of lexical articles."""
+    """Types of AI insights."""
 
     # todo: extract from Llm.article_names()
     TRANSLATE = "Translate", _("Translate")
