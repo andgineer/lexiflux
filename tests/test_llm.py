@@ -302,28 +302,23 @@ class TestModelSettings:
             assert settings["api_key"] == "test_key"
             assert settings["temperature"] == 0.7
 
-    def test_get_model_settings_fallback_to_env(self, db_init, approved_user):
+    def test_get_model_settings_from_db(self, db_init, approved_user):
         llm = Llm()
         model_class = "ChatOpenAI"
 
-        # Create mock AIModelConfig without API key
+        # Create mock AIModelConfig with settings
         config = AIModelConfig(
             user=approved_user,  # Use the approved_user fixture
             chat_model=model_class,
-            settings={"temperature": 0.7},
+            settings={"temperature": 0.7, "api_key": "db_key"},
         )
 
-        with (
-            patch(
-                "lexiflux.models.AIModelConfig.get_or_create_ai_model_config", return_value=config
-            ),
-            patch(
-                "lexiflux.language.llm.settings", create=True, new_callable=MagicMock
-            ) as mock_settings,
+        with patch(
+            "lexiflux.models.AIModelConfig.get_or_create_ai_model_config", return_value=config
         ):
-            mock_settings.OPENAI_API_KEY = "env_key"
             settings = llm.get_model_settings(approved_user, model_class)
-            assert settings["api_key"] == "env_key"
+            assert settings["temperature"] == 0.7
+            assert settings["api_key"] == "db_key"
 
 
 @allure.epic("Language Tools")
