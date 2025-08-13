@@ -519,7 +519,7 @@ class TestArticleGeneration:
         params = {"model": "gpt-5", "user": approved_user}
         data = {"text": "Sample text", "text_language": "en", "user_language": "fr"}
 
-        with pytest.raises(ValueError, match="Lexical article 'InvalidArticle' not found"):
+        with pytest.raises(ValueError, match="AI insight 'InvalidArticle' not found"):
             llm_instance._generate_article_cached(
                 "InvalidArticle",
                 llm_instance.hashable_dict(params),
