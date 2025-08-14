@@ -125,6 +125,7 @@ jobs:
 
     - name: Upload coverage data to coveralls.io
       if: always()
+      continue-on-error: true
       uses: coverallsapp/github-action@v2
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -135,6 +136,7 @@ jobs:
 
     - name: Finalize coverage reporting to coveralls.io
       if: always()
+      continue-on-error: true
       uses: coverallsapp/github-action@v2
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
