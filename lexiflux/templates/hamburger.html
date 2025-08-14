@@ -8,5 +8,7 @@
     <li><a class="dropdown-item {% if current_page == 'reader' %}text-secondary{% endif %}" href="{% url 'reader' %}">Reader</a></li>
     <li><a class="dropdown-item {% if current_page == 'ai-settings' %}text-secondary{% endif %}" href="{% url 'ai-settings' %}">AI Connections</a></li>
     <li><a class="dropdown-item {% if current_page == 'words-export' %}text-secondary{% endif %}" href="{% url 'words-export' %}">Words Export</a></li>
+    <li><hr class="dropdown-divider"></li>
+    <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#aboutModal">About</a></li>
   </ul>
 </div>
