@@ -1,0 +1,6 @@
+2025-08-14 05:39:17,994 INFO signals Successfully created language preferences for user testuser (ID: 1)
+2025-08-14 05:39:18,008 INFO reader_views Location changed: book test-book-links, page 1, top word 0
+2025-08-14 05:39:18,012 INFO models Reading location updated for test-book-links: 1(1):0/0.0
+[{'page_number': 1, 'word': 0}]/0
+2025-08-14 05:39:18,015 INFO reader_views Link clicked: page2.xhtml#section1, page_info: {'page': 2, 'item_id': 'item_1', 'item_name': 'page2.xhtml'}
+2025-08-14 05:39:18,021 INFO models Jumping to 2#0

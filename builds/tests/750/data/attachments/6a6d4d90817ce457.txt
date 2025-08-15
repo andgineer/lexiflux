@@ -1,0 +1,1 @@
+2025-08-14 05:40:15,070 INFO calibre_views Calibre handshake stage 2: {'stage': 2, 'device_name': 'Lexiflux', 'status': 'connected', 'session_id': '846a7365-f0f6-4aaf-8bcd-fed4a5abe0e3'}

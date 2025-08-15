@@ -1,0 +1,5 @@
+INFO: Page  1 topWord 0  loaded successfully.
+INFO: domChanged. bookCode: some-book-code pageNum: 1 totalWords: 4 wordsContainerHeight: 56
+INFO: Total words: 4, topWord: 0
+INFO: reInitDom called
+INFO: Google Fonts loaded successfully

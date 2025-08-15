@@ -1,0 +1,2 @@
+WARNING  lexiflux.views.calibre_views:calibre_views.py:34 No Bearer token provided for Calibre upload
+WARNING  django.request:log.py:248 Unauthorized: /calibre/upload/

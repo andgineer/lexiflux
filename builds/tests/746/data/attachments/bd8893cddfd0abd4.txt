@@ -1,0 +1,1 @@
+2025-08-12 12:48:31,208 INFO apps Lexiflux 2.5.0 is ready.

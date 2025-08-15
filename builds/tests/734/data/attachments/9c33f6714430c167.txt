@@ -1,0 +1,26 @@
+2025-07-28 04:15:46,989 INFO signals Successfully created language preferences for user contentuser (ID: 1)
+2025-07-28 04:15:46,990 INFO timing Loading from https://example.com/content-nav-test completed in 0.000 seconds
+2025-07-28 04:15:46,991 INFO timing Extract metadata completed in 0.001 seconds
+2025-07-28 04:15:46,992 INFO timing Extracting IDs with internal links completed in 0.000 seconds
+2025-07-28 04:15:46,992 INFO book_loader_url Using original HTML
+2025-07-28 04:15:46,992 INFO timing Extracting readable HTML completed in 0.000 seconds
+2025-07-28 04:15:46,992 INFO timing Parse extracted HTML completed in 0.000 seconds
+2025-07-28 04:15:46,992 INFO timing Adding source info completed in 0.000 seconds
+2025-07-28 04:15:46,993 INFO timing Cleared HTML completed in 0.001 seconds
+2025-07-28 04:15:46,996 INFO book_loader_url No images found in the content
+2025-07-28 04:15:47,004 INFO timing Iterate over pages and save them completed in 0.006 seconds
+2025-07-28 04:15:47,004 INFO book_loader_url No images to download
+2025-07-28 04:15:47,032 INFO reader_views Link clicked: #chapter1, page_info: {'page': 1, 'item_id': 'chapter1', 'item_name': 'Chapter 1: The Beginning'}
+2025-07-28 04:15:47,034 INFO models Jumping to 1#33
+2025-07-28 04:15:47,039 INFO reader_views Link clicked: #important_note, page_info: {'page': 4, 'item_id': 'important_note', 'item_name': 'Important Note About Something'}
+2025-07-28 04:15:47,040 INFO models Jumping to 4#250
+2025-07-28 04:15:47,045 INFO reader_views Link clicked: #chapter3, page_info: {'page': 6, 'item_id': 'chapter3', 'item_name': 'Chapter 3: The Final Section'}
+2025-07-28 04:15:47,047 INFO models Jumping to 6#280
+2025-07-28 04:15:47,052 INFO reader_views Link clicked: #chapter1, page_info: {'page': 1, 'item_id': 'chapter1', 'item_name': 'Chapter 1: The Beginning'}
+2025-07-28 04:15:47,054 INFO models Jumping to 1#33
+2025-07-28 04:15:47,058 INFO reader_views Link clicked: #chapter2, page_info: {'page': 2, 'item_id': 'chapter2', 'item_name': 'Chapter 2: The Middle Part'}
+2025-07-28 04:15:47,060 INFO models Jumping to 2#250
+2025-07-28 04:15:47,065 INFO reader_views Link clicked: #chapter2, page_info: {'page': 2, 'item_id': 'chapter2', 'item_name': 'Chapter 2: The Middle Part'}
+2025-07-28 04:15:47,067 INFO models Jumping to 2#250
+2025-07-28 04:15:47,071 INFO reader_views Link clicked: #chapter2, page_info: {'page': 2, 'item_id': 'chapter2', 'item_name': 'Chapter 2: The Middle Part'}
+2025-07-28 04:15:47,073 INFO models Jumping to 2#250

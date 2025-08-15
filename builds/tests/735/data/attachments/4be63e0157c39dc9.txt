@@ -1,0 +1,6 @@
+2025-07-29 06:52:40,673 WARNING google_languages Warning: Egyptian Arabic not found in the database for group Arabic.
+2025-07-29 06:52:41,175 INFO signals Successfully created language preferences for user testuser (ID: 4)
+2025-07-29 06:52:41,182 WARNING log Method Not Allowed (GET): /api/import-book/
+2025-07-29 06:52:41,182 WARNING log Method Not Allowed (GET): /api/import-book/
+2025-07-29 06:52:41,182 WARNING log Method Not Allowed: /api/import-book/
+2025-07-29 06:52:41,182 WARNING log Method Not Allowed: /api/import-book/

@@ -1,0 +1,5 @@
+2025-07-27 13:33:22,268 ERROR webdriver_augmented Failed to enable CDP logging: Unrecognised command executeCdpCommand
+2025-07-27 13:33:22,715 INFO signals Successfully created language preferences for user testuser (ID: 1)
+2025-07-27 13:33:24,494 INFO words_export For language en last export datetime: 2025-01-01 00:00:00
+2025-07-27 13:33:24,847 INFO words_export Words exported for English: 1 words using csvFile
+2025-07-27 13:33:24,861 INFO words_export For language en last export datetime: 2025-07-27 13:33:24.847015+00:00
