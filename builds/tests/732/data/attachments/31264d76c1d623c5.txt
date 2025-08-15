@@ -1,5 +1,0 @@
-2025-07-26 05:46:16,230 ERROR webdriver_augmented Failed to enable CDP logging: Message: HTTP method not allowed
-
-2025-07-26 05:46:16,348 WARNING google_languages Warning: Egyptian Arabic not found in the database for group Arabic.
-2025-07-26 05:46:16,727 INFO signals Successfully created language preferences for user testuser2 (ID: 20)
-2025-07-26 05:46:18,181 INFO language_preferences_views Set global preferences for user testuser2 to Serbian

@@ -1,2 +1,0 @@
-2025-07-26 05:45:13,301 WARNING log Bad Request: /calibre/upload/
-2025-07-26 05:45:13,301 WARNING log Bad Request: /calibre/upload/

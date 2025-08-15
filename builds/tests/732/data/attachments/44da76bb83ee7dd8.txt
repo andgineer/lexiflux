@@ -1,2 +1,0 @@
-2025-07-26 05:43:58,770 INFO signals Successfully created language preferences for user lexiflux (ID: 1)
-2025-07-26 05:43:58,771 INFO apps Lexiflux 2.4.0 is ready.
