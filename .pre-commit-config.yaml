@@ -74,4 +74,4 @@ repos:
         require_serial: true
         language: system
         types: [ python ]
-        exclude: ^tests/
+        exclude: (^tests/|lexiflux/environments)

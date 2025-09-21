@@ -60,26 +60,26 @@ def docs_task_factory(language: str):
 @task
 def shell(c: Context):
     """Django shell"""
-    c.run("LEXIFLUX_SKIP_AUTH=true ./manage shell")
+    c.run("LEXIFLUX_ENV=local LEXIFLUX_SKIP_AUTH=true ./manage shell")
 
 
 @task
 def jupyter(c: Context):
     """Run Jupyter Notebook"""
-    c.run("LEXIFLUX_SKIP_AUTH=true ./manage shell_plus --notebook")
+    c.run("LEXIFLUX_ENV=local LEXIFLUX_SKIP_AUTH=true ./manage shell_plus --notebook")
 
 
 @task
 def migrate(c: Context):
     """Migrate DB to current models"""
-    c.run("LEXIFLUX_SKIP_AUTH=true ./manage makemigrations lexiflux")
-    c.run("LEXIFLUX_SKIP_AUTH=true ./manage migrate")
+    c.run("LEXIFLUX_ENV=local LEXIFLUX_SKIP_AUTH=true ./manage makemigrations lexiflux")
+    c.run("LEXIFLUX_ENV=local LEXIFLUX_SKIP_AUTH=true ./manage migrate")
 
 
 @task
 def pages(c: Context):
     """Create random book with random pages"""
-    c.run("LEXIFLUX_SKIP_AUTH=true ./manage add-pages")
+    c.run("LEXIFLUX_ENV=local LEXIFLUX_SKIP_AUTH=true ./manage add-pages")
 
 
 @task
@@ -120,7 +120,7 @@ def admin(c: Context):
 @task
 def user(c: Context):
     """Create default user for auto-login"""
-    c.run("LEXIFLUX_SKIP_AUTH=true ./manage default-user")
+    c.run("LEXIFLUX_ENV=local LEXIFLUX_SKIP_AUTH=true ./manage default-user")
 
 
 @task(kill_db, migrate, admin, user, alisa)
@@ -131,14 +131,14 @@ def init_db(c: Context):
 @task
 def run(c: Context):
     """Run local server"""
-    c.run("LEXIFLUX_SKIP_AUTH=true ./manage runserver")
+    c.run("LEXIFLUX_ENV=local LEXIFLUX_SKIP_AUTH=true ./manage runserver")
 
 
 @task
 def runssl(c: Context):
     """Run local SSL server in auto-login mode"""
     c.run(
-        "LEXIFLUX_SKIP_AUTH=true ./manage runserver_plus 0.0.0.0:8000 "
+        "LEXIFLUX_ENV=local LEXIFLUX_SKIP_AUTH=true ./manage runserver_plus 0.0.0.0:8000 "
         "--cert-file ssl_certs/localhost.crt --key-file ssl_certs/localhost.key",
     )
 
@@ -147,7 +147,7 @@ def runssl(c: Context):
 def runcloud(c: Context):
     """Run local SSL server in multi-user mode"""
     c.run(
-        "LEXIFLUX_SKIP_AUTH=false ./manage runserver_plus 0.0.0.0:8000 "
+        "LEXIFLUX_ENV=local LEXIFLUX_SKIP_AUTH=false ./manage runserver_plus 0.0.0.0:8000 "
         "--cert-file ssl_certs/localhost.crt --key-file ssl_certs/localhost.key",
     )
 
@@ -256,6 +256,12 @@ def mkcert(c: Context):
 def docker(c: Context):
     """Build docker image"""
     c.run("docker build -t lexiflux:latest -f docker/Dockerfile .")
+
+
+@task
+def rundocker(c: Context):
+    """Run built docker image"""
+    c.run("docker run --rm -p 8080:8000 lexiflux:latest")
 
 
 @task

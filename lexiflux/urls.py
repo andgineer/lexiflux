@@ -1,5 +1,6 @@
 """URLs for Lexiflux app."""
 
+from django.conf import settings
 from django.contrib import admin
 from django.contrib.auth.views import LogoutView
 from django.urls import include, path
@@ -13,7 +14,6 @@ import lexiflux.views.library_views
 import lexiflux.views.reader_views
 import lexiflux.views.search_view
 import lexiflux.views.words_export
-from lexiflux import settings
 from lexiflux.views.auth_views import CustomLoginView, SignUpView
 from lexiflux.views.library_views import EditBookModalPartial
 from lexiflux.views.user_modal import user_modal
