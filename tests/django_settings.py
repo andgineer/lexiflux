@@ -1,5 +1,8 @@
 # Override ALLOWED_HOSTS to allow all hosts during testing
-from lexiflux.settings import *
+import os
+
+os.environ.setdefault("LEXIFLUX_ENV", "local")
+from lexiflux.environments import *
 
 ALLOWED_HOSTS = ["*"]
 

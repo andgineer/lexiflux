@@ -6,7 +6,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### Setup and Environment
 - `uv` is used for Python package management
-- `. ./activate.sh` - Set up development environment (note the space between . and ./activate.sh)
+- `. ./activate.sh` or `source ./activate.sh` - Set up development environment (note the space between . and ./activate.sh)
+- **IMPORTANT**: Always use `source ./activate.sh` in the same shell session when running commands like pytest, not separate tool calls
 - `invoke init-db` - Initialize development database with sample data
 - `invoke buildjs` - Build TypeScript frontend assets using webpack
 - `invoke reqs` - Update requirements and install dependencies
@@ -95,7 +96,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - URL imports automatically download and rewrite image references
 
 ### Configuration
-- Environment-based settings in `lexiflux_settings.py`
+- **Environment-based settings**: `lexiflux/environments/` with auto-detection via `LEXIFLUX_ENV`
+  - `local` - Local development with SQLite and auto-login
+  - `docker` - Local Docker with SQLite and simplified static serving
+  - `koyeb` - Production deployment with PostgreSQL
 - AI model configurations in `lexiflux/resources/chat_models.yaml`
 - Translation prompts in `lexiflux/resources/prompts/`
 - Docker support with compose file for services
