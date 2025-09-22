@@ -5,7 +5,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Development Commands
 
 ### Setup and Environment
-- `uv` is used for Python package management
+- `uv` is used for Python package management - **NEVER use plain pip, always use uv**
 - `. ./activate.sh` or `source ./activate.sh` - Set up development environment (note the space between . and ./activate.sh)
 - **IMPORTANT**: Always use `source ./activate.sh` in the same shell session when running commands like pytest, not separate tool calls
 - `invoke init-db` - Initialize development database with sample data

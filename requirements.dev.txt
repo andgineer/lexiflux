@@ -20,7 +20,7 @@ annotated-types==0.7.0
     # via
     #   -r requirements.txt
     #   pydantic
-anthropic==0.62.0
+anthropic==0.68.0
     # via
     #   -r requirements.txt
     #   langchain-anthropic
@@ -68,7 +68,7 @@ babel==2.17.0
     #   mkdocs-material
 backrefs==5.9
     # via mkdocs-material
-beautifulsoup4==4.13.4
+beautifulsoup4==4.13.5
     # via
     #   -r requirements.txt
     #   deep-translator
@@ -103,7 +103,7 @@ certifi==2025.8.3
     #   requests
     #   selenium
     #   trafilatura
-cffi==1.17.1
+cffi==2.0.0
     # via
     #   -r requirements.txt
     #   argon2-cffi-bindings
@@ -122,13 +122,13 @@ chevron==0.14.0
     # via
     #   -r requirements.txt
     #   genanki
-click==8.2.1
+click==8.3.0
     # via
     #   -r requirements.txt
     #   mkdocs
     #   nltk
     #   typer
-cloudpathlib==0.21.1
+cloudpathlib==0.22.0
     # via
     #   -r requirements.txt
     #   weasel
@@ -148,13 +148,13 @@ courlan==1.3.2
     # via
     #   -r requirements.txt
     #   trafilatura
-coverage==7.10.3
+coverage==7.10.6
     # via
     #   coveralls
     #   pytest-cov
 coveralls==4.0.1
     # via -r requirements.dev.in
-cryptography==45.0.6
+cryptography==46.0.1
     # via
     #   -r requirements.txt
     #   pyopenssl
@@ -172,7 +172,7 @@ dateparser==1.2.2
     # via
     #   -r requirements.txt
     #   htmldate
-debugpy==1.8.16
+debugpy==1.8.17
     # via ipykernel
 decorator==5.2.1
     # via ipython
@@ -189,13 +189,13 @@ distro==1.9.0
     #   -r requirements.txt
     #   anthropic
     #   openai
-django==5.2.5
+django==5.2.6
     # via
     #   -r requirements.txt
     #   django-allauth
     #   django-debug-toolbar
     #   django-extensions
-django-allauth==65.10.0
+django-allauth==65.11.2
     # via -r requirements.txt
 django-debug-toolbar==6.0.0
     # via -r requirements.dev.in
@@ -205,21 +205,25 @@ django-widget-tweaks==1.5.0
     # via -r requirements.txt
 docopt==0.6.2
     # via coveralls
+docstring-parser==0.17.0
+    # via
+    #   -r requirements.txt
+    #   anthropic
 ebooklib==0.19
     # via -r requirements.txt
 execnet==2.1.1
     # via pytest-xdist
-executing==2.2.0
+executing==2.2.1
     # via
     #   icecream
     #   stack-data
-faker==37.5.3
+faker==37.8.0
     # via -r requirements.dev.in
-fastjsonschema==2.21.1
+fastjsonschema==2.21.2
     # via nbformat
 fasttext==0.9.3
     # via -r requirements.txt
-filelock==3.18.0
+filelock==3.19.1
     # via
     #   -r requirements.txt
     #   huggingface-hub
@@ -239,7 +243,7 @@ frozenlist==1.7.0
     #   -r requirements.txt
     #   aiohttp
     #   aiosignal
-fsspec==2025.7.0
+fsspec==2025.9.0
     # via
     #   -r requirements.txt
     #   huggingface-hub
@@ -247,7 +251,7 @@ genanki==0.13.1
     # via -r requirements.txt
 ghp-import==2.1.0
     # via mkdocs
-google-ai-generativelanguage==0.6.18
+google-ai-generativelanguage==0.7.0
     # via
     #   -r requirements.txt
     #   langchain-google-genai
@@ -267,14 +271,14 @@ googleapis-common-protos==1.70.0
     #   grpcio-status
 googletrans==4.0.2
     # via -r requirements.txt
-griffe==1.11.1
+griffe==1.14.0
     # via mkdocstrings-python
-grpcio==1.74.0
+grpcio==1.75.0
     # via
     #   -r requirements.txt
     #   google-api-core
     #   grpcio-status
-grpcio-status==1.74.0
+grpcio-status==1.75.0
     # via
     #   -r requirements.txt
     #   google-api-core
@@ -283,11 +287,11 @@ h11==0.16.0
     #   -r requirements.txt
     #   httpcore
     #   wsproto
-h2==4.2.0
+h2==4.3.0
     # via
     #   -r requirements.txt
     #   httpx
-hf-xet==1.1.7
+hf-xet==1.1.10
     # via
     #   -r requirements.txt
     #   huggingface-hub
@@ -317,7 +321,7 @@ httpx-sse==0.4.1
     #   -r requirements.txt
     #   langchain-community
     #   langchain-mistralai
-huggingface-hub==0.34.4
+huggingface-hub==0.35.0
     # via
     #   -r requirements.txt
     #   tokenizers
@@ -327,7 +331,7 @@ hyperframe==6.1.0
     #   h2
 icecream==2.1.3
     # via -r requirements.dev.in
-identify==2.6.13
+identify==2.6.14
     # via pre-commit
 idna==3.10
     # via
@@ -371,12 +375,12 @@ jinja2==3.1.6
     #   nbconvert
     #   notebook
     #   spacy
-jiter==0.10.0
+jiter==0.11.0
     # via
     #   -r requirements.txt
     #   anthropic
     #   openai
-joblib==1.5.1
+joblib==1.5.2
     # via
     #   -r requirements.txt
     #   nltk
@@ -389,11 +393,11 @@ jsonpointer==3.0.0
     #   -r requirements.txt
     #   jsonpatch
     #   jsonschema
-jsonschema==4.25.0
+jsonschema==4.25.1
     # via
     #   jupyter-events
     #   nbformat
-jsonschema-specifications==2025.4.1
+jsonschema-specifications==2025.9.1
     # via jsonschema
 jupyter-client==8.0.3
     # via
@@ -418,7 +422,7 @@ jupyter-core==5.2.0
     #   notebook
 jupyter-events==0.12.0
     # via jupyter-server
-jupyter-server==2.16.0
+jupyter-server==2.17.0
     # via notebook-shim
 jupyter-server-terminals==0.5.3
     # via jupyter-server
@@ -432,11 +436,11 @@ langchain==0.3.27
     # via
     #   -r requirements.txt
     #   langchain-community
-langchain-anthropic==0.3.18
+langchain-anthropic==0.3.20
     # via -r requirements.txt
-langchain-community==0.3.27
+langchain-community==0.3.29
     # via -r requirements.txt
-langchain-core==0.3.74
+langchain-core==0.3.76
     # via
     #   -r requirements.txt
     #   langchain
@@ -446,13 +450,13 @@ langchain-core==0.3.74
     #   langchain-mistralai
     #   langchain-openai
     #   langchain-text-splitters
-langchain-google-genai==2.1.9
+langchain-google-genai==2.1.12
     # via -r requirements.txt
-langchain-mistralai==0.2.11
+langchain-mistralai==0.2.12
     # via -r requirements.txt
-langchain-openai==0.3.29
+langchain-openai==0.3.33
     # via -r requirements.txt
-langchain-text-splitters==0.3.9
+langchain-text-splitters==0.3.11
     # via
     #   -r requirements.txt
     #   langchain
@@ -460,7 +464,7 @@ langcodes==3.5.0
     # via
     #   -r requirements.txt
     #   spacy
-langsmith==0.4.13
+langsmith==0.4.29
     # via
     #   -r requirements.txt
     #   langchain
@@ -485,11 +489,11 @@ lxml-html-clean==0.4.2
     # via
     #   -r requirements.txt
     #   lxml
-marisa-trie==1.2.1
+marisa-trie==1.3.1
     # via
     #   -r requirements.txt
     #   language-data
-markdown==3.8.2
+markdown==3.9
     # via
     #   mkdocs
     #   mkdocs-autorefs
@@ -527,7 +531,7 @@ mergedeep==1.3.4
     # via
     #   mkdocs
     #   mkdocs-get-deps
-mistune==3.1.3
+mistune==3.1.4
     # via nbconvert
 mkdocs==1.6.1
     # via
@@ -535,7 +539,7 @@ mkdocs==1.6.1
     #   mkdocs-awesome-pages-plugin
     #   mkdocs-material
     #   mkdocstrings
-mkdocs-autorefs==1.4.2
+mkdocs-autorefs==1.4.3
     # via
     #   mkdocstrings
     #   mkdocstrings-python
@@ -547,11 +551,11 @@ mkdocs-material==9.6.16
     # via -r requirements.dev.in
 mkdocs-material-extensions==1.3.1
     # via mkdocs-material
-mkdocstrings==0.30.0
+mkdocstrings==0.30.1
     # via
     #   -r requirements.dev.in
     #   mkdocstrings-python
-mkdocstrings-python==1.16.12
+mkdocstrings-python==1.18.2
     # via mkdocstrings
 multidict==6.6.4
     # via
@@ -564,7 +568,7 @@ murmurhash==1.0.13
     #   preshed
     #   spacy
     #   thinc
-mypy==1.17.1
+mypy==1.18.2
     # via -r requirements.dev.in
 mypy-extensions==1.1.0
     # via
@@ -573,7 +577,7 @@ mypy-extensions==1.1.0
     #   typing-inspect
 natsort==8.4.0
     # via mkdocs-awesome-pages-plugin
-nbclassic==1.3.1
+nbclassic==1.3.3
     # via notebook
 nbclient==0.10.2
     # via nbconvert
@@ -608,13 +612,13 @@ numpy==1.26.4
     #   langchain-community
     #   spacy
     #   thinc
-ollama==0.5.3
+ollama==0.5.4
     # via -r requirements.txt
-openai==1.99.9
+openai==1.108.1
     # via
     #   -r requirements.txt
     #   langchain-openai
-orjson==3.11.1
+orjson==3.11.3
     # via
     #   -r requirements.txt
     #   langsmith
@@ -622,8 +626,6 @@ outcome==1.3.0.post0
     # via
     #   trio
     #   trio-websocket
-overrides==7.7.0
-    # via jupyter-server
 packaging==25.0
     # via
     #   -r requirements.txt
@@ -646,7 +648,7 @@ paginate==0.5.7
     # via mkdocs-material
 pandocfilters==1.5.1
     # via nbconvert
-parso==0.8.4
+parso==0.8.5
     # via jedi
 pathspec==0.12.1
     # via
@@ -654,7 +656,7 @@ pathspec==0.12.1
     #   mypy
 pexpect==4.9.0
     # via ipython
-platformdirs==4.3.8
+platformdirs==4.4.0
     # via
     #   jupyter-core
     #   mkdocs-get-deps
@@ -672,11 +674,11 @@ preshed==3.0.10
     #   -r requirements.txt
     #   spacy
     #   thinc
-prometheus-client==0.22.1
+prometheus-client==0.23.1
     # via
     #   jupyter-server
     #   notebook
-prompt-toolkit==3.0.51
+prompt-toolkit==3.0.52
     # via
     #   ipython
     #   jupyter-console
@@ -690,7 +692,7 @@ proto-plus==1.26.1
     #   -r requirements.txt
     #   google-ai-generativelanguage
     #   google-api-core
-protobuf==6.31.1
+protobuf==6.32.1
     # via
     #   -r requirements.txt
     #   google-ai-generativelanguage
@@ -698,7 +700,7 @@ protobuf==6.31.1
     #   googleapis-common-protos
     #   grpcio-status
     #   proto-plus
-psutil==7.0.0
+psutil==7.1.0
     # via
     #   -r requirements.txt
     #   ipykernel
@@ -717,15 +719,15 @@ pyasn1-modules==0.4.2
     # via
     #   -r requirements.txt
     #   google-auth
-pybind11==3.0.0
+pybind11==3.0.1
     # via
     #   -r requirements.txt
     #   fasttext
-pycparser==2.22
+pycparser==2.23
     # via
     #   -r requirements.txt
     #   cffi
-pydantic==2.11.7
+pydantic==2.11.9
     # via
     #   -r requirements.txt
     #   anthropic
@@ -776,18 +778,18 @@ pymdown-extensions==10.16.1
     #   -r requirements.dev.in
     #   mkdocs-material
     #   mkdocstrings
-pyopenssl==25.1.0
+pyopenssl==25.3.0
     # via -r requirements.txt
 pysocks==1.7.1
     # via urllib3
-pytest==8.4.1
+pytest==8.4.2
     # via
     #   -r requirements.dev.in
     #   allure-pytest
     #   pytest-cov
     #   pytest-django
     #   pytest-xdist
-pytest-cov==6.2.1
+pytest-cov==7.0.0
     # via -r requirements.dev.in
 pytest-django==4.11.1
     # via -r requirements.dev.in
@@ -828,7 +830,7 @@ pyyaml==6.0.2
     #   pyyaml-env-tag
 pyyaml-env-tag==1.1
     # via mkdocs
-pyzmq==27.0.1
+pyzmq==27.1.0
     # via
     #   ipykernel
     #   jupyter-client
@@ -840,13 +842,13 @@ referencing==0.36.2
     #   jsonschema
     #   jsonschema-specifications
     #   jupyter-events
-regex==2025.7.34
+regex==2025.9.18
     # via
     #   -r requirements.txt
     #   dateparser
     #   nltk
     #   tiktoken
-requests==2.32.4
+requests==2.32.5
     # via
     #   -r requirements.txt
     #   coveralls
@@ -882,7 +884,7 @@ rich==14.1.0
     # via
     #   -r requirements.txt
     #   typer
-rpds-py==0.27.0
+rpds-py==0.27.1
     # via
     #   jsonschema
     #   referencing
@@ -890,7 +892,7 @@ rsa==4.9.1
     # via
     #   -r requirements.txt
     #   google-auth
-selenium==4.34.2
+selenium==4.32.0
     # via -r requirements.dev.in
 send2trash==1.8.3
     # via
@@ -900,7 +902,6 @@ setuptools==80.9.0
     # via
     #   -r requirements.txt
     #   fasttext
-    #   marisa-trie
     #   spacy
     #   thinc
 shellingham==1.5.4
@@ -914,7 +915,7 @@ six==1.17.0
     #   python-dateutil
     #   rfc3339-validator
     #   transliterate
-smart-open==7.3.0.post1
+smart-open==7.3.1
     # via
     #   -r requirements.txt
     #   weasel
@@ -927,7 +928,7 @@ sniffio==1.3.1
     #   trio
 sortedcontainers==2.4.0
     # via trio
-soupsieve==2.7
+soupsieve==2.8
     # via
     #   -r requirements.txt
     #   beautifulsoup4
@@ -984,7 +985,7 @@ tld==0.13.1
     # via
     #   -r requirements.txt
     #   courlan
-tokenizers==0.21.4
+tokenizers==0.22.1
     # via
     #   -r requirements.txt
     #   langchain-mistralai
@@ -1023,26 +1024,27 @@ traitlets==5.9.0
     #   notebook
 transliterate==1.10.2
     # via -r requirements.txt
-trio==0.30.0
+trio==0.31.0
     # via
     #   selenium
     #   trio-websocket
 trio-websocket==0.12.2
     # via selenium
-typer==0.16.0
+typer==0.19.1
     # via
     #   -r requirements.txt
     #   spacy
     #   weasel
-types-python-dateutil==2.9.0.20250809
+types-python-dateutil==2.9.0.20250822
     # via arrow
-typing-extensions==4.14.1
+typing-extensions==4.15.0
     # via
     #   -r requirements.txt
     #   aiosignal
     #   anthropic
     #   anyio
     #   beautifulsoup4
+    #   grpcio
     #   huggingface-hub
     #   langchain-core
     #   mypy
@@ -1083,7 +1085,7 @@ urllib3==2.5.0
     #   requests
     #   selenium
     #   trafilatura
-virtualenv==20.33.1
+virtualenv==20.34.0
     # via pre-commit
 wasabi==1.1.3
     # via
@@ -1123,7 +1125,7 @@ yarl==1.20.1
     # via
     #   -r requirements.txt
     #   aiohttp
-zstandard==0.23.0
+zstandard==0.25.0
     # via
     #   -r requirements.txt
     #   langsmith

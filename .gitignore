@@ -13,3 +13,5 @@ allure-results/
 docs/src/ru/images/
 coverage/
 Lexiflux_Calibre_Plugin.zip
+staticfiles/
+test-koyeb.db

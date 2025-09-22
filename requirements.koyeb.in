@@ -1,0 +1,58 @@
+# Production requirements for Koyeb deployment
+# Excludes heavy packages like Ollama, includes PostgreSQL support
+
+# Core Django and web framework
+django
+django-allauth
+django-widget-tweaks
+django-extensions
+Werkzeug
+pyOpenSSL
+
+# Database
+dj-database-url
+psycopg2-binary
+
+# Static files serving
+whitenoise
+
+# Data validation and processing
+pydantic
+numpy==1.26.4
+
+# AI and language processing (cloud-based only, no local models)
+langchain
+langchain-community
+langchain-core
+langchain-openai
+langchain_anthropic
+langchain_google_genai
+langchain_mistralai
+openai
+
+# Text processing and translation
+deep-translator
+transliterate
+trafilatura
+beautifulsoup4
+lxml
+lxml_html_clean
+chardet
+fasttext
+nltk
+unidecode
+spacy
+googletrans
+pagesmith
+
+# Book processing
+EbookLib
+
+# genanki for Anki export
+genanki
+
+# Security and utilities
+PyJWT
+psutil
+
+# Note: Ollama is excluded for Koyeb due to memory constraints

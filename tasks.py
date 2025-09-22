@@ -154,7 +154,7 @@ def runcloud(c: Context):
 
 @task
 def compile_requirements(c: Context):
-    "Convert requirements.in to requirements.txt and requirements.dev.txt."
+    "Convert requirements.in to requirements.txt, requirements.dev.txt, and requirements.koyeb.txt."
 
     start_time = int(time.time())
 
@@ -166,10 +166,15 @@ def compile_requirements(c: Context):
 
     c.run("uv pip compile requirements.dev.in --output-file=requirements.dev.txt --upgrade")
 
+    dev_time = int(time.time())
+
+    c.run("uv pip compile requirements.koyeb.in --output-file=requirements.koyeb.txt --upgrade")
+
     end_time = int(time.time())
 
     print(f"Req's compilation time: {reqs_time - start_time} seconds")
-    print(f"Req's dev compilation time: {end_time - reqs_time} seconds")
+    print(f"Req's dev compilation time: {dev_time - reqs_time} seconds")
+    print(f"Req's koyeb compilation time: {end_time - dev_time} seconds")
     print(f"Total execution time: {end_time - start_time} seconds")
 
 
@@ -274,6 +279,32 @@ def uv(c: Context):
 def pre(c):
     """Run pre-commit checks"""
     c.run("pre-commit run --verbose --all-files")
+
+
+@task
+def test_koyeb(c: Context):
+    """Test koyeb configuration in separate venv"""
+    # Create separate venv for koyeb testing
+    c.run("uv venv .venv-koyeb", warn=True)
+    # Install koyeb requirements
+    c.run("source .venv-koyeb/bin/activate && uv pip install -r requirements.koyeb.txt")
+    # Test Django configuration with koyeb settings
+    c.run(
+        "source .venv-koyeb/bin/activate && "
+        "LEXIFLUX_ENV=koyeb "
+        "SECRET_KEY=test-secret-key "
+        "DATABASE_URL=sqlite:///test-koyeb.db "
+        "./manage check --deploy",
+    )
+    # Test collectstatic
+    c.run(
+        "source .venv-koyeb/bin/activate && "
+        "LEXIFLUX_ENV=koyeb "
+        "SECRET_KEY=test-secret-key "
+        "DATABASE_URL=sqlite:///test-koyeb.db "
+        "./manage collectstatic --noinput",
+    )
+    print("Koyeb configuration test passed!")
 
 
 namespace = Collection.from_module(sys.modules[__name__])
