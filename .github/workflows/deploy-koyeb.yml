@@ -1,0 +1,47 @@
+name: Deploy to Koyeb
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Install uv
+      run: pip install uv
+
+    - name: Install dependencies
+      run: uv pip install --system -r requirements.koyeb.txt
+
+    - name: Run Django checks
+      env:
+        LEXIFLUX_ENV: koyeb
+        DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        SECRET_KEY: ${{ secrets.SECRET_KEY }}
+      run: python manage.py check --deploy
+
+    - name: Collect static files
+      env:
+        LEXIFLUX_ENV: koyeb
+        DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        SECRET_KEY: ${{ secrets.SECRET_KEY }}
+      run: python manage.py collectstatic --noinput
+
+    - name: Deploy to Koyeb
+      uses: koyeb/action-git-deploy@v1
+      with:
+        api-token: ${{ secrets.KOYEB_API_TOKEN }}
+        app-name: lexiflux
+        service-name: web
+        git-sha: ${{ github.sha }}

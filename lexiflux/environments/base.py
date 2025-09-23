@@ -164,3 +164,6 @@ CACHES = {
 
 # Allow cross-origin requests for external dictionary window
 SECURE_CROSS_ORIGIN_OPENER_POLICY = "same-origin-allow-popups"
+
+# Debugger toolbar setting (default: False)
+DEBUGGER_TOOLBAR = False

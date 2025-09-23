@@ -109,3 +109,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - SSL certificates can be generated with `invoke keygen` or `invoke mkcert`
 - Webpack preserves `goToPage` function name for HTML integration
 - Vue.js components use `[[]]` delimiters to avoid Django template conflicts
+
+## CRITICAL KOYEB ENVIRONMENT RULES
+1. **NEVER use the main .venv environment** (activated by activate.sh) for koyeb testing
+2. **ALWAYS use separate .venv-koyeb environment** for koyeb dependencies and testing
+3. **NEVER use plain pip** - ALWAYS use `uv pip` (even in .venv-koyeb environment)
+4. **Koyeb testing pattern**: `source .venv-koyeb/bin/activate && uv pip install ...` (NOT pip install)

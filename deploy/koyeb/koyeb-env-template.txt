@@ -1,0 +1,31 @@
+# Koyeb Environment Variables Template
+# Copy these variables to your Koyeb application environment settings
+
+# Database Configuration
+DATABASE_URL=postgresql://username:password@host:port/database_name
+
+# Django Secret Key (generate a new one for production)
+SECRET_KEY=your-django-secret-key-here
+
+# Social Authentication (required for production)
+# Google OAuth
+GOOGLE_OAUTH2_CLIENT_ID=your-google-client-id
+GOOGLE_OAUTH2_CLIENT_SECRET=your-google-client-secret
+
+# GitHub OAuth (optional)
+GITHUB_CLIENT_ID=your-github-client-id
+GITHUB_CLIENT_SECRET=your-github-client-secret
+
+# Email Configuration (for mandatory email verification)
+EMAIL_HOST=smtp.gmail.com
+EMAIL_PORT=587
+EMAIL_HOST_USER=your-email@gmail.com
+EMAIL_HOST_PASSWORD=your-app-password
+EMAIL_USE_TLS=True
+DEFAULT_FROM_EMAIL=your-email@gmail.com
+
+# Custom Domain (if using)
+ALLOWED_HOSTS=lexiflux.sorokin.engineer,your-koyeb-app.koyeb.app
+
+# Environment Identifier
+LEXIFLUX_ENV=koyeb
