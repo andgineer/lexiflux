@@ -102,13 +102,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
   - `koyeb` - Production deployment with PostgreSQL
 - AI model configurations in `lexiflux/resources/chat_models.yaml`
 - Translation prompts in `lexiflux/resources/prompts/`
-- Docker support with compose file for services
+- Docker support with compose file for services (docker-compose.yaml for Selenium tests only)
+- Separate docker-compose.postgres.yaml for PostgreSQL debugging (not for regular tests)
 
 ## Important Notes
 - Auto-login is enabled in development via `LEXIFLUX_SKIP_AUTH=true`
 - SSL certificates can be generated with `invoke keygen` or `invoke mkcert`
 - Webpack preserves `goToPage` function name for HTML integration
 - Vue.js components use `[[]]` delimiters to avoid Django template conflicts
+- **ALL documentation and code comments MUST be in English** - this is a strict project requirement
 
 ## CRITICAL KOYEB ENVIRONMENT RULES
 1. **NEVER use the main .venv environment** (activated by activate.sh) for koyeb testing
