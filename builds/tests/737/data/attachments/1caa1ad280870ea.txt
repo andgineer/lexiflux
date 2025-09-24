@@ -1,1 +1,0 @@
-INFO     root:book_loader_url.py:223 Found 3 images to prepare for download
