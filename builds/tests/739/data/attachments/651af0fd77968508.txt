@@ -1,0 +1,5 @@
+2025-07-31 15:14:53,516 INFO signals Successfully created language preferences for user testuser (ID: 1)
+2025-07-31 15:14:53,530 INFO reader_views Link clicked: page2.xhtml#section1, page_info: {'page': 2, 'item_id': 'item_1', 'item_name': 'page2.xhtml'}
+2025-07-31 15:14:53,536 INFO models Jumping to 2#0
+2025-07-31 15:14:53,542 INFO reader_views Link clicked: page2.xhtml#section1, page_info: {'page': 2, 'item_id': 'item_1', 'item_name': 'page2.xhtml'}
+2025-07-31 15:14:53,543 INFO models Jumping to 2#0

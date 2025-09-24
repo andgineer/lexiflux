@@ -1,0 +1,2 @@
+2025-08-12 09:24:04,540 INFO nltk_tokenizer Downloaded NLTK data: punkt
+2025-08-12 09:24:04,541 WARNING nltk_tokenizer NLTK punkt tokenizer not available for en. Using default.

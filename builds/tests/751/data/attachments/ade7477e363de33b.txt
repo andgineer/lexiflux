@@ -1,0 +1,2 @@
+Hidden text: alert('Hello'); (8, 23)
+Hidden text: body { color: red; } (39, 59)

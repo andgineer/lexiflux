@@ -1,0 +1,2 @@
+INFO     lexiflux.signals:signals.py:55 Successfully created language preferences for user testuser (ID: 1)
+ERROR    lexiflux.anki.anki_connect:anki_connect.py:47 Failed to connect to AnkiConnect: Connection refused
