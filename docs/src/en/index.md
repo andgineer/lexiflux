@@ -1,6 +1,6 @@
 <img align="left" width="200" src="images//android-chrome-192x192.png" />
 
-# Lexiflux
+# Lexiflux reader
 
 Master languages faster with our AI-powered reading companion.
 

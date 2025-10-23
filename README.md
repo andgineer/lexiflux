@@ -3,7 +3,7 @@
 <br/><br/>
 <img align="left" width="200" src="lexiflux/static/android-chrome-192x192.png" />
 
-# Lexiflux
+# Lexiflux reader
 
 Master languages faster with our AI-powered reading companion.
 
