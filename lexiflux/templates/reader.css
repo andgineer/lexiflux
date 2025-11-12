@@ -22,11 +22,40 @@
   overflow-x: visible;
 }
 
+/* Mobile portrait: sidebar below text, limited height, full width */
 #lexical-panel {
-    max-height: 30vh;
+    max-height: 40vh;
     overflow-y: auto;
+    height: auto;
+    width: 100%;
+    max-width: none;
+    flex: 0 0 auto;
 }
 
+/* Mobile portrait: prevent text container from taking all space */
+@media (max-width: 575px) {
+    #text-container {
+        flex: 1 1 60vh;
+        min-height: 0;
+        overflow: hidden;
+    }
+}
+
+/* Mobile landscape (small screens in landscape): sidebar on right, full height, 35% width */
+@media (min-width: 576px) and (orientation: landscape) {
+    #lexical-panel {
+        max-height: none;
+        height: 100%;
+        width: 35%;
+        max-width: 400px;
+    }
+
+    #lexical-panel .card {
+        height: 100%;
+    }
+}
+
+/* Tablet and desktop: sidebar on right, full height, responsive width */
 @media (min-width: 768px) {
     .flex-md-row {
         flex-direction: row !important;
@@ -35,6 +64,20 @@
     #lexical-panel {
         max-height: none;
         height: 100%;
+        width: 40%;
+        max-width: 500px;
+    }
+
+    #lexical-panel .card {
+        height: 100%;
+    }
+}
+
+/* Large desktop: slightly smaller sidebar proportion */
+@media (min-width: 1200px) {
+    #lexical-panel {
+        width: 33%;
+        max-width: 600px;
     }
 }
 
