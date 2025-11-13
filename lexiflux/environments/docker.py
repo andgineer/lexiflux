@@ -16,9 +16,13 @@ from .base import *  # noqa: F401,F403
 # Debug mode for simple static file serving
 DEBUG = True
 
-# Environment variables from Dockerfile
 SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "defaultsecretkey")
-ALLOWED_HOSTS = os.environ.get("DJANGO_ALLOWED_HOSTS", "*").split(",")
+
+# Default to allow all hosts, but replace if LEXIFLUX_ALLOWED_HOSTS is set (comma-separated)
+if lexiflux_allowed_hosts := os.environ.get("LEXIFLUX_ALLOWED_HOSTS"):
+    ALLOWED_HOSTS = [host.strip() for host in lexiflux_allowed_hosts.split(",") if host.strip()]
+else:
+    ALLOWED_HOSTS = ["*"]
 
 # Database - SQLite for local Docker (can be mounted as volume)
 DATABASES = {

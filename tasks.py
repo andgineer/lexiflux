@@ -131,7 +131,7 @@ def init_db(c: Context):
 @task
 def run(c: Context):
     """Run local server"""
-    c.run("LEXIFLUX_ENV=local LEXIFLUX_SKIP_AUTH=true ./manage runserver")
+    c.run("LEXIFLUX_ENV=local LEXIFLUX_SKIP_AUTH=true ./manage runserver 0.0.0.0:8000")
 
 
 @task

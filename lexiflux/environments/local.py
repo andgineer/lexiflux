@@ -8,6 +8,8 @@ These settings replicate the current local development environment:
 - All AI models available including Ollama
 """
 
+import os
+
 from .base import *  # noqa: F401,F403
 
 # SECURITY WARNING: don't run with debug turned on in production!
@@ -17,12 +19,17 @@ DEBUGGER_TOOLBAR = False
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = "django-insecure-(qy1)@^p*1x^l$ayy@(t-5cym8y5a#8e0jrlr2v#sprhv)cei#"  # noqa: S105
 
-ALLOWED_HOSTS: list[str] = [
+_default_allowed_hosts = [
     "localhost",
     "127.0.0.1",
     "host.docker.internal",
     "lexiflux.ai",
 ]
+
+if lexiflux_allowed_hosts := os.getenv("LEXIFLUX_ALLOWED_HOSTS"):
+    ALLOWED_HOSTS = [host.strip() for host in lexiflux_allowed_hosts.split(",") if host.strip()]
+else:
+    ALLOWED_HOSTS = _default_allowed_hosts
 
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases

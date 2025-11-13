@@ -30,6 +30,18 @@ Add `OLLAMA_LOAD_MODEL=llama3.2` or whatever model you want to the `docker run` 
 
 Please note it will download about 2Gb Ollama AI model and require about 4G RAM for the Docker container to run.
 
+### Configuration
+
+#### Allowed Hosts
+
+By default, the Docker container allows connections from any hostname (`*`). If you need to restrict access to specific hostnames, you can use the `LEXIFLUX_ALLOWED_HOSTS` environment variable:
+
+```bash
+docker run -d -p 6100:8000 -e LEXIFLUX_ALLOWED_HOSTS="localhost,example.com" --name lexiflux andgineer/lexiflux
+```
+
+The value should be a comma-separated list of hostnames. This will replace the default `*` setting.
+
 ## Stopping Lexiflux Docker Container
 To stop the container you can use
 
