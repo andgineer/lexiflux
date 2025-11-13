@@ -32,17 +32,36 @@
     flex: 0 0 auto;
 }
 
-/* Mobile portrait: prevent text container from taking all space */
+/* Mobile: fix viewport height and ensure bottom navbar is visible */
+@media (max-width: 767px) {
+    /* Use dynamic viewport height to account for mobile browser chrome */
+    #reader {
+        height: 100dvh !important;
+    }
+
+    /* Ensure text container doesn't overflow */
+    #text-container {
+        min-height: 0;
+        overflow: hidden;
+    }
+
+    /* Prevent scroller from taking all space, leaving room for bottom navbar */
+    #book-page-scroller {
+        flex: 1 1 0;
+        min-height: 0;
+        overflow-y: auto;
+    }
+}
+
+/* Mobile portrait: sidebar below text, limited height */
 @media (max-width: 575px) {
     #text-container {
         flex: 1 1 60vh;
-        min-height: 0;
-        overflow: hidden;
     }
 }
 
 /* Mobile landscape (small screens in landscape): sidebar on right, full height, 35% width */
-@media (min-width: 576px) and (orientation: landscape) {
+@media (min-width: 576px) and (max-width: 767px) and (orientation: landscape) {
     #lexical-panel {
         max-height: none;
         height: 100%;
