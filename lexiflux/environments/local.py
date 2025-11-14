@@ -23,7 +23,6 @@ _default_allowed_hosts = [
     "localhost",
     "127.0.0.1",
     "host.docker.internal",
-    "lexiflux.ai",
 ]
 
 if lexiflux_allowed_hosts := os.getenv("LEXIFLUX_ALLOWED_HOSTS"):

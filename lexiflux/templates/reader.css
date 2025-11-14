@@ -22,18 +22,8 @@
   overflow-x: visible;
 }
 
-/* Mobile portrait: sidebar below text, limited height, full width */
-#lexical-panel {
-    max-height: 40vh;
-    overflow-y: auto;
-    height: auto;
-    width: 100%;
-    max-width: none;
-    flex: 0 0 auto;
-}
-
 /* Mobile: fix viewport height and ensure bottom navbar is visible */
-@media (max-width: 767px) {
+@media (max-width: 575px) {
     /* Use dynamic viewport height to account for mobile browser chrome */
     #reader {
         height: 100dvh !important;
@@ -43,6 +33,7 @@
     #text-container {
         min-height: 0;
         overflow: hidden;
+        flex: 1 1 60vh;
     }
 
     /* Prevent scroller from taking all space, leaving room for bottom navbar */
@@ -51,22 +42,35 @@
         min-height: 0;
         overflow-y: auto;
     }
-}
 
-/* Mobile portrait: sidebar below text, limited height */
-@media (max-width: 575px) {
-    #text-container {
-        flex: 1 1 60vh;
+    /* Mobile portrait: sidebar below text, limited height, full width */
+    #lexical-panel {
+        max-height: 40vh;
+        overflow-y: auto;
+        height: auto;
+        width: 100%;
+        max-width: none;
+        flex: 0 0 auto;
     }
 }
 
-/* Mobile landscape (small screens in landscape): sidebar on right, full height, 35% width */
-@media (min-width: 576px) and (max-width: 767px) and (orientation: landscape) {
+/* Small screens (576px-767px): sidebar on right, ensure text area is always visible */
+@media (min-width: 576px) and (max-width: 767px) {
+    /* Ensure text container has minimum width and doesn't shrink to zero */
+    #text-container {
+        min-width: 0;
+        flex: 1 1 0;
+        min-height: 0;
+        overflow: hidden;
+    }
+
+    /* Sidebar on right with constrained width */
     #lexical-panel {
         max-height: none;
         height: 100%;
         width: 35%;
         max-width: 400px;
+        flex: 0 0 auto;
     }
 
     #lexical-panel .card {
