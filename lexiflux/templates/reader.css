@@ -52,6 +52,38 @@
         max-width: none;
         flex: 0 0 auto;
     }
+
+    /* Horizontal scrolling tabs on mobile - force one line */
+    #lexical-panel .card-header {
+        position: relative;
+    }
+
+    #lexical-panel .nav-tabs {
+        flex-wrap: nowrap !important;
+        overflow-x: auto;
+        overflow-y: hidden;
+        -webkit-overflow-scrolling: touch;
+        padding-right: 30px; /* Space for fade indicator */
+    }
+
+    #lexical-panel .nav-tabs .nav-item {
+        flex-shrink: 0;
+        white-space: nowrap;
+    }
+
+    /* Fade gradient on right to indicate more tabs - always visible on mobile */
+    #lexical-panel .card-header::after {
+        content: '';
+        position: absolute;
+        right: 0;
+        top: 0;
+        bottom: 0;
+        width: 30px;
+        background: linear-gradient(to right, transparent, rgba(248, 249, 250, 1));
+        pointer-events: none;
+        z-index: 1;
+    }
+
 }
 
 /* Small screens (576px-767px): sidebar on right, ensure text area is always visible */
@@ -76,6 +108,38 @@
     #lexical-panel .card {
         height: 100%;
     }
+
+    /* Horizontal scrolling tabs on small screens (mobile landscape) - force one line */
+    #lexical-panel .card-header {
+        position: relative;
+    }
+
+    #lexical-panel .nav-tabs {
+        flex-wrap: nowrap !important;
+        overflow-x: auto;
+        overflow-y: hidden;
+        -webkit-overflow-scrolling: touch;
+        padding-right: 30px; /* Space for fade indicator */
+    }
+
+    #lexical-panel .nav-tabs .nav-item {
+        flex-shrink: 0;
+        white-space: nowrap;
+    }
+
+    /* Fade gradient on right to indicate more tabs - always visible */
+    #lexical-panel .card-header::after {
+        content: '';
+        position: absolute;
+        right: 0;
+        top: 0;
+        bottom: 0;
+        width: 30px;
+        background: linear-gradient(to right, transparent, rgba(248, 249, 250, 1));
+        pointer-events: none;
+        z-index: 1;
+    }
+
 }
 
 /* Tablet and desktop: sidebar on right, full height, responsive width */
@@ -94,6 +158,18 @@
     #lexical-panel .card {
         height: 100%;
     }
+
+    /* On desktop, tabs wrap normally - no horizontal scrolling */
+    #lexical-panel .nav-tabs {
+        overflow: visible;
+        padding-right: 0;
+    }
+
+    /* Remove fade indicator on desktop */
+    #lexical-panel .card-header::after {
+        display: none;
+    }
+
 }
 
 /* Large desktop: slightly smaller sidebar proportion */
