@@ -1,0 +1,2 @@
+2025-08-12 12:50:33,906 INFO anki_connect result {'result': [123]}
+2025-08-12 12:50:33,906 ERROR anki_connect Unexpected error when adding notes to Anki: Mismatch between number of notes and response

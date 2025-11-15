@@ -1,0 +1,2 @@
+2025-10-23 10:57:21,417 WARNING log Bad Request: /calibre/handshake/
+2025-10-23 10:57:21,417 WARNING log Bad Request: /calibre/handshake/

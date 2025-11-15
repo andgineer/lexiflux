@@ -1,0 +1,8 @@
+2025-09-21 13:28:56,332 ERROR webdriver_augmented Failed to enable CDP logging: Message: HTTP method not allowed
+
+2025-09-21 13:28:56,482 WARNING google_languages Warning: Egyptian Arabic not found in the database for group Arabic.
+2025-09-21 13:28:56,929 INFO signals Successfully created language preferences for user testuser (ID: 2)
+2025-09-21 13:28:58,439 INFO words_export For language en last export datetime: 2025-01-01 00:00:00
+2025-09-21 13:28:58,758 INFO words_export Words exported for English: 1 words
+2025-09-21 13:28:58,759 INFO words_export Words exported for English: 1 words using ankiConnect
+2025-09-21 13:28:58,766 INFO words_export For language en last export datetime: 2025-09-21 13:28:58.758704+00:00

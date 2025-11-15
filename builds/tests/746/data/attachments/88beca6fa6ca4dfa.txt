@@ -1,0 +1,11 @@
+2025-08-12 12:48:29,691 INFO signals Successfully created language preferences for user testuser (ID: 1)
+2025-08-12 12:48:29,693 INFO timing Loading from https://example.com/nav-test completed in 0.000 seconds
+2025-08-12 12:48:29,694 INFO timing Extract metadata completed in 0.001 seconds
+2025-08-12 12:48:29,694 INFO timing Extracting IDs with internal links completed in 0.000 seconds
+2025-08-12 12:48:29,698 INFO timing Extracting readable HTML completed in 0.004 seconds
+2025-08-12 12:48:29,698 INFO timing Parse extracted HTML completed in 0.000 seconds
+2025-08-12 12:48:29,698 INFO timing Adding source info completed in 0.000 seconds
+2025-08-12 12:48:29,699 INFO timing Cleared HTML completed in 0.000 seconds
+2025-08-12 12:48:29,701 INFO book_loader_url No images found in the content
+2025-08-12 12:48:29,707 INFO timing Iterate over pages and save them completed in 0.004 seconds
+2025-08-12 12:48:29,708 INFO book_loader_url No images to download

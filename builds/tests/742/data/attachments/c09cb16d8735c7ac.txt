@@ -1,0 +1,2 @@
+2025-08-12 11:00:50,297 WARNING log Bad Request: /calibre/handshake/
+2025-08-12 11:00:50,297 WARNING log Bad Request: /calibre/handshake/

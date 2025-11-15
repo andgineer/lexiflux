@@ -1,0 +1,2 @@
+2025-08-14 05:39:11,586 INFO signals Successfully created language preferences for user testuser (ID: 1)
+2025-08-14 05:39:11,601 ERROR anki_connect Failed to connect to AnkiConnect: Connection refused

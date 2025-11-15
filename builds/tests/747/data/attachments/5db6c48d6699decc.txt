@@ -1,0 +1,5 @@
+2025-08-13 04:09:08,967 INFO anki_connect result {'error': "['duplicate', 'other error']"}
+2025-08-13 04:09:08,968 INFO anki_connect Some notes are duplicates. Adding individually.
+2025-08-13 04:09:08,968 INFO anki_connect result {'error': "['duplicate']"}
+2025-08-13 04:09:08,968 INFO anki_connect All 1 notes are duplicates. No new notes added.
+2025-08-13 04:09:08,969 INFO anki_connect result {'result': [123]}

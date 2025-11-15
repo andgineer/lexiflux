@@ -1,0 +1,1 @@
+2025-08-14 08:47:13,636 INFO book_loader_url Found 3 images to prepare for download

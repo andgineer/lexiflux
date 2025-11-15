@@ -1,0 +1,10 @@
+2025-08-12 12:48:29,881 INFO timing Loading from https://example.com/source-info-test completed in 0.000 seconds
+2025-08-12 12:48:29,881 INFO timing Extract metadata completed in 0.001 seconds
+2025-08-12 12:48:29,882 INFO timing Extracting IDs with internal links completed in 0.000 seconds
+2025-08-12 12:48:29,887 INFO timing Extracting readable HTML completed in 0.005 seconds
+2025-08-12 12:48:29,887 INFO timing Parse extracted HTML completed in 0.000 seconds
+2025-08-12 12:48:29,888 INFO timing Adding source info completed in 0.000 seconds
+2025-08-12 12:48:29,888 INFO timing Cleared HTML completed in 0.000 seconds
+2025-08-12 12:48:29,890 INFO book_loader_url No images found in the content
+2025-08-12 12:48:29,893 INFO timing Iterate over pages and save them completed in 0.001 seconds
+2025-08-12 12:48:29,893 INFO book_loader_url No images to download

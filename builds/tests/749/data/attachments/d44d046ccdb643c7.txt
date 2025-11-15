@@ -1,0 +1,1 @@
+WARNING  django.request:log.py:253 Bad Request: /calibre/handshake/
