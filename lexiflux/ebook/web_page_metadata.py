@@ -1,4 +1,5 @@
 import json
+import re
 from collections.abc import Callable
 from html import unescape
 from typing import Any
@@ -89,9 +90,7 @@ class MetadataExtractor:
             lambda: self._get_meta_content(name="dc.title"),  # Dublin Core
             lambda: self._get_meta_content(property="og:title"),  # Open Graph
             lambda: self._get_meta_content(name="twitter:title"),  # Twitter Card
-            lambda: self.tree.xpath("//title/text()")[0].strip()
-            if self.tree.xpath("//title/text()")
-            else None,  # HTML title
+            lambda: self._extract_title_from_tag(),  # HTML title
             lambda: self.tree.xpath("//h1/text()")[0].strip()
             if self.tree.xpath("//h1/text()")
             else None,  # First H1
@@ -103,6 +102,28 @@ class MetadataExtractor:
 
         if title := self._get_first_match(title_sources):
             self.metadata[MetadataField.TITLE] = unescape(title)
+
+    def _extract_title_from_tag(self) -> str | None:
+        """Extract title from HTML title tag, handling broken HTML."""
+        if text_nodes := self.tree.xpath("//title/text()"):
+            title_text = text_nodes[0]
+            # Handle broken HTML where title tag isn't closed:
+            # Take only the first line to avoid including subsequent content
+            first_line = title_text.split("\n", 1)[0]
+            # Remove any HTML tags that might have been incorrectly included
+            # as literal text due to unclosed title tag, while preserving actual text content
+            # This regex removes HTML tags: <...> or </...>
+            cleaned_text = re.sub(r"<[^>]+>", "", first_line)
+            # If the cleaned text contains excessive whitespace (likely indicating
+            # that subsequent content was incorrectly included), take only the first
+            # meaningful chunk before the excessive whitespace
+            # Look for patterns like "Title    More Text" where there are 3+ spaces
+            if re.search(r"\s{3,}", cleaned_text):
+                # Split on excessive whitespace and take the first part
+                parts = re.split(r"\s{3,}", cleaned_text)
+                cleaned_text = parts[0] if parts else cleaned_text
+            return cleaned_text.strip() if cleaned_text.strip() else None
+        return None
 
     def extract_part_title(self) -> str | None:
         """Extract title from part of a book."""
