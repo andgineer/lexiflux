@@ -2,7 +2,6 @@
 
 import logging
 import os
-from typing import Optional
 
 import nltk
 
@@ -10,7 +9,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-def ensure_nltk_data(resource: str, package: Optional[str] = None) -> None:
+def ensure_nltk_data(resource: str, package: str | None = None) -> None:
     """Ensure NLTK data is available, downloading it if necessary.
 
     Args:

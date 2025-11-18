@@ -5,7 +5,7 @@ import enum
 import logging
 import os
 from pprint import pformat
-from typing import Any, Optional, Union
+from typing import Any
 from urllib.parse import urljoin, urlparse
 
 import requests
@@ -39,9 +39,9 @@ class BookLoaderURL(BookLoaderHtml):
     def __init__(
         self,
         url: str,
-        cleaning_level: Union[CleaningLevel, str] = CleaningLevel.MODERATE,
-        languages: Optional[list[str]] = None,
-        original_filename: Optional[str] = None,
+        cleaning_level: CleaningLevel | str = CleaningLevel.MODERATE,
+        languages: list[str] | None = None,
+        original_filename: str | None = None,
     ) -> None:
         """Initialize.
 

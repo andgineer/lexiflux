@@ -6,7 +6,7 @@ import logging
 import os
 import tempfile
 import uuid
-from typing import Any, Optional
+from typing import Any
 
 from django.http import HttpRequest, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -26,7 +26,7 @@ DEVICE_VERSION = "1.0.0"
 PREFERRED_FORMATS = ["epub", "html", "txt"]
 
 
-def _get_authenticated_user_email(request: HttpRequest) -> Optional[str]:
+def _get_authenticated_user_email(request: HttpRequest) -> str | None:
     """Get authenticated user email from request. Always requires valid token."""
     # For Calibre uploads, we ALWAYS require token authentication
     # skip_auth does NOT bypass API authentication

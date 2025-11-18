@@ -1,6 +1,6 @@
 """Django Custom User Backend"""
 
-from typing import Any, Optional
+from typing import Any
 
 from django.contrib.auth import get_user_model
 from django.contrib.auth.backends import ModelBackend
@@ -13,11 +13,11 @@ class CustomUserBackend(ModelBackend):  # type: ignore
 
     def authenticate(
         self,
-        request: Optional[HttpRequest],  # noqa: ARG002
-        username: Optional[str] = None,
-        password: Optional[str] = None,
+        request: HttpRequest | None,  # noqa: ARG002
+        username: str | None = None,
+        password: str | None = None,
         **kwargs: Any,  # noqa: ARG002
-    ) -> Optional[AbstractBaseUser]:
+    ) -> AbstractBaseUser | None:
         """Authenticate a user."""
         user_model = get_user_model()
         try:

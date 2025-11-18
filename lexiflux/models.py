@@ -127,10 +127,10 @@ class Language(models.Model):  # type: ignore
     @classmethod
     def find(
         cls: Any,
-        name: Optional[str] = None,
-        google_code: Optional[str] = None,
-        epub_code: Optional[str] = None,
-    ) -> Optional[str]:
+        name: str | None = None,
+        google_code: str | None = None,
+        epub_code: str | None = None,
+    ) -> str | None:
         """Find language by provided parameters (which are not None).
 
         Return language name if found, None otherwise.
@@ -201,7 +201,7 @@ class Book(models.Model):  # type: ignore
     def generate_unique_book_code(self) -> str:
         """Generate a unique book code."""
 
-        def transliterate(book_code: str, lang_code: Optional[str]) -> str:
+        def transliterate(book_code: str, lang_code: str | None) -> str:
             try:
                 if lang_code in get_available_language_codes():
                     book_code = translit(book_code, lang_code, reversed=True)
@@ -343,8 +343,8 @@ class BookPage(models.Model):  # type: ignore
     )
     word_to_sentence_map = models.JSONField(null=True, blank=True)
 
-    _word_sentence_mapping_cache: Optional[dict[int, int]] = None
-    _words_cache: Optional[list[tuple[int, int]]] = None
+    _word_sentence_mapping_cache: dict[int, int] | None = None
+    _words_cache: list[tuple[int, int]] | None = None
 
     class Meta:
         ordering = ["number"]
@@ -521,7 +521,7 @@ class ReaderSettings(models.Model):  # type: ignore
         ]
 
     @classmethod
-    def get_settings(cls, user: CustomUser, book: Book) -> dict[str, Optional[str]]:
+    def get_settings(cls, user: CustomUser, book: Book) -> dict[str, str | None]:
         """Get reader settings for a user and book.
 
         Return the most recently saved settings.
@@ -537,7 +537,7 @@ class ReaderSettings(models.Model):  # type: ignore
         }
 
     @staticmethod
-    def _settings_to_dict(reader_settings: "ReaderSettings") -> dict[str, Optional[str]]:
+    def _settings_to_dict(reader_settings: "ReaderSettings") -> dict[str, str | None]:
         """Convert settings model to dictionary, excluding None values."""
         result = {}
         if reader_settings.font_family is not None:
@@ -550,7 +550,7 @@ class ReaderSettings(models.Model):  # type: ignore
     def save_settings(
         cls,
         user: CustomUser,
-        reader_settings: dict[str, Optional[str]],
+        reader_settings: dict[str, str | None],
         book: Book,
     ) -> None:
         """Save reader settings for a user and optionally a specific book."""

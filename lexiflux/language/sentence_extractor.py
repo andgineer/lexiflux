@@ -1,7 +1,6 @@
 """Sentence extraction utilities for the LexiFlux language module."""
 
 from enum import Enum
-from typing import Optional
 
 import spacy
 import spacy.language
@@ -27,7 +26,7 @@ def get_spacy_sentencizer(lang_code: str) -> spacy.language.Language:
 def break_into_sentences(
     plain_text: str,
     word_slices: list[tuple[int, int]],
-    term_word_ids: Optional[list[int]] = None,  # noqa: ARG001
+    term_word_ids: list[int] | None = None,  # noqa: ARG001
     lang_code: str = "en",
     tokenizer: SentenceTokenizer = SentenceTokenizer.SPACY,
 ) -> tuple[list[str], dict[int, int]]:

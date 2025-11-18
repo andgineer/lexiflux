@@ -6,7 +6,7 @@ import random
 import re
 from collections import defaultdict
 from collections.abc import Iterable, Iterator
-from typing import Any, Optional
+from typing import Any
 
 from ebooklib import ITEM_DOCUMENT, ITEM_IMAGE, epub
 from lxml import etree
@@ -48,7 +48,7 @@ class BookLoaderEpub(BookLoaderBase):
         super().__init__(*args, **kwargs)
         self._pending_toc_entries = []
 
-    def create(self, owner_email: str | None, forced_language: Optional[str] = None) -> Book:
+    def create(self, owner_email: str | None, forced_language: str | None = None) -> Book:
         """Save the book to the database."""
         # Prepare TOC entries before iterating pages
         self._prepare_toc_entries()
@@ -194,13 +194,13 @@ class BookLoaderEpub(BookLoaderBase):
 
     def clear_page(  # noqa: PLR0913
         self,
-        content: Optional[str] = None,
-        root: Optional[etree._Element] = None,
+        content: str | None = None,
+        root: etree._Element | None = None,
         item_filename: str = "",
         item_id: str = "",
         item_name: str = "",
         page_num: int = 0,
-    ) -> Optional[str]:
+    ) -> str | None:
         if content is not None:
             root = parse_partial_html(content)
         self.keep_ids |= self.extract_ids_from_internal_links(root)

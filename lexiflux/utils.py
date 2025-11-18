@@ -4,7 +4,8 @@ import cProfile
 import io
 import logging
 import pstats
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 from django.core.management import CommandError
 

@@ -2,7 +2,7 @@
 
 import json
 import logging
-from typing import Any, Optional
+from typing import Any
 
 from django.apps import apps as django_apps
 
@@ -21,7 +21,7 @@ LANGUAGE_GROUPS: dict[str, list[str]] = {
 }
 
 
-def populate_languages(apps: Optional[django_apps] = None, *args: Any) -> None:  # pylint: disable=keyword-arg-before-vararg
+def populate_languages(apps: django_apps | None = None, *args: Any) -> None:  # pylint: disable=keyword-arg-before-vararg
     """Load languages from the JSON file.
 
     Can be used in RunPython migrations or without params.
@@ -52,7 +52,7 @@ def populate_languages(apps: Optional[django_apps] = None, *args: Any) -> None: 
     populate_language_groups(apps, *args)
 
 
-def populate_language_groups(apps: Optional[django_apps] = None, *args: Any) -> None:  # pylint: disable=keyword-arg-before-vararg  # noqa: ARG001
+def populate_language_groups(apps: django_apps | None = None, *args: Any) -> None:  # pylint: disable=keyword-arg-before-vararg  # noqa: ARG001
     """Load language groups."""
     get_model = django_apps.get_model if apps is None else apps.get_model
     try:

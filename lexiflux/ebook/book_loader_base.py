@@ -4,7 +4,7 @@ import logging
 import os
 from collections import Counter
 from collections.abc import Iterator
-from typing import IO, Any, Optional, Union, cast
+from typing import IO, Any, cast
 from urllib.parse import unquote
 
 from django.core.management import CommandError
@@ -44,9 +44,9 @@ class BookLoaderBase:
 
     def __init__(
         self,
-        file_path: Union[str, IO[str]],
-        languages: Optional[list[str]] = None,
-        original_filename: Optional[str] = None,
+        file_path: str | IO[str],
+        languages: list[str] | None = None,
+        original_filename: str | None = None,
     ) -> None:
         """Initialize.
 
@@ -81,7 +81,7 @@ class BookLoaderBase:
         """
         raise NotImplementedError
 
-    def create(self, owner_email: str | None, forced_language: Optional[str] = None) -> Book:
+    def create(self, owner_email: str | None, forced_language: str | None = None) -> Book:
         """Create the book instance."""
         title = self.meta[MetadataField.TITLE]
         author_name = self.meta[MetadataField.AUTHOR]
@@ -192,7 +192,7 @@ class BookLoaderBase:
         """
         raise NotImplementedError
 
-    def detect_language(self) -> Optional[str]:
+    def detect_language(self) -> str | None:
         """Detect language of the book extracting random fragments of the `self.text`.
 
         Returns lang code.
@@ -253,11 +253,11 @@ class BookLoaderBase:
     def _process_anchors(  # noqa: PLR0913
         self,
         page_num: int,
-        content: Optional[str] = None,
-        html_tree: Optional[etree._Element] = None,
+        content: str | None = None,
+        html_tree: etree._Element | None = None,
         file_name: str = "",
-        item_id: Optional[str] = None,
-        item_name: Optional[str] = None,
+        item_id: str | None = None,
+        item_name: str | None = None,
     ):
         """Process anchors for a page.
 
@@ -299,7 +299,7 @@ class BookLoaderBase:
             log.exception("Error processing anchors")
 
     @staticmethod
-    def extract_ids_from_internal_links(root: Optional[etree.Element]) -> set[str]:
+    def extract_ids_from_internal_links(root: etree.Element | None) -> set[str]:
         """Extract from self.tree_root IDs that have internal links to them.
 
         Extract both "#anchor" (as "anchor") and "filename#anchor" (as "anchor") formats

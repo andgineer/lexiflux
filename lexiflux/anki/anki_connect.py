@@ -3,7 +3,7 @@
 import ast
 import json
 import logging
-from typing import Any, Optional
+from typing import Any
 
 import requests
 import urllib3.connection
@@ -68,7 +68,7 @@ def create_model(url: str, model_name: str) -> None:
     requests.post(url, json=payload, timeout=ANKI_CONNECT_TIMEOUT)
 
 
-def add_notes(url: str, notes: list[dict[str, Any]]) -> Optional[int]:
+def add_notes(url: str, notes: list[dict[str, Any]]) -> int | None:
     """Add notes to Anki, skipping duplicates and adding only new notes.
 
     Return None if all success.

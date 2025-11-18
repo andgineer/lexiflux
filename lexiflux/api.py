@@ -1,8 +1,9 @@
 """API utilities."""
 
 import re
+from collections.abc import Callable
 from functools import wraps
-from typing import Any, Callable
+from typing import Any
 
 from django.http import HttpRequest, JsonResponse
 from pydantic import BaseModel, ValidationError

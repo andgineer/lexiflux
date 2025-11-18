@@ -1,6 +1,7 @@
 import json
+from collections.abc import Callable
 from html import unescape
-from typing import Any, Callable, Optional
+from typing import Any
 from urllib.parse import urlparse
 
 from lxml import etree
@@ -17,7 +18,7 @@ class MetadataExtractor:
         html_content: str | None = None,
         *,
         url: str = "",
-        tree: Optional[etree.Element] = None,
+        tree: etree.Element | None = None,
     ) -> None:
         """
         Initialize the metadata extractor.
@@ -53,9 +54,9 @@ class MetadataExtractor:
 
     def _get_meta_content(
         self,
-        name: Optional[str] = None,
-        property: Optional[str] = None,
-    ) -> Optional[str]:
+        name: str | None = None,
+        property: str | None = None,
+    ) -> str | None:
         """Helper method to get content from meta tags."""
         xpath_query = "//meta"
         if name:
@@ -69,7 +70,7 @@ class MetadataExtractor:
                 return content.strip()
         return None
 
-    def _get_first_match(self, sources: list[Callable]) -> Optional[Any]:
+    def _get_first_match(self, sources: list[Callable]) -> Any | None:
         """Return the first non-None result."""
         for source in sources:
             try:
@@ -103,7 +104,7 @@ class MetadataExtractor:
         if title := self._get_first_match(title_sources):
             self.metadata[MetadataField.TITLE] = unescape(title)
 
-    def extract_part_title(self) -> Optional[str]:
+    def extract_part_title(self) -> str | None:
         """Extract title from part of a book."""
         title_sources = [
             lambda: self._get_meta_content(name="dc.title"),  # Dublin Core
@@ -164,12 +165,12 @@ class MetadataExtractor:
 
         self.metadata[MetadataField.LANGUAGE] = self._get_first_match(language_sources)
 
-    def _extract_html_lang(self) -> Optional[str]:
+    def _extract_html_lang(self) -> str | None:
         """Extract language from HTML lang attribute."""
         lang_attrs = self.tree.xpath("//html/@lang")
         return lang_attrs[0].strip().split("-")[0] if lang_attrs else None
 
-    def _extract_og_locale(self) -> Optional[str]:
+    def _extract_og_locale(self) -> str | None:
         """Extract language from Open Graph locale."""
         locale = self._get_meta_content(property="og:locale")
         return locale.split("_")[0] if locale else None
@@ -313,7 +314,7 @@ def extract_web_page_metadata(
     html_content: str | None = None,
     *,
     url: str,
-    root: Optional[etree.Element] = None,
+    root: etree.Element | None = None,
 ) -> dict[str, Any]:
     """
     Extract metadata from HTML content using multiple methods.

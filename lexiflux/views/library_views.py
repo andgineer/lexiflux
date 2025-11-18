@@ -1,7 +1,7 @@
 """Library partial views with URL import functionality."""
 
 import logging
-from typing import Any, Optional
+from typing import Any
 
 from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
 from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
@@ -76,7 +76,7 @@ class EditBookModalPartial(TemplateView):  # type: ignore
     """Edit book modal partial view."""
 
     template_name = "partials/book_modal.html"
-    book: Optional[Book] = None
+    book: Book | None = None
 
     def dispatch(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
         """Handle all HTTP methods with proper error checking."""

@@ -2,7 +2,7 @@
 
 import json
 import logging
-from typing import Any, Optional
+from typing import Any
 
 from deep_translator.exceptions import LanguageNotSupportedException
 from django.conf import settings
@@ -180,7 +180,7 @@ def check_article_params(
     article_type: str,
     parameters: dict[str, str],
     language_preferences: LanguagePreferences,
-) -> Optional[JsonResponse]:
+) -> JsonResponse | None:
     """Check if the article parameters are valid.
 
     Return None if the parameters are valid, otherwise return a JsonResponse with an error message.
