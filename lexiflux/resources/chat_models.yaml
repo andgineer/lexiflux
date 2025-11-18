@@ -14,20 +14,21 @@ gpt-5-nano:
   model: ChatOpenAI
   suffix: 🔗 5ⁿ
 
-gpt-5-chat-latest:
-  title: OpenAI GPT-5 Chat Latest
+gpt-4.1:
+  title: OpenAI GPT-4.1
   model: ChatOpenAI
-  suffix: 🔗 5⚡
+  suffix: 🔗 4.1
 
-gpt-4o:
-  title: OpenAI GPT-4o
+gpt-4.1-mini:
+  title: OpenAI GPT-4.1 mini
   model: ChatOpenAI
-  suffix: 🔗 4o
+  suffix: 🔗 4.1°
 
-gpt-4o-mini:
-  title: OpenAI GPT-4o mini
+gpt-4.1-nano:
+  title: OpenAI GPT-4.1 nano
   model: ChatOpenAI
-  suffix: 🔗 4o°
+  suffix: 🔗 4.1ⁿ
+
 
 # Claude Models
 claude-opus-4-1:
@@ -35,25 +36,16 @@ claude-opus-4-1:
   model: ChatAnthropic
   suffix: 💡4.1♦
 
-claude-opus-4-0:
-  title: Claude Opus 4
+claude-sonnet-4-5:
+  title: Claude Sonnet 4.5
   model: ChatAnthropic
-  suffix: 💡4♦
+  suffix: 💡4.5
 
-claude-sonnet-4-0:
-  title: Claude Sonnet 4
+claude-haiku-4-5:
+  title: Claude Haiku 4.5
   model: ChatAnthropic
-  suffix: 💡4
+  suffix: 💡4.5°
 
-claude-3-5-sonnet-latest:
-  title: Claude 3.5 Sonnet
-  model: ChatAnthropic
-  suffix: 💡3.5
-
-claude-3-5-haiku-latest:
-  title: Claude 3.5 Haiku
-  model: ChatAnthropic
-  suffix: 💡3.5°
 
 # Other Models
 llama3.2:
@@ -61,27 +53,32 @@ llama3.2:
   model: Ollama
   suffix: 🦙3.2
 
-mistral-large-latest:
-  title: Mistral Large
+mistral-medium-3.1:
+  title: Mistral Medium 3.1
   model: ChatMistralAI
-  suffix: 🌪️L
+  suffix: 🌪️M3.1
 
-mistral-medium-latest:
-  title: Mistral Medium
+mistral-small-3.1:
+  title: Mistral Small 3.1
   model: ChatMistralAI
-  suffix: 🌪️M
+  suffix: 🌪️S3.1
 
 gemini-2.0-flash-exp:
   title: Gemini 2.0 Flash Experimental
   model: ChatGoogle
   suffix: 🌀2.0fe
 
-gemini-1.5-pro-latest:
-  title: Gemini 1.5 Pro
+gemini-2.5-pro:
+  title: Gemini 2.5 Pro
   model: ChatGoogle
-  suffix: 🌀1.5p
+  suffix: 🌀2.5p
 
-gemini-1.5-flash-latest:
-  title: Gemini 1.5 Flash
+gemini-2.5-flash:
+  title: Gemini 2.5 Flash
   model: ChatGoogle
-  suffix: 🌀1.5f
+  suffix: 🌀2.5f
+
+gemini-2.5-flash-lite:
+  title: Gemini 2.5 Flash Lite
+  model: ChatGoogle
+  suffix: 🌀2.5fl

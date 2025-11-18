@@ -8,10 +8,10 @@ from typing import Any
 import openai
 import yaml
 from django.conf import settings
-from langchain.schema import BaseOutputParser
 from langchain_anthropic import ChatAnthropic
 from langchain_community.llms import Ollama  # pylint: disable=no-name-in-module
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
+from langchain_core.output_parsers import BaseOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import RunnablePassthrough
 from langchain_google_genai import ChatGoogleGenerativeAI

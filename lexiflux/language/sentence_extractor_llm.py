@@ -4,7 +4,7 @@
 except for the marked sentence.
 """
 
-from langchain.schema import BaseOutputParser
+from langchain_core.output_parsers import BaseOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_openai import ChatOpenAI
 
