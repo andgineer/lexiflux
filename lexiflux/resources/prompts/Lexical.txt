@@ -4,7 +4,7 @@ marked with [HIGHLIGHT][/HIGHLIGHT].
 The article should analyze and describe the {text_language} word itself,
 not its translation.
 
-The article itself should be in {user_language} and should be written for a general audience.
+The article itself should be in {user_language} language and should be written for a general audience.
 
 The article should include:
 - All meanings and their usage contexts
@@ -16,4 +16,6 @@ The article should include:
 Format: HTML without block markers
 Style: Concise dictionary entry format (Oxford Dictionary style)
 
-Critical instructions: Give the result in HTML formatting, without any block marks.
+Critical instructions:
+- Give the result in HTML formatting, without any block marks.
+- The result should be in {user_language} language

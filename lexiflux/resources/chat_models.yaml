@@ -1,4 +1,9 @@
 # OpenAI Models
+gpt-3.5-turbo:
+  title: OpenAI GPT-3.5 Turbo
+  model: ChatOpenAI
+  suffix: 🔗 3.5
+
 gpt-5:
   title: OpenAI GPT-5
   model: ChatOpenAI
