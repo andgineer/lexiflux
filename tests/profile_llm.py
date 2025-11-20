@@ -15,13 +15,28 @@ For each prompt we:
       highlighted word = 'list' (wrapped in [HIGHLIGHT]...[/HIGHLIGHT])
 
 We:
-  - Skip OpenAI reasoning models (o*, gpt-5*, *reasoning*)
-  - Skip OpenAI audio/gpt-audio, realtime, codex, instruct, legacy Davinci/Curie/Babbage/Ada,
-    embeddings, moderation, etc.
-  - Skip Anthropic reasoning models (*thinking*, *opus*)
-  - Keep a blacklist of models that 404/500 so we don't keep retrying them
-  - Record tokens, latency, per-1M-token prices and estimated cost per call
-  - Print a per-prompt summary and save everything as llm_benchmark_YYYYMMDD_HHMMSS.json
+  - Skip OpenAI:
+      * reasoning models (o*, gpt-5*, *reasoning*)
+      * audio / gpt-audio*, Sora, realtime (*realtime*), image models,
+      * TTS / STT models (tts, whisper, transcribe, audio-),
+      * embeddings, moderation,
+      * codex-*, code-*,
+      * instruct, old GPT-3 completions (davinci/curie/babbage/ada).
+  - Skip Anthropic reasoning models (*thinking*, *opus*).
+  - Keep a blacklist of models that 404/500 so we don't keep retrying them.
+  - Record tokens, latency, per-1M-token prices and estimated cost per call.
+  - Update the JSON file after *every* result (success or error).
+  - With --resume, read the existing JSON, skip already completed (provider, model, prompt)
+    and reuse known bad-model blacklists.
+  - At the end, print:
+      * per-prompt summary
+      * total cost (overall and per provider).
+
+Usage examples:
+
+  python bench_llms.py
+  python bench_llms.py --output my_run.json
+  python bench_llms.py --resume --output my_run.json
 
 Env:
   export OPENAI_API_KEY="sk-..."
@@ -31,7 +46,7 @@ Env:
 import os
 import time
 import json
-import datetime as dt
+import argparse
 from typing import Dict, List, Any, Tuple, Optional
 from pathlib import Path
 from collections import defaultdict
@@ -42,7 +57,7 @@ import anthropic
 
 PROMPTS_DIR = Path("lexiflux/resources/prompts")
 
-# Fixed test context you requested
+# Fixed test context
 TEXT_LANGUAGE = "Serbian"
 USER_LANGUAGE = "Russian"
 TEXT_FRAGMENT = (
@@ -92,7 +107,7 @@ def build_input_for_prompt(template: str) -> str:
 
     1. Format known placeholders: {text_language}, {user_language}
     2. Inject [FRAGMENT]...[/FRAGMENT] with [HIGHLIGHT]list[/HIGHLIGHT]
-    3. Append explicit language info at the bottom (just in case)
+    3. Append explicit language + word info at the bottom
     """
     safe_vars = SafeFormatDict(
         text_language=TEXT_LANGUAGE,
@@ -101,7 +116,7 @@ def build_input_for_prompt(template: str) -> str:
     # Replace {text_language} / {user_language} if present
     formatted_template = template.format_map(safe_vars)
 
-    # Mark the highlighted word
+    # Mark the highlighted word once
     marked_fragment = TEXT_FRAGMENT.replace(
         HIGHLIGHT_WORD,
         f"[HIGHLIGHT]{HIGHLIGHT_WORD}[/HIGHLIGHT]",
@@ -114,7 +129,7 @@ def build_input_for_prompt(template: str) -> str:
         "[/FRAGMENT]\n\n"
         f"text_language={TEXT_LANGUAGE}\n"
         f"user_language={USER_LANGUAGE}\n"
-        f"target_language={USER_LANGUAGE}\n"  # explicit, even if template infers it
+        f"target_language={USER_LANGUAGE}\n"
         f"word={HIGHLIGHT_WORD}\n"
     )
 
@@ -142,27 +157,26 @@ def is_openai_reasoning_model(model_id: str) -> bool:
     return False
 
 
-def is_openai_non_text_model(model_id: str, model_type: Optional[str]) -> bool:
+def is_openai_non_text_model(model_id: str) -> bool:
     """
-    Return True if this is not a text chat/responses model.
+    Return True if this is NOT a text chat/responses model we want to call.
 
-    - Filter by type when available (only keep 'chat.completions' / 'responses')
-    - Additionally filter by name:
-        * gpt-audio*, *realtime*, image, tts, whisper/transcribe/audio
-        * embeddings, moderation
-        * codex-*, code-*
-        * instruct, davinci/curie/babbage/ada (old completions)
+    We filter by name because OpenAI's models.list() returns models for many
+    endpoints (audio, images, embeddings, moderation, realtime, Sora, etc.),
+    and some legacy completions that 404/500 on modern endpoints.
     """
     mid = model_id.lower()
 
-    # First, type-based filter: only keep chat/responses
-    if model_type not in (None, "chat.completions", "responses"):
+    # Sora (video)
+    if "sora" in mid:
         return True
 
-    # Explicit name-based filters
-    if mid.startswith("gpt-audio") or "audio-" in mid:
-        return True
+    # Realtime
     if "realtime" in mid:
+        return True
+
+    # Audio / gpt-audio
+    if mid.startswith("gpt-audio") or "audio-" in mid:
         return True
 
     # Images
@@ -179,7 +193,7 @@ def is_openai_non_text_model(model_id: str, model_type: Optional[str]) -> bool:
     if "embedding" in mid:
         return True
 
-    # Moderation
+    # Moderation / safety-only
     if "moderation" in mid or "omni-moderation" in mid:
         return True
 
@@ -187,7 +201,7 @@ def is_openai_non_text_model(model_id: str, model_type: Optional[str]) -> bool:
     if mid.startswith("codex-") or mid.startswith("code-"):
         return True
 
-    # Instruct / legacy completions (tend to 404/500)
+    # Instruct / legacy completions
     if "instruct" in mid:
         return True
 
@@ -208,14 +222,21 @@ def is_anthropic_reasoning_model(model_id: str) -> bool:
 
 
 # ---------------------------------------------------------------------------
-# 3) PRICING HELPERS (rough, but enough for comparison)
+# 3) PRICING HELPERS (rough, but good enough for comparison)
+#    Based on Anthropic pricing docs and OpenAI pricing examples.
 # ---------------------------------------------------------------------------
 
 
 def openai_pricing_for_model(model_id: str) -> Tuple[Optional[float], Optional[float]]:
+    """
+    Return (input_price_per_1M_tokens, output_price_per_1M_tokens) in USD
+    for known OpenAI *text* chat models.
+
+    If unknown, returns (None, None).
+    """
     mid = model_id.lower()
 
-    # GPT-4.1 family
+    # GPT-4.1 family (approx)
     if mid.startswith("gpt-4.1-mini"):
         return 0.40, 1.60
     if mid.startswith("gpt-4.1-nano"):
@@ -231,7 +252,7 @@ def openai_pricing_for_model(model_id: str) -> Tuple[Optional[float], Optional[f
     if mid.startswith("gpt-4o"):
         return 2.50, 10.00
 
-    # GPT-3.5 turbo (legacy but still useful as reference)
+    # GPT-3.5-turbo (legacy but still useful baseline)
     if "gpt-3.5-turbo" in mid:
         return 0.50, 1.50
 
@@ -247,7 +268,19 @@ def openai_pricing_for_model(model_id: str) -> Tuple[Optional[float], Optional[f
 
 
 def anthropic_pricing_for_model(model_id: str) -> Tuple[Optional[float], Optional[float]]:
+    """
+    Return (input_price_per_1M_tokens, output_price_per_1M_tokens) in USD
+    for known Claude models. Values from Anthropic pricing table.
+    """
     mid = model_id.lower()
+
+    # Claude 4 / 4.1 Opus / Sonnet / Haiku
+    if "opus 4.1" in mid or "opus-4.1" in mid or "claude-opus-4.1" in mid:
+        return 15.00, 75.00
+    if "opus 4" in mid or "opus-4" in mid:
+        return 15.00, 75.00
+    if "sonnet 4" in mid or "sonnet-4" in mid:
+        return 3.00, 15.00
 
     # Claude 3.7 / 3.5 Sonnet
     if "claude-3-7-sonnet" in mid or "claude-3.7-sonnet" in mid:
@@ -267,16 +300,6 @@ def anthropic_pricing_for_model(model_id: str) -> Tuple[Optional[float], Optiona
     if "claude-3-opus" in mid:
         return 15.00, 75.00
 
-    # Claude 4.x (rough guesses grouped with Sonnet/Haiku tiers)
-    if "haiku-4.5" in mid:
-        return 1.00, 5.00
-    if "sonnet-4.5" in mid:
-        return 3.00, 15.00
-    if "sonnet-4" in mid and "4.5" not in mid:
-        return 3.00, 15.00
-    if "opus-4.1" in mid or "opus-4" in mid:
-        return 15.00, 75.00
-
     return None, None
 
 
@@ -294,55 +317,75 @@ def estimate_cost_usd(
 
 
 # ---------------------------------------------------------------------------
-# 4) OPENAI: run models on prompts
+# 4) JSON WRITER (incremental updates)
 # ---------------------------------------------------------------------------
 
 
-def run_openai(raw_prompts: Dict[str, str]) -> List[Dict[str, Any]]:
-    results: List[Dict[str, Any]] = []
+def write_results(output_path: Path, results: List[Dict[str, Any]]) -> None:
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    with output_path.open("w", encoding="utf-8") as f:
+        json.dump(results, f, ensure_ascii=False, indent=2)
 
+
+# ---------------------------------------------------------------------------
+# 5) OPENAI: run models on prompts (with resume + blacklist)
+# ---------------------------------------------------------------------------
+
+
+def run_openai(
+    raw_prompts: Dict[str, str],
+    output_path: Path,
+    all_results: List[Dict[str, Any]],
+    completed_keys: set,
+    bad_models: set,
+) -> Tuple[List[Dict[str, Any]], set]:
     api_key = os.getenv("OPENAI_API_KEY")
     if not api_key:
         print("OPENAI_API_KEY not set, skipping OpenAI.\n")
-        return results
+        return all_results, bad_models
 
-    client = OpenAI(api_key=api_key)
+    # Shorter timeout + fewer retries so bad models don't hang forever.
+    client = OpenAI(api_key=api_key, timeout=20.0, max_retries=1)
 
     model_objs = list(client.models.list())
-    all_models = [(m.id, getattr(m, "type", None)) for m in model_objs]
-    print(f"[OpenAI] Found {len(all_models)} models for this key.")
+    model_ids = [m.id for m in model_objs]
+    print(f"[OpenAI] Found {len(model_ids)} models for this key.")
 
     filtered_model_ids: List[str] = []
-    for mid, mtype in all_models:
+    for mid in model_ids:
         if is_openai_reasoning_model(mid):
             print(f"[OpenAI] Skipping reasoning model: {mid}")
             continue
-        if is_openai_non_text_model(mid, mtype):
-            print(f"[OpenAI] Skipping non-text/unsupported model: {mid} (type={mtype})")
+        if is_openai_non_text_model(mid):
+            print(f"[OpenAI] Skipping non-text/unsupported model: {mid}")
             continue
         filtered_model_ids.append(mid)
 
     print(f"[OpenAI] Will run {len(filtered_model_ids)} text LLM models.\n")
 
-    bad_models = set()
-
     for model_id in filtered_model_ids:
         if model_id in bad_models:
+            print(f"[OpenAI] Skipping blacklisted model: {model_id}")
             continue
 
         for prompt_name, prompt_template in raw_prompts.items():
             if model_id in bad_models:
                 break
 
+            key = ("openai", model_id, prompt_name)
+            if key in completed_keys:
+                # Already done in a previous run (resume mode)
+                continue
+
             input_text = build_input_for_prompt(prompt_template)
             print(f"[OpenAI] Running model={model_id} on prompt={prompt_name} ...")
             start = time.perf_counter()
             try:
-                response = client.responses.create(
+                # Per-request override for timeout, just in case
+                response = client.with_options(timeout=20.0).responses.create(
                     model=model_id,
                     input=input_text,
                     max_output_tokens=512,
-                    timeout=15,  # hard cap to avoid long hangs
                 )
                 elapsed = time.perf_counter() - start
 
@@ -368,7 +411,9 @@ def run_openai(raw_prompts: Dict[str, str]) -> List[Dict[str, Any]]:
                     "output": output_text,
                     "error": None,
                 }
-                results.append(rec)
+                all_results.append(rec)
+                completed_keys.add(key)
+                write_results(output_path, all_results)
 
                 print(
                     f"[OpenAI] ✔ {model_id} | {prompt_name} | "
@@ -392,38 +437,51 @@ def run_openai(raw_prompts: Dict[str, str]) -> List[Dict[str, Any]]:
                     "output": None,
                     "error": err_msg,
                 }
-                results.append(rec)
+                all_results.append(rec)
+                completed_keys.add(key)
+                write_results(output_path, all_results)
 
                 print(
                     f"[OpenAI] ✖ {model_id} | {prompt_name} | ERROR after {elapsed:.3f}s: {err_msg}"
                 )
 
-                # If it's clearly a model-not-found or 500, blacklist the model
+                # Heuristics: if it's clearly model-not-found or internal error,
+                # blacklist the model so we don't keep hitting it.
                 msg = str(e).lower()
-                if "model" in msg and "not found" in msg:
+                if ("model" in msg and "not found" in msg) or "was not found" in msg:
                     bad_models.add(model_id)
                     print(f"[OpenAI] → Blacklisting {model_id} (model not found)")
-                elif "500" in msg or "internalservererror" in msg:
+                elif (
+                    "error code: 500" in msg
+                    or "internalservererror" in msg
+                    or "internal server error" in msg
+                    or "status_code: 500" in msg
+                ):
                     bad_models.add(model_id)
                     print(f"[OpenAI] → Blacklisting {model_id} (internal error)")
 
-    return results
+    return all_results, bad_models
 
 
 # ---------------------------------------------------------------------------
-# 5) ANTHROPIC: run non-reasoning models on prompts
+# 6) ANTHROPIC: run non-reasoning models on prompts (with resume + blacklist)
 # ---------------------------------------------------------------------------
 
 
-def run_anthropic(raw_prompts: Dict[str, str]) -> List[Dict[str, Any]]:
-    results: List[Dict[str, Any]] = []
-
+def run_anthropic(
+    raw_prompts: Dict[str, str],
+    output_path: Path,
+    all_results: List[Dict[str, Any]],
+    completed_keys: set,
+    bad_models: set,
+) -> Tuple[List[Dict[str, Any]], set]:
     api_key = os.getenv("ANTHROPIC_API_KEY")
     if not api_key:
         print("ANTHROPIC_API_KEY not set, skipping Anthropic.\n")
-        return results
+        return all_results, bad_models
 
-    client = anthropic.Anthropic(api_key=api_key)
+    # Set a reasonable timeout + limited retries
+    client = anthropic.Anthropic(api_key=api_key, timeout=20.0, max_retries=1)
 
     models_list = client.models.list()
     all_ids = [m.id for m in models_list.data]
@@ -438,15 +496,18 @@ def run_anthropic(raw_prompts: Dict[str, str]) -> List[Dict[str, Any]]:
 
     print(f"[Anthropic] Will run {len(filtered_ids)} non-reasoning models.\n")
 
-    bad_models = set()
-
     for model_id in filtered_ids:
         if model_id in bad_models:
+            print(f"[Anthropic] Skipping blacklisted model: {model_id}")
             continue
 
         for prompt_name, prompt_template in raw_prompts.items():
             if model_id in bad_models:
                 break
+
+            key = ("anthropic", model_id, prompt_name)
+            if key in completed_keys:
+                continue
 
             input_text = build_input_for_prompt(prompt_template)
             print(f"[Anthropic] Running model={model_id} on prompt={prompt_name} ...")
@@ -458,7 +519,6 @@ def run_anthropic(raw_prompts: Dict[str, str]) -> List[Dict[str, Any]]:
                     messages=[
                         {"role": "user", "content": input_text},
                     ],
-                    timeout=15,
                 )
                 elapsed = time.perf_counter() - start
 
@@ -490,7 +550,9 @@ def run_anthropic(raw_prompts: Dict[str, str]) -> List[Dict[str, Any]]:
                     "output": output_text,
                     "error": None,
                 }
-                results.append(rec)
+                all_results.append(rec)
+                completed_keys.add(key)
+                write_results(output_path, all_results)
 
                 print(
                     f"[Anthropic] ✔ {model_id} | {prompt_name} | "
@@ -514,7 +576,9 @@ def run_anthropic(raw_prompts: Dict[str, str]) -> List[Dict[str, Any]]:
                     "output": None,
                     "error": err_msg,
                 }
-                results.append(rec)
+                all_results.append(rec)
+                completed_keys.add(key)
+                write_results(output_path, all_results)
 
                 print(
                     f"[Anthropic] ✖ {model_id} | {prompt_name} | "
@@ -522,25 +586,35 @@ def run_anthropic(raw_prompts: Dict[str, str]) -> List[Dict[str, Any]]:
                 )
 
                 msg = str(e).lower()
-                if "model" in msg and "not found" in msg:
+                if ("model" in msg and "not found" in msg) or "was not found" in msg:
                     bad_models.add(model_id)
                     print(f"[Anthropic] → Blacklisting {model_id} (model not found)")
-                elif "500" in msg or "internal" in msg:
+                elif (
+                    "error code: 500" in msg
+                    or "internal" in msg  # catch InternalServerError variants
+                ):
                     bad_models.add(model_id)
                     print(f"[Anthropic] → Blacklisting {model_id} (internal error)")
 
-    return results
+    return all_results, bad_models
 
 
 # ---------------------------------------------------------------------------
-# 6) SUMMARY
+# 7) SUMMARY (per prompt + total cost)
 # ---------------------------------------------------------------------------
 
 
 def print_summary_grouped_by_prompt(all_results: List[Dict[str, Any]]) -> None:
     by_prompt: Dict[str, List[Dict[str, Any]]] = defaultdict(list)
+    total_cost = 0.0
+    by_provider_cost: Dict[str, float] = defaultdict(float)
+
     for r in all_results:
         by_prompt[r["prompt_name"]].append(r)
+        c = r.get("estimated_cost_usd")
+        if c is not None:
+            total_cost += c
+            by_provider_cost[r["provider"]] += c
 
     print("\n================ SUMMARY BY PROMPT ================\n")
     for prompt_name, items in by_prompt.items():
@@ -568,27 +642,147 @@ def print_summary_grouped_by_prompt(all_results: List[Dict[str, Any]]) -> None:
             )
         print()
 
+    print("=============== COST SUMMARY =================")
+    print(f"Total cost (all providers): ${total_cost:.8f}")
+    for provider, c in by_provider_cost.items():
+        print(f"  - {provider}: ${c:.8f}")
+    print("===============================================")
+
 
 # ---------------------------------------------------------------------------
-# 7) MAIN
+# 8) ARG PARSING + RESUME LOGIC
+# ---------------------------------------------------------------------------
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        description="Bench all OpenAI + Anthropic text models on LexiFlux prompts."
+    )
+    parser.add_argument(
+        "--output",
+        "-o",
+        default="llm_benchmark.json",
+        help="Path to JSON file with results (default: llm_benchmark.json)",
+    )
+    parser.add_argument(
+        "--resume",
+        action="store_true",
+        help="Resume from existing JSON file: skip already completed "
+        "(provider, model, prompt) and reuse bad-model blacklist.",
+    )
+    return parser.parse_args()
+
+
+def load_existing_results_for_resume(
+    output_path: Path,
+) -> Tuple[List[Dict[str, Any]], set, set, set]:
+    """
+    Load existing JSON (if any) and reconstruct:
+
+    - all_results: the list itself
+    - completed_keys: set of (provider, model, prompt_name)
+    - openai_bad_models: models we should skip immediately
+    - anthropic_bad_models: models we should skip immediately
+    """
+    all_results: List[Dict[str, Any]] = []
+    completed_keys: set = set()
+    openai_bad_models: set = set()
+    anthropic_bad_models: set = set()
+
+    if not output_path.exists():
+        return all_results, completed_keys, openai_bad_models, anthropic_bad_models
+
+    try:
+        with output_path.open("r", encoding="utf-8") as f:
+            data = json.load(f)
+        if not isinstance(data, list):
+            print(f"[WARN] Existing file {output_path} is not a list; ignoring for resume.")
+            return all_results, completed_keys, openai_bad_models, anthropic_bad_models
+        all_results = data
+    except Exception as e:
+        print(f"[WARN] Could not parse existing JSON {output_path}: {e}")
+        return all_results, completed_keys, openai_bad_models, anthropic_bad_models
+
+    for r in all_results:
+        provider = r.get("provider")
+        model = r.get("model")
+        prompt_name = r.get("prompt_name")
+        if not provider or not model or not prompt_name:
+            continue
+        completed_keys.add((provider, model, prompt_name))
+
+        err = (r.get("error") or "").lower()
+        if not err:
+            continue
+
+        # Rebuild bad-model blacklist from previous runs
+        if provider == "openai":
+            if ("model" in err and "not found" in err) or "was not found" in err:
+                openai_bad_models.add(model)
+            elif (
+                "error code: 500" in err
+                or "internalservererror" in err
+                or "internal server error" in err
+                or "status_code: 500" in err
+            ):
+                openai_bad_models.add(model)
+        elif provider == "anthropic":
+            if ("model" in err and "not found" in err) or "was not found" in err:
+                anthropic_bad_models.add(model)
+            elif "error code: 500" in err or "internal" in err:
+                anthropic_bad_models.add(model)
+
+    print(
+        f"[RESUME] Loaded {len(all_results)} existing records from {output_path}. "
+        f"Completed combos: {len(completed_keys)}, "
+        f"OpenAI bad models: {len(openai_bad_models)}, "
+        f"Anthropic bad models: {len(anthropic_bad_models)}"
+    )
+    return all_results, completed_keys, openai_bad_models, anthropic_bad_models
+
+
+# ---------------------------------------------------------------------------
+# 9) MAIN
 # ---------------------------------------------------------------------------
 
 
 def main() -> None:
+    args = parse_args()
+    output_path = Path(args.output)
+
     raw_prompts = load_raw_prompts_from_dir(PROMPTS_DIR)
 
-    all_results: List[Dict[str, Any]] = []
+    if args.resume:
+        all_results, completed_keys, openai_bad_models, anthropic_bad_models = (
+            load_existing_results_for_resume(output_path)
+        )
+    else:
+        all_results = []
+        completed_keys = set()
+        openai_bad_models = set()
+        anthropic_bad_models = set()
 
-    all_results.extend(run_openai(raw_prompts))
-    all_results.extend(run_anthropic(raw_prompts))
+    # Run OpenAI + Anthropic. Each call will update all_results and JSON incrementally.
+    all_results, openai_bad_models = run_openai(
+        raw_prompts,
+        output_path,
+        all_results,
+        completed_keys,
+        openai_bad_models,
+    )
+    all_results, anthropic_bad_models = run_anthropic(
+        raw_prompts,
+        output_path,
+        all_results,
+        completed_keys,
+        anthropic_bad_models,
+    )
 
-    ts = dt.datetime.now().strftime("%Y%m%d_%H%M%S")
-    out_path = f"llm_benchmark_{ts}.json"
-    with open(out_path, "w", encoding="utf-8") as f:
-        json.dump(all_results, f, ensure_ascii=False, indent=2)
+    # Final write (just in case)
+    write_results(output_path, all_results)
+    print(f"\nDone. Total records stored in {output_path}: {len(all_results)}")
 
-    print(f"\nDone. Saved {len(all_results)} records to {out_path}")
-
+    # Human-readable summary you asked for:
     print_summary_grouped_by_prompt(all_results)
 
 
