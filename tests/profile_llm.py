@@ -56,6 +56,8 @@ import anthropic
 
 
 PROMPTS_DIR = Path("lexiflux/resources/prompts")
+BLACKLIST_PATH = Path(__file__).parent / "llm_blacklist.json"
+PRICES_PATH = Path(__file__).parent / "llm_prices.json"
 
 # Fixed test context
 TEXT_LANGUAGE = "Serbian"
@@ -138,8 +140,41 @@ def build_input_for_prompt(template: str) -> str:
 
 
 # ---------------------------------------------------------------------------
-# 2) MODEL FILTERS
+# 2) MODEL FILTERS + BLACKLIST
 # ---------------------------------------------------------------------------
+
+
+def load_blacklist() -> set:
+    """Load blacklist from JSON file."""
+    if not BLACKLIST_PATH.exists():
+        print(f"[WARN] Blacklist file not found: {BLACKLIST_PATH}, using empty blacklist.")
+        return set()
+    try:
+        with BLACKLIST_PATH.open("r", encoding="utf-8") as f:
+            data = json.load(f)
+            models = data.get("models", [])
+            return set(models)
+    except Exception as e:
+        print(f"[WARN] Could not load blacklist from {BLACKLIST_PATH}: {e}, using empty blacklist.")
+        return set()
+
+
+_BLACKLIST_CACHE: Optional[set] = None
+
+
+def get_blacklist() -> set:
+    """Get blacklist (cached)."""
+    global _BLACKLIST_CACHE
+    if _BLACKLIST_CACHE is None:
+        _BLACKLIST_CACHE = load_blacklist()
+    return _BLACKLIST_CACHE
+
+
+def is_blacklisted(provider: str, model_id: str) -> bool:
+    """Check if a model is blacklisted."""
+    blacklist = get_blacklist()
+    key = f"{provider}:{model_id}"
+    return key in blacklist
 
 
 def is_openai_reasoning_model(model_id: str) -> bool:
@@ -222,9 +257,32 @@ def is_anthropic_reasoning_model(model_id: str) -> bool:
 
 
 # ---------------------------------------------------------------------------
-# 3) PRICING HELPERS (rough, but good enough for comparison)
-#    Based on Anthropic pricing docs and OpenAI pricing examples.
+# 3) PRICING HELPERS (read from JSON file)
 # ---------------------------------------------------------------------------
+
+
+def load_prices() -> Dict[str, Dict[str, Dict[str, float]]]:
+    """Load pricing data from JSON file."""
+    if not PRICES_PATH.exists():
+        print(f"[WARN] Prices file not found: {PRICES_PATH}, using empty prices.")
+        return {}
+    try:
+        with PRICES_PATH.open("r", encoding="utf-8") as f:
+            return json.load(f)
+    except Exception as e:
+        print(f"[WARN] Could not load prices from {PRICES_PATH}: {e}, using empty prices.")
+        return {}
+
+
+_PRICES_CACHE: Optional[Dict[str, Dict[str, Dict[str, float]]]] = None
+
+
+def get_prices() -> Dict[str, Dict[str, Dict[str, float]]]:
+    """Get prices (cached)."""
+    global _PRICES_CACHE
+    if _PRICES_CACHE is None:
+        _PRICES_CACHE = load_prices()
+    return _PRICES_CACHE
 
 
 def openai_pricing_for_model(model_id: str) -> Tuple[Optional[float], Optional[float]]:
@@ -234,35 +292,25 @@ def openai_pricing_for_model(model_id: str) -> Tuple[Optional[float], Optional[f
 
     If unknown, returns (None, None).
     """
+    prices = get_prices()
+    openai_prices = prices.get("openai", {})
+
     mid = model_id.lower()
 
-    # GPT-4.1 family (approx)
-    if mid.startswith("gpt-4.1-mini"):
-        return 0.40, 1.60
-    if mid.startswith("gpt-4.1-nano"):
-        return 0.10, 0.40
-    if mid.startswith("gpt-4.1"):
-        return 2.00, 8.00
+    # Try exact match first
+    for key, price_info in openai_prices.items():
+        if key.lower() == mid:
+            return price_info.get("input_price_per_mtoken"), price_info.get(
+                "output_price_per_mtoken"
+            )
 
-    # GPT-4o mini
-    if mid.startswith("gpt-4o-mini"):
-        return 0.15, 0.60
-
-    # GPT-4o
-    if mid.startswith("gpt-4o"):
-        return 2.50, 10.00
-
-    # GPT-3.5-turbo (legacy but still useful baseline)
-    if "gpt-3.5-turbo" in mid:
-        return 0.50, 1.50
-
-    # GPT-4 turbo / GPT-4 older
-    if "gpt-4-turbo" in mid:
-        return 10.00, 30.00
-    if mid.startswith("gpt-4-32k"):
-        return 60.00, 120.00
-    if mid.startswith("gpt-4"):
-        return 30.00, 60.00
+    # Try prefix matches (for versioned models)
+    for key, price_info in openai_prices.items():
+        key_lower = key.lower()
+        if mid.startswith(key_lower) or key_lower in mid:
+            return price_info.get("input_price_per_mtoken"), price_info.get(
+                "output_price_per_mtoken"
+            )
 
     return None, None
 
@@ -272,33 +320,25 @@ def anthropic_pricing_for_model(model_id: str) -> Tuple[Optional[float], Optiona
     Return (input_price_per_1M_tokens, output_price_per_1M_tokens) in USD
     for known Claude models. Values from Anthropic pricing table.
     """
+    prices = get_prices()
+    anthropic_prices = prices.get("anthropic", {})
+
     mid = model_id.lower()
 
-    # Claude 4 / 4.1 Opus / Sonnet / Haiku
-    if "opus 4.1" in mid or "opus-4.1" in mid or "claude-opus-4.1" in mid:
-        return 15.00, 75.00
-    if "opus 4" in mid or "opus-4" in mid:
-        return 15.00, 75.00
-    if "sonnet 4" in mid or "sonnet-4" in mid:
-        return 3.00, 15.00
+    # Try exact match first
+    for key, price_info in anthropic_prices.items():
+        if key.lower() == mid:
+            return price_info.get("input_price_per_mtoken"), price_info.get(
+                "output_price_per_mtoken"
+            )
 
-    # Claude 3.7 / 3.5 Sonnet
-    if "claude-3-7-sonnet" in mid or "claude-3.7-sonnet" in mid:
-        return 3.00, 15.00
-    if "claude-3-5-sonnet" in mid or "claude-3.5-sonnet" in mid:
-        return 3.00, 15.00
-
-    # Claude 3.5 Haiku
-    if "claude-3-5-haiku" in mid or "claude-3.5-haiku" in mid:
-        return 0.80, 4.00
-
-    # Claude 3 Haiku
-    if "claude-3-haiku" in mid and "3-5" not in mid and "3.5" not in mid:
-        return 0.25, 1.25
-
-    # Claude 3 Opus
-    if "claude-3-opus" in mid:
-        return 15.00, 75.00
+    # Try substring matches (for versioned models)
+    for key, price_info in anthropic_prices.items():
+        key_lower = key.lower()
+        if key_lower in mid or mid in key_lower:
+            return price_info.get("input_price_per_mtoken"), price_info.get(
+                "output_price_per_mtoken"
+            )
 
     return None, None
 
@@ -366,6 +406,9 @@ def run_openai(
     for model_id in filtered_model_ids:
         if model_id in bad_models:
             print(f"[OpenAI] Skipping blacklisted model: {model_id}")
+            continue
+        if is_blacklisted("openai", model_id):
+            print(f"[OpenAI] Skipping blacklisted model (from JSON): {model_id}")
             continue
 
         for prompt_name, prompt_template in raw_prompts.items():
@@ -499,6 +542,9 @@ def run_anthropic(
     for model_id in filtered_ids:
         if model_id in bad_models:
             print(f"[Anthropic] Skipping blacklisted model: {model_id}")
+            continue
+        if is_blacklisted("anthropic", model_id):
+            print(f"[Anthropic] Skipping blacklisted model (from JSON): {model_id}")
             continue
 
         for prompt_name, prompt_template in raw_prompts.items():

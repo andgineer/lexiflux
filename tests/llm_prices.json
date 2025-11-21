@@ -1,0 +1,102 @@
+{
+  "openai": {
+    "gpt-4.1-mini": {
+      "input_price_per_mtoken": 0.40,
+      "output_price_per_mtoken": 1.60
+    },
+    "gpt-4.1-nano": {
+      "input_price_per_mtoken": 0.10,
+      "output_price_per_mtoken": 0.40
+    },
+    "gpt-4.1": {
+      "input_price_per_mtoken": 2.00,
+      "output_price_per_mtoken": 8.00
+    },
+    "gpt-4o-mini": {
+      "input_price_per_mtoken": 0.15,
+      "output_price_per_mtoken": 0.60
+    },
+    "gpt-4o": {
+      "input_price_per_mtoken": 2.50,
+      "output_price_per_mtoken": 10.00
+    },
+    "gpt-3.5-turbo": {
+      "input_price_per_mtoken": 0.50,
+      "output_price_per_mtoken": 1.50
+    },
+    "gpt-4-turbo": {
+      "input_price_per_mtoken": 10.00,
+      "output_price_per_mtoken": 30.00
+    },
+    "gpt-4-32k": {
+      "input_price_per_mtoken": 60.00,
+      "output_price_per_mtoken": 120.00
+    },
+    "gpt-4": {
+      "input_price_per_mtoken": 30.00,
+      "output_price_per_mtoken": 60.00
+    }
+  },
+  "anthropic": {
+    "opus 4.1": {
+      "input_price_per_mtoken": 15.00,
+      "output_price_per_mtoken": 75.00
+    },
+    "opus-4.1": {
+      "input_price_per_mtoken": 15.00,
+      "output_price_per_mtoken": 75.00
+    },
+    "claude-opus-4.1": {
+      "input_price_per_mtoken": 15.00,
+      "output_price_per_mtoken": 75.00
+    },
+    "opus 4": {
+      "input_price_per_mtoken": 15.00,
+      "output_price_per_mtoken": 75.00
+    },
+    "opus-4": {
+      "input_price_per_mtoken": 15.00,
+      "output_price_per_mtoken": 75.00
+    },
+    "sonnet 4": {
+      "input_price_per_mtoken": 3.00,
+      "output_price_per_mtoken": 15.00
+    },
+    "sonnet-4": {
+      "input_price_per_mtoken": 3.00,
+      "output_price_per_mtoken": 15.00
+    },
+    "claude-3-7-sonnet": {
+      "input_price_per_mtoken": 3.00,
+      "output_price_per_mtoken": 15.00
+    },
+    "claude-3.7-sonnet": {
+      "input_price_per_mtoken": 3.00,
+      "output_price_per_mtoken": 15.00
+    },
+    "claude-3-5-sonnet": {
+      "input_price_per_mtoken": 3.00,
+      "output_price_per_mtoken": 15.00
+    },
+    "claude-3.5-sonnet": {
+      "input_price_per_mtoken": 3.00,
+      "output_price_per_mtoken": 15.00
+    },
+    "claude-3-5-haiku": {
+      "input_price_per_mtoken": 0.80,
+      "output_price_per_mtoken": 4.00
+    },
+    "claude-3.5-haiku": {
+      "input_price_per_mtoken": 0.80,
+      "output_price_per_mtoken": 4.00
+    },
+    "claude-3-haiku": {
+      "input_price_per_mtoken": 0.25,
+      "output_price_per_mtoken": 1.25
+    },
+    "claude-3-opus": {
+      "input_price_per_mtoken": 15.00,
+      "output_price_per_mtoken": 75.00
+    }
+  }
+}
