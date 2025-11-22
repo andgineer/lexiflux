@@ -30,11 +30,13 @@ Most of them should be open in external window, but some of them even could be o
 
 This is controlled by `open in new window` parameter.
 
-## AI models: OpenAI (ChatGPT), Anthropic (Claude) and others
+## AI models: OpenAI (ChatGPT), Google (Gemini), Anthropic (Claude) and others
 
 To use commercial AI providers you need `API KEY`.
 
 See [AI Connections](http://localhost:6100/ai-settings/) section how to get one for different AI providers.
+
+> Gemini 2.5 Flash is smart enough for even tricky language puzzles and can be used with free tier.
 
 ## Ollama
 You can [install](docker.md#local-ollama-ai) in the docker local AI [Ollama](https://github.com/jmorganca/ollama) model.

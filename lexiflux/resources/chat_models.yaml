@@ -1,7 +1,7 @@
-gpt-5:
-  title: OpenAI GPT-5
+gpt-5.1:
+  title: OpenAI GPT-5.1
   model: ChatOpenAI
-  suffix: 🔗 5
+  suffix: 🔗 5.1
 
 gpt-5-mini:
   title: OpenAI GPT-5 mini
@@ -27,11 +27,6 @@ mistral-small-3.1:
   title: Mistral Small 3.1
   model: ChatMistralAI
   suffix: 🌪️S3.1
-
-gemini-2.5-pro:
-  title: Gemini 2.5 Pro
-  model: ChatGoogle
-  suffix: 🌀2.5p
 
 gemini-2.5-flash:
   title: Gemini 2.5 Flash
