@@ -163,8 +163,23 @@ class Llm:  # pylint: disable=too-few-public-methods
         text_parser = TextOutputParser()
 
         return {
+            "AI dictionary": lambda model: (
+                RunnablePassthrough()
+                | self._prompt_templates["AI dictionary"]
+                | model
+                | text_parser
+            ),
             "Translate": lambda model: (
                 RunnablePassthrough() | self._prompt_templates["Translate"] | model | text_parser
+            ),
+            "Sentence": lambda model: (
+                RunnablePassthrough.assign(text=lambda x: _extract_sentence(x["text"]))
+                | self._prompt_templates["Sentence"]
+                | model
+                | text_parser
+            ),
+            "Explain": lambda model: (
+                RunnablePassthrough() | self._prompt_templates["Explain"] | model | text_parser
             ),
             "Lexical": lambda model: (
                 RunnablePassthrough(text=lambda x: _remove_sentence_marks(x["text"]))
@@ -172,17 +187,8 @@ class Llm:  # pylint: disable=too-few-public-methods
                 | model
                 | text_parser
             ),
-            "Explain": lambda model: (
-                RunnablePassthrough() | self._prompt_templates["Explain"] | model | text_parser
-            ),
             "Origin": lambda model: (
                 RunnablePassthrough() | self._prompt_templates["Origin"] | model | text_parser
-            ),
-            "Sentence": lambda model: (
-                RunnablePassthrough.assign(text=lambda x: _extract_sentence(x["text"]))
-                | self._prompt_templates["Sentence"]
-                | model
-                | text_parser
             ),
             "AI": lambda model: (
                 RunnablePassthrough.assign(

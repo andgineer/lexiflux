@@ -49,26 +49,26 @@ def normalize_for_search(text: str) -> str:
 class LexicalArticleType(models.TextChoices):  # type: ignore  # pylint: disable=too-many-ancestors
     """Types of AI insights."""
 
-    # todo: extract from Llm.article_names()
+    DICTIONARY = "Dictionary", _("Dictionary")
+    SITE = "Site", _("Site")
+    AI_DICTIONARY = "AI dictionary", _("AI dictionary")
     TRANSLATE = "Translate", _("Translate")
     SENTENCE = "Sentence", _("Sentence")
     EXPLAIN = "Explain", _("Explain")
-    ORIGIN = "Origin", _("Origin")
     LEXICAL = "Lexical", _("Lexical")
+    ORIGIN = "Origin", _("Origin")
     AI = "AI", _("AI")
-    DICTIONARY = "Dictionary", _("Dictionary")
-    SITE = "Site", _("Site")
 
 
 LEXICAL_ARTICLE_PARAMETERS = {
+    "Dictionary": ["dictionary"],
+    "Site": ["url", "window"],
+    "AI dictionary": ["model"],
     "Translate": ["model"],
     "Sentence": ["model"],
     "Explain": ["model"],
-    "Origin": ["model"],
-    "Examples": ["model"],
     "Lexical": ["model"],
-    "Dictionary": ["dictionary"],
-    "Site": ["url", "window"],
+    "Origin": ["model"],
     "AI": ["model", "prompt"],
 }
 

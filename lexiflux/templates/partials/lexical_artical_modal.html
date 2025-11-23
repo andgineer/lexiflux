@@ -45,7 +45,7 @@
                             <label class="form-check-label" for="openInNewWindow">Open in new window</label>
                         </div>
                     </div>
-                    <div v-if="['Translate', 'Sentence', 'Explain', 'Origin', 'Examples', 'Lexical'].includes(form.type)">
+                    <div v-if="['Translate', 'Sentence', 'Explain', 'Origin', 'Examples', 'Lexical', 'AI dictionary'].includes(form.type)">
                         <div class="mb-3">
                             <label class="form-label">AI Model</label>
                             <select v-model="form.parameters.model" @change="updateParameters" class="form-select">

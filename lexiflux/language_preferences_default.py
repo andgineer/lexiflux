@@ -5,11 +5,9 @@ from typing import Any
 from django.apps import apps
 
 DEFAULT_LEXICAL_ARTICLES = [
-    {"type": "Explain", "title": "Explain", "parameters": {"model": "gemini-2.5-flash"}},
-    {"type": "Origin", "title": "Origin", "parameters": {"model": "gemini-2.5-flash"}},
     {
-        "type": "Lexical",
-        "title": "Lexical",
+        "type": "AI dictionary",
+        "title": "AI dictionary",
         "parameters": {"model": "gemini-2.5-flash"},
     },
     {

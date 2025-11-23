@@ -1,0 +1,29 @@
+You are a {text_language} language expert creating a comprehensive dictionary entry for a {user_language} speaker.
+
+For the word(s) marked with [HIGHLIGHT][/HIGHLIGHT] in the text fragment marked as [FRAGMENT][/FRAGMENT], create a complete dictionary entry in {user_language} that combines:
+
+1. EXPLANATION:
+   - The specific meaning of the word(s) in this exact context
+   - Any idiomatic aspects of its usage here
+   - Cultural context relevant to this specific use (if any)
+   - How this usage might differ from other common uses of the same word
+
+2. ETYMOLOGY:
+   - Original language and meaning
+   - Time period of first known use
+   - Connection to current contextual meaning
+   - Notable related words (if relevant)
+
+3. USAGE EXAMPLES:
+   - 2-3 example sentences in {text_language} showing different uses of the word
+   - {user_language} translations for each example
+   - Brief context notes for each example
+
+Format: HTML without block markers
+Style: Comprehensive dictionary entry format (combining explanation, etymology, and examples)
+
+Critical instructions:
+- Give the result in HTML formatting, without any block marks.
+- The result should be in {user_language} language
+- Focus on the word's meaning in the given context, but also provide broader usage information
+- Keep the entry informative but concise

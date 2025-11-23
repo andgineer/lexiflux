@@ -21,6 +21,18 @@ from lexiflux.language.sentence_extractor_llm import (
 from lexiflux.views.lexical_views import get_context_for_translation_history
 
 
+def get_first_chatopenai_model(llm_instance: Llm) -> str:
+    """Get the first ChatOpenAI model from llm_instance.chat_models."""
+    chat_models = llm_instance.chat_models
+    model_name = next(
+        (name for name, info in chat_models.items() if info.get("model") == "ChatOpenAI"),
+        list(chat_models.keys())[0] if chat_models else None,
+    )
+    if not model_name:
+        raise ValueError("No models found in chat_models")
+    return model_name
+
+
 @pytest.fixture
 def mock_book_page(book):
     page = BookPage.objects.get(book=book, number=1)
@@ -324,9 +336,10 @@ class TestModelSettings:
 @allure.epic("Language Tools")
 @allure.feature("Model Management")
 class TestModelManagement:
-    def test_get_or_create_model_openai(self, request, approved_user):
+    def test_get_or_create_model_openai(self, request, approved_user, llm_instance):
         llm = Llm()
-        params = {"model": "gpt-5", "user": approved_user}
+        model_name = get_first_chatopenai_model(llm_instance)
+        params = {"model": model_name, "user": approved_user}
 
         mock_settings = {"api_key": "test_key", "temperature": 0.7}
         with patch.object(Llm, "get_model_settings", return_value=mock_settings):
@@ -342,7 +355,7 @@ class TestModelManagement:
 
                     # Verify the model was created with correct parameters
                     mock_openai.assert_called_once_with(
-                        model="gpt-5", api_key="test_key", temperature=0.7
+                        model=model_name, api_key="test_key", temperature=0.7
                     )
                     assert model is mock_chat
 
@@ -378,7 +391,8 @@ class TestArticleGeneration:
         expected_prompt_file,
     ):
         # Prepare test data
-        params = {"model": "gpt-5", "user": approved_user}
+        model_name = get_first_chatopenai_model(llm_instance)
+        params = {"model": model_name, "user": approved_user}
         data = {
             "book_code": mock_book_page.book.code,
             "book_page_number": mock_book_page.number,
@@ -443,7 +457,7 @@ class TestArticleGeneration:
                     # Verify ChatOpenAI was initialized correctly
                     mock_openai.assert_called_once()
                     call_kwargs = mock_openai.call_args.kwargs
-                    assert call_kwargs["model"] == "gpt-5"
+                    assert call_kwargs["model"] == model_name
                     assert "temperature" in call_kwargs
             finally:
                 # Restore the original factory function
@@ -453,8 +467,9 @@ class TestArticleGeneration:
         self, request, mock_book_page, llm_instance, approved_user
     ):
         # Prepare test data
+        model_name = get_first_chatopenai_model(llm_instance)
         params = {
-            "model": "gpt-5",
+            "model": model_name,
             "user": approved_user,
             "prompt": "Custom system prompt for AI article",
         }
@@ -508,7 +523,7 @@ class TestArticleGeneration:
                     # Verify ChatOpenAI was initialized correctly
                     mock_openai.assert_called_once()
                     call_kwargs = mock_openai.call_args.kwargs
-                    assert call_kwargs["model"] == "gpt-5"
+                    assert call_kwargs["model"] == model_name
                     assert "temperature" in call_kwargs
             finally:
                 # Restore the original factory function
@@ -516,7 +531,8 @@ class TestArticleGeneration:
 
     def test_generate_article_cached_invalid_article(self, llm_instance, approved_user):
         # Prepare test data
-        params = {"model": "gpt-5", "user": approved_user}
+        model_name = get_first_chatopenai_model(llm_instance)
+        params = {"model": model_name, "user": approved_user}
         data = {"text": "Sample text", "text_language": "en", "user_language": "fr"}
 
         with pytest.raises(ValueError, match="AI insight 'InvalidArticle' not found"):
@@ -529,20 +545,29 @@ class TestArticleGeneration:
     def test_generate_article_error_handling(self, approved_user):
         llm = Llm()
         article_name = "Translate"
-        params = {"model": "gpt-5", "user": approved_user}
+        model_name = get_first_chatopenai_model(llm)
+        params = {"model": model_name, "user": approved_user}
         data = {"text": "Test text"}
 
         with patch.object(Llm, "_generate_article_cached", side_effect=Exception("Test error")):
             with pytest.raises(AIModelError) as exc_info:
                 llm.generate_article(article_name, params, data)
 
-            assert exc_info.value.model_name == "gpt-5"
+            assert exc_info.value.model_name == model_name
             assert "Test error" in str(exc_info.value)
 
     def test_generate_article_invalid_article(self):
         llm = Llm()
         article_name = "InvalidArticle"
-        params = {"model": "gpt-5", "user": MagicMock()}
+        # Get first ChatOpenAI model from available models
+        chat_models = llm.chat_models
+        model_name = next(
+            (name for name, info in chat_models.items() if info.get("model") == "ChatOpenAI"),
+            list(chat_models.keys())[0] if chat_models else None,
+        )
+        if not model_name:
+            raise ValueError("No models found in chat_models")
+        params = {"model": model_name, "user": MagicMock()}
         data = {"text": "Test text"}
 
         with pytest.raises(AIModelError) as exc_info:
@@ -554,7 +579,8 @@ class TestArticleGeneration:
     def test_generate_article_api_error(self, mock_chat_openai, approved_user, book):
         llm = Llm()
         article_name = "Translate"
-        params = {"model": "gpt-5", "user": approved_user}
+        model_name = get_first_chatopenai_model(llm)
+        params = {"model": model_name, "user": approved_user}
         data = {
             "text": "Test text",
             "text_language": "en",
@@ -571,7 +597,7 @@ class TestArticleGeneration:
             llm.generate_article(article_name, params, data)
 
         assert "'book_code'" in str(exc_info.value)
-        assert exc_info.value.model_name == "gpt-5"
+        assert exc_info.value.model_name == model_name
 
 
 @allure.epic("Language Tools")
