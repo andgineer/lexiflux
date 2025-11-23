@@ -1,0 +1,11 @@
+2025-11-20 05:22:31,915 INFO timing Loading from https://example.com/error-test completed in 0.000 seconds
+2025-11-20 05:22:31,916 INFO timing Extract metadata completed in 0.001 seconds
+2025-11-20 05:22:31,916 INFO timing Extracting IDs with internal links completed in 0.000 seconds
+2025-11-20 05:22:31,922 INFO timing Extracting readable HTML completed in 0.006 seconds
+2025-11-20 05:22:31,923 INFO timing Parse extracted HTML completed in 0.000 seconds
+2025-11-20 05:22:31,923 INFO timing Adding source info completed in 0.000 seconds
+2025-11-20 05:22:31,923 INFO timing Cleared HTML completed in 0.000 seconds
+2025-11-20 05:22:31,925 INFO book_loader_url No images found in the content
+2025-11-20 05:22:31,929 INFO timing Iterate over pages and save them completed in 0.001 seconds
+2025-11-20 05:22:31,929 INFO book_loader_url No images to download
+2025-11-20 05:22:31,930 ERROR book_loader_url Error fetching URL https://example.com/error-test: Network error

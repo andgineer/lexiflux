@@ -1,0 +1,11 @@
+2025-09-22 04:22:17,177 ERROR webdriver_augmented Failed to enable CDP logging: Message: HTTP method not allowed
+
+2025-09-22 04:22:17,377 WARNING google_languages Warning: Egyptian Arabic not found in the database for group Arabic.
+2025-09-22 04:22:17,738 INFO signals Successfully created language preferences for user testuser (ID: 11)
+2025-09-22 04:22:19,662 INFO timing Iterate over pages and save them completed in 0.001 seconds
+2025-09-22 04:22:20,286 INFO reader_views Opening book tmpenn1wnx-author at page 1 for user testuser
+2025-09-22 04:22:20,309 INFO models Reading location updated for tmpenn1wnx-author: 1(1):0/0.0
+[{'page_number': 1, 'word': 0}]/0
+2025-09-22 04:22:20,310 INFO reader_views Jump status: book tmpenn1wnx-author, is_first_jump True, is_last_jump True
+2025-09-22 04:22:20,461 INFO reader_views Rendering page 1 of book tmpenn1wnx-author
+2025-09-22 04:22:22,933 INFO test_e2e_import_book Redirected to reader page

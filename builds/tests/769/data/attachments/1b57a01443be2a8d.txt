@@ -1,0 +1,2 @@
+2025-11-20 05:04:33,926 INFO signals Successfully created language preferences for user testuser (ID: 1)
+2025-11-20 05:04:33,941 INFO reader_views Link clicked: nonexistent.xhtml#invalid, page_info: None

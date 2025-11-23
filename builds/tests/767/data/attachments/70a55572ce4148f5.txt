@@ -1,0 +1,4 @@
+2025-11-18 10:20:00,814 WARNING google_languages Warning: Egyptian Arabic not found in the database for group Arabic.
+2025-11-18 10:20:01,143 INFO signals Successfully created language preferences for user testuser (ID: 4)
+2025-11-18 10:20:01,148 WARNING log Method Not Allowed (PUT): /api/ai-settings/
+2025-11-18 10:20:01,149 WARNING log Method Not Allowed: /api/ai-settings/

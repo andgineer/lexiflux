@@ -1,0 +1,10 @@
+2025-09-20 06:14:14,892 INFO timing Loading from https://example.com/metadata-test completed in 0.000 seconds
+2025-09-20 06:14:14,893 INFO timing Extract metadata completed in 0.001 seconds
+2025-09-20 06:14:14,893 INFO timing Extracting IDs with internal links completed in 0.000 seconds
+2025-09-20 06:14:14,897 INFO timing Extracting readable HTML completed in 0.004 seconds
+2025-09-20 06:14:14,898 INFO timing Parse extracted HTML completed in 0.000 seconds
+2025-09-20 06:14:14,898 INFO timing Adding source info completed in 0.000 seconds
+2025-09-20 06:14:14,898 INFO timing Cleared HTML completed in 0.000 seconds
+2025-09-20 06:14:14,901 INFO book_loader_url No images found in the content
+2025-09-20 06:14:14,904 INFO timing Iterate over pages and save them completed in 0.002 seconds
+2025-09-20 06:14:14,905 INFO book_loader_url No images to download

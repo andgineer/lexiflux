@@ -1,0 +1,1 @@
+2025-11-14 05:17:40,269 ERROR llm AI insight 'InvalidArticle' not found., model: gpt-5, class: ChatOpenAI, show_api_key_info: True

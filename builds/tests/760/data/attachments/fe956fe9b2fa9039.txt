@@ -1,0 +1,1 @@
+INFO     lexiflux.views.calibre_views:calibre_views.py:91 Calibre handshake stage 2: {'stage': 2, 'device_name': 'Lexiflux', 'status': 'connected', 'session_id': 'ad7c6e94-79d3-4505-b335-28d3c6dc69fa'}

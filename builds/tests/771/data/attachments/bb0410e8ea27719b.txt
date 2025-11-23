@@ -1,0 +1,3 @@
+2025-11-21 05:16:23,970 WARNING google_languages Warning: Egyptian Arabic not found in the database for group Arabic.
+2025-11-21 05:16:24,320 INFO signals Successfully created language preferences for user testuser (ID: 4)
+2025-11-21 05:16:24,329 INFO user_modal   - Serbian -> English (ID: 7)
