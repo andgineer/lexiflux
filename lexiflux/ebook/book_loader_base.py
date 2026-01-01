@@ -8,6 +8,7 @@ from typing import IO, Any, cast
 from urllib.parse import unquote
 
 from django.core.management import CommandError
+from django.db.models import Q
 from lxml import etree
 from pagesmith import parse_partial_html
 
@@ -98,8 +99,7 @@ class BookLoaderBase:
                     + (f" (found: {', '.join(user.email for user in users)})" if users else ""),
                 )
 
-        language_name = forced_language or self.meta.get(MetadataField.LANGUAGE, "Unknown Language")
-        language, _ = Language.objects.get_or_create(name=language_name)
+        language = self.get_language_name(forced_language)
 
         book_instance = Book.objects.create(title=title, author=author, language=language)
         if owner:
@@ -123,6 +123,34 @@ class BookLoaderBase:
         log.debug("TOC: %s", book_instance.toc)
 
         return book_instance  # type: ignore
+
+    def get_language_name(self, forced_language: str | None) -> Any:
+        """Get language name, ensuring it's not None or empty"""
+        if language_name := (
+            forced_language
+            or self.meta.get(MetadataField.LANGUAGE)
+            or self.get_language()
+            or "English"
+        ):
+            language = (
+                Language.objects.filter(name=language_name).first()
+                or Language.objects.filter(
+                    Q(google_code=language_name) | Q(epub_code=language_name),
+                ).first()
+            )
+        else:
+            language = None
+
+        if not language:
+            language = Language.objects.filter(name="English").first()
+        if not language:
+            language = Language.objects.first()
+        if not language:
+            log.error(
+                "No languages found in database. Please run migrations to populate languages.",
+            )
+            raise ValueError("No languages available in database")
+        return language
 
     def create_page(self, book_instance: Book, page_num: int, page_content: str) -> BookPage:
         """Create a book page instance.
@@ -249,7 +277,8 @@ class BookLoaderBase:
         # Detect language if not found in meta
         language_name = self.detect_language()
         log.debug("Language '%s' detected.", language_name)
-        return language_name  # type: ignore
+        # Return a default language if detection failed
+        return language_name or "English"
 
     def _process_anchors(  # noqa: PLR0913
         self,

@@ -56,7 +56,7 @@ def book_processor_url_mock():
 @allure.epic("Book import")
 @allure.feature("URL import: success import")
 @patch("lexiflux.models.Author.objects.get_or_create")
-@patch("lexiflux.models.Language.objects.get_or_create")
+@patch("lexiflux.models.Language.objects.filter")
 @patch("lexiflux.models.Book.objects.create")
 @patch("lexiflux.models.BookPage.objects.bulk_create")
 @patch("lexiflux.models.BookPage.__init__", return_value=None)
@@ -64,12 +64,13 @@ def test_import_book_url_success(
     mock_book_page_init,
     mock_book_page_bulk_create,
     mock_book_create,
-    mock_language_get_or_create,
+    mock_language_filter,
     mock_author_get_or_create,
     book_processor_url_mock,
 ):
     mock_author_get_or_create.return_value = (MagicMock(spec=Author), True)
-    mock_language_get_or_create.return_value = (MagicMock(spec=Language), True)
+    mock_language = MagicMock(spec=Language)
+    mock_language_filter.return_value.first.return_value = mock_language
 
     mock_book = MagicMock(spec=Book)
     mock_book.title = "Test Book"
@@ -82,7 +83,6 @@ def test_import_book_url_success(
 
     # Verify that all mocks were called as expected
     mock_author_get_or_create.assert_called_once_with(name="Test Author")
-    mock_language_get_or_create.assert_called_once_with(name="English")
     mock_book_create.assert_called_once_with(title="Test Book", author=ANY, language=ANY)
 
     # Check that BookPage.__init__ was called with the expected arguments
@@ -115,9 +115,9 @@ def test_import_book_url_success(
 @patch("lexiflux.models.BookPage.objects.bulk_create")
 @patch("lexiflux.models.BookPage.__init__", return_value=None)
 @patch("lexiflux.models.Author.objects.get_or_create")
-@patch("lexiflux.models.Language.objects.get_or_create")
+@patch("lexiflux.models.Language.objects.filter")
 def test_import_book_url_without_owner_is_public(
-    mock_language_get_or_create,
+    mock_language_filter,
     mock_author_get_or_create,
     mock_book_page_init,
     mock_book_page_create,
@@ -128,7 +128,8 @@ def test_import_book_url_without_owner_is_public(
     mock_book = MagicMock(spec=Book)
     mock_book_create.return_value = mock_book
     mock_author_get_or_create.return_value = (MagicMock(), True)
-    mock_language_get_or_create.return_value = (MagicMock(), True)
+    mock_language = MagicMock()
+    mock_language_filter.return_value.first.return_value = mock_language
 
     book = book_processor_url_mock.create("")
     assert book.public is True
@@ -140,9 +141,9 @@ def test_import_book_url_without_owner_is_public(
 @patch("lexiflux.ebook.book_loader_base.Book.objects.create")
 @patch("lexiflux.ebook.book_loader_base.BookPage.objects.create")
 @patch("lexiflux.ebook.book_loader_base.Author.objects.get_or_create")
-@patch("lexiflux.ebook.book_loader_base.Language.objects.get_or_create")
+@patch("lexiflux.ebook.book_loader_base.Language.objects.filter")
 def test_import_book_nonexistent_owner_email(
-    mock_language_get_or_create,
+    mock_language_filter,
     mock_author_get_or_create,
     mock_book_page_create,
     mock_book_create,
@@ -151,7 +152,8 @@ def test_import_book_nonexistent_owner_email(
 ):
     mock_user_filter.return_value.first.return_value = None
     mock_author_get_or_create.return_value = (MagicMock(), True)
-    mock_language_get_or_create.return_value = (MagicMock(), True)
+    mock_language = MagicMock()
+    mock_language_filter.return_value.first.return_value = mock_language
     mock_book = MagicMock()
     mock_book_create.return_value = mock_book
 
