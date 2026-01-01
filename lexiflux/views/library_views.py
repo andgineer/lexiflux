@@ -28,15 +28,14 @@ AUTHOR_SUGGESTION_PAGE_SIZE = 15
 @require_GET  # type: ignore
 def books_list(request: HttpRequest) -> HttpResponse:
     """Return the paginated books list partial."""
-    if request.user.is_superuser:
+    user = get_custom_user(request)
+    if user.is_superuser:
         # If the user is a superuser, show all books
         books_query = Book.objects.all()
     else:
         # Filter books for regular users
         books_query = Book.objects.filter(
-            models.Q(owner=request.user)
-            | models.Q(shared_with=request.user)
-            | models.Q(public=True),
+            models.Q(owner=user) | models.Q(shared_with=user) | models.Q(public=True),
         )
 
     books_query = (
@@ -155,11 +154,10 @@ class EditBookModalPartial(TemplateView):  # type: ignore
 
     def delete(self, request: HttpRequest, *args: Any, **kwargs: Any) -> JsonResponse:  # noqa: ARG002
         """Delete a book."""
+        user = get_custom_user(request)
         try:
             assert self.book is not None
-            if self.book.owner and (
-                self.book.owner != request.user and not request.user.is_superuser
-            ):
+            if self.book.owner and (self.book.owner != user and not user.is_superuser):
                 raise PermissionDenied("You don't have permission to delete this book")
             self.book.delete()
             return JsonResponse({"success": "Book deleted successfully"})
@@ -206,6 +204,7 @@ def search_authors(request: HttpRequest) -> HttpResponse:
 @require_GET  # type: ignore
 def library_page(request: HttpRequest) -> HttpResponse:
     """Render the main library page."""
-    if not request.user.language:
+    user = get_custom_user(request)
+    if not user.language:
         return TemplateResponse(request, "library.html", {"show_user_modal": True})
     return TemplateResponse(request, "library.html")

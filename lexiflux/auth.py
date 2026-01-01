@@ -3,7 +3,7 @@
 import logging
 from collections.abc import Callable
 from functools import wraps
-from typing import TYPE_CHECKING, Any, TypeVar, cast
+from typing import TYPE_CHECKING, Any
 
 from django.contrib.auth.backends import ModelBackend
 from django.contrib.auth.base_user import AbstractBaseUser
@@ -18,9 +18,6 @@ if TYPE_CHECKING:
     from lexiflux.models import CustomUser
 
 logger = logging.getLogger(__name__)
-
-# TypeVar for preserving function signatures in decorators
-_F = TypeVar("_F", bound=Callable[..., Any])
 
 
 class CustomUserBackend(ModelBackend):  # type: ignore
@@ -66,15 +63,18 @@ def get_default_user() -> "CustomUser":
     return user
 
 
-def smart_login_required(view_func: _F) -> _F:
+def smart_login_required(view_func: object) -> Callable[..., HttpResponse]:
     """Login required decorator that does not require login if not in cloud."""
+    # Accept object type to handle TypeVars from stacked decorators (e.g., @require_GET)
+    if not callable(view_func):
+        raise TypeError(f"Expected callable, got {type(view_func)}")
 
-    @wraps(view_func)
+    @wraps(view_func)  # type: ignore[arg-type]
     def wrapper(request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
         if settings.lexiflux.skip_auth:
             if isinstance(request.user, AnonymousUser):
                 request.user = get_default_user()
-            return view_func(request, *args, **kwargs)
-        return login_required(view_func)(request, *args, **kwargs)
+            return view_func(request, *args, **kwargs)  # type: ignore[operator]
+        return login_required(view_func)(request, *args, **kwargs)  # type: ignore[arg-type,operator]
 
-    return cast(_F, wrapper)
+    return wrapper

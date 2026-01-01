@@ -410,6 +410,7 @@ def find_closest_word_index(positions: list[tuple[int, int]], target_position: i
 @require_POST  # type: ignore
 def link_click(request: HttpRequest) -> HttpResponse:
     """Handle a link click in the book."""
+    user = get_custom_user(request)
     book_code = request.POST.get("book-code")
     link = request.POST.get("link")
 
@@ -431,7 +432,7 @@ def link_click(request: HttpRequest) -> HttpResponse:
     new_word = find_closest_word_for_anchor(book_page, link)
 
     # Get or create the reading location for this user and book
-    reading_loc = ReadingLoc.get_or_create_reading_loc(request.user, book)
+    reading_loc = ReadingLoc.get_or_create_reading_loc(user, book)
 
     # Use the jump method to update the reading location and jump history
     reading_loc.jump(new_page_number, new_word)

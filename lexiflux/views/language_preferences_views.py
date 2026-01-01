@@ -112,17 +112,18 @@ def language_preferences_editor(request: HttpRequest) -> HttpResponse:
 @require_http_methods(["POST"])  # type: ignore
 def get_language_preferences(request: HttpRequest) -> JsonResponse:
     """Ajax to Change or create a new preferences for the selected language."""
+    user = get_custom_user(request)
     try:
         data = json.loads(request.body)
         language_id = data.get("language_id")
         language = get_object_or_404(Language, google_code=language_id)
 
         language_preferences = LanguagePreferences.get_or_create_language_preferences(
-            request.user,
+            user,
             language,
         )
 
-        all_languages_data = get_grouped_languages(request.user)
+        all_languages_data = get_grouped_languages(user)
         all_languages_flat = list(Language.objects.values("google_code", "name"))
 
         return JsonResponse(
@@ -220,12 +221,13 @@ def check_article_params(
 @require_http_methods(["POST"])  # type: ignore
 def save_inline_translation(request: HttpRequest) -> JsonResponse:
     """Ajax to Save the inline translation settings."""
+    user = get_custom_user(request)
     data = json.loads(request.body)
     language_id = data.get("language_id")
     translation_type = data.get("type")
     parameters = data.get("parameters", {})
 
-    language_preferences = request.user.language_preferences.get(language__google_code=language_id)
+    language_preferences = user.language_preferences.get(language__google_code=language_id)
     if error_response := check_article_params(translation_type, parameters, language_preferences):
         return error_response
 
@@ -448,12 +450,13 @@ def update_article_order(request: HttpRequest) -> JsonResponse:
 @require_http_methods(["POST"])  # type: ignore
 def set_global_preferences(request: HttpRequest) -> JsonResponse:
     """HTMX to Set the global preferences for the user."""
+    user = get_custom_user(request)
     try:
         data = json.loads(request.body)
         language_id = data.get("language_id")
         language = get_object_or_404(Language, google_code=language_id)
-        request.user.language_preferences.exclude(language=language).delete()
-        logger.info(f"Set global preferences for user {request.user.username} to {language.name}")
+        user.language_preferences.exclude(language=language).delete()
+        logger.info(f"Set global preferences for user {user.username} to {language.name}")
 
         return JsonResponse({"status": "success"})
     except Exception as e:  # noqa: BLE001
