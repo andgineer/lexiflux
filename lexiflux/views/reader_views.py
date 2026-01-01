@@ -265,8 +265,8 @@ def location(request: HttpRequest) -> HttpResponse:
     user = get_custom_user(request)
     try:
         book_code = request.POST.get("book-code")
-        page_number = int(request.POST.get("book-page-number"))
-        top_word = int(request.POST.get("top-word", 0))
+        page_number = int(request.POST.get("book-page-number", "0"))
+        top_word = int(request.POST.get("top-word", "0"))
         if not book_code:
             raise ValueError("book-code is missing")
     except (TypeError, ValueError, KeyError):
@@ -291,8 +291,8 @@ def jump(request: HttpRequest) -> HttpResponse:
     user = get_custom_user(request)
     try:
         book_code = request.POST.get("book-code")
-        page_number = int(request.POST.get("book-page-number"))
-        top_word = int(request.POST.get("top-word"))
+        page_number = int(request.POST.get("book-page-number", "0"))
+        top_word = int(request.POST.get("top-word", "0"))
 
         if not book_code:
             return JsonResponse({"error": "Missing book code"}, status=400)

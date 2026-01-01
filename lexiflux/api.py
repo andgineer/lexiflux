@@ -31,9 +31,9 @@ def get_params(schema: type[BaseModel]) -> Callable[[Callable[..., Any]], Callab
         @wraps(view_func)
         def _wrapped_view(request: HttpRequest, *args: Any, **kwargs: Any) -> JsonResponse:
             try:
-                # Convert QueryDict to regular dict to use parse_obj, ensuring single values
+                # Convert QueryDict to regular dict to use model_validate, ensuring single values
                 data: dict[str, Any] = {key: request.GET.get(key) for key in request.GET}
-                params = schema.parse_obj(data)
+                params = schema.model_validate(data)
                 return view_func(request, params, *args, **kwargs)
             except ValidationError as e:
                 print("GET params validation error", e.errors())

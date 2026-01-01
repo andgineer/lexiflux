@@ -356,9 +356,9 @@ def book_epub(db_init):
     mock_items = [
         MagicMock(
             spec=epub.EpubHtml,
-            get_body_content=lambda: (
-                f"Page {i} " + " ".join([f"word{j}" for j in range(200)])
-            ).encode("utf-8"),
+            get_content=lambda: (f"Page {i} " + " ".join([f"word{j}" for j in range(200)])).encode(
+                "utf-8"
+            ),
             get_type=lambda: ITEM_DOCUMENT,
             file_name=f"page_{i}.xhtml",
             get_name=lambda: f"page_{i}.xhtml",

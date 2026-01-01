@@ -3,7 +3,7 @@
 import logging
 from collections.abc import Callable
 from functools import wraps
-from typing import TYPE_CHECKING, Any, TypeVar
+from typing import TYPE_CHECKING, Any, TypeVar, cast
 
 from django.contrib.auth.backends import ModelBackend
 from django.contrib.auth.base_user import AbstractBaseUser
@@ -20,7 +20,7 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 # TypeVar for preserving function signatures in decorators
-_ViewFunc = TypeVar("_ViewFunc", bound=Callable[..., HttpResponse])
+_F = TypeVar("_F", bound=Callable[..., Any])
 
 
 class CustomUserBackend(ModelBackend):  # type: ignore
@@ -66,7 +66,7 @@ def get_default_user() -> "CustomUser":
     return user
 
 
-def smart_login_required(view_func: _ViewFunc) -> _ViewFunc:
+def smart_login_required(view_func: _F) -> _F:
     """Login required decorator that does not require login if not in cloud."""
 
     @wraps(view_func)
@@ -77,4 +77,4 @@ def smart_login_required(view_func: _ViewFunc) -> _ViewFunc:
             return view_func(request, *args, **kwargs)
         return login_required(view_func)(request, *args, **kwargs)
 
-    return wrapper  # type: ignore[return-value]
+    return cast(_F, wrapper)

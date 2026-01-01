@@ -87,6 +87,7 @@ class BookLoaderBase:
         author_name = self.meta[MetadataField.AUTHOR]
         author, _ = Author.objects.get_or_create(name=author_name)
 
+        owner = None
         if owner_email:
             owner = CustomUser.objects.filter(email=owner_email).first()
             if not owner:
@@ -101,7 +102,7 @@ class BookLoaderBase:
         language, _ = Language.objects.get_or_create(name=language_name)
 
         book_instance = Book.objects.create(title=title, author=author, language=language)
-        if owner_email:
+        if owner:
             book_instance.owner = owner
             book_instance.public = False
         else:

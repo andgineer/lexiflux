@@ -8,7 +8,8 @@ from collections import defaultdict
 from collections.abc import Iterable, Iterator
 from typing import Any
 
-from ebooklib import ITEM_DOCUMENT, ITEM_IMAGE, epub
+from ebooklib import ITEM_DOCUMENT, ITEM_IMAGE
+from ebooklib import epub as ebooklib
 from lxml import etree
 from pagesmith import parse_partial_html, refine_html
 from pagesmith.html_page_splitter import HtmlPageSplitter
@@ -30,7 +31,7 @@ class BookLoaderEpub(BookLoaderBase):
     twice to collect internal links backward targets and place them into `keep_id`.
     """
 
-    epub: Any
+    epub: ebooklib.EpubBook
     book_start: int
     book_end: int
     heading_hrefs: dict[str, dict[str, str]]
@@ -98,7 +99,7 @@ class BookLoaderEpub(BookLoaderBase):
         return page
 
     def load_text(self) -> None:
-        self.epub = epub.read_epub(self.file_path)
+        self.epub = ebooklib.read_epub(self.file_path)
 
     def detect_meta(self) -> tuple[dict[str, Any], int, int]:
         """Read the book and extract meta if it is present.
@@ -141,7 +142,7 @@ class BookLoaderEpub(BookLoaderBase):
     def spine(self) -> Iterator[tuple[str, str, str, str]]:
         """Items in the EPUB spine."""
         for spine_id in self.epub.spine:
-            item: epub.EpubItem = self.epub.get_item_with_id(spine_id[0])
+            item: ebooklib.EpubItem = self.epub.get_item_with_id(spine_id[0])
             if item.get_type() == ITEM_DOCUMENT:
                 log.debug(
                     "Processing spine: %s, name = %s, type = %s, id = %s, file_name = %s",
@@ -152,7 +153,7 @@ class BookLoaderEpub(BookLoaderBase):
                     item.file_name,
                 )
                 yield (
-                    item.get_body_content().decode("utf-8"),
+                    item.get_content().decode("utf-8"),
                     item.file_name,
                     item.get_id(),
                     item.get_name(),
@@ -223,7 +224,7 @@ class BookLoaderEpub(BookLoaderBase):
         """Generate TOC from the EPUB spine when no TOC is present."""
         result: dict[str, dict[str, str]] = defaultdict(dict)
         for spine_id in self.epub.spine:
-            item: epub.EpubItem = self.epub.get_item_with_id(spine_id[0])
+            item: ebooklib.EpubItem = self.epub.get_item_with_id(spine_id[0])
             log.debug(f"Spine item: {item.get_name()}")
             if item.get_type() == ITEM_DOCUMENT:
                 file_name = item.file_name
@@ -231,9 +232,9 @@ class BookLoaderEpub(BookLoaderBase):
         log.debug("Generated TOC from spine: %s", result)
         return result
 
-    def extract_title(self, item: epub.EpubItem) -> str:
+    def extract_title(self, item: ebooklib.EpubItem) -> str:
         """Extract the title from the EPUB item."""
-        extractor = MetadataExtractor(item.get_body_content().decode("utf-8"))
+        extractor = MetadataExtractor(item.get_content().decode("utf-8"))
         return extractor.extract_part_title() or os.path.splitext(item.get_name())[0]
 
     def get_random_words(self, words_num: int = 15) -> str:
@@ -247,8 +248,8 @@ class BookLoaderEpub(BookLoaderBase):
 
         words = []
         for _ in range(self.MAX_RANDOM_WORDS_ATTEMPTS):
-            random_item = random.choice(document_items)  # noqa: S311
-            content = random_item.get_body_content().decode("utf-8")
+            random_item: ebooklib.EpubItem = random.choice(document_items)  # noqa: S311
+            content = random_item.get_content().decode("utf-8")
 
             # Clean the content
             cleaned_content = refine_html(content)
@@ -292,9 +293,9 @@ def extract_headings(epub_toc: list[Any]) -> list[dict[str, Any]]:
                 result.append({item[0].title: extract_headings(item[1])})
             elif isinstance(item, Iterable):
                 result.append(extract_headings(list(item)))
-            elif isinstance(item, epub.Link):
+            elif isinstance(item, ebooklib.Link):
                 result.append({item.title: item.href})
-            elif isinstance(item, epub.Section):
+            elif isinstance(item, ebooklib.Section):
                 result.append({item.title: extract_headings(epub_toc[item_idx + 1 :])})
                 item_idx += 1  # noqa: PLW2901
 

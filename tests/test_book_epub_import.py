@@ -130,7 +130,7 @@ def test_get_random_words_short_book(book_epub):
     # Patch the pages method to return a short book
     short_items = [
         MagicMock(
-            get_body_content=lambda: " ".join([f"word{i}" for i in range(10)]).encode("utf-8"),
+            get_content=lambda: " ".join([f"word{i}" for i in range(10)]).encode("utf-8"),
             get_type=lambda: ITEM_DOCUMENT,
         )
         for _ in range(3)
@@ -165,7 +165,7 @@ def test_pages_content_splitting(book_epub):
     html_content = (
         "<div><p>" + ("HTML content " * 500) + "</p><p>" + ("More HTML " * 500) + "</p></div>"
     )
-    book_epub.epub.get_items()[0].get_body_content = lambda: html_content.encode("utf-8")
+    book_epub.epub.get_items()[0].get_content = lambda: html_content.encode("utf-8")
 
     html_pages = list(book_epub.pages())
 
@@ -176,7 +176,7 @@ def test_pages_content_splitting(book_epub):
 
     # Test with content that looks like plain text but is actually in a <p> tag
     plain_text_like_content = "<p>" + ("Simple HTML content " * 1000) + "</p>"
-    book_epub.epub.get_items()[0].get_body_content = lambda: plain_text_like_content.encode("utf-8")
+    book_epub.epub.get_items()[0].get_content = lambda: plain_text_like_content.encode("utf-8")
 
     text_like_pages = list(book_epub.pages())
 
@@ -187,7 +187,7 @@ def test_pages_content_splitting(book_epub):
 
     # Test with content without any HTML tags
     no_tags_content = "Plain text content without any HTML tags. " * 1000
-    book_epub.epub.get_items()[0].get_body_content = lambda: no_tags_content.encode("utf-8")
+    book_epub.epub.get_items()[0].get_content = lambda: no_tags_content.encode("utf-8")
 
     no_tags_pages = list(book_epub.pages())
 
@@ -216,7 +216,7 @@ def test_pages_with_anchors(book_epub):
     # Modify the last item (page_19.xhtml) to have an anchor
     content = "<a href='#chapter1'>Link</a><h1 id='chapter1'>Chapter 1</h1><p>Content</p>"
     mock_item = book_epub.epub.get_items()[-1]  # Use the last item from the fixture
-    mock_item.get_body_content = lambda: content.encode("utf-8")
+    mock_item.get_content = lambda: content.encode("utf-8")
 
     # Update heading_hrefs to match the actual item name
     book_epub.heading_hrefs = {"page_19.xhtml": {"#chapter1": "Chapter 1"}}
@@ -257,7 +257,7 @@ def test_pages_with_anchors(book_epub):
 def test_pages_empty_content(book_epub):
     # Modify all items to have empty content
     for item in book_epub.epub.get_items():
-        item.get_body_content = lambda: b""
+        item.get_content = lambda: b""
 
     pages = list(book_epub.pages())
     assert len(pages) == 0
@@ -365,7 +365,7 @@ def test_extract_title_with_headers(book_epub_loader):
         </body>
     </html>
     """
-    mock_item = MagicMock(get_body_content=lambda: content.encode("utf-8"))
+    mock_item = MagicMock(get_content=lambda: content.encode("utf-8"))
 
     loader = book_epub_loader
     extracted_title = loader.extract_title(mock_item)
@@ -387,7 +387,7 @@ def test_extract_title_with_div_class_title(book_epub_loader):
         </body>
     </html>
     """
-    mock_item = MagicMock(get_body_content=lambda: content.encode("utf-8"))
+    mock_item = MagicMock(get_content=lambda: content.encode("utf-8"))
 
     loader = book_epub_loader
     extracted_title = loader.extract_title(mock_item)
@@ -407,7 +407,7 @@ def test_extract_title_with_headers_and_no_div(book_epub_loader):
         </body>
     </html>
     """
-    mock_item = MagicMock(get_body_content=lambda: content.encode("utf-8"))
+    mock_item = MagicMock(get_content=lambda: content.encode("utf-8"))
 
     loader = book_epub_loader
     extracted_title = loader.extract_title(mock_item)
@@ -425,7 +425,7 @@ def test_extract_title_no_title_or_headers(book_epub_loader):
     </html>
     """
     mock_item = MagicMock(
-        get_body_content=lambda: content.encode("utf-8"),
+        get_content=lambda: content.encode("utf-8"),
         get_name=lambda: "chapter1.xhtml",
     )
 
@@ -444,7 +444,7 @@ def test_extract_title_handles_malformed_html(book_epub_loader):
                 <p>   Author Name  </p>
                 <p>   Book Title  </p>
     """  # Missing closing tags
-    mock_item = MagicMock(get_body_content=lambda: content.encode("utf-8"))
+    mock_item = MagicMock(get_content=lambda: content.encode("utf-8"))
 
     loader = book_epub_loader
     extracted_title = loader.extract_title(mock_item)
@@ -465,7 +465,7 @@ def test_generate_toc_fallback_to_spine_item_name(book_epub_loader):
     </html>
     """
     mock_item = MagicMock(
-        get_body_content=lambda: content_no_title.encode("utf-8"),
+        get_content=lambda: content_no_title.encode("utf-8"),
         get_name=lambda: "chapter1.xhtml",  # Mock the get_name() method
         file_name="chapter1.xhtml",  # Mock the file_name attribute
         get_type=lambda: ITEM_DOCUMENT,  # Ensure the item is treated as a document
@@ -477,7 +477,7 @@ def test_generate_toc_fallback_to_spine_item_name(book_epub_loader):
     mock_epub.get_item_with_id.return_value = mock_item
 
     # Patch the loader to use the mocked EPUB
-    with patch("lexiflux.ebook.book_loader_epub.epub.read_epub", return_value=mock_epub):
+    with patch("lexiflux.ebook.book_loader_epub.ebooklib.read_epub", return_value=mock_epub):
         loader = book_epub_loader
         loader.epub = mock_epub  # Assign the mocked EPUB
 
@@ -505,19 +505,19 @@ def test_generate_toc_from_spine_when_toc_is_empty(book_epub_loader):
             get_name=lambda: "chapter1.xhtml",
             get_type=lambda: ITEM_DOCUMENT,
             file_name="chapter1.xhtml",
-            get_body_content=lambda: "<h1>Chapter 1</h1>".encode("utf-8"),
+            get_content=lambda: "<h1>Chapter 1</h1>".encode("utf-8"),
         ),
         "item_2": MagicMock(
             get_name=lambda: "chapter2.xhtml",
             get_type=lambda: ITEM_DOCUMENT,
             file_name="chapter2.xhtml",
-            get_body_content=lambda: "<h1>Chapter 2</h1>".encode("utf-8"),
+            get_content=lambda: "<h1>Chapter 2</h1>".encode("utf-8"),
         ),
     }
     mock_epub.get_item_with_id.side_effect = lambda x: mock_items[x]
 
     # Patch the BookLoaderEpub object to use the mocked EPUB
-    with patch("lexiflux.ebook.book_loader_epub.epub.read_epub", return_value=mock_epub):
+    with patch("lexiflux.ebook.book_loader_epub.ebooklib.read_epub", return_value=mock_epub):
         loader = book_epub_loader
         loader.epub = mock_epub  # Simulate loading the mocked EPUB
 

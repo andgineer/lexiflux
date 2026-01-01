@@ -43,7 +43,8 @@ class FastTextDetectLanguage:
         fasttext_model_path = fasttext_data_dir / "lid.176.bin"
         os.makedirs(os.path.dirname(fasttext_model_path), exist_ok=True)
 
-        if not (model := self.read_model_file(fasttext_model_path)):
+        model = self.read_model_file(fasttext_model_path)
+        if not model:
             logger.info(
                 f"Downloading fastText language identification model from {FASTTEXT_MODEL_URL}",
             )

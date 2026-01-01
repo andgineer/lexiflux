@@ -7,36 +7,37 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ### Setup and Environment
 - `uv` is used for Python package management - **NEVER use plain pip, always use uv**
 - `. ./activate.sh` or `source ./activate.sh` - Set up development environment (note the space between . and ./activate.sh)
-- **IMPORTANT**: Always use `source ./activate.sh` in the same shell session when running commands like pytest, not separate tool calls
-- `invoke init-db` - Initialize development database with sample data
-- `invoke buildjs` - Build TypeScript frontend assets using webpack
-- `invoke reqs` - Update requirements and install dependencies
+- **CRITICAL**: ALL Python-dependent commands (invoke, pytest, manage.py, etc.) MUST be run with `source ./activate.sh && <command>` in the same shell session
+- **NEVER run invoke, pytest, or any Python commands without `source ./activate.sh &&` prefix**
+- `source ./activate.sh && invoke init-db` - Initialize development database with sample data
+- `source ./activate.sh && invoke buildjs` - Build TypeScript frontend assets using webpack
+- `source ./activate.sh && invoke reqs` - Update requirements and install dependencies
 
 ### Running the Application
-- `invoke run` - Run development server with auto-login (localhost:8000)
-- `invoke runssl` - Run with SSL for local development
-- `invoke runcloud` - Run in multi-user mode
-- `invoke shell` - Django shell
-- `invoke jupyter` - Run Jupyter notebook with Django shell_plus
+- `source ./activate.sh && invoke run` - Run development server with auto-login (localhost:8000)
+- `source ./activate.sh && invoke runssl` - Run with SSL for local development
+- `source ./activate.sh && invoke runcloud` - Run in multi-user mode
+- `source ./activate.sh && invoke shell` - Django shell
+- `source ./activate.sh && invoke jupyter` - Run Jupyter notebook with Django shell_plus
 
 ### Testing and Quality
-- `invoke test` - Run Python tests with pytest and generate Allure report
-- `invoke selenium` - Run Selenium end-to-end tests
-- `invoke pre` - Run pre-commit hooks (formatting, linting)
+- `source ./activate.sh && invoke test` - Run Python tests with pytest and generate Allure report
+- `source ./activate.sh && invoke selenium` - Run Selenium end-to-end tests
+- `source ./activate.sh && invoke pre` - Run pre-commit hooks (formatting, linting)
 - `npm test` - Run JavaScript/TypeScript tests with Jest
 - `npm run build` - Build frontend bundle
 
 ### Database Operations
-- `invoke migrate` - Run Django migrations
-- `invoke kill_db` - Reset database
-- `invoke admin` - Create admin user (admin/admin)
-- `invoke user` - Create default auto-login user
+- `source ./activate.sh && invoke migrate` - Run Django migrations
+- `source ./activate.sh && invoke kill_db` - Reset database
+- `source ./activate.sh && invoke admin` - Create admin user (admin/admin)
+- `source ./activate.sh && invoke user` - Create default auto-login user
 
 ### Book Import Commands
-- `./manage import-epub <file_path>` - Import EPUB file
-- `./manage import-html <file_path>` - Import HTML file
-- `./manage import-text <file_path>` - Import plain text file
-- `./manage import-url <url>` - Import web page from URL with image support
+- `source ./activate.sh && ./manage import-epub <file_path>` - Import EPUB file
+- `source ./activate.sh && ./manage import-html <file_path>` - Import HTML file
+- `source ./activate.sh && ./manage import-text <file_path>` - Import plain text file
+- `source ./activate.sh && ./manage import-url <url>` - Import web page from URL with image support
   - `--cleaning-level {aggressive,moderate,minimal}` - Content cleaning level
   - `--public` - Make book public
   - `--language <lang>` - Force language detection

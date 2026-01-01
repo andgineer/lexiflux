@@ -34,7 +34,7 @@ class TestEpubTocIntegration:
         mock_items.append(
             MagicMock(
                 spec=epub.EpubHtml,
-                get_body_content=lambda: '<h1 id="chapter1">Chapter 1: Introduction</h1><p>Short intro content.</p>'.encode(
+                get_content=lambda: '<h1 id="chapter1">Chapter 1: Introduction</h1><p>Short intro content.</p>'.encode(
                     "utf-8"
                 ),
                 get_type=lambda: ITEM_DOCUMENT,
@@ -54,7 +54,7 @@ class TestEpubTocIntegration:
         mock_items.append(
             MagicMock(
                 spec=epub.EpubHtml,
-                get_body_content=lambda: long_content.encode("utf-8"),
+                get_content=lambda: long_content.encode("utf-8"),
                 get_type=lambda: ITEM_DOCUMENT,
                 file_name="main.xhtml",
                 get_name=lambda: "main.xhtml",
@@ -66,7 +66,7 @@ class TestEpubTocIntegration:
         mock_items.append(
             MagicMock(
                 spec=epub.EpubHtml,
-                get_body_content=lambda: '<h1 id="chapter3">Chapter 3: Conclusion</h1><p id="important">Important conclusion text.</p>'.encode(
+                get_content=lambda: '<h1 id="chapter3">Chapter 3: Conclusion</h1><p id="important">Important conclusion text.</p>'.encode(
                     "utf-8"
                 ),
                 get_type=lambda: ITEM_DOCUMENT,
@@ -147,7 +147,7 @@ class TestEpubTocIntegration:
 
         mock_item = MagicMock(
             spec=epub.EpubHtml,
-            get_body_content=lambda: content.encode("utf-8"),
+            get_content=lambda: content.encode("utf-8"),
             get_type=lambda: ITEM_DOCUMENT,
             file_name="book.xhtml",
             get_name=lambda: "book.xhtml",
