@@ -6,7 +6,7 @@ from django.contrib.auth.models import AnonymousUser
 from django.test import RequestFactory
 from unittest.mock import MagicMock, patch
 from lexiflux.lexiflux_settings import settings
-from lexiflux.decorators import get_default_user, smart_login_required
+from lexiflux.auth import get_default_user, smart_login_required
 
 User = get_user_model()
 
@@ -56,7 +56,7 @@ class TestAuthDecorators:
             request = request_factory.get("/")
             request.user = AnonymousUser()
 
-            with patch("lexiflux.decorators.settings.lexiflux.skip_auth", True):
+            with patch("lexiflux.auth.settings.lexiflux.skip_auth", True):
                 decorated_view = smart_login_required(mock_view)
                 response = decorated_view(request)
 
@@ -72,7 +72,7 @@ class TestAuthDecorators:
             request.user = User.objects.create(username="test_user")
             original_user = request.user
 
-            with patch("lexiflux.decorators.settings.lexiflux.skip_auth", True):
+            with patch("lexiflux.auth.settings.lexiflux.skip_auth", True):
                 decorated_view = smart_login_required(mock_view)
                 response = decorated_view(request)
 
@@ -86,7 +86,7 @@ class TestAuthDecorators:
             request = request_factory.get("/")
             request.user = AnonymousUser()
 
-            with patch("lexiflux.decorators.settings.lexiflux.skip_auth", False):
+            with patch("lexiflux.auth.settings.lexiflux.skip_auth", False):
                 decorated_view = smart_login_required(mock_view)
                 response = decorated_view(request)
 
@@ -100,7 +100,7 @@ class TestAuthDecorators:
             request = request_factory.get("/")
             request.user = User.objects.create(username="test_user")
 
-            with patch("lexiflux.decorators.settings.lexiflux.skip_auth", False):
+            with patch("lexiflux.auth.settings.lexiflux.skip_auth", False):
                 decorated_view = smart_login_required(mock_view)
                 response = decorated_view(request)
 

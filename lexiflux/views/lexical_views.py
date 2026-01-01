@@ -10,7 +10,8 @@ from django.template.loader import render_to_string
 from pydantic import Field
 
 from lexiflux.api import ViewGetParamsModel, get_params
-from lexiflux.decorators import get_custom_user, smart_login_required
+from lexiflux.auth import smart_login_required
+from lexiflux.custom_user import get_custom_user
 from lexiflux.language.llm import (
     SENTENCE_END_MARK,
     SENTENCE_START_MARK,

@@ -7,7 +7,8 @@ from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import render
 from django.views.decorators.http import require_http_methods
 
-from lexiflux.decorators import get_custom_user, smart_login_required
+from lexiflux.auth import smart_login_required
+from lexiflux.custom_user import get_custom_user
 from lexiflux.models import SUPPORTED_CHAT_MODELS, AIModelConfig
 
 # Define custom captions for chat models

@@ -6,7 +6,6 @@ from typing import Any
 
 from deep_translator.exceptions import LanguageNotSupportedException
 from django.conf import settings
-from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError
 from django.db.models import Max
@@ -14,7 +13,8 @@ from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, render
 from django.views.decorators.http import require_http_methods
 
-from lexiflux.decorators import get_custom_user, smart_login_required
+from lexiflux.auth import smart_login_required
+from lexiflux.custom_user import get_custom_user
 from lexiflux.language.llm import Llm
 from lexiflux.language.translation import Translator, get_translator
 from lexiflux.language_preferences_default import create_default_language_preferences
@@ -36,8 +36,6 @@ def get_grouped_languages(user: settings.AUTH_USER_MODEL) -> dict[str, Any]:
     - 'with_preferences': list of languages with existing preferences
     - 'without_preferences': list of languages without existing preferences
     """
-    assert isinstance(user, get_user_model())  # Type check for mypy
-
     languages_with_preferences = set(
         user.language_preferences.values_list("language__google_code", flat=True),
     )

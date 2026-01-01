@@ -3,9 +3,10 @@
 import argparse
 from typing import Any
 
-from django.contrib.auth import get_user_model
 from django.core.management.base import BaseCommand
 from django.db.models import Count
+
+from lexiflux.custom_user import get_custom_user_model
 
 
 class Command(BaseCommand):  # type: ignore
@@ -33,9 +34,9 @@ class Command(BaseCommand):  # type: ignore
         limit = options["limit"]
         email_filter = options["email"]
 
-        user = get_user_model()
+        user_model = get_custom_user_model()
 
-        users = user.objects.annotate(num_owned_books=Count("owned_books"))
+        users = user_model.objects.annotate(num_owned_books=Count("owned_books"))
 
         if email_filter:
             # Handle wildcard pattern correctly

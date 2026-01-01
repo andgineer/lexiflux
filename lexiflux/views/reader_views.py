@@ -11,7 +11,8 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.views.decorators.http import require_POST
 
-from lexiflux.decorators import get_custom_user, smart_login_required
+from lexiflux.auth import smart_login_required
+from lexiflux.custom_user import get_custom_user
 from lexiflux.ebook.book_loader_base import BookLoaderBase, normalize_path
 from lexiflux.models import (
     Book,

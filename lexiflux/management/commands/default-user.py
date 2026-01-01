@@ -7,7 +7,7 @@ from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.management.base import BaseCommand
 
-from lexiflux.decorators import get_default_user
+from lexiflux.auth import get_default_user
 from lexiflux.lexiflux_settings import settings
 
 

@@ -692,7 +692,7 @@ def test_import_book_from_url_success(mock_book_loader_url):
 
     with (
         patch("lexiflux.views.import_views.render") as mock_render,
-        patch("lexiflux.decorators.login_required", lambda f: f),
+        patch("lexiflux.auth.login_required", lambda f: f),
     ):  # Bypass decorator
         response = import_book(request)
 
@@ -729,7 +729,7 @@ def test_import_book_from_url_with_aggressive_cleaning(mock_book_loader_url):
 
     with (
         patch("lexiflux.views.library_views.render"),
-        patch("lexiflux.decorators.login_required", lambda f: f),
+        patch("lexiflux.auth.login_required", lambda f: f),
     ):  # Bypass decorator
         import_book(request)
 
@@ -750,7 +750,7 @@ def test_import_book_from_url_invalid_url():
 
     with (
         patch("lexiflux.views.import_views.render") as mock_render,
-        patch("lexiflux.decorators.login_required", lambda f: f),
+        patch("lexiflux.auth.login_required", lambda f: f),
     ):  # Bypass decorator
         response = import_book(request)
 
@@ -777,7 +777,7 @@ def test_import_book_from_url_empty_url(mock_validator):
 
     with (
         patch("lexiflux.views.import_views.render") as mock_render,
-        patch("lexiflux.decorators.login_required", lambda f: f),
+        patch("lexiflux.auth.login_required", lambda f: f),
     ):  # Bypass decorator
         response = import_book(request)
 
@@ -819,7 +819,7 @@ def test_import_book_from_paste_text_success(mock_book_loader, mock_temp_file):
     with (
         patch("lexiflux.views.library_views.render"),
         patch("os.unlink"),
-        patch("lexiflux.decorators.login_required", lambda f: f),
+        patch("lexiflux.auth.login_required", lambda f: f),
     ):  # Bypass decorator
         response = import_book(request)
 
@@ -861,7 +861,7 @@ def test_import_book_from_paste_html_success(mock_book_loader, mock_temp_file):
     with (
         patch("lexiflux.views.library_views.render"),
         patch("os.unlink"),
-        patch("lexiflux.decorators.login_required", lambda f: f),
+        patch("lexiflux.auth.login_required", lambda f: f),
     ):  # Bypass decorator
         response = import_book(request)
 
@@ -889,7 +889,7 @@ def test_import_book_from_paste_empty_content():
 
     with (
         patch("lexiflux.views.import_views.render") as mock_render,
-        patch("lexiflux.decorators.login_required", lambda f: f),
+        patch("lexiflux.auth.login_required", lambda f: f),
     ):  # Bypass decorator
         response = import_book(request)
 
@@ -915,7 +915,7 @@ def test_import_book_from_paste_whitespace_only():
 
     with (
         patch("lexiflux.views.import_views.render") as mock_render,
-        patch("lexiflux.decorators.login_required", lambda f: f),
+        patch("lexiflux.auth.login_required", lambda f: f),
     ):  # Bypass decorator
         response = import_book(request)
 
@@ -946,7 +946,7 @@ def test_import_book_from_paste_file_cleanup(mock_temp_file):
         patch("lexiflux.views.import_views.BookLoaderPlainText") as mock_loader,
         patch("os.unlink") as mock_unlink,
         patch("lexiflux.views.library_views.render"),
-        patch("lexiflux.decorators.login_required", lambda f: f),
+        patch("lexiflux.auth.login_required", lambda f: f),
     ):  # Bypass decorator
         # Setup book loader to return a book
         mock_book = MagicMock()
@@ -980,7 +980,7 @@ def test_import_book_from_paste_with_exception_still_cleans_up(mock_temp_file):
         patch("lexiflux.views.import_views.BookLoaderPlainText") as mock_loader,
         patch("os.unlink") as mock_unlink,
         patch("lexiflux.views.library_views.render"),
-        patch("lexiflux.decorators.login_required", lambda f: f),
+        patch("lexiflux.auth.login_required", lambda f: f),
     ):  # Bypass decorator
         mock_loader.return_value.create.side_effect = ValueError("Test error")
 
@@ -1003,7 +1003,7 @@ def test_import_book_unknown_type():
 
     with (
         patch("lexiflux.views.import_views.render") as mock_render,
-        patch("lexiflux.decorators.login_required", lambda f: f),
+        patch("lexiflux.auth.login_required", lambda f: f),
     ):  # Bypass decorator
         response = import_book(request)
 

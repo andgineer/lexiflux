@@ -10,7 +10,8 @@ from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404
 from django.views.decorators.http import require_POST
 
-from lexiflux.decorators import get_custom_user, smart_login_required
+from lexiflux.auth import smart_login_required
+from lexiflux.custom_user import get_custom_user
 from lexiflux.models import Book, BookPage, normalize_for_search
 
 logger = logging.getLogger(__name__)

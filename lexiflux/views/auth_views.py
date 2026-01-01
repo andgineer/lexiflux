@@ -2,7 +2,7 @@
 
 from typing import Any
 
-from django.contrib.auth import authenticate, get_user_model, login
+from django.contrib.auth import authenticate, login
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.views import LoginView
 from django.core.exceptions import ObjectDoesNotExist
@@ -11,6 +11,7 @@ from django.shortcuts import redirect, render
 from django.urls import reverse_lazy
 from django.views import generic
 
+from lexiflux.custom_user import get_custom_user_model
 from lexiflux.forms import CustomUserCreationForm
 
 
@@ -22,7 +23,7 @@ class SignUpView(generic.CreateView):  # type: ignore
     template_name = "signup.html"
 
 
-UserModel = get_user_model()
+UserModel = get_custom_user_model()
 
 
 class CustomLoginView(LoginView):  # type: ignore

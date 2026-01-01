@@ -16,7 +16,8 @@ from django.views.decorators.http import require_http_methods
 from lexiflux.anki.anki_connect import export_words_to_anki_connect
 from lexiflux.anki.anki_file import export_words_to_anki_file
 from lexiflux.anki.csv_file import export_words_to_csv_file
-from lexiflux.decorators import get_custom_user, smart_login_required
+from lexiflux.auth import smart_login_required
+from lexiflux.custom_user import get_custom_user
 from lexiflux.models import (
     CustomUser,
     Language,

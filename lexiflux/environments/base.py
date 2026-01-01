@@ -28,7 +28,7 @@ LOGIN_REDIRECT_URL = "reader"
 LOGOUT_REDIRECT_URL = "login"
 
 AUTH_USER_MODEL = "lexiflux.CustomUser"
-AUTHENTICATION_BACKENDS = ["lexiflux.backends.CustomUserBackend"]
+AUTHENTICATION_BACKENDS = ["lexiflux.auth.CustomUserBackend"]
 
 # Application definition
 INSTALLED_APPS = [
