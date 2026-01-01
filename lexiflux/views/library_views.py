@@ -14,7 +14,7 @@ from django.utils.decorators import method_decorator
 from django.views.decorators.http import require_GET
 from django.views.generic import TemplateView
 
-from lexiflux.decorators import smart_login_required
+from lexiflux.decorators import get_custom_user, smart_login_required
 from lexiflux.lexiflux_settings import settings
 from lexiflux.models import Author, Book, Language
 
@@ -81,7 +81,7 @@ class EditBookModalPartial(TemplateView):  # type: ignore
     def dispatch(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
         """Handle all HTTP methods with proper error checking."""
         try:
-            self.book = Book.get_if_can_be_read(request.user, id=kwargs.get("book_id"))
+            self.book = Book.get_if_can_be_read(get_custom_user(request), id=kwargs.get("book_id"))
             return super().dispatch(request, *args, **kwargs)
         except (ObjectDoesNotExist, PermissionDenied, ValueError):
             # The middleware will handle converting this to the appropriate JSON response

@@ -13,7 +13,7 @@ from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import render
 from django.views.decorators.http import require_GET, require_POST
 
-from lexiflux.decorators import smart_login_required
+from lexiflux.decorators import get_custom_user, smart_login_required
 from lexiflux.ebook.book_loader_base import BookLoaderBase
 from lexiflux.ebook.book_loader_epub import BookLoaderEpub
 from lexiflux.ebook.book_loader_html import BookLoaderHtml
@@ -87,6 +87,7 @@ def import_book(request: HttpRequest) -> HttpResponse:
 
 
 def import_file(request: HttpRequest) -> Book:
+    user = get_custom_user(request)
     file = request.FILES.get("file")
     if not file:
         raise ValueError("No file provided")
@@ -106,7 +107,7 @@ def import_file(request: HttpRequest) -> Book:
             file.temporary_file_path(),
             original_filename=original_filename,
         )
-        book = book_processor.create(request.user.email)
+        book = book_processor.create(user.email)
         book.save()
     else:
         # in-memory, save on disk
@@ -116,12 +117,13 @@ def import_file(request: HttpRequest) -> Book:
             tmp_file.flush()
 
             book_processor = book_class(tmp_file.name, original_filename=original_filename)
-            book = book_processor.create(request.user.email)
+            book = book_processor.create(user.email)
             book.save()
     return book
 
 
 def import_clipboard(request: HttpRequest) -> Book:
+    user = get_custom_user(request)
     pasted_content = request.POST.get("pasted_content")
     if not pasted_content or not pasted_content.strip():
         raise ValueError("No content pasted")
@@ -149,7 +151,7 @@ def import_clipboard(request: HttpRequest) -> Book:
                 tmp_file.name,
                 original_filename=original_filename,
             )
-            book = book_processor.create(request.user.email)
+            book = book_processor.create(user.email)
             book.save()
         finally:
             # Make sure we clean up the temporary file
@@ -161,6 +163,7 @@ def import_clipboard(request: HttpRequest) -> Book:
 
 
 def import_url(request: HttpRequest) -> Book:
+    user = get_custom_user(request)
     url = request.POST.get("url")
     if not url:
         raise ValueError("No URL provided")
@@ -174,7 +177,7 @@ def import_url(request: HttpRequest) -> Book:
     if cleaning_level not in ["aggressive", "moderate", "minimal"]:
         cleaning_level = "moderate"  # Default to moderate if invalid value
     book_processor = BookLoaderURL(url, cleaning_level=cleaning_level)
-    book = book_processor.create(request.user.email)
+    book = book_processor.create(user.email)
     book.save()
     return book
 
@@ -183,6 +186,7 @@ def import_url(request: HttpRequest) -> Book:
 @require_GET  # type: ignore
 def download_calibre_plugin(request: HttpRequest) -> HttpResponse:
     """Generate and download Calibre plugin with API token."""
+    user = get_custom_user(request)
 
     # Get the calibre_plugin directory path
     calibre_plugin_dir = os.path.join(
@@ -202,10 +206,10 @@ def download_calibre_plugin(request: HttpRequest) -> HttpResponse:
     server_url = request.build_absolute_uri("/")[:-1]  # Remove trailing slash
 
     # Generate API token for this user
-    api_token_obj = APIToken.generate_for_user(request.user, name="Calibre Plugin")
+    api_token_obj = APIToken.generate_for_user(user, name="Calibre Plugin")
     api_token = api_token_obj.token
 
-    logger.info(f"Generated Calibre plugin token for user {request.user.email}")
+    logger.info(f"Generated Calibre plugin token for user {user.email}")
 
     # Create ZIP file in memory
     zip_buffer = io.BytesIO()
@@ -266,19 +270,20 @@ def download_calibre_plugin(request: HttpRequest) -> HttpResponse:
 @smart_login_required  # type: ignore
 def generate_api_token(request: HttpRequest) -> JsonResponse:
     """Generate a new API token for the user, removing old ones with the same name."""
+    user = get_custom_user(request)
     try:
         data = json.loads(request.body)
         name = data.get("name", "API Token")
 
         # Remove existing tokens with the same name for this user
-        old_tokens_count = APIToken.objects.filter(user=request.user, name=name).count()
-        APIToken.objects.filter(user=request.user, name=name).delete()
+        old_tokens_count = APIToken.objects.filter(user=user, name=name).count()
+        APIToken.objects.filter(user=user, name=name).delete()
 
         # Generate new token
-        api_token_obj = APIToken.generate_for_user(request.user, name=name)
+        api_token_obj = APIToken.generate_for_user(user, name=name)
 
         logger.info(
-            f"Generated new API token '{name}' for user {request.user.email}, "
+            f"Generated new API token '{name}' for user {user.email}, "
             f"removed {old_tokens_count} old tokens",
         )
 

@@ -51,6 +51,6 @@ class CustomLoginView(LoginView):  # type: ignore
 
         form = AuthenticationForm(initial={"username": username})
         assert (  # Tells pyrefly "this is definitely not None here"
-                self.template_name is not None
+            self.template_name is not None
         )
         return render(request, self.template_name, {"form": form, "error_message": error_message})

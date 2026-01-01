@@ -7,7 +7,7 @@ from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import render
 from django.views.decorators.http import require_http_methods
 
-from lexiflux.decorators import smart_login_required
+from lexiflux.decorators import get_custom_user, smart_login_required
 from lexiflux.models import SUPPORTED_CHAT_MODELS, AIModelConfig
 
 # Define custom captions for chat models
@@ -31,10 +31,11 @@ def ai_settings(request: HttpRequest) -> HttpResponse:
 @require_http_methods(["GET", "POST"])  # type: ignore
 def ai_settings_api(request: HttpRequest) -> JsonResponse:
     """API for getting and setting AI model settings."""
+    user = get_custom_user(request)
     if request.method == "GET":
         configs = []
         for chat_model in SUPPORTED_CHAT_MODELS:
-            config = AIModelConfig.get_or_create_ai_model_config(request.user, chat_model)
+            config = AIModelConfig.get_or_create_ai_model_config(user, chat_model)
             configs.append(
                 {
                     "chat_model": chat_model,
@@ -63,7 +64,7 @@ def ai_settings_api(request: HttpRequest) -> JsonResponse:
 
                 try:
                     config, _ = AIModelConfig.objects.update_or_create(
-                        user=request.user,
+                        user=user,
                         chat_model=chat_model,
                         defaults={"settings": ai_model_settings},
                     )

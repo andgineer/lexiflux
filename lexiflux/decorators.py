@@ -3,7 +3,7 @@
 import logging
 from collections.abc import Callable
 from functools import wraps
-from typing import Any
+from typing import TYPE_CHECKING, Any, TypeVar, cast
 
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
@@ -12,7 +12,22 @@ from django.http import HttpRequest, HttpResponse
 
 from lexiflux.lexiflux_settings import settings
 
+if TYPE_CHECKING:
+    from lexiflux.models import CustomUser
+
 logger = logging.getLogger(__name__)
+
+# TypeVar for preserving function signatures in decorators
+_ViewFunc = TypeVar("_ViewFunc", bound=Callable[..., HttpResponse])
+
+
+def get_custom_user(request: HttpRequest) -> "CustomUser":
+    """Type-safe helper to get CustomUser from request after authentication.
+
+    Use this after @smart_login_required or @login_required decorators
+    to tell the type checker that request.user is definitely CustomUser.
+    """
+    return cast("CustomUser", request.user)
 
 
 def get_default_user() -> Any:
@@ -31,9 +46,7 @@ def get_default_user() -> Any:
     return user
 
 
-def smart_login_required(
-    view_func: Callable[[HttpRequest, Any], HttpResponse],
-) -> Callable[[HttpRequest, Any], HttpResponse]:
+def smart_login_required(view_func: _ViewFunc) -> _ViewFunc:
     """Login required decorator that does not require login if not in cloud."""
 
     @wraps(view_func)
@@ -44,4 +57,4 @@ def smart_login_required(
             return view_func(request, *args, **kwargs)
         return login_required(view_func)(request, *args, **kwargs)
 
-    return wrapper
+    return wrapper  # type: ignore[return-value]

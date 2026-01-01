@@ -10,7 +10,7 @@ from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404
 from django.views.decorators.http import require_POST
 
-from lexiflux.decorators import smart_login_required
+from lexiflux.decorators import get_custom_user, smart_login_required
 from lexiflux.models import Book, BookPage, normalize_for_search
 
 logger = logging.getLogger(__name__)
@@ -185,6 +185,7 @@ def render_results_table(
 @require_POST  # type: ignore
 def search(request: HttpRequest) -> HttpResponse:
     """Search for a term in the book."""
+    user = get_custom_user(request)
     book_code = request.POST.get("book-code")
     search_term = request.POST.get("searchInput", "").strip()
     whole_words = request.POST.get("whole-words") == "on"
@@ -198,7 +199,7 @@ def search(request: HttpRequest) -> HttpResponse:
         return HttpResponse(render_results_table([], None, request.path, start_page))
 
     book = get_object_or_404(Book, code=book_code)
-    book.ensure_can_be_read_by(request.user)
+    book.ensure_can_be_read_by(user)
 
     # If this is the initial search and "from current" is checked,
     # use the current page as starting point

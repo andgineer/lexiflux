@@ -415,7 +415,7 @@ class TestInternalLinkClicking:
         )
         # The view doesn't explicitly check for missing link, it will try to process None
         assert response.status_code == 200
-        assert response.json() == {"success": False, "error": "Link None not found in anchor map"}
+        assert response.json() == {"success": False, "error": "No link provided"}
 
     def test_link_click_with_invalid_book_code(self, setup_book_with_links):
         """Test link_click view with invalid book code."""

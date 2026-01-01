@@ -11,7 +11,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.views.decorators.http import require_POST
 
-from lexiflux.decorators import smart_login_required
+from lexiflux.decorators import get_custom_user, smart_login_required
 from lexiflux.ebook.book_loader_base import BookLoaderBase, normalize_path
 from lexiflux.models import (
     Book,
@@ -127,51 +127,50 @@ def reader(request: HttpRequest) -> HttpResponse:
     If the book code not given open the latest book.
     Send jump status to set jump buttons active/inactive.
     """
+    user = get_custom_user(request)
     book_code = request.GET.get("book-code")
     page_number = request.GET.get("book-page-number")
     book = Book.objects.filter(code=book_code).first() if book_code else None
     if not book:
         if book_code:
             log.warning(f"Book {book_code} not found")
-        reading_location = (
-            ReadingLoc.objects.filter(user=request.user).order_by("-last_access").first()
-        )
+        reading_location = ReadingLoc.objects.filter(user=user).order_by("-last_access").first()
         if not reading_location:
             return redirect("library")  # Redirect if the user has no reading history
 
         book = reading_location.book
         book_code = book.code  # Update book_code to be used in the response
         page_number = reading_location.page_number
-    book.ensure_can_be_read_by(request.user)
+    book.ensure_can_be_read_by(user)
 
     if not page_number:
         # if the book-code is provided but book-page-number is not: first page or last read page
-        reading_location = ReadingLoc.objects.filter(book=book, user=request.user).first()
+        reading_location = ReadingLoc.objects.filter(book=book, user=user).first()
         page_number = reading_location.page_number if reading_location else 1
     else:
         page_number = int(page_number)  # Ensure page_number is an integer
 
-    log.info(f"Opening book {book_code} at page {page_number} for user {request.user.username}")
+    log.info(f"Opening book {book_code} at page {page_number} for user {user.username}")
     book_page = BookPage.objects.get(book=book, number=page_number)
 
     language_preferences = LanguagePreferences.get_or_create_language_preferences(
-        request.user,
+        user,
         book.language,
     )
     # Minimize user's confusion:
     # we expect when he goes to the Language preferences he wants to change the preferences
     # for the language of the book he just read. Language preferences editor could be very
     # confusing if you do not notice for which language you are changing the preferences.
-    if request.user.default_language_preferences != language_preferences:
-        request.user.default_language_preferences = language_preferences
-        request.user.save()
+    if user.default_language_preferences != language_preferences:
+        user.default_language_preferences = language_preferences
+        user.save()
     lexical_articles = language_preferences.get_lexical_articles()
 
-    reading_location = ReadingLoc.get_or_create_reading_loc(user=request.user, book=book)
+    reading_location = ReadingLoc.get_or_create_reading_loc(user=user, book=book)
 
     # update so it will be the last accessed location even if the user won't change the page
     ReadingLoc.update_reading_location(
-        user=request.user,
+        user=user,
         book_id=book.id,
         page_number=page_number,
         top_word_id=reading_location.word,
@@ -185,7 +184,7 @@ def reader(request: HttpRequest) -> HttpResponse:
     )
 
     reader_settings = ReaderSettings.get_settings(
-        user=request.user,
+        user=user,
         book=book,
     )
 
@@ -208,12 +207,13 @@ def reader(request: HttpRequest) -> HttpResponse:
 @smart_login_required  # type: ignore
 def page(request: HttpRequest) -> HttpResponse:
     """Book page."""
+    user = get_custom_user(request)
     book_code = request.GET.get("book-code")
     page_number = request.GET.get("book-page-number")
     if not book_code:
         return HttpResponse("error: Book code is required", status=400)
 
-    book = Book.get_if_can_be_read(request.user, code=book_code)
+    book = Book.get_if_can_be_read(user, code=book_code)
     try:
         page_number = int(page_number)
         if page_number < 1:
@@ -250,7 +250,8 @@ def page(request: HttpRequest) -> HttpResponse:
 @smart_login_required  # type: ignore
 def serve_book_image(request, book_code, image_filename):
     """Serve the book image."""
-    book = Book.get_if_can_be_read(request.user, code=book_code)
+    user = get_custom_user(request)
+    book = Book.get_if_can_be_read(user, code=book_code)
 
     image = get_object_or_404(BookImage, book=book, filename=image_filename)
     return HttpResponse(image.image_data, content_type=image.content_type)
@@ -260,6 +261,7 @@ def serve_book_image(request, book_code, image_filename):
 @require_POST  # type: ignore
 def location(request: HttpRequest) -> HttpResponse:
     """Read location changed."""
+    user = get_custom_user(request)
     try:
         book_code = request.POST.get("book-code")
         page_number = int(request.POST.get("book-page-number"))
@@ -270,10 +272,10 @@ def location(request: HttpRequest) -> HttpResponse:
         return HttpResponse("Invalid or missing parameters", status=400)
 
     log.info(f"Location changed: book {book_code}, page {page_number}, top word {top_word}")
-    book = Book.get_if_can_be_read(request.user, code=book_code)
+    book = Book.get_if_can_be_read(user, code=book_code)
 
     ReadingLoc.update_reading_location(
-        user=request.user,
+        user=user,
         book_id=book.id,
         page_number=page_number,
         top_word_id=top_word,
@@ -285,6 +287,7 @@ def location(request: HttpRequest) -> HttpResponse:
 @require_POST  # type: ignore
 def jump(request: HttpRequest) -> HttpResponse:
     """Jump to a specific location in the book."""
+    user = get_custom_user(request)
     try:
         book_code = request.POST.get("book-code")
         page_number = int(request.POST.get("book-page-number"))
@@ -293,8 +296,8 @@ def jump(request: HttpRequest) -> HttpResponse:
         if not book_code:
             return JsonResponse({"error": "Missing book code"}, status=400)
 
-        book = Book.get_if_can_be_read(request.user, code=book_code)
-        reading_loc = ReadingLoc.get_or_create_reading_loc(user=request.user, book=book)
+        book = Book.get_if_can_be_read(user, code=book_code)
+        reading_loc = ReadingLoc.get_or_create_reading_loc(user=user, book=book)
         reading_loc.jump(page_number, top_word)
 
         return JsonResponse({"success": True})
@@ -306,12 +309,13 @@ def jump(request: HttpRequest) -> HttpResponse:
 @require_POST  # type: ignore
 def jump_back(request: HttpRequest) -> HttpResponse:
     """Jump back to the previous location in the book."""
+    user = get_custom_user(request)
     book_code = request.POST.get("book-code")
     if not book_code:
         return JsonResponse({"error": "Missing book code"}, status=400)
 
-    book = Book.get_if_can_be_read(request.user, code=book_code)
-    reading_loc = ReadingLoc.get_or_create_reading_loc(user=request.user, book=book)
+    book = Book.get_if_can_be_read(user, code=book_code)
+    reading_loc = ReadingLoc.get_or_create_reading_loc(user=user, book=book)
 
     page_number, word = reading_loc.jump_back()
     return JsonResponse({"success": True, "page_number": page_number, "word": word})
@@ -321,12 +325,13 @@ def jump_back(request: HttpRequest) -> HttpResponse:
 @require_POST  # type: ignore
 def jump_forward(request: HttpRequest) -> HttpResponse:
     """Jump forward to the next location in the book."""
+    user = get_custom_user(request)
     book_code = request.POST.get("book-code")
     if not book_code:
         return JsonResponse({"error": "Missing book code"}, status=400)
 
-    book = Book.get_if_can_be_read(request.user, code=book_code)
-    reading_loc = ReadingLoc.get_or_create_reading_loc(user=request.user, book=book)
+    book = Book.get_if_can_be_read(user, code=book_code)
+    reading_loc = ReadingLoc.get_or_create_reading_loc(user=user, book=book)
 
     page_number, word = reading_loc.jump_forward()
     return JsonResponse({"success": True, "page_number": page_number, "word": word})
@@ -335,13 +340,14 @@ def jump_forward(request: HttpRequest) -> HttpResponse:
 @smart_login_required  # type: ignore
 def get_jump_status(request: HttpRequest) -> HttpResponse:
     """Get the status of the jump history."""
+    user = get_custom_user(request)
     book_code = request.GET.get("book-code")
     if not book_code:
         return JsonResponse({"error": "Missing book code"}, status=400)
 
-    book = Book.get_if_can_be_read(request.user, code=book_code)
+    book = Book.get_if_can_be_read(user, code=book_code)
 
-    reading_loc = ReadingLoc.get_or_create_reading_loc(user=request.user, book=book)
+    reading_loc = ReadingLoc.get_or_create_reading_loc(user=user, book=book)
 
     is_first_jump = reading_loc.current_jump <= 0
     is_last_jump = reading_loc.current_jump == len(reading_loc.jump_history) - 1
@@ -457,13 +463,14 @@ def load_reader_settings(request: HttpRequest) -> HttpResponse:  # pragma: no co
         - other future settings
 
     """
+    user = get_custom_user(request)
     try:
         book_code = request.GET.get("book_code")
         if not book_code:
             return JsonResponse({"error": "Book code is required"}, status=400)
 
         book = Book.objects.get(code=book_code)
-        settings_dict = ReaderSettings.get_settings(user=request.user, book=book)
+        settings_dict = ReaderSettings.get_settings(user=user, book=book)
 
         return JsonResponse(settings_dict)
 
@@ -487,6 +494,7 @@ def save_reader_settings(request: HttpRequest) -> HttpResponse:
         HttpResponse with appropriate status code
 
     """
+    user = get_custom_user(request)
     try:
         book_code = request.POST.get("book_code")
         if not book_code:
@@ -501,7 +509,7 @@ def save_reader_settings(request: HttpRequest) -> HttpResponse:
         if not settings:
             return JsonResponse({"error": "No settings provided"}, status=400)
 
-        ReaderSettings.save_settings(user=request.user, reader_settings=settings, book=book)
+        ReaderSettings.save_settings(user=user, reader_settings=settings, book=book)
 
         return HttpResponse(status=200)
 

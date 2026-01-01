@@ -16,7 +16,7 @@ from django.views.decorators.http import require_http_methods
 from lexiflux.anki.anki_connect import export_words_to_anki_connect
 from lexiflux.anki.anki_file import export_words_to_anki_file
 from lexiflux.anki.csv_file import export_words_to_csv_file
-from lexiflux.decorators import smart_login_required
+from lexiflux.decorators import get_custom_user, smart_login_required
 from lexiflux.models import (
     CustomUser,
     Language,
@@ -32,7 +32,7 @@ logger = logging.getLogger(__name__)
 @smart_login_required  # type: ignore
 def words_export_page(request: HttpRequest) -> HttpResponse:  # pylint: disable=too-many-locals
     """Render the words export page with all necessary data."""
-    user = request.user
+    user = get_custom_user(request)
 
     # Check if translation history is empty
     if not TranslationHistory.objects.filter(user=user).exists():
@@ -164,15 +164,16 @@ def get_language_last_export(user: CustomUser, language_code: str) -> datetime |
 @require_http_methods(["GET"])  # type: ignore
 def last_export_datetime(request: HttpRequest) -> HttpResponse:
     """Get the last export datetime for a given language or language group."""
+    user = get_custom_user(request)
     language_id = request.GET.get("language")
     if not language_id:
         return JsonResponse({"error": "Language parameter is required"}, status=400)
 
     try:
         last_export = (
-            get_group_last_export(request.user, language_id)
+            get_group_last_export(user, language_id)
             if language_id.isdigit()
-            else get_language_last_export(request.user, language_id)
+            else get_language_last_export(user, language_id)
         )
 
         if not last_export:
@@ -205,7 +206,7 @@ def export_words(request: HttpRequest) -> HttpResponse:  # pylint: disable=too-m
     deck_name = data.get("deck_name", "")
     if is_naive(min_datetime):
         min_datetime = make_aware(min_datetime)
-    user = request.user
+    user = get_custom_user(request)
 
     try:
         if isinstance(language_id, str) and language_id.isdigit():
@@ -284,10 +285,10 @@ def export_words(request: HttpRequest) -> HttpResponse:  # pylint: disable=too-m
 @require_http_methods(["GET"])  # type: ignore
 def word_count(request: HttpRequest) -> HttpResponse:
     """Get the number of words for a given language or language group."""
+    user = get_custom_user(request)
     try:
         language_id = request.GET.get("language")
         min_datetime = request.GET.get("min_datetime")
-        user = request.user
 
         if not language_id or not min_datetime:
             return JsonResponse(

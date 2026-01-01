@@ -10,7 +10,7 @@ from django.template.loader import render_to_string
 from pydantic import Field
 
 from lexiflux.api import ViewGetParamsModel, get_params
-from lexiflux.decorators import smart_login_required
+from lexiflux.decorators import get_custom_user, smart_login_required
 from lexiflux.language.llm import (
     SENTENCE_END_MARK,
     SENTENCE_START_MARK,
@@ -125,11 +125,12 @@ def translate(request: HttpRequest, params: TranslateGetParams) -> HttpResponse:
     The selected text is defined by the word IDs.
     If the lexical article is provided, the article is generated for the selected text.
     """
+    user = get_custom_user(request)
     book = Book.objects.get(code=params.book_code)
     book_page = BookPage.objects.get(book=book, number=params.book_page_number)
 
     language_preferences = LanguagePreferences.get_or_create_language_preferences(
-        request.user,
+        user,
         book.language,
     )
 
@@ -158,7 +159,7 @@ def translate(request: HttpRequest, params: TranslateGetParams) -> HttpResponse:
                 book_page,
                 term_word_ids,
                 language_preferences,
-                request.user,
+                user,
             ),
         )
         result["article"] = result["article"].split("<hr>")[0]
@@ -168,7 +169,7 @@ def translate(request: HttpRequest, params: TranslateGetParams) -> HttpResponse:
         translation_history, created = TranslationHistory.objects.update_or_create(
             term=term_text,
             source_language=book.language,
-            user=request.user,
+            user=user,
             defaults={
                 "translation": result["article"],
                 "target_language": language_preferences.user_language,
@@ -195,7 +196,7 @@ def translate(request: HttpRequest, params: TranslateGetParams) -> HttpResponse:
                     book_page,
                     term_word_ids,
                     language_preferences,
-                    request.user,
+                    user,
                 ),
             )
         else:
