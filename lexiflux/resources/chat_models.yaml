@@ -33,7 +33,7 @@ gemini-2.5-flash:
   model: ChatGoogle
   suffix: 🌀2.5f
 
-gemini-3.0-flash:
-  title: Gemini 3.0 Flash
+gemini-3-flash-preview:
+  title: Gemini 3 Flash Preview
   model: ChatGoogle
-  suffix: 🌀3.0f
+  suffix: 🌀3f

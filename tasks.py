@@ -309,6 +309,6 @@ def test_koyeb(c: Context):
 
 namespace = Collection.from_module(sys.modules[__name__])
 for name in ALLOWED_VERSION_TYPES:
-    namespace.add_task(ver_task_factory(name), name=f"ver-{name}")
+    namespace.add_task(ver_task_factory(name), name=f"ver-{name}")  # type: ignore[bad-argument-type]
 for name in ALLOWED_DOC_LANGUAGES:
-    namespace.add_task(docs_task_factory(name), name=f"docs-{name}")
+    namespace.add_task(docs_task_factory(name), name=f"docs-{name}")  # type: ignore[bad-argument-type]
