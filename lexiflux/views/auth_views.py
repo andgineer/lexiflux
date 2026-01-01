@@ -50,4 +50,7 @@ class CustomLoginView(LoginView):  # type: ignore
             error_message = "Invalid username or password."
 
         form = AuthenticationForm(initial={"username": username})
+        assert (  # Tells pyrefly "this is definitely not None here"
+                self.template_name is not None
+        )
         return render(request, self.template_name, {"form": form, "error_message": error_message})

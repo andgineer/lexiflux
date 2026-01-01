@@ -17,9 +17,8 @@ requests_mock
 
 # lint
 pre-commit
-pylint
-mypy
-pylint-django
+pyrefly
+django-stubs
 
 # debug
 # versions pinned because of https://github.com/django-extensions/django-extensions/issues/1835

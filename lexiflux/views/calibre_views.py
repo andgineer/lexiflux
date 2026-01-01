@@ -134,7 +134,8 @@ def _handle_file_upload(request: HttpRequest, user_email: str) -> JsonResponse:
         metadata = {}
 
     # Import the book using existing book loaders
-    book = _import_book_file(file, file.name, metadata, user_email)
+    filename = file.name or "uploaded_book.epub"
+    book = _import_book_file(file, filename, metadata, user_email)
 
     logger.info(f"Successfully imported book from Calibre: {book.title}")
     return JsonResponse(

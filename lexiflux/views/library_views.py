@@ -51,7 +51,7 @@ def books_list(request: HttpRequest) -> HttpResponse:
     )
 
     # Pagination
-    page_number = request.GET.get("page")
+    page_number = request.GET.get("page", "1")
     paginator = Paginator(books_query, 10)  # Show 10 books per page
 
     try:
@@ -140,6 +140,9 @@ class EditBookModalPartial(TemplateView):  # type: ignore
             return HttpResponse()
 
         except ValueError as e:
+            assert (  # Tells pyrefly "this is definitely not None here"
+                self.template_name is not None
+            )
             return TemplateResponse(
                 request,
                 self.template_name,

@@ -406,6 +406,9 @@ def link_click(request: HttpRequest) -> HttpResponse:
     book_code = request.POST.get("book-code")
     link = request.POST.get("link")
 
+    if not link:
+        return JsonResponse({"success": False, "error": "No link provided"})
+
     book = get_object_or_404(Book, code=book_code)
 
     # Get the page number from the anchor_map
