@@ -19,4 +19,4 @@ class CustomUserCreationForm(UserCreationForm):
         """Meta class for the form."""
 
         model = CustomUser
-        fields = UserCreationForm.Meta.fields + ("email",)
+        fields = UserCreationForm.Meta.fields + ("email",)  # type: ignore[missing-attribute]

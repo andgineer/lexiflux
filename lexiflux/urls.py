@@ -76,11 +76,6 @@ urlpatterns = [
         name="save_inline_translation",
     ),
     path(
-        "api/save-inline-translation/",
-        lexiflux.views.language_preferences_views.save_inline_translation,
-        name="save_inline_translation",
-    ),
-    path(
         "api/update-article-order/",
         lexiflux.views.language_preferences_views.update_article_order,
         name="update_article_order",
@@ -109,17 +104,17 @@ urlpatterns = [
     # user settings
     path("api/user/", user_modal, name="user-modal"),
     # calibre integration
-    path(
+    path(  # type: ignore[no-matching-overload]
         "calibre/handshake/",
         lexiflux.views.calibre_views.calibre_handshake,
         name="calibre_handshake",
     ),
-    path(
+    path(  # type: ignore[no-matching-overload]
         "calibre/upload/",
         lexiflux.views.calibre_views.calibre_upload_book,
         name="calibre_upload_book",
     ),
-    path("calibre/status/", lexiflux.views.calibre_views.calibre_status, name="calibre_status"),
+    path("calibre/status/", lexiflux.views.calibre_views.calibre_status, name="calibre_status"),  # type: ignore[no-matching-overload]
 ]
 
 # library partials
@@ -142,7 +137,7 @@ urlpatterns += [
         lexiflux.views.import_views.download_calibre_plugin,
         name="download_calibre_plugin",
     ),
-    path(
+    path(  # type: ignore[no-matching-overload]
         "api/generate-token/",
         lexiflux.views.import_views.generate_api_token,
         name="generate_api_token",
