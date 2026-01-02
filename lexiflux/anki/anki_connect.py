@@ -7,6 +7,7 @@ from typing import Any
 
 import requests
 import urllib3.connection
+from django.db.models import QuerySet
 
 from lexiflux.anki.anki_common import NOTES_PER_TERM, create_anki_notes_data, get_anki_model_config
 from lexiflux.models import Language, TranslationHistory
@@ -20,7 +21,7 @@ ANKI_CONNECT_URL = "http://localhost:8765"
 
 def export_words_to_anki_connect(
     language: Language,  # noqa: ARG001
-    terms: list[TranslationHistory],
+    terms: QuerySet[TranslationHistory],
     deck_name: str,
 ) -> int:
     """Export words to Anki using AnkiConnect."""

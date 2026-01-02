@@ -5,7 +5,7 @@ from django.contrib.auth.forms import UserCreationForm
 from lexiflux.models import CustomUser
 
 
-class CustomUserCreationForm(UserCreationForm):  # type: ignore  # pylint: disable=too-many-ancestors
+class CustomUserCreationForm(UserCreationForm):
     """Form for creating a new user."""
 
     def save(self, commit: bool = True) -> CustomUser:

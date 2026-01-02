@@ -4,7 +4,6 @@
 import json
 import logging
 from datetime import datetime
-from typing import cast
 
 from django.db.models import Max
 from django.http import FileResponse, HttpRequest, HttpResponse, JsonResponse
@@ -138,7 +137,7 @@ def words_export_page(request: HttpRequest) -> HttpResponse:  # pylint: disable=
         last_export_date = last_export.export_datetime.isoformat()
     else:
         # Set to the beginning of the year if no export exists
-        last_export_date = timezone.datetime(timezone.now().year, 1, 1).isoformat()
+        last_export_date = datetime(timezone.now().year, 1, 1).isoformat()
 
     # Check if the selected language is part of a language group
     for group in language_groups:
@@ -150,7 +149,7 @@ def words_export_page(request: HttpRequest) -> HttpResponse:  # pylint: disable=
     initial_word_count = TranslationHistory.objects.filter(
         user=user,
         source_language=language if language_selection else None,
-        last_lookup__gte=timezone.datetime.fromisoformat(last_export_date),
+        last_lookup__gte=datetime.fromisoformat(last_export_date),
     ).count()
 
     default_deck_name = WordsExport.get_default_deck_name(user, language)
@@ -212,10 +211,7 @@ def last_export_datetime(request: HttpRequest) -> HttpResponse:
         )
 
         if not last_export:
-            last_export = timezone.datetime(timezone.now().year, 1, 1)
-
-        # Cast to datetime since we know it can't be None at this point
-        last_export = cast(datetime, last_export)
+            last_export = datetime(timezone.now().year, 1, 1)
 
         logger.info(f"For language {language_id} last export datetime: {last_export}")
 
@@ -232,12 +228,12 @@ def last_export_datetime(request: HttpRequest) -> HttpResponse:
 
 @smart_login_required
 @require_http_methods(["POST"])  # type: ignore
-def export_words(request: HttpRequest) -> HttpResponse:  # pylint: disable=too-many-locals
+def export_words(request: HttpRequest) -> JsonResponse | FileResponse:  # pylint: disable=too-many-locals
     """Export words for the given language or language group."""
     data = json.loads(request.body)
     language_id = data.get("language")
     export_method = data.get("export_method")
-    min_datetime = timezone.datetime.fromisoformat(data.get("min_datetime"))
+    min_datetime = datetime.fromisoformat(data.get("min_datetime"))
     deck_name = data.get("deck_name", "")
     if is_naive(min_datetime):
         min_datetime = make_aware(min_datetime)
@@ -274,6 +270,7 @@ def export_words(request: HttpRequest) -> HttpResponse:  # pylint: disable=too-m
 
         words_exported = len(terms)
 
+        response: JsonResponse | FileResponse
         if export_method == "ankiConnect":
             words_exported = export_words_to_anki_connect(language, terms, deck_name)
             logger.info(f"Words exported for {language.name}: {words_exported} words")
@@ -320,7 +317,7 @@ def word_count(request: HttpRequest) -> HttpResponse:
     user = get_custom_user(request)
     try:
         language_id = request.GET.get("language")
-        min_datetime = request.GET.get("min_datetime")
+        min_datetime = datetime.fromisoformat(request.GET.get("min_datetime", ""))
 
         if not language_id or not min_datetime:
             return JsonResponse(
@@ -328,7 +325,6 @@ def word_count(request: HttpRequest) -> HttpResponse:
                 status=400,
             )
 
-        min_datetime = timezone.datetime.fromisoformat(min_datetime)
         if is_naive(min_datetime):
             min_datetime = make_aware(min_datetime)
 

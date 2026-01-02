@@ -4,6 +4,7 @@ import csv
 import io
 
 from django.core.files.base import ContentFile
+from django.db.models import QuerySet
 from django.utils import timezone
 
 from lexiflux.models import Language, TranslationHistory
@@ -11,7 +12,7 @@ from lexiflux.models import Language, TranslationHistory
 
 def export_words_to_csv_file(
     language: Language,
-    terms: list[TranslationHistory],
+    terms: QuerySet[TranslationHistory],
 ) -> tuple[ContentFile, str]:
     """Export words to a CSV file."""
     filename = f"lexiflux_{language.google_code}_{timezone.now().strftime('%Y%m%d%H%M%S')}.csv"

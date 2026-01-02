@@ -5,6 +5,7 @@ import random
 
 import genanki
 from django.core.files.base import ContentFile
+from django.db.models import QuerySet
 from django.utils import timezone
 
 from lexiflux.anki.anki_common import create_anki_notes_data, get_anki_model_config
@@ -13,7 +14,7 @@ from lexiflux.models import Language, TranslationHistory
 
 def export_words_to_anki_file(  # pylint: disable=too-many-locals
     language: Language,
-    terms: list[TranslationHistory],
+    terms: QuerySet[TranslationHistory],
     deck_name: str,
 ) -> tuple[ContentFile, str]:
     """Export words to an Anki-compatible file."""

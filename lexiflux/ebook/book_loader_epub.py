@@ -142,7 +142,7 @@ class BookLoaderEpub(BookLoaderBase):
     def spine(self) -> Iterator[tuple[str, str, str, str]]:
         """Items in the EPUB spine."""
         for spine_id in self.epub.spine:
-            item: ebooklib.EpubItem = self.epub.get_item_with_id(spine_id[0])
+            item: ebooklib.EpubItem = self.epub.get_item_with_id(spine_id[0])  # type: ignore[bad-assignment]
             if item.get_type() == ITEM_DOCUMENT:
                 log.debug(
                     "Processing spine: %s, name = %s, type = %s, id = %s, file_name = %s",
@@ -224,7 +224,7 @@ class BookLoaderEpub(BookLoaderBase):
         """Generate TOC from the EPUB spine when no TOC is present."""
         result: dict[str, dict[str, str]] = defaultdict(dict)
         for spine_id in self.epub.spine:
-            item: ebooklib.EpubItem = self.epub.get_item_with_id(spine_id[0])
+            item: ebooklib.EpubItem = self.epub.get_item_with_id(spine_id[0])  # type: ignore[bad-assignment]
             log.debug(f"Spine item: {item.get_name()}")
             if item.get_type() == ITEM_DOCUMENT:
                 file_name = item.file_name

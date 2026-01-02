@@ -12,7 +12,7 @@ from django.conf import settings
 from django.contrib.auth.models import AbstractUser
 from django.core.exceptions import ObjectDoesNotExist, PermissionDenied, ValidationError
 from django.db import models
-from django.db.models import Q, QuerySet
+from django.db.models import Manager, Q, QuerySet
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from transliterate import get_available_language_codes, translit
@@ -159,6 +159,10 @@ class Author(models.Model):  # type: ignore
 
 class Book(models.Model):  # type: ignore
     """A book containing multiple pages."""
+
+    # Type hints for auto-created Django reverse relationships
+    pages: Manager["BookPage"]
+    current_readers: Manager["LanguagePreferences"]
 
     owner = models.ForeignKey(
         settings.AUTH_USER_MODEL,
