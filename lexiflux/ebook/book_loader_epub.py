@@ -152,7 +152,7 @@ class BookLoaderEpub(BookLoaderBase):
                     item.get_id(),
                     item.file_name,
                 )
-                yield (
+                yield (  # type: ignore[misc]
                     item.get_content().decode("utf-8"),
                     item.file_name,
                     item.get_id(),

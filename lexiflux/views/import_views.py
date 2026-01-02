@@ -77,12 +77,15 @@ def import_book(request: HttpRequest) -> HttpResponse:
             ),  # Preserve selected cleaning level
         }
 
-        if request.POST.get("importType") == "file" and request.FILES.get("file"):
-            context["last_filename"] = request.FILES.get("file").name
+        if request.POST.get("importType") == "file":
+            if file := request.FILES.get("file"):
+                context["last_filename"] = file.name or "Unknown"
         elif request.POST.get("importType") == "url" and request.POST.get("url"):
             context["last_url"] = request.POST.get("url")
-        elif request.POST.get("importType") == "paste" and request.POST.get("pasted_content"):
-            context["last_paste_length"] = len(request.POST.get("pasted_content"))
+        elif request.POST.get("importType") == "paste":
+            pasted_content = request.POST.get("pasted_content")
+            if pasted_content:
+                context["last_paste_length"] = str(len(pasted_content))
 
         return render(request, "partials/import_modal.html", context)
 
@@ -269,8 +272,8 @@ def download_calibre_plugin(request: HttpRequest) -> HttpResponse:
     return response
 
 
-@require_POST
-@smart_login_required  # type: ignore
+@require_POST  # type: ignore
+@smart_login_required
 def generate_api_token(request: HttpRequest) -> JsonResponse:
     """Generate a new API token for the user, removing old ones with the same name."""
     user = get_custom_user(request)

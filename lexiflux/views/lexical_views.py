@@ -138,7 +138,7 @@ def translate(request: HttpRequest, params: TranslateGetParams) -> HttpResponse:
 
     language_preferences = LanguagePreferences.get_or_create_language_preferences(
         user,
-        book.language,
+        book.language,  # type: ignore[arg-type]
     )
 
     assert params.word_ids is not None
@@ -190,7 +190,7 @@ def translate(request: HttpRequest, params: TranslateGetParams) -> HttpResponse:
             translation_history.save()
 
     else:
-        all_articles = language_preferences.lexical_articles.all()
+        all_articles = language_preferences.lexical_articles.all()  # type: ignore[attr-defined]
         article_index = int(params.lexical_article) - 1
 
         if 0 <= article_index < len(all_articles):

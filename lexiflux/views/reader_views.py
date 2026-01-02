@@ -156,7 +156,7 @@ def reader(request: HttpRequest) -> HttpResponse:
 
     language_preferences = LanguagePreferences.get_or_create_language_preferences(
         user,
-        book.language,
+        book.language,  # type: ignore[arg-type]
     )
     # Minimize user's confusion:
     # we expect when he goes to the Language preferences he wants to change the preferences
@@ -216,7 +216,7 @@ def page(request: HttpRequest) -> HttpResponse:
 
     book = Book.get_if_can_be_read(user, code=book_code)
     try:
-        page_number = int(page_number)
+        page_number = int(page_number) if page_number else 1
         if page_number < 1:
             page_number = 1
         elif page_number > book.pages.count():

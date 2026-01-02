@@ -196,9 +196,9 @@ def check_article_params(
                 {"status": "error", "message": "Please set your user language"},
                 status=400,
             )
+        source_language = language_preferences.language.name.lower()
+        target_language = language_preferences.user_language.name.lower()
         try:
-            source_language = language_preferences.language.name.lower()
-            target_language = language_preferences.user_language.name.lower()
             get_translator(
                 dictionary_name,
                 source_language,
@@ -232,7 +232,7 @@ def save_inline_translation(request: HttpRequest) -> JsonResponse:
     translation_type = data.get("type")
     parameters = data.get("parameters", {})
 
-    language_preferences = user.language_preferences.get(language__google_code=language_id)
+    language_preferences = user.language_preferences.get(language__google_code=language_id)  # type: ignore[attr-defined]
     if error_response := check_article_params(translation_type, parameters, language_preferences):
         return error_response
 
@@ -287,11 +287,11 @@ def manage_lexical_article(request: HttpRequest) -> JsonResponse:  # noqa: PLR09
             )
 
         if action == "add":
-            return add_lexical_article(language_preferences, data)
+            return add_lexical_article(language_preferences, data)  # type: ignore[return-value]
         if action == "edit":
-            return edit_lexical_article(language_preferences, data)
+            return edit_lexical_article(language_preferences, data)  # type: ignore[return-value]
         if action == "delete":
-            return delete_lexical_article(language_preferences, data)
+            return delete_lexical_article(language_preferences, data)  # type: ignore[return-value]
         return JsonResponse({"status": "error", "message": "Invalid action"}, status=400)
 
     except json.JSONDecodeError:
@@ -460,7 +460,7 @@ def set_global_preferences(request: HttpRequest) -> JsonResponse:
         data = json.loads(request.body)
         language_id = data.get("language_id")
         language = get_object_or_404(Language, google_code=language_id)
-        user.language_preferences.exclude(language=language).delete()
+        user.language_preferences.exclude(language=language).delete()  # type: ignore[attr-defined]
         logger.info(f"Set global preferences for user {user.username} to {language.name}")
 
         return JsonResponse({"status": "success"})

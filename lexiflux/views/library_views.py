@@ -65,8 +65,8 @@ def books_list(request: HttpRequest) -> HttpResponse:
 
     # Format last_read for each book
     for book in books_page:
-        book.formatted_last_read = book.format_last_read(request.user)
-        book.last_position_percent = book.reading_loc(request.user).last_position_percent
+        book.formatted_last_read = book.format_last_read(request.user)  # type: ignore[attr-defined]
+        book.last_position_percent = book.reading_loc(request.user).last_position_percent  # type: ignore[attr-defined]
 
     return render(request, "partials/books_list.html", {"books": books_page})
 
@@ -82,7 +82,7 @@ class EditBookModalPartial(TemplateView):  # type: ignore
         """Handle all HTTP methods with proper error checking."""
         try:
             self.book = Book.get_if_can_be_read(get_custom_user(request), id=kwargs.get("book_id"))
-            return super().dispatch(request, *args, **kwargs)
+            return super().dispatch(request, *args, **kwargs)  # type: ignore[return-value]
         except (ObjectDoesNotExist, PermissionDenied, ValueError):
             # The middleware will handle converting this to the appropriate JSON response
             raise

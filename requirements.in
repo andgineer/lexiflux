@@ -17,6 +17,7 @@ langchain-openai
 langchain_anthropic
 langchain_google_genai
 langchain_mistralai
+langchain_ollama
 lxml_html_clean
 openai
 ollama

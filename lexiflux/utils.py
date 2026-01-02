@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 def validate_log_level(level_name: str) -> int:
     """Validate the log level and return the corresponding integer value."""
-    level = logging.getLevelName(level_name.upper())
+    level = logging.getLevelNamesMapping().get(level_name.upper(), None)
     if not isinstance(level, int):
         valid_levels = list(logging._levelToName.values())  # noqa: SLF001
         raise CommandError(

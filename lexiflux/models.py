@@ -546,7 +546,7 @@ class ReaderSettings(models.Model):  # type: ignore
     @staticmethod
     def _settings_to_dict(reader_settings: "ReaderSettings") -> dict[str, str | None]:
         """Convert settings model to dictionary, excluding None values."""
-        result = {}
+        result: dict[str, str | None] = {}
         if reader_settings.font_family is not None:
             result["font_family"] = reader_settings.font_family
         if reader_settings.font_size is not None:
@@ -747,7 +747,7 @@ class LanguagePreferences(models.Model):  # type: ignore
 
         if created:
             # Copy lexical articles from the default language preferences
-            for article in default.lexical_articles.all():
+            for article in default.lexical_articles.all():  # type: ignore[attr-defined]
                 LexicalArticle.objects.create(
                     language_preferences=preferences,
                     type=article.type,
@@ -767,7 +767,7 @@ class LanguagePreferences(models.Model):  # type: ignore
 
     def get_lexical_articles(self) -> "QuerySet[LexicalArticle]":
         """Return all lexical articles for this language_preferences."""
-        return self.lexical_articles.all().order_by("order")
+        return self.lexical_articles.all().order_by("order")  # type: ignore[attr-defined]
 
 
 class ReadingLoc(models.Model):  # type: ignore  # pylint: disable=too-many-instance-attributes

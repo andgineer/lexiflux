@@ -9,13 +9,13 @@ import openai
 import yaml
 from django.conf import settings
 from langchain_anthropic import ChatAnthropic
-from langchain_community.llms import Ollama  # pylint: disable=no-name-in-module
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 from langchain_core.output_parsers import BaseOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import RunnablePassthrough
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_mistralai import ChatMistralAI
+from langchain_ollama import OllamaLLM as Ollama
 from langchain_openai import ChatOpenAI
 
 from lexiflux.language.parse_html_text_content import extract_content_from_html
@@ -438,7 +438,7 @@ class Llm:  # pylint: disable=too-few-public-methods
                         **common_params,  # type: ignore
                     )
                 elif model_class == "Ollama":
-                    self._model_cache[model_key] = Ollama(  # pylint: disable=not-callable
+                    self._model_cache[model_key] = Ollama(
                         model=model_name,
                         **common_params,
                     )
@@ -447,14 +447,14 @@ class Llm:  # pylint: disable=too-few-public-methods
                     if api_key:
                         # If we have an API key from database, use it explicitly
                         self._model_cache[model_key] = ChatAnthropic(
-                            model=model_name,  # type: ignore
+                            model_name=model_name,
                             api_key=api_key,  # type: ignore
                             **common_params,  # type: ignore
                         )
                     else:
                         # Let Anthropic SDK auto-load from ANTHROPIC_API_KEY environment variable
                         self._model_cache[model_key] = ChatAnthropic(
-                            model=model_name,  # type: ignore
+                            model_name=model_name,
                             **common_params,  # type: ignore
                         )
                 elif model_class == "ChatGoogle":

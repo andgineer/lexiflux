@@ -56,8 +56,8 @@ def _get_authenticated_user_email(request: HttpRequest) -> str | None:
         return None
 
 
-@csrf_exempt
-@require_GET
+@csrf_exempt  # type: ignore[arg-type]
+@require_GET  # type: ignore[arg-type]
 def calibre_handshake(request: HttpRequest) -> JsonResponse:
     """Handle Calibre device discovery handshake."""
     try:
@@ -98,8 +98,8 @@ def calibre_handshake(request: HttpRequest) -> JsonResponse:
         return JsonResponse({"error": str(e)}, status=500)
 
 
-@csrf_exempt
-@require_POST
+@csrf_exempt  # type: ignore[arg-type]
+@require_POST  # type: ignore[arg-type]
 def calibre_upload_book(request: HttpRequest) -> JsonResponse:
     """Handle book upload from Calibre."""
     try:
@@ -328,8 +328,8 @@ def _import_book_from_path(  # noqa: C901
     return book
 
 
-@csrf_exempt
-@require_GET
+@csrf_exempt  # type: ignore[arg-type]
+@require_GET  # type: ignore[arg-type]
 def calibre_status(request: HttpRequest) -> JsonResponse:
     """Return Calibre device status with authentication check."""
     try:

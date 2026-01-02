@@ -52,7 +52,7 @@ def get_punkt_tokenizer(lang_code: str) -> nltk.tokenize.punkt.PunktSentenceToke
     """
     ensure_nltk_data(f"tokenizers/punkt/{lang_code}.pickle", "punkt")
     try:
-        return nltk.data.load(f"tokenizers/punkt/{lang_code}.pickle")
+        return nltk.data.load(f"tokenizers/punkt/{lang_code}.pickle")  # type: ignore[return-value]
     except LookupError:
         logger.warning(f"NLTK punkt tokenizer not available for {lang_code}. Using default.")
         return nltk.tokenize.punkt.PunktSentenceTokenizer()

@@ -40,7 +40,7 @@ def export_words_to_anki_file(  # pylint: disable=too-many-locals
     deck = genanki.Deck(deck_id, deck_name)
 
     for term in terms:
-        notes_data = create_anki_notes_data(term, model.name, deck_name)
+        notes_data = create_anki_notes_data(term, model.name, deck_name)  # type: ignore[arg-type]
         for note_data in notes_data:
             note = genanki.Note(
                 model=model,

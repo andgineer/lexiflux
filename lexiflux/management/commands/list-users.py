@@ -62,6 +62,6 @@ class Command(BaseCommand):  # type: ignore
             self.stdout.write(
                 self.style.SUCCESS(
                     f"Username: {user.username}, Email: {user.email}, "
-                    f"Number of Books Owned: {user.num_owned_books}",
+                    f"Number of Books Owned: {user.num_owned_books}",  # type: ignore[missing-attribute]  # added with annotation
                 ),
             )

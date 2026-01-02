@@ -94,11 +94,12 @@ django==6.0
     #   dj-database-url
     #   django-allauth
     #   django-extensions
+    #   django-widget-tweaks
 django-allauth==65.13.1
     # via -r requirements.koyeb.in
 django-extensions==4.1
     # via -r requirements.koyeb.in
-django-widget-tweaks==1.5.0
+django-widget-tweaks==1.5.1
     # via -r requirements.koyeb.in
 docstring-parser==0.17.0
     # via anthropic
