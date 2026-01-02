@@ -72,5 +72,6 @@ repos:
           "--project-excludes=**/lexiflux/calibre_plugin/**",
           "--project-excludes=**/lexiflux/environments/koyeb.py",
           "--project-excludes=**/.venv/**",
-          "--project-excludes=**/.venv-koyeb/**"
+          "--project-excludes=**/.venv-koyeb/**",
+          "--python-interpreter-path=.venv/bin/python"
         ]
