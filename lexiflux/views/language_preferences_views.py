@@ -191,6 +191,11 @@ def check_article_params(
                 {"status": "error", "message": "Please select a dictionary"},
                 status=400,
             )
+        if not language_preferences.user_language:
+            return JsonResponse(
+                {"status": "error", "message": "Please set your user language"},
+                status=400,
+            )
         try:
             source_language = language_preferences.language.name.lower()
             target_language = language_preferences.user_language.name.lower()

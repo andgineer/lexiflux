@@ -30,6 +30,56 @@ from lexiflux.models import (
 logger = logging.getLogger(__name__)
 
 
+def select_user_language_from_list(
+    user: CustomUser,
+    available_languages: list[Language],
+    fallback_language: Language | None = None,
+) -> Language | None:
+    """Select user's preferred language from a list of available languages.
+
+    This function tries to match the user's default language preference against
+    a list of available Language objects.
+
+    Args:
+        user: The user whose language preference to use
+        available_languages: List of available Language objects
+        fallback_language: Optional fallback if user has no default language preference
+
+    Returns:
+        The selected Language object, or None if list is empty
+    """
+    if not available_languages:
+        return None
+
+    # Get user's default language or use fallback
+    if user.default_language_preferences:
+        default_lang = user.default_language_preferences.language
+    else:
+        default_lang = fallback_language or Language.objects.first()
+
+    if not default_lang:
+        return available_languages[0]
+
+    # Get or create language preferences for the default language
+    language_prefs = LanguagePreferences.get_or_create_language_preferences(
+        user,
+        default_lang,
+    )
+
+    # Try to find the user's preferred language in the available languages
+    selected = next(
+        (
+            lang
+            for lang in available_languages
+            if lang.google_code == language_prefs.language.google_code
+        ),
+        None,
+    )
+
+    # Fall back to first language if user's preference not found
+    return selected or available_languages[0]
+
+
 @smart_login_required  # type: ignore
 def words_export_page(request: HttpRequest) -> HttpResponse:  # pylint: disable=too-many-locals
     """Render the words export page with all necessary data."""
@@ -51,10 +101,8 @@ def words_export_page(request: HttpRequest) -> HttpResponse:  # pylint: disable=
         return render(request, "words-export.html", context)
 
     # Get languages with translations
-    languages = (
-        Language.objects.filter(translation_history__user=user)
-        .distinct()
-        .values("google_code", "name")
+    languages = list(
+        Language.objects.filter(translation_history__user=user).distinct(),
     )
 
     # Get language groups with translations
@@ -62,33 +110,18 @@ def words_export_page(request: HttpRequest) -> HttpResponse:  # pylint: disable=
         LanguageGroup.objects.filter(languages__translation_history__user=user)
         .distinct()
         .prefetch_related("languages")
-        .values("id", "name")
     )
 
     # add to languages all languages from the groups
     for group in language_groups:
-        group_languages = LanguageGroup.objects.get(id=group["id"]).languages.values(
-            "google_code",
-            "name",
-        )
-        for lang in group_languages:
+        for lang in group.languages.all():
             if lang not in languages:
-                languages = list(languages) + [lang]
+                languages.append(lang)
 
     # select last used language
     # but if it is not in translation history, use the first language from the history
-    language_prefs = LanguagePreferences.get_or_create_language_preferences(
-        user,
-        user.default_language_preferences.language,
-    )
-    language_selection = next(
-        (
-            lang["google_code"]
-            for lang in languages
-            if lang["google_code"] == language_prefs.language.google_code
-        ),
-        languages[0]["google_code"],
-    )
+    selected_lang = select_user_language_from_list(user, languages)
+    language_selection = selected_lang.google_code if selected_lang else None
 
     # Get the last export datetime for the default selection
     last_export = None
@@ -109,12 +142,9 @@ def words_export_page(request: HttpRequest) -> HttpResponse:  # pylint: disable=
 
     # Check if the selected language is part of a language group
     for group in language_groups:
-        group_languages = LanguageGroup.objects.get(id=group["id"]).languages.values_list(
-            "google_code",
-            flat=True,
-        )
-        if language_selection in group_languages:
-            language_selection = group["id"]
+        group_language_codes = group.languages.values_list("google_code", flat=True)
+        if language_selection in group_language_codes:
+            language_selection = str(group.id)
             break
 
     initial_word_count = TranslationHistory.objects.filter(
@@ -127,9 +157,13 @@ def words_export_page(request: HttpRequest) -> HttpResponse:  # pylint: disable=
     previous_deck_names = WordsExport.get_previous_deck_names(user)
     last_export_format = WordsExport.get_last_export_format(user, language)
 
+    # Convert Language objects to dicts for JSON serialization
+    languages_json = [{"google_code": lang.google_code, "name": lang.name} for lang in languages]
+    language_groups_json = [{"id": str(group.id), "name": group.name} for group in language_groups]
+
     context = {
-        "languages": json.dumps(list(languages)),
-        "language_groups": json.dumps(list(language_groups)),
+        "languages": json.dumps(languages_json),
+        "language_groups": json.dumps(language_groups_json),
         "default_selection": language_selection,
         "last_export_datetime": last_export_date,
         "initial_word_count": initial_word_count,
@@ -220,17 +254,11 @@ def export_words(request: HttpRequest) -> HttpResponse:  # pylint: disable=too-m
             )
             # select last used language if it's in the translation history,
             # else the first language from the group
-            language_prefs = LanguagePreferences.get_or_create_language_preferences(
+            fallback = languages[0] if languages else None
+            language = select_user_language_from_list(
                 user,
-                user.default_language_preferences.language,
-            )
-            language = next(
-                (
-                    lang
-                    for lang in languages
-                    if lang.google_code == language_prefs.language.google_code
-                ),
-                languages[0],
+                languages,
+                fallback_language=fallback,
             )
         else:
             language = Language.objects.get(google_code=language_id)
@@ -240,6 +268,9 @@ def export_words(request: HttpRequest) -> HttpResponse:  # pylint: disable=too-m
                 source_language=language,
                 last_lookup__gte=min_datetime,
             )
+
+        if not language:
+            return JsonResponse({"status": "error", "error": "No language selected"})
 
         words_exported = len(terms)
 

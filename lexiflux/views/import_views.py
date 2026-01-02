@@ -93,6 +93,8 @@ def import_file(request: HttpRequest) -> Book:
     if not file:
         raise ValueError("No file provided")
     original_filename = file.name
+    if not original_filename:
+        raise ValueError("File has no name")
     file_extension = original_filename.split(".")[-1].lower()
     book_class: type[BookLoaderBase]
     if file_extension == "txt":

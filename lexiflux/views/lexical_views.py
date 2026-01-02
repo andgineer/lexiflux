@@ -47,7 +47,7 @@ def get_llm_errors_folder() -> str:
     return "llm-error" if settings.lexiflux.ui_settings_only else "llm-error-env"
 
 
-def get_lexical_article(  # noqa: PLR0913
+def get_lexical_article(  # noqa: PLR0913,PLR0911
     article_name: str,
     article_params: dict[str, Any],
     selected_text: str,
@@ -60,6 +60,12 @@ def get_lexical_article(  # noqa: PLR0913
 
     Return {"article": str, "error": bool} dictionary.
     """
+    # Validate required languages are set
+    if not book_page.book.language:
+        return {"article": "Error: Book language is not set", "error": True}
+    if not language_preferences.user_language:
+        return {"article": "Error: User language is not set", "error": True}
+
     if article_name == "Site":
         return {
             "url": article_params.get("url", "").format(

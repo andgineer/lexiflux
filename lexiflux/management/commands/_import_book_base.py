@@ -116,7 +116,9 @@ class ImportBookBaseCommand(BaseCommand):  # type: ignore
                 return
             if languages.count() == 0:
                 raise CommandError(f"Language '--language={forced_language}' not found")
-            forced_language = languages.first().name
+            first_lang = languages.first()
+            assert first_lang is not None  # Guaranteed by count() > 0 check above
+            forced_language = first_lang.name
 
         owner_email = None if public else email or self.get_user_email()
         change_log_level(log_level, db_log_level)

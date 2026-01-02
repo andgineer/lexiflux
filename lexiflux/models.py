@@ -213,15 +213,16 @@ class Book(models.Model):  # type: ignore
             except Exception:  # noqa: BLE001
                 return unidecode(book_code)
 
-        title_words = split_into_words(transliterate(self.title, self.language.google_code))
-        author_words = split_into_words(transliterate(self.author.name, self.language.google_code))
+        lang_code = self.language.google_code if self.language else None
+        title_words = split_into_words(transliterate(self.title, lang_code))
+        author_words = split_into_words(transliterate(self.author.name, lang_code))
         code = "-".join(title_words[:2]) if title_words else "book"
         if author_words:
             code = f"{code}-{author_words[-1]}"
         code = code.replace(" ", "").replace(".", "")
 
         # Transliterate the code to latin chars if the language is supported
-        code = transliterate(code, self.language.google_code)
+        code = transliterate(code, lang_code)
 
         # reserving 3 chars for the delimiter and two-digits counter in case the name is not unique
         code = code[: BOOK_CODE_LENGTH - 3]
@@ -418,7 +419,8 @@ class BookPage(models.Model):  # type: ignore
 
     def _parse_and_save_words(self) -> None:
         """Parse words from content and save to DB."""
-        parsed_words, _ = parse_words(self.content, lang_code=self.book.language.google_code)
+        lang_code = self.book.language.google_code if self.book.language else "en"
+        parsed_words, _ = parse_words(self.content, lang_code=lang_code)
         self.word_slices = parsed_words
         if self.pk:
             self.save(update_fields=["word_slices"])
@@ -465,10 +467,11 @@ class BookPage(models.Model):  # type: ignore
         return self._word_sentence_mapping_cache
 
     def _detect_and_store_sentences(self) -> None:
+        lang_code = self.book.language.google_code if self.book.language else "en"
         _, word_to_sentence = break_into_sentences(
             self.content,
             self.words,
-            lang_code=self.book.language.google_code,
+            lang_code=lang_code,
         )
         # Ensure all keys are strings
         self.word_to_sentence_map = {str(k): v for k, v in word_to_sentence.items()}
