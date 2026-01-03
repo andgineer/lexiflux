@@ -5,6 +5,7 @@ from lexiflux.models import BookPage, Book, TranslationHistory, AIModelConfig
 from lexiflux.language.llm import (
     Llm,
     AIModelError,
+    AIModelRetiredError,
     _remove_word_marks,
     _remove_sentence_marks,
     _extract_sentence,
@@ -363,7 +364,7 @@ class TestModelManagement:
         llm = Llm()
         params = {"model": "invalid_model", "user": approved_user}
 
-        with pytest.raises(ValueError, match="Unsupported model"):
+        with pytest.raises(AIModelRetiredError):
             llm._get_or_create_model(params)
 
 
@@ -682,3 +683,8 @@ class TestErrorHandling:
         assert error.model_class == "ChatOpenAI"
         assert error.error_message == "API error"
         assert str(error) == "AI class `ChatOpenAI` error for model `gpt-5`: API error"
+
+    def test_ai_model_retired_error(self):
+        error = AIModelRetiredError("claude-sonnet-4-0")
+        assert error.model_name == "claude-sonnet-4-0"
+        assert str(error) == "AI model `claude-sonnet-4-0` has been retired or removed"

@@ -87,6 +87,15 @@ class AIModelError(Exception):
         )
 
 
+class AIModelRetiredError(Exception):
+    """Error when a previously configured AI model has been retired or removed."""
+
+    def __init__(self, model_name: str) -> None:
+        self.model_name = model_name
+        logger.warning(f"User attempted to use retired model: {model_name}")
+        super().__init__(f"AI model `{model_name}` has been retired or removed")
+
+
 def find_nth_occurrence(substring: str, string: str, occurrence: int) -> int:
     """Find the nth occurrence (1 - first, etc) of a substring in a string."""
     start = -1
@@ -231,6 +240,9 @@ class Llm:  # pylint: disable=too-few-public-methods
                 self.hashable_dict(params),
                 self.hashable_dict(data),
             )
+        except AIModelRetiredError:
+            # Re-raise AIModelRetiredError so it can be handled specifically
+            raise
         except Exception as e:
             raise AIModelError(
                 params["model"],
@@ -420,7 +432,7 @@ class Llm:  # pylint: disable=too-few-public-methods
         if model_key not in self._model_cache:
             model_info = self.chat_models.get(model_name)
             if not model_info:
-                raise ValueError(f"Unsupported model: {model_name}")
+                raise AIModelRetiredError(model_name)
 
             model_class = model_info["model"]
             try:

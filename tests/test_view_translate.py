@@ -111,3 +111,38 @@ def test_translator_translate(book, user):
 
         assert result == mock_translation
         mock_google_translator.translate.assert_called_once_with("This is a test.")
+
+
+@allure.epic("Pages endpoints")
+@allure.feature("Reader")
+@pytest.mark.django_db
+def test_translate_view_retired_model_error(client, user, book):
+    """Test that retired model error shows friendly HTML error message"""
+
+    client.force_login(user)
+    language_preferences = LanguagePreferences.get_or_create_language_preferences(
+        user=user, language=book.language
+    )
+    # Set to an AI model type that would use LLM
+    language_preferences.inline_translation_type = "Translate"
+    language_preferences.inline_translation_parameters = {
+        "model": "claude-sonnet-4-0"  # This model doesn't exist in chat_models.yaml
+    }
+    language_preferences.save()
+
+    response = client.get(
+        reverse("translate"),
+        {
+            "lexical-article": "0",
+            "book-code": book.code,
+            "book-page-number": "1",
+            "word-ids": "1.2",
+        },
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["error"] is True
+    assert "AI Model No Longer Available" in data["article"]
+    assert "claude-sonnet-4-0" in data["article"]
+    assert "/language-preferences/" in data["article"]

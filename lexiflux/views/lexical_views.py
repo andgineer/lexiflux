@@ -18,6 +18,7 @@ from lexiflux.language.llm import (
     WORD_END_MARK,
     WORD_START_MARK,
     AIModelError,
+    AIModelRetiredError,
     Llm,
     logger,
 )
@@ -100,6 +101,13 @@ def get_lexical_article(  # noqa: PLR0913,PLR0911
             },
         )
         return {"article": str(data)}
+    except AIModelRetiredError as e:
+        error_template_folder = get_llm_errors_folder()
+        error_message = render_to_string(
+            f"{error_template_folder}/retired_model.html",
+            {"model_name": e.model_name},
+        )
+        return {"article": error_message, "error": True}
     except AIModelError as e:
         error_template_folder = get_llm_errors_folder()
         try:
