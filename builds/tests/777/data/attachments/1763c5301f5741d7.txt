@@ -1,0 +1,2 @@
+INFO     lexiflux.signals:signals.py:55 Successfully created language preferences for user testuser (ID: 1)
+INFO     root:reader_views.py:422 Link clicked: nonexistent.xhtml#invalid, page_info: None

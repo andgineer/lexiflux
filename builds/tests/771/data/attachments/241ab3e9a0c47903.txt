@@ -1,0 +1,1 @@
+WARNING  root:book_loader_url.py:302 Image too small, skipping: https://example.com/test.jpg

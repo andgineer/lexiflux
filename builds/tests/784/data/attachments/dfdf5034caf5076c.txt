@@ -1,0 +1,6 @@
+INFO     lexiflux.signals:signals.py:55 Successfully created language preferences for user testuser (ID: 1)
+INFO     root:reader_views.py:275 Location changed: book test-book-links, page 1, top word 0
+INFO     root:models.py:880 Reading location updated for test-book-links: 1(1):0/0.0
+[{'page_number': 1, 'word': 0}]/0
+INFO     root:reader_views.py:424 Link clicked: page2.xhtml#section1, page_info: {'page': 2, 'item_id': 'item_1', 'item_name': 'page2.xhtml'}
+INFO     root:models.py:804 Jumping to 2#0

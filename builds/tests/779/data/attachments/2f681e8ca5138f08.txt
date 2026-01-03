@@ -1,0 +1,29 @@
+2026-01-01 13:02:31,536 WARNING google_languages Warning: Egyptian Arabic not found in the database for group Arabic.
+2026-01-01 13:02:31,922 INFO signals Successfully created language preferences for user testuser (ID: 4)
+2026-01-01 13:02:32,319 INFO signals Successfully created language preferences for user otheruser (ID: 5)
+2026-01-01 13:02:32,324 ERROR middleware Exception: other@example.com does not have permission to read book '(ID: 4)
+Traceback (most recent call last):
+  File "/home/runner/work/lexiflux/lexiflux/.venv/lib/python3.12/site-packages/django/core/handlers/base.py", line 198, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/work/lexiflux/lexiflux/.venv/lib/python3.12/site-packages/django/views/generic/base.py", line 106, in view
+    return self.dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/work/lexiflux/lexiflux/.venv/lib/python3.12/site-packages/django/utils/decorators.py", line 48, in _wrapper
+    return bound_method(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/work/lexiflux/lexiflux/lexiflux/auth.py", line 78, in wrapper
+    return login_required(view_func)(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/work/lexiflux/lexiflux/.venv/lib/python3.12/site-packages/django/contrib/auth/decorators.py", line 59, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/work/lexiflux/lexiflux/lexiflux/views/library_views.py", line 85, in dispatch
+    self.book = Book.get_if_can_be_read(get_custom_user(request), id=kwargs.get("book_id"))
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/work/lexiflux/lexiflux/lexiflux/models.py", line 292, in get_if_can_be_read
+    book.ensure_can_be_read_by(user)
+  File "/home/runner/work/lexiflux/lexiflux/lexiflux/models.py", line 275, in ensure_can_be_read_by
+    raise PermissionDenied(
+django.core.exceptions.PermissionDenied: other@example.com does not have permission to read book '(ID: 4)
+2026-01-01 13:02:32,325 WARNING log Forbidden: /modals/edit-book/4/

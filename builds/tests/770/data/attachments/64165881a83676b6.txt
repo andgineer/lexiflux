@@ -1,0 +1,31 @@
+2025-11-20 05:22:31,830 INFO timing Loading from https://example.com/content-test completed in 0.000 seconds
+2025-11-20 05:22:31,831 INFO timing Extract metadata completed in 0.001 seconds
+2025-11-20 05:22:31,831 INFO timing Extracting IDs with internal links completed in 0.000 seconds
+2025-11-20 05:22:31,831 INFO book_loader_url Using original HTML
+2025-11-20 05:22:31,831 INFO timing Extracting readable HTML completed in 0.000 seconds
+2025-11-20 05:22:31,832 INFO timing Parse extracted HTML completed in 0.000 seconds
+2025-11-20 05:22:31,832 INFO timing Adding source info completed in 0.000 seconds
+2025-11-20 05:22:31,832 INFO timing Cleared HTML completed in 0.000 seconds
+2025-11-20 05:22:31,834 INFO book_loader_url No images found in the content
+2025-11-20 05:22:31,838 INFO timing Iterate over pages and save them completed in 0.002 seconds
+2025-11-20 05:22:31,839 INFO book_loader_url No images to download
+2025-11-20 05:22:31,842 INFO timing Loading from https://example.com/content-test completed in 0.000 seconds
+2025-11-20 05:22:31,843 INFO timing Extract metadata completed in 0.001 seconds
+2025-11-20 05:22:31,843 INFO timing Extracting IDs with internal links completed in 0.000 seconds
+2025-11-20 05:22:31,848 INFO timing Extracting readable HTML completed in 0.005 seconds
+2025-11-20 05:22:31,848 INFO timing Parse extracted HTML completed in 0.000 seconds
+2025-11-20 05:22:31,848 INFO timing Adding source info completed in 0.000 seconds
+2025-11-20 05:22:31,849 INFO timing Cleared HTML completed in 0.000 seconds
+2025-11-20 05:22:31,851 INFO book_loader_url No images found in the content
+2025-11-20 05:22:31,855 INFO timing Iterate over pages and save them completed in 0.002 seconds
+2025-11-20 05:22:31,855 INFO book_loader_url No images to download
+2025-11-20 05:22:31,857 INFO timing Loading from https://example.com/content-test completed in 0.000 seconds
+2025-11-20 05:22:31,858 INFO timing Extract metadata completed in 0.001 seconds
+2025-11-20 05:22:31,858 INFO timing Extracting IDs with internal links completed in 0.000 seconds
+2025-11-20 05:22:31,866 INFO timing Extracting readable HTML completed in 0.008 seconds
+2025-11-20 05:22:31,867 INFO timing Parse extracted HTML completed in 0.000 seconds
+2025-11-20 05:22:31,867 INFO timing Adding source info completed in 0.000 seconds
+2025-11-20 05:22:31,867 INFO timing Cleared HTML completed in 0.000 seconds
+2025-11-20 05:22:31,869 INFO book_loader_url No images found in the content
+2025-11-20 05:22:31,873 INFO timing Iterate over pages and save them completed in 0.001 seconds
+2025-11-20 05:22:31,873 INFO book_loader_url No images to download
