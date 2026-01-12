@@ -1,0 +1,60 @@
+INFO     root:timing.py:14 Loading from https://example.com completed in 0.000 seconds
+INFO     root:timing.py:14 Extract metadata completed in 0.000 seconds
+INFO     root:timing.py:14 Extracting IDs with internal links completed in 0.000 seconds
+DEBUG    trafilatura.main_extractor:main_extractor.py:515 Recovering wild text elements
+DEBUG    trafilatura.readability_lxml:readability_lxml.py:148 Ended up stripping too much - going for a safer parse
+DEBUG    trafilatura.readability_lxml:readability_lxml.py:154 Ruthless and lenient parsing did not work. Returning raw html
+DEBUG    trafilatura.external:external.py:64 extracted length: 7 (algorithm) 7 (extraction)
+DEBUG    trafilatura.external:external.py:92 using custom extraction: None
+DEBUG    trafilatura.external:external.py:96 unclean document triggering justext examination: None
+DEBUG    trafilatura.core:core.py:125 non-clean extracted length: 7 (extraction)
+DEBUG    trafilatura.core:core.py:316 not enough comments: None
+INFO     root:timing.py:14 Extracting readable HTML completed in 0.004 seconds
+INFO     root:timing.py:14 Parse extracted HTML completed in 0.000 seconds
+INFO     root:timing.py:14 Adding source info completed in 0.000 seconds
+INFO     root:timing.py:14 Cleared HTML completed in 0.000 seconds
+INFO     root:timing.py:14 Loading from https://example.com/article completed in 0.000 seconds
+INFO     root:timing.py:14 Extract metadata completed in 0.000 seconds
+INFO     root:timing.py:14 Extracting IDs with internal links completed in 0.000 seconds
+DEBUG    trafilatura.main_extractor:main_extractor.py:515 Recovering wild text elements
+DEBUG    trafilatura.readability_lxml:readability_lxml.py:148 Ended up stripping too much - going for a safer parse
+DEBUG    trafilatura.readability_lxml:readability_lxml.py:154 Ruthless and lenient parsing did not work. Returning raw html
+DEBUG    trafilatura.external:external.py:64 extracted length: 7 (algorithm) 7 (extraction)
+DEBUG    trafilatura.external:external.py:92 using custom extraction: None
+DEBUG    trafilatura.external:external.py:96 unclean document triggering justext examination: None
+DEBUG    trafilatura.core:core.py:125 non-clean extracted length: 7 (extraction)
+DEBUG    trafilatura.core:core.py:316 not enough comments: None
+INFO     root:timing.py:14 Extracting readable HTML completed in 0.003 seconds
+INFO     root:timing.py:14 Parse extracted HTML completed in 0.000 seconds
+INFO     root:timing.py:14 Adding source info completed in 0.000 seconds
+INFO     root:timing.py:14 Cleared HTML completed in 0.000 seconds
+INFO     root:timing.py:14 Loading from https://blog.example.com/post/123 completed in 0.000 seconds
+INFO     root:timing.py:14 Extract metadata completed in 0.000 seconds
+INFO     root:timing.py:14 Extracting IDs with internal links completed in 0.000 seconds
+DEBUG    trafilatura.main_extractor:main_extractor.py:515 Recovering wild text elements
+DEBUG    trafilatura.readability_lxml:readability_lxml.py:148 Ended up stripping too much - going for a safer parse
+DEBUG    trafilatura.readability_lxml:readability_lxml.py:154 Ruthless and lenient parsing did not work. Returning raw html
+DEBUG    trafilatura.external:external.py:64 extracted length: 7 (algorithm) 7 (extraction)
+DEBUG    trafilatura.external:external.py:92 using custom extraction: None
+DEBUG    trafilatura.external:external.py:96 unclean document triggering justext examination: None
+DEBUG    trafilatura.core:core.py:125 non-clean extracted length: 7 (extraction)
+DEBUG    trafilatura.core:core.py:316 not enough comments: None
+INFO     root:timing.py:14 Extracting readable HTML completed in 0.003 seconds
+INFO     root:timing.py:14 Parse extracted HTML completed in 0.000 seconds
+INFO     root:timing.py:14 Adding source info completed in 0.000 seconds
+INFO     root:timing.py:14 Cleared HTML completed in 0.000 seconds
+INFO     root:timing.py:14 Loading from https://example.com/document.pdf completed in 0.000 seconds
+INFO     root:timing.py:14 Extract metadata completed in 0.001 seconds
+INFO     root:timing.py:14 Extracting IDs with internal links completed in 0.000 seconds
+DEBUG    trafilatura.main_extractor:main_extractor.py:515 Recovering wild text elements
+DEBUG    trafilatura.readability_lxml:readability_lxml.py:148 Ended up stripping too much - going for a safer parse
+DEBUG    trafilatura.readability_lxml:readability_lxml.py:154 Ruthless and lenient parsing did not work. Returning raw html
+DEBUG    trafilatura.external:external.py:64 extracted length: 7 (algorithm) 7 (extraction)
+DEBUG    trafilatura.external:external.py:92 using custom extraction: None
+DEBUG    trafilatura.external:external.py:96 unclean document triggering justext examination: None
+DEBUG    trafilatura.core:core.py:125 non-clean extracted length: 7 (extraction)
+DEBUG    trafilatura.core:core.py:316 not enough comments: None
+INFO     root:timing.py:14 Extracting readable HTML completed in 0.003 seconds
+INFO     root:timing.py:14 Parse extracted HTML completed in 0.000 seconds
+INFO     root:timing.py:14 Adding source info completed in 0.000 seconds
+INFO     root:timing.py:14 Cleared HTML completed in 0.000 seconds

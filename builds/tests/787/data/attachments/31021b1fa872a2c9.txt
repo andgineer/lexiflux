@@ -1,0 +1,2 @@
+INFO     lexiflux.anki.anki_connect:anki_connect.py:84 result {'error': "['duplicate', 'duplicate']"}
+INFO     lexiflux.anki.anki_connect:anki_connect.py:91 All 2 notes are duplicates. No new notes added.

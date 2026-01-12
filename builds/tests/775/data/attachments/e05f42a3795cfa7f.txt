@@ -1,0 +1,21 @@
+2026-01-01 08:39:32,732 INFO signals Successfully created language preferences for user testuser (ID: 1)
+2026-01-01 08:39:32,734 INFO timing Loading from https://example.com/internal-links-test completed in 0.000 seconds
+2026-01-01 08:39:32,735 INFO timing Extract metadata completed in 0.001 seconds
+2026-01-01 08:39:32,735 INFO timing Extracting IDs with internal links completed in 0.000 seconds
+2026-01-01 08:39:32,735 INFO book_loader_url Using original HTML
+2026-01-01 08:39:32,735 INFO timing Extracting readable HTML completed in 0.000 seconds
+2026-01-01 08:39:32,736 INFO timing Parse extracted HTML completed in 0.000 seconds
+2026-01-01 08:39:32,736 INFO timing Adding source info completed in 0.000 seconds
+2026-01-01 08:39:32,737 INFO timing Cleared HTML completed in 0.001 seconds
+2026-01-01 08:39:32,739 INFO book_loader_url No images found in the content
+2026-01-01 08:39:32,749 INFO timing Iterate over pages and save them completed in 0.007 seconds
+2026-01-01 08:39:32,749 INFO book_loader_url No images to download
+2026-01-01 08:39:32,814 INFO reader_views Link clicked: #section1, page_info: {'page': 2, 'item_id': 'section1', 'item_name': 'Section 1: First Topic'}
+2026-01-01 08:39:32,826 INFO models Jumping to 2#360
+2026-01-01 08:39:32,832 INFO reader_views Link clicked: #conclusion, page_info: {'page': 8, 'item_id': 'conclusion', 'item_name': 'Conclusion'}
+2026-01-01 08:39:32,842 INFO models Jumping to 8#330
+2026-01-01 08:39:32,846 INFO reader_views Link clicked: #nonexistent_anchor, page_info: None
+2026-01-01 08:39:32,850 INFO reader_views Link clicked: #introduction, page_info: {'page': 1, 'item_id': 'introduction', 'item_name': 'Introduction'}
+2026-01-01 08:39:32,860 INFO models Jumping to 1#19
+2026-01-01 08:39:32,865 INFO reader_views Link clicked: #section2, page_info: {'page': 4, 'item_id': 'section2', 'item_name': 'Section 2: Second Topic'}
+2026-01-01 08:39:32,875 INFO models Jumping to 4#320
