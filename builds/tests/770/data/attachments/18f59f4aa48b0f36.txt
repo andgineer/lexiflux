@@ -1,1 +1,0 @@
-WARNING  root:book_loader_base.py:344 Anchor 'section1' not found in page 2 content

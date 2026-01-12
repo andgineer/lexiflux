@@ -1,0 +1,1 @@
+WARNING  lexiflux.language.llm:llm.py:95 User attempted to use retired model: claude-sonnet-4-0
