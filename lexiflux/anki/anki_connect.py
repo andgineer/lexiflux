@@ -7,6 +7,7 @@ from typing import Any
 
 import requests
 import urllib3.connection
+import urllib3.exceptions
 from django.db.models import QuerySet
 
 from lexiflux.anki.anki_common import NOTES_PER_TERM, create_anki_notes_data, get_anki_model_config
