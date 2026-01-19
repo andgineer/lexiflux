@@ -1,0 +1,2 @@
+INFO     lexiflux.signals:signals.py:55 Successfully created language preferences for user lexiflux (ID: 1)
+INFO     root:apps.py:36 Lexiflux 2.8.2 is ready.

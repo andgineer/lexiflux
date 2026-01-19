@@ -1,5 +1,0 @@
-INFO     lexiflux.signals:signals.py:55 Successfully created language preferences for user testuser (ID: 1)
-INFO     lexiflux.views.words_export:words_export.py:184 For language en last export datetime: 2025-01-01 00:00:00
-INFO     lexiflux.views.words_export:words_export.py:246 Words exported for English: 1 words
-INFO     lexiflux.views.words_export:words_export.py:273 Words exported for English: 1 words using ankiConnect
-INFO     lexiflux.views.words_export:words_export.py:184 For language en last export datetime: 2025-11-25 05:01:41.997966+00:00

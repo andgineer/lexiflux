@@ -1,5 +1,0 @@
-2025-11-25 05:01:21,023 INFO signals Successfully created language preferences for user lexiflux (ID: 1)
-2025-11-25 05:01:21,331 ERROR apps 
-
-Lexiflux fail to start:
-We are in multi-user environment but the auto-login user with hard-coded password exists. Please change the password for the user `lexiflux` or delete it.
