@@ -1,0 +1,3 @@
+2026-01-01 16:31:38,214 WARNING google_languages Warning: Egyptian Arabic not found in the database for group Arabic.
+2026-01-01 16:31:38,591 INFO signals Successfully created language preferences for user testuser2 (ID: 21)
+2026-01-01 16:31:40,375 INFO language_preferences_views Set global preferences for user testuser2 to Serbian

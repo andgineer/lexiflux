@@ -1,0 +1,10 @@
+2025-11-25 05:02:41,948 WARNING google_languages Warning: Egyptian Arabic not found in the database for group Arabic.
+2025-11-25 05:02:42,287 INFO signals Successfully created language preferences for user testuser (ID: 4)
+2025-11-25 05:02:42,294 ERROR import_views Error importing book
+Traceback (most recent call last):
+  File "/home/runner/work/lexiflux/lexiflux/lexiflux/views/import_views.py", line 45, in import_book
+    book = import_file(request)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/work/lexiflux/lexiflux/lexiflux/views/import_views.py", line 103, in import_file
+    raise ValueError(f"Unsupported file format for {file.name}")
+ValueError: Unsupported file format for test.pdf

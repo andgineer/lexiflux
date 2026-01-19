@@ -1,0 +1,28 @@
+WARNING  root:google_languages.py:74 Warning: Egyptian Arabic not found in the database for group Arabic.
+INFO     lexiflux.signals:signals.py:55 Successfully created language preferences for user testuser (ID: 4)
+INFO     root:timing.py:14 Loading from https://example.com/test-book.html completed in 0.001 seconds
+INFO     root:timing.py:14 Extract metadata completed in 0.001 seconds
+INFO     root:timing.py:14 Extracting IDs with internal links completed in 0.000 seconds
+DEBUG    trafilatura.main_extractor:main_extractor.py:515 Recovering wild text elements
+DEBUG    trafilatura.readability_lxml:readability_lxml.py:217 Top 5: body 5.17
+DEBUG    trafilatura.readability_lxml:readability_lxml.py:217 Top 5: html 2.585
+DEBUG    trafilatura.external:external.py:64 extracted length: 152 (algorithm) 132 (extraction)
+DEBUG    trafilatura.external:external.py:84 extraction values: 132 152 for None
+DEBUG    trafilatura.external:external.py:92 using custom extraction: None
+DEBUG    trafilatura.external:external.py:96 unclean document triggering justext examination: None
+INFO     root:timing.py:14 Extracting readable HTML completed in 0.008 seconds
+INFO     root:timing.py:14 Parse extracted HTML completed in 0.000 seconds
+INFO     root:timing.py:14 Adding source info completed in 0.000 seconds
+INFO     root:timing.py:14 Cleared HTML completed in 0.000 seconds
+INFO     root:book_loader_url.py:221 No images found in the content
+INFO     root:timing.py:14 Iterate over pages and save them completed in 0.001 seconds
+INFO     root:book_loader_url.py:257 No images to download
+INFO     root:test_e2e_import_book.py:121 Book title extracted correctly
+INFO     root:test_e2e_import_book.py:126 Author input field is displayed
+INFO     root:test_e2e_import_book.py:129 Book saved successfully
+INFO     root:reader_views.py:154 Opening book pride-prejudice-examplecom at page 1 for user testuser
+INFO     root:models.py:884 Reading location updated for pride-prejudice-examplecom: 1(1):0/0.0
+[{'page_number': 1, 'word': 0}]/0
+INFO     root:reader_views.py:182 Jump status: book pride-prejudice-examplecom, is_first_jump True, is_last_jump True
+INFO     root:reader_views.py:236 Rendering page 1 of book pride-prejudice-examplecom
+INFO     root:test_e2e_import_book.py:133 Redirected to reader page

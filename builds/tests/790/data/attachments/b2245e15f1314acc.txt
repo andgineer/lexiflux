@@ -1,0 +1,2 @@
+2026-01-12 06:55:07,009 INFO detect_language_fasttext Downloading fastText language identification model from https://dl.fbaipublicfiles.com/fasttext/supervised-models/lid.176.bin
+2026-01-12 06:55:08,394 INFO detect_language_fasttext /home/runner/work/lexiflux/lexiflux/fasttext_data/lid.176.bin: 131,266,198 bytes, md5: 0181 0bc5 9c6a 3d2b 79c7 9e63 3661 2f65

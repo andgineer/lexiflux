@@ -1,0 +1,1 @@
+INFO     root:timing.py:14 Iterate over pages and save them completed in 0.024 seconds

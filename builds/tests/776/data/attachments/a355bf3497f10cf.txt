@@ -1,0 +1,3 @@
+After jump: page_number=3, word=30
+jump_history=[{'page_number': 3, 'word': 30}]
+current_jump=0

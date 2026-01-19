@@ -1,0 +1,21 @@
+INFO     lexiflux.signals:signals.py:55 Successfully created language preferences for user testuser (ID: 1)
+INFO     root:timing.py:14 Loading from https://example.com/internal-links-test completed in 0.000 seconds
+INFO     root:timing.py:14 Extract metadata completed in 0.001 seconds
+INFO     root:timing.py:14 Extracting IDs with internal links completed in 0.000 seconds
+INFO     root:book_loader_url.py:139 Using original HTML
+INFO     root:timing.py:14 Extracting readable HTML completed in 0.000 seconds
+INFO     root:timing.py:14 Parse extracted HTML completed in 0.000 seconds
+INFO     root:timing.py:14 Adding source info completed in 0.000 seconds
+INFO     root:timing.py:14 Cleared HTML completed in 0.001 seconds
+INFO     root:book_loader_url.py:221 No images found in the content
+INFO     root:timing.py:14 Iterate over pages and save them completed in 0.007 seconds
+INFO     root:book_loader_url.py:257 No images to download
+INFO     root:reader_views.py:424 Link clicked: #section1, page_info: {'page': 2, 'item_id': 'section1', 'item_name': 'Section 1: First Topic'}
+INFO     root:models.py:808 Jumping to 2#360
+INFO     root:reader_views.py:424 Link clicked: #conclusion, page_info: {'page': 8, 'item_id': 'conclusion', 'item_name': 'Conclusion'}
+INFO     root:models.py:808 Jumping to 8#330
+INFO     root:reader_views.py:424 Link clicked: #nonexistent_anchor, page_info: None
+INFO     root:reader_views.py:424 Link clicked: #introduction, page_info: {'page': 1, 'item_id': 'introduction', 'item_name': 'Introduction'}
+INFO     root:models.py:808 Jumping to 1#19
+INFO     root:reader_views.py:424 Link clicked: #section2, page_info: {'page': 4, 'item_id': 'section2', 'item_name': 'Section 2: Second Topic'}
+INFO     root:models.py:808 Jumping to 4#320

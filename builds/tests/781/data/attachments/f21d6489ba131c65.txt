@@ -1,0 +1,1 @@
+b'{"error": "Method GET not allowed. Allowed methods: POST", "details": ["/api/import-book/"]}'

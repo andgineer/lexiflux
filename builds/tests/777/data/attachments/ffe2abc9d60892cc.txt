@@ -1,0 +1,3 @@
+WARNING  root:book_loader_url.py:213 No tree_root available for image processing
+INFO     root:timing.py:14 Iterate over pages and save them completed in 0.002 seconds
+INFO     root:book_loader_url.py:257 No images to download

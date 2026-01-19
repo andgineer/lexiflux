@@ -1,0 +1,1 @@
+2026-01-19 14:42:39,948 WARNING llm User attempted to use retired model: claude-sonnet-4-0

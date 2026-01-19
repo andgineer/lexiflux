@@ -1,0 +1,37 @@
+INFO     root:apps.py:36 Lexiflux 2.8.1 is ready.
+ERROR    root:google_languages.py:62 Skipping language group population.
+Traceback (most recent call last):
+  File "/home/runner/work/lexiflux/lexiflux/.venv/lib/python3.12/site-packages/django/apps/config.py", line 235, in get_model
+    return self.models[model_name.lower()]
+           ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^
+KeyError: 'languagegroup'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/runner/work/lexiflux/lexiflux/lexiflux/language/google_languages.py", line 60, in populate_language_groups
+    language_group_class = get_model("lexiflux", "LanguageGroup")
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/work/lexiflux/lexiflux/.venv/lib/python3.12/site-packages/django/apps/registry.py", line 213, in get_model
+    return app_config.get_model(model_name, require_ready=require_ready)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/work/lexiflux/lexiflux/.venv/lib/python3.12/site-packages/django/apps/config.py", line 237, in get_model
+    raise LookupError(
+LookupError: App 'lexiflux' doesn't have a 'LanguageGroup' model.
+WARNING  root:google_languages.py:74 Warning: Egyptian Arabic not found in the database for group Arabic.
+INFO     root:timing.py:14 Loading from https://example.com/test-page completed in 0.000 seconds
+INFO     root:timing.py:14 Extract metadata completed in 0.004 seconds
+INFO     root:timing.py:14 Extracting IDs with internal links completed in 0.000 seconds
+DEBUG    trafilatura.main_extractor:main_extractor.py:515 Recovering wild text elements
+DEBUG    trafilatura.readability_lxml:readability_lxml.py:148 Ended up stripping too much - going for a safer parse
+DEBUG    trafilatura.readability_lxml:readability_lxml.py:154 Ruthless and lenient parsing did not work. Returning raw html
+DEBUG    trafilatura.external:external.py:64 extracted length: 4 (algorithm) 0 (extraction)
+DEBUG    trafilatura.external:external.py:90 using generic algorithm: None
+DEBUG    trafilatura.external:external.py:96 unclean document triggering justext examination: None
+DEBUG    trafilatura.core:core.py:125 non-clean extracted length: 4 (extraction)
+DEBUG    trafilatura.core:core.py:316 not enough comments: None
+INFO     root:timing.py:14 Extracting readable HTML completed in 0.224 seconds
+INFO     root:timing.py:14 Parse extracted HTML completed in 0.000 seconds
+INFO     root:timing.py:14 Adding source info completed in 0.000 seconds
+INFO     root:timing.py:14 Cleared HTML completed in 0.000 seconds
+INFO     root:timing.py:14 Iterate over pages and save them completed in 0.002 seconds

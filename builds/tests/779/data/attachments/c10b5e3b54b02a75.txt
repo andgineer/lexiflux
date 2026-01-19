@@ -1,0 +1,26 @@
+INFO     lexiflux.signals:signals.py:55 Successfully created language preferences for user contentuser (ID: 1)
+INFO     root:timing.py:14 Loading from https://example.com/content-nav-test completed in 0.000 seconds
+INFO     root:timing.py:14 Extract metadata completed in 0.001 seconds
+INFO     root:timing.py:14 Extracting IDs with internal links completed in 0.000 seconds
+INFO     root:book_loader_url.py:139 Using original HTML
+INFO     root:timing.py:14 Extracting readable HTML completed in 0.000 seconds
+INFO     root:timing.py:14 Parse extracted HTML completed in 0.000 seconds
+INFO     root:timing.py:14 Adding source info completed in 0.000 seconds
+INFO     root:timing.py:14 Cleared HTML completed in 0.001 seconds
+INFO     root:book_loader_url.py:221 No images found in the content
+INFO     root:timing.py:14 Iterate over pages and save them completed in 0.005 seconds
+INFO     root:book_loader_url.py:257 No images to download
+INFO     root:reader_views.py:423 Link clicked: #chapter1, page_info: {'page': 1, 'item_id': 'chapter1', 'item_name': 'Chapter 1: The Beginning'}
+INFO     root:models.py:801 Jumping to 1#33
+INFO     root:reader_views.py:423 Link clicked: #important_note, page_info: {'page': 4, 'item_id': 'important_note', 'item_name': 'Important Note About Something'}
+INFO     root:models.py:801 Jumping to 4#250
+INFO     root:reader_views.py:423 Link clicked: #chapter3, page_info: {'page': 6, 'item_id': 'chapter3', 'item_name': 'Chapter 3: The Final Section'}
+INFO     root:models.py:801 Jumping to 6#280
+INFO     root:reader_views.py:423 Link clicked: #chapter1, page_info: {'page': 1, 'item_id': 'chapter1', 'item_name': 'Chapter 1: The Beginning'}
+INFO     root:models.py:801 Jumping to 1#33
+INFO     root:reader_views.py:423 Link clicked: #chapter2, page_info: {'page': 2, 'item_id': 'chapter2', 'item_name': 'Chapter 2: The Middle Part'}
+INFO     root:models.py:801 Jumping to 2#250
+INFO     root:reader_views.py:423 Link clicked: #chapter2, page_info: {'page': 2, 'item_id': 'chapter2', 'item_name': 'Chapter 2: The Middle Part'}
+INFO     root:models.py:801 Jumping to 2#250
+INFO     root:reader_views.py:423 Link clicked: #chapter2, page_info: {'page': 2, 'item_id': 'chapter2', 'item_name': 'Chapter 2: The Middle Part'}
+INFO     root:models.py:801 Jumping to 2#250

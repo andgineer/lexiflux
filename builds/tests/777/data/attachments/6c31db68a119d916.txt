@@ -1,0 +1,29 @@
+2026-01-01 10:15:45,877 INFO apps Lexiflux 2.8.0 is ready.
+2026-01-01 10:15:46,071 ERROR google_languages Skipping language group population.
+Traceback (most recent call last):
+  File "/home/runner/work/lexiflux/lexiflux/.venv/lib/python3.12/site-packages/django/apps/config.py", line 235, in get_model
+    return self.models[model_name.lower()]
+           ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^
+KeyError: 'languagegroup'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/runner/work/lexiflux/lexiflux/lexiflux/language/google_languages.py", line 60, in populate_language_groups
+    language_group_class = get_model("lexiflux", "LanguageGroup")
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/work/lexiflux/lexiflux/.venv/lib/python3.12/site-packages/django/apps/registry.py", line 213, in get_model
+    return app_config.get_model(model_name, require_ready=require_ready)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/work/lexiflux/lexiflux/.venv/lib/python3.12/site-packages/django/apps/config.py", line 237, in get_model
+    raise LookupError(
+LookupError: App 'lexiflux' doesn't have a 'LanguageGroup' model.
+2026-01-01 10:15:47,106 WARNING google_languages Warning: Egyptian Arabic not found in the database for group Arabic.
+2026-01-01 10:15:48,465 INFO timing Loading from https://example.com/test-page completed in 0.000 seconds
+2026-01-01 10:15:48,469 INFO timing Extract metadata completed in 0.004 seconds
+2026-01-01 10:15:48,470 INFO timing Extracting IDs with internal links completed in 0.000 seconds
+2026-01-01 10:15:48,683 INFO timing Extracting readable HTML completed in 0.214 seconds
+2026-01-01 10:15:48,684 INFO timing Parse extracted HTML completed in 0.000 seconds
+2026-01-01 10:15:48,684 INFO timing Adding source info completed in 0.000 seconds
+2026-01-01 10:15:48,684 INFO timing Cleared HTML completed in 0.000 seconds
+2026-01-01 10:15:48,727 INFO timing Iterate over pages and save them completed in 0.002 seconds

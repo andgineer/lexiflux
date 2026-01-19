@@ -1,0 +1,3 @@
+2026-01-19 14:57:39,399 WARNING book_loader_url No tree_root available for image processing
+2026-01-19 14:57:39,401 INFO timing Iterate over pages and save them completed in 0.001 seconds
+2026-01-19 14:57:39,401 INFO book_loader_url No images to download
