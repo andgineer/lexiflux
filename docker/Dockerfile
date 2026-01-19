@@ -21,7 +21,6 @@ ENV DJANGO_SECRET_KEY=defaultsecretkey
 ENV DJANGO_DEBUG=False
 ENV DJANGO_ALLOWED_HOSTS=*
 
-# Install git
 RUN apt-get update && apt-get install -y git
 
 WORKDIR /lexiflux
@@ -32,7 +31,7 @@ COPY manage .
 
 COPY --from=node-builder /lexiflux/lexiflux/static/lexiflux/bundle.js /lexiflux/lexiflux/static/lexiflux/bundle.js
 
-RUN curl -L https://ollama.ai/install.sh | sh
+COPY --from=ollama/ollama:latest /usr/bin/ollama /usr/local/bin/ollama
 
 RUN pip install --no-cache-dir -r requirements.txt gunicorn
 RUN ./manage migrate
