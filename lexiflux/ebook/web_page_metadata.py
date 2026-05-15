@@ -96,13 +96,14 @@ class MetadataExtractor:
             lambda: self._get_meta_content(property="og:title"),  # Open Graph
             lambda: self._get_meta_content(name="twitter:title"),  # Twitter Card
             lambda: self._extract_title_from_tag(),  # HTML title
-            lambda: self.tree.xpath("//h1/text()")[0].strip()
-            if self.tree.xpath("//h1/text()")
-            else None,  # First H1
-            lambda: self.url.rsplit("/", 1)[-1]
-            .replace("-", " ")
-            .replace("_", " ")
-            .capitalize(),  # URL fallback
+            lambda: (
+                self.tree.xpath("//h1/text()")[0].strip()
+                if self.tree.xpath("//h1/text()")
+                else None
+            ),  # First H1
+            lambda: (
+                self.url.rsplit("/", 1)[-1].replace("-", " ").replace("_", " ").capitalize()
+            ),  # URL fallback
         ]
 
         if title := self._get_first_match(title_sources):
@@ -136,9 +137,11 @@ class MetadataExtractor:
             lambda: self._get_meta_content(name="dc.title"),  # Dublin Core
             lambda: self._get_meta_content(property="og:title"),  # Open Graph
             lambda: self._get_meta_content(name="twitter:title"),  # Twitter Card
-            lambda: self.tree.xpath("//title/text()")[0].strip()
-            if self.tree.xpath("//title/text()")
-            else None,
+            lambda: (
+                self.tree.xpath("//title/text()")[0].strip()
+                if self.tree.xpath("//title/text()")
+                else None
+            ),
             # HTML title
             # Check all heading tags h1-h6 in a single lambda
             lambda: next(
@@ -150,15 +153,17 @@ class MetadataExtractor:
                 None,
             ),
             # title class elements - get all text nodes recursively
-            lambda: " ".join(
-                [
-                    text.strip()
-                    for text in self.tree.xpath("//*[contains(@class, 'title')]//text()")
-                    if text.strip()
-                ],
-            )
-            if self.tree.xpath("//*[contains(@class, 'title')]//text()")
-            else None,
+            lambda: (
+                " ".join(
+                    [
+                        text.strip()
+                        for text in self.tree.xpath("//*[contains(@class, 'title')]//text()")
+                        if text.strip()
+                    ],
+                )
+                if self.tree.xpath("//*[contains(@class, 'title')]//text()")
+                else None
+            ),
         ]
 
         return self._get_first_match(title_sources)
@@ -250,18 +255,22 @@ class MetadataExtractor:
         image_sources = [
             lambda: self._get_meta_content(property="og:image"),  # Open Graph
             lambda: self._get_meta_content(name="twitter:image"),  # Twitter Card
-            lambda: self.tree.xpath("//link[@rel='image_src']/@href")[0]
-            if self.tree.xpath("//link[@rel='image_src']/@href")
-            else None,  # Link rel
-            lambda: self.tree.xpath(
-                "//img[contains(@class, 'featured') or contains(@class, 'main') "
-                "or contains(@class, 'hero')]/@src",
-            )[0]
-            if self.tree.xpath(
-                "//img[contains(@class, 'featured') or contains(@class, 'main') "
-                "or contains(@class, 'hero')]/@src",
-            )
-            else None,  # Common image classes
+            lambda: (
+                self.tree.xpath("//link[@rel='image_src']/@href")[0]
+                if self.tree.xpath("//link[@rel='image_src']/@href")
+                else None
+            ),  # Link rel
+            lambda: (
+                self.tree.xpath(
+                    "//img[contains(@class, 'featured') or contains(@class, 'main') "
+                    "or contains(@class, 'hero')]/@src",
+                )[0]
+                if self.tree.xpath(
+                    "//img[contains(@class, 'featured') or contains(@class, 'main') "
+                    "or contains(@class, 'hero')]/@src",
+                )
+                else None
+            ),  # Common image classes
         ]
 
         if image := self._get_first_match(image_sources):

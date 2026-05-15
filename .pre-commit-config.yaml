@@ -60,7 +60,7 @@ repos:
           --line-length=100
         ]
   - repo: https://github.com/facebook/pyrefly-pre-commit
-    rev: 0.48.2
+    rev: 1.0.0
     hooks:
       - id: pyrefly-check
         name: pyrefly check

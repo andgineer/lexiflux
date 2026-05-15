@@ -8,39 +8,17 @@ repo_name: lexiflux
 repo_url: https://github.com/andgineer/lexiflux
 edit_uri: edit/master/docs
 docs_dir: 'src/LANGUAGE'
-site_dir: '../site/SITE_PREFIX'
+site_dir: 'SITE_DIR'
 
 plugins:
   - awesome-pages
   - search:
       lang: LANGUAGE
   - mkdocstrings:
-      handlers:
-        python:
-          paths: [ ../src ]
-          options:
-            allow_inspection: false
-            show_bases: true
-            heading_level: 2
-            show_root_heading: true
-            show_source: false
-            show_csource_code: true
-            show_root_members_full_path: false
-            show_object_full_path: true
-            show_category_heading: true
-            show_symbol_type_heading: true
-            show_symbol_type_toc: true
-            docstring_style: numpy
-            filters:
-              - "!^_"
-            show_signature: true
-            separate_signature: true
-            show_signature_annotations: true
-            signature_crossrefs: true
-            docstring_section_style: table
-            group_by_category: true
-            show_if_no_docstring: true
-            annotations_path: brief
+        handlers:
+          python:
+            options:
+              show_root_heading: true
 
 markdown_extensions:
   - abbr

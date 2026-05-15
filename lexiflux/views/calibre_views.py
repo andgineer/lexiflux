@@ -202,7 +202,7 @@ def _handle_json_upload(request: HttpRequest, user_email: str) -> JsonResponse:
 
 def _import_book_file(file, filename: str, metadata: dict[str, Any], user_email: str) -> Book:  # noqa: PLR0912,C901
     """Import a book from an uploaded file."""
-    file_extension = filename.split(".")[-1].lower()
+    file_extension = filename.rsplit(".", maxsplit=1)[-1].lower()
 
     # Determine book loader class
     book_class: type[BookLoaderBase]
@@ -278,7 +278,7 @@ def _import_book_from_path(  # noqa: C901
     user_email: str,
 ) -> Book:
     """Import a book from a file path."""
-    file_extension = filename.split(".")[-1].lower()
+    file_extension = filename.rsplit(".", maxsplit=1)[-1].lower()
 
     # Determine book loader class
     book_class: type[BookLoaderBase]

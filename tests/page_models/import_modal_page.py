@@ -85,8 +85,9 @@ class ImportModalPage(BasePage):
 
         # Verify the status was updated
         WebDriverWait(self.browser, 10).until(
-            lambda driver: "Text content ready"
-            in driver.find_element(By.ID, "pasteContentStatus").text
+            lambda driver: (
+                "Text content ready" in driver.find_element(By.ID, "pasteContentStatus").text
+            )
         )
 
     @retry_on_stale_element()

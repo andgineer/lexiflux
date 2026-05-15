@@ -38,15 +38,19 @@ jobs:
         with:
           python-version: ${{ env.PRIMARY_PYTHON_VERSION  }}
 
-
       - name: Install uv environment
         uses: andgineer/uv-venv@v3
 
-      - run: |
+      - name: Install dependencies
+        run: |
           uv pip install ghp-import -r requirements.dev.txt --python=${{ env.PRIMARY_PYTHON_VERSION }}
-      - run: ./scripts/build-docs.sh
-      - run: |
-          ghp-import --no-jekyll --push --force site --cname=lexiflux.sorokin.engineer
+
+      - name: Build documentation
+        run: inv build-docs
+
+      - name: Deploy to GitHub Pages
+        run: |
+          ghp-import --no-jekyll --push --force build/docs/site
 
       - name: Restore Allure test reports folder
         uses: peaceiris/actions-gh-pages@v3

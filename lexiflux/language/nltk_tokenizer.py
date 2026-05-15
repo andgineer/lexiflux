@@ -30,7 +30,7 @@ def ensure_nltk_data(resource: str, package: str | None = None) -> None:
     except LookupError:
         try:
             nltk.download(
-                package or resource.split("/")[-1],
+                package or resource.rsplit("/", maxsplit=1)[-1],
                 quiet=True,
                 download_dir=nltk_data_dir,
             )
