@@ -11,11 +11,11 @@ Instantly translate and understand foreign texts as you read, building your voca
 
 <br clear="left"/>
 
-![Lexiflux](docs/src/en/images/ponedeljak.png)
+![Lexiflux](docs/common/images/ponedeljak.png)
 
 ## Quick start
 
-[Lexiflux Quick start](https://lexiflux.sorokin.engineer/quickstart/)
+[Lexiflux Quick start](https://andgineer.github.io/lexiflux/quickstart/)
 
 ## Docker image
 
