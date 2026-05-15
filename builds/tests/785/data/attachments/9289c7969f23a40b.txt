@@ -1,0 +1,59 @@
+INFO     root:timing.py:14 Loading from https://example.com/content-test completed in 0.000 seconds
+INFO     root:timing.py:14 Extract metadata completed in 0.001 seconds
+INFO     root:timing.py:14 Extracting IDs with internal links completed in 0.000 seconds
+INFO     root:book_loader_url.py:139 Using original HTML
+INFO     root:timing.py:14 Extracting readable HTML completed in 0.000 seconds
+INFO     root:timing.py:14 Parse extracted HTML completed in 0.000 seconds
+INFO     root:timing.py:14 Adding source info completed in 0.000 seconds
+INFO     root:timing.py:14 Cleared HTML completed in 0.001 seconds
+INFO     root:book_loader_url.py:221 No images found in the content
+INFO     root:timing.py:14 Iterate over pages and save them completed in 0.002 seconds
+INFO     root:book_loader_url.py:257 No images to download
+INFO     root:timing.py:14 Loading from https://example.com/content-test completed in 0.000 seconds
+INFO     root:timing.py:14 Extract metadata completed in 0.001 seconds
+INFO     root:timing.py:14 Extracting IDs with internal links completed in 0.000 seconds
+DEBUG    trafilatura.main_extractor:main_extractor.py:601 ['blockquote', 'code', 'del', 'div', 'graphic', 'head', 'hi', 'lb', 'list', 'p', 'pre', 'quote', 'ref', 'table', 'td', 'th', 'tr']
+DEBUG    trafilatura.main_extractor:main_extractor.py:40 discarding element: header None
+DEBUG    trafilatura.main_extractor:main_extractor.py:40 discarding element: main None
+DEBUG    trafilatura.main_extractor:main_extractor.py:614 (.//article)[1]
+DEBUG    trafilatura.main_extractor:main_extractor.py:515 Recovering wild text elements
+DEBUG    trafilatura.readability_lxml:readability_lxml.py:217 Top 5: article 8.73
+DEBUG    trafilatura.readability_lxml:readability_lxml.py:217 Top 5: main 5.12
+DEBUG    trafilatura.readability_lxml:readability_lxml.py:217 Top 5: body 1.22
+DEBUG    trafilatura.readability_lxml:readability_lxml.py:217 Top 5: aside -0.56
+DEBUG    trafilatura.readability_lxml:readability_lxml.py:217 Top 5: header -2.66
+DEBUG    trafilatura.readability_lxml:readability_lxml.py:350 Removed header with score -2.660 and weight 0  
+DEBUG    trafilatura.external:external.py:64 extracted length: 131 (algorithm) 336 (extraction)
+DEBUG    trafilatura.external:external.py:92 using custom extraction: None
+DEBUG    trafilatura.core:core.py:316 not enough comments: None
+INFO     root:timing.py:14 Extracting readable HTML completed in 0.005 seconds
+INFO     root:timing.py:14 Parse extracted HTML completed in 0.000 seconds
+INFO     root:timing.py:14 Adding source info completed in 0.000 seconds
+INFO     root:timing.py:14 Cleared HTML completed in 0.000 seconds
+INFO     root:book_loader_url.py:221 No images found in the content
+INFO     root:timing.py:14 Iterate over pages and save them completed in 0.002 seconds
+INFO     root:book_loader_url.py:257 No images to download
+INFO     root:timing.py:14 Loading from https://example.com/content-test completed in 0.000 seconds
+INFO     root:timing.py:14 Extract metadata completed in 0.001 seconds
+INFO     root:timing.py:14 Extracting IDs with internal links completed in 0.000 seconds
+DEBUG    trafilatura.main_extractor:main_extractor.py:601 ['blockquote', 'code', 'del', 'div', 'graphic', 'head', 'hi', 'lb', 'list', 'p', 'pre', 'quote', 'ref', 'table', 'td', 'th', 'tr']
+DEBUG    trafilatura.main_extractor:main_extractor.py:40 discarding element: main None
+DEBUG    trafilatura.main_extractor:main_extractor.py:614 (.//article)[1]
+DEBUG    trafilatura.main_extractor:main_extractor.py:515 Recovering wild text elements
+DEBUG    trafilatura.readability_lxml:readability_lxml.py:217 Top 5: article 8.73
+DEBUG    trafilatura.readability_lxml:readability_lxml.py:217 Top 5: main 5.12
+DEBUG    trafilatura.readability_lxml:readability_lxml.py:217 Top 5: body 1.22
+DEBUG    trafilatura.readability_lxml:readability_lxml.py:217 Top 5: aside -0.56
+DEBUG    trafilatura.readability_lxml:readability_lxml.py:217 Top 5: header -2.66
+DEBUG    trafilatura.readability_lxml:readability_lxml.py:350 Removed header with score -2.660 and weight 0  
+DEBUG    trafilatura.external:external.py:64 extracted length: 131 (algorithm) 245 (extraction)
+DEBUG    trafilatura.external:external.py:84 extraction values: 245 131 for None
+DEBUG    trafilatura.external:external.py:92 using custom extraction: None
+DEBUG    trafilatura.external:external.py:96 unclean document triggering justext examination: None
+INFO     root:timing.py:14 Extracting readable HTML completed in 0.008 seconds
+INFO     root:timing.py:14 Parse extracted HTML completed in 0.000 seconds
+INFO     root:timing.py:14 Adding source info completed in 0.000 seconds
+INFO     root:timing.py:14 Cleared HTML completed in 0.000 seconds
+INFO     root:book_loader_url.py:221 No images found in the content
+INFO     root:timing.py:14 Iterate over pages and save them completed in 0.001 seconds
+INFO     root:book_loader_url.py:257 No images to download

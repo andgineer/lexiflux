@@ -1,0 +1,4 @@
+2026-01-19 14:57:27,916 WARNING google_languages Warning: Egyptian Arabic not found in the database for group Arabic.
+2026-01-19 14:57:28,293 INFO signals Successfully created language preferences for user testuser (ID: 4)
+2026-01-19 14:57:28,324 INFO lexical_views Selected text: of page
+2026-01-19 14:57:28,537 WARNING llm User attempted to use retired model: claude-sonnet-4-0

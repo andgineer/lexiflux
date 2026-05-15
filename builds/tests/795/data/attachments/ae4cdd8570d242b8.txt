@@ -1,0 +1,2 @@
+2026-05-15 08:53:44,136 INFO nltk_tokenizer Downloaded NLTK data: punkt
+2026-05-15 08:53:44,138 WARNING nltk_tokenizer NLTK punkt tokenizer not available for en. Using default.

@@ -1,0 +1,23 @@
+2026-01-02 09:14:57,170 INFO apps Lexiflux 2.8.0 is ready.
+2026-01-02 09:14:57,368 ERROR google_languages Skipping language group population.
+Traceback (most recent call last):
+  File "/home/runner/work/lexiflux/lexiflux/.venv/lib/python3.12/site-packages/django/apps/config.py", line 235, in get_model
+    return self.models[model_name.lower()]
+           ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^
+KeyError: 'languagegroup'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/runner/work/lexiflux/lexiflux/lexiflux/language/google_languages.py", line 60, in populate_language_groups
+    language_group_class = get_model("lexiflux", "LanguageGroup")
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/work/lexiflux/lexiflux/.venv/lib/python3.12/site-packages/django/apps/registry.py", line 213, in get_model
+    return app_config.get_model(model_name, require_ready=require_ready)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/work/lexiflux/lexiflux/.venv/lib/python3.12/site-packages/django/apps/config.py", line 237, in get_model
+    raise LookupError(
+LookupError: App 'lexiflux' doesn't have a 'LanguageGroup' model.
+2026-01-02 09:14:58,408 WARNING google_languages Warning: Egyptian Arabic not found in the database for group Arabic.
+2026-01-02 09:15:00,195 INFO signals Successfully created language preferences for user testuser (ID: 1)
+2026-01-02 09:15:00,214 INFO anki_connect result {'result': [1, 2, 3, 4, 5, 6]}

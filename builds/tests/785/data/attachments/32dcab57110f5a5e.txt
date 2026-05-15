@@ -1,0 +1,7 @@
+ERROR    root:webdriver_augmented.py:88 Failed to enable CDP logging: Message: HTTP method not allowed
+
+WARNING  root:google_languages.py:74 Warning: Egyptian Arabic not found in the database for group Arabic.
+INFO     lexiflux.signals:signals.py:55 Successfully created language preferences for user testuser (ID: 47)
+INFO     lexiflux.views.words_export:words_export.py:216 For language en last export datetime: 2026-01-01 00:00:00
+INFO     lexiflux.views.words_export:words_export.py:303 Words exported for English: 1 words using csvFile
+INFO     lexiflux.views.words_export:words_export.py:216 For language en last export datetime: 2026-01-02 09:18:55.636796+00:00

@@ -1,0 +1,2 @@
+2026-01-12 06:55:06,149 INFO anki_connect result {'error': "['duplicate', 'duplicate']"}
+2026-01-12 06:55:06,150 INFO anki_connect All 2 notes are duplicates. No new notes added.

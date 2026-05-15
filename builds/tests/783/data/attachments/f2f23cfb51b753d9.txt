@@ -1,0 +1,2 @@
+2026-01-01 18:24:49,609 INFO anki_connect result {'status': 'ok'}
+2026-01-01 18:24:49,609 ERROR anki_connect Unexpected error when adding notes to Anki: Unexpected response format from AnkiConnect

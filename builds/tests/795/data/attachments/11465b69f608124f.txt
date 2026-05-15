@@ -1,0 +1,3 @@
+After jump_back: page_number=2, word=30
+jump_history=[{'page_number': 2, 'word': 30}, {'page_number': 4, 'word': 50}]
+current_jump=0

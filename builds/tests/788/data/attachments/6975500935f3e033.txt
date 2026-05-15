@@ -1,0 +1,5 @@
+INFO     lexiflux.anki.anki_connect:anki_connect.py:84 result {'error': "['duplicate', 'other error']"}
+INFO     lexiflux.anki.anki_connect:anki_connect.py:95 Some notes are duplicates. Adding individually.
+INFO     lexiflux.anki.anki_connect:anki_connect.py:84 result {'error': "['duplicate']"}
+INFO     lexiflux.anki.anki_connect:anki_connect.py:91 All 1 notes are duplicates. No new notes added.
+INFO     lexiflux.anki.anki_connect:anki_connect.py:84 result {'result': [123]}

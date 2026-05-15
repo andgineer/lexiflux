@@ -1,0 +1,10 @@
+2026-01-02 07:49:55,686 WARNING google_languages Warning: Egyptian Arabic not found in the database for group Arabic.
+2026-01-02 07:49:56,139 INFO signals Successfully created language preferences for user testuser (ID: 4)
+2026-01-02 07:49:56,146 ERROR import_views Error importing book
+Traceback (most recent call last):
+  File "/home/runner/work/lexiflux/lexiflux/lexiflux/views/import_views.py", line 46, in import_book
+    book = import_file(request)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/work/lexiflux/lexiflux/lexiflux/views/import_views.py", line 94, in import_file
+    raise ValueError("No file provided")
+ValueError: No file provided

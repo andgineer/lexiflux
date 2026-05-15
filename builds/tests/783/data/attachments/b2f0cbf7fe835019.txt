@@ -1,0 +1,2 @@
+Hidden text: var x = 5; (8, 18)
+Hidden text: .cls { color: red; } (34, 54)

@@ -1,0 +1,17 @@
+2026-01-01 18:24:50,229 ERROR import_views Error importing book
+Traceback (most recent call last):
+  File "/home/runner/work/lexiflux/lexiflux/lexiflux/views/import_views.py", line 173, in import_url
+    validator(url)
+  File "/home/runner/work/lexiflux/lexiflux/.venv/lib/python3.12/site-packages/django/core/validators.py", line 171, in __call__
+    raise ValidationError(self.message, code=self.code, params={"value": value})
+django.core.exceptions.ValidationError: ['Enter a valid URL.']
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/runner/work/lexiflux/lexiflux/lexiflux/views/import_views.py", line 48, in import_book
+    book = import_url(request)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/work/lexiflux/lexiflux/lexiflux/views/import_views.py", line 175, in import_url
+    raise ValueError("Invalid URL format") from e
+ValueError: Invalid URL format

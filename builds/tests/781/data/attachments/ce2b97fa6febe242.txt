@@ -1,0 +1,3 @@
+2026-01-01 16:30:27,750 WARNING google_languages Warning: Egyptian Arabic not found in the database for group Arabic.
+2026-01-01 16:30:28,187 INFO signals Successfully created language preferences for user testuser (ID: 4)
+2026-01-01 16:30:28,194 WARNING calibre_views Language unknown_lang_code not found in database

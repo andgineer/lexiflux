@@ -1,0 +1,3 @@
+2026-01-02 07:50:45,300 INFO anki_connect result {'error': 'Critical Anki error'}
+2026-01-02 07:50:45,300 ERROR anki_connect Unexpected AnkiConnect errors
+2026-01-02 07:50:45,301 ERROR anki_connect Unexpected error when adding notes to Anki: AnkiConnect error: Critical Anki error

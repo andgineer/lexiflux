@@ -1,0 +1,1 @@
+2026-01-01 12:15:07,752 WARNING log Bad Request: /calibre/upload/
