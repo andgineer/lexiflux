@@ -41,10 +41,10 @@ theme:
 extra:
   alternate:
     - name: English
-      link: /
+      link: /lexiflux/
       lang: en
     - name: Русский
-      link: /ru/
+      link: /lexiflux/ru/
       lang: ru
 
 nav:
