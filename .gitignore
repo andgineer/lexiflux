@@ -9,6 +9,7 @@ ssl_certs/
 bundle.js
 .DS_Store
 .coverage
+.env
 **/__pycache__/
 **/.pytest_cache/
 node_modules/

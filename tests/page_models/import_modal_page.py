@@ -1,5 +1,3 @@
-import time
-
 import allure
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -157,38 +155,9 @@ class ImportModalPage(BasePage):
         return edit_modal
 
     def save_book_changes(self):
-        """Save changes in the edit book modal."""
-        max_attempts = 3
-        for attempt in range(max_attempts):
-            try:
-                edit_modal = self.wait_for_edit_book_modal()
-
-                # Find and click the save button
-                save_button = WebDriverWait(self.browser, 10).until(
-                    EC.element_to_be_clickable((By.CSS_SELECTOR, "#editBookModal .btn-primary"))
-                )
-
-                # Use JavaScript to click the button (more reliable across browsers)
-                self.browser.execute_script("arguments[0].click();", save_button)
-
-                # Wait for HTMX request to complete
-                WebDriverWait(self.browser, 10).until(
-                    lambda driver: driver.execute_script("return !htmx.requesting")
-                )
-
-                # Wait for the modal to close
-                WebDriverWait(self.browser, 10).until(
-                    EC.invisibility_of_element_located((By.ID, "editBookModal"))
-                )
-
-                # Wait for the modal backdrop to disappear
-                WebDriverWait(self.browser, 10).until(
-                    EC.invisibility_of_element_located((By.CLASS_NAME, "modal-backdrop"))
-                )
-                # Success, break out of retry loop
-                break
-
-            except Exception:
-                if attempt == max_attempts - 1:  # Last attempt
-                    raise  # Re-raise the exception if all attempts failed
-                time.sleep(1)  # Wait before retrying
+        """Save the imported book and wait for the reader page."""
+        self.wait_for_edit_book_modal()
+        save_button = self.wait_for_clickable((By.CSS_SELECTOR, "#editBookModal .btn-primary"))
+        self.browser.execute_script("arguments[0].click();", save_button)
+        # Import navigates away; inspecting the old page can retry an already saved form.
+        WebDriverWait(self.browser, 10).until(EC.url_contains("/reader"))

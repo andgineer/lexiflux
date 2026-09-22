@@ -273,6 +273,13 @@ This is chapter one of the test book.""")
             # Wait for the edit book modal to appear after successful import
             try:
                 import_page.fill_edit_book_form("Test File Book", "Test Author")
+                # Author-search responses must not trigger the form's save redirect.
+                WebDriverWait(browser, 10).until(
+                    EC.visibility_of_element_located(
+                        (By.CSS_SELECTOR, "#editBookModal .suggestions-content .list-group-item")
+                    )
+                )
+                assert "/reader" not in browser.current_url
                 browser.take_screenshot("After Fill Form")
 
                 # Save the book

@@ -22,7 +22,7 @@
             hx-target="body"
             hx-swap="none"
             {% if not require_delete_confirmation %}
-            hx-on::after-request="if (event.detail.successful && !window.bookDeleteClicked) { window.location.href='{% url 'reader' %}?book-code={{ book.code }}'; }"
+            hx-on::after-request="if (event.target === this && event.detail.successful && !window.bookDeleteClicked) { window.location.href='{% url 'reader' %}?book-code={{ book.code }}'; }"
             {% endif %}>
         <div class="modal-body">
           {% if error_message %}
