@@ -220,6 +220,7 @@ def reqs(c: Context):
     """Upgrade requirements including pre-commit."""
     c.run("pre-commit autoupdate")
     c.run("uv pip install -r requirements.dev.txt")
+    c.run("playwright install chromium")
 
 
 @task
@@ -302,8 +303,9 @@ def docker(c: Context):
 
 @task
 def rundocker(c: Context):
-    """Run built docker image"""
-    c.run("docker run --rm -p 8080:8000 lexiflux:latest")
+    """Run built docker image, passing the AI keys from .env when it exists"""
+    env_file = "--env-file .env " if Path(".env").exists() else ""
+    c.run(f"docker run --rm -p 8080:8000 {env_file}lexiflux:latest")
 
 
 @task

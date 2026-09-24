@@ -259,7 +259,7 @@ def pytest_runtest_call(item):
     """Hook that runs during test execution to check JS errors."""
     outcome = yield
     try:
-        if "browser" not in item.fixturenames:
+        if "browser" not in item.fixturenames or item.get_closest_marker("playwright"):
             return
 
         web_driver = item.funcargs["browser"]
@@ -285,7 +285,7 @@ def pytest_runtest_makereport(item, call):
     rep = outcome.get_result()
     if rep.when == "call" and rep.failed:
         try:
-            if "browser" in item.fixturenames:  # assume this is fixture with webdriver
+            if "browser" in item.fixturenames and not item.get_closest_marker("playwright"):
                 web_driver = item.funcargs["browser"]
             else:
                 return
@@ -385,6 +385,25 @@ def book_epub(db_init):
         loader = BookLoaderEpub("dummy_path")
         loader.detect_meta()  # This will set up the epub attribute
         return loader
+
+
+@pytest.fixture(autouse=True)
+def no_real_llm_calls():
+    from lexiflux.language.llm import clear_cache
+
+    clear_cache()
+    with (
+        patch(
+            "lexiflux.language.llm.llms_for",
+            side_effect=RuntimeError("a test reached the real LLM broker; patch llms_for"),
+        ),
+        patch(
+            "lexiflux.language.broker.get_broker",
+            side_effect=RuntimeError("a test reached the real LLM broker; patch get_broker"),
+        ),
+    ):
+        yield
+    clear_cache()
 
 
 @pytest.fixture(autouse=True)

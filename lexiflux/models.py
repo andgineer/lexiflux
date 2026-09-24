@@ -18,18 +18,12 @@ from django.utils.translation import gettext_lazy as _
 from transliterate import get_available_language_codes, translit
 from unidecode import unidecode
 
+from lexiflux.language.ai_models import validate_knobs
 from lexiflux.language.sentence_extractor import break_into_sentences
 from lexiflux.language.word_extractor import parse_words
 from lexiflux.language_preferences_default import create_default_language_preferences
 
 BOOK_CODE_LENGTH = 100
-SUPPORTED_CHAT_MODELS = {
-    "ChatOpenAI": ["api_key", "temperature"],
-    "ChatMistralAI": ["api_key", "temperature"],
-    "ChatAnthropic": ["api_key", "temperature"],
-    "ChatGoogle": ["api_key", "temperature"],
-    "Ollama": ["temperature"],
-}
 
 TocEntry: TypeAlias = tuple[str, int, int]  # <title>, <page num>, <word on the page num>
 Toc: TypeAlias = list[TocEntry]
@@ -52,6 +46,7 @@ class LexicalArticleType(models.TextChoices):  # type: ignore  # pylint: disable
     DICTIONARY = "Dictionary", _("Dictionary")
     SITE = "Site", _("Site")
     AI_DICTIONARY = "AI dictionary", _("AI dictionary")
+    IN_DEPTH = "In depth", _("In depth")
     TRANSLATE = "Translate", _("Translate")
     SENTENCE = "Sentence", _("Sentence")
     EXPLAIN = "Explain", _("Explain")
@@ -60,16 +55,24 @@ class LexicalArticleType(models.TextChoices):  # type: ignore  # pylint: disable
     AI = "AI", _("AI")
 
 
+AI_ARTICLE_KNOBS = ["model", "effort", "tier"]
+
+# Their prompts ask for plain text or inline tags only, so the answer's line breaks are its layout.
+LINE_BREAK_ARTICLE_TYPES = frozenset(
+    {"AI dictionary", "In depth", "Translate", "Sentence", "Explain"},
+)
+
 LEXICAL_ARTICLE_PARAMETERS = {
     "Dictionary": ["dictionary"],
     "Site": ["url", "window"],
-    "AI dictionary": ["model"],
-    "Translate": ["model"],
-    "Sentence": ["model"],
-    "Explain": ["model"],
-    "Lexical": ["model"],
-    "Origin": ["model"],
-    "AI": ["model", "prompt"],
+    "AI dictionary": AI_ARTICLE_KNOBS,
+    "In depth": AI_ARTICLE_KNOBS,
+    "Translate": AI_ARTICLE_KNOBS,
+    "Sentence": AI_ARTICLE_KNOBS,
+    "Explain": AI_ARTICLE_KNOBS,
+    "Lexical": AI_ARTICLE_KNOBS,
+    "Origin": AI_ARTICLE_KNOBS,
+    "AI": [*AI_ARTICLE_KNOBS, "prompt"],
 }
 
 
@@ -568,60 +571,6 @@ class ReaderSettings(models.Model):  # type: ignore
         )
 
 
-class AIModelConfig(models.Model):  # type: ignore
-    """Model to store settings for AI models used in the application."""
-
-    user = models.ForeignKey(
-        CustomUser,
-        on_delete=models.CASCADE,
-        related_name="ai_model_settings",
-    )
-    chat_model = models.CharField(max_length=100, help_text="LangChain Chat model class")
-    settings = models.JSONField(
-        default=dict,
-        blank=True,
-        help_text="AI model settings.",
-    )
-
-    class Meta:
-        unique_together = ("user", "chat_model")
-
-    @classmethod
-    def get_or_create_ai_model_config(cls, user: CustomUser, chat_model: str) -> "AIModelConfig":
-        """Get or create AI model config for the given user and chat model."""
-        supported_settings = SUPPORTED_CHAT_MODELS.get(chat_model, [])
-        config, created = AIModelConfig.objects.get_or_create(
-            user=user,
-            chat_model=chat_model,
-            defaults={"settings": dict.fromkeys(supported_settings, "")},
-        )
-        if created:
-            config.save()
-        return config  # type: ignore
-
-    def clean(self) -> None:
-        super().clean()
-        errors = {}
-        for key, value in self.settings.items():
-            if key == "temperature" and value:
-                try:
-                    float_value = float(value)
-                    if not 0 <= float_value <= 1:
-                        errors[key] = f"Temperature must be between 0 and 1, got {float_value}"
-                except ValueError:
-                    errors[key] = f"Temperature must be a number, got {value}"
-
-        if errors:
-            raise ValidationError(errors)
-
-    def save(self, *args: Any, **kwargs: Any) -> None:
-        self.full_clean()
-        super().save(*args, **kwargs)
-
-    def __str__(self) -> str:
-        return f"{self.user.username} - {self.chat_model} Settings"
-
-
 class LexicalArticle(models.Model):  # type: ignore
     """A lexical article."""
 
@@ -642,6 +591,10 @@ class LexicalArticle(models.Model):  # type: ignore
         unique_together = ("language_preferences", "title")
         ordering = ["order"]
 
+    @property
+    def keeps_line_breaks(self) -> bool:
+        return self.type in LINE_BREAK_ARTICLE_TYPES
+
     def clean(self) -> None:
         if self.type == "Site":
             if "url" not in self.parameters or "window" not in self.parameters:
@@ -649,11 +602,19 @@ class LexicalArticle(models.Model):  # type: ignore
         elif self.type == "Dictionary":
             if "dictionary" not in self.parameters:
                 raise ValidationError("Dictionary article must have 'dictionary' parameter.")
-        elif self.type == "AI":
-            if "prompt" not in self.parameters:
+        else:
+            if self.type == "AI" and "prompt" not in self.parameters:
                 raise ValidationError("AI article must have 'prompt' parameter.")
-        elif self.type not in ["Dictionary", "Site"] and "model" not in self.parameters:
-            raise ValidationError(f"{self.type} article must have 'model' parameter.")
+            if "model" not in self.parameters:
+                raise ValidationError(f"{self.type} article must have 'model' parameter.")
+            try:
+                validate_knobs(
+                    self.parameters["model"],
+                    self.parameters.get("effort"),
+                    self.parameters.get("tier"),
+                )
+            except ValueError as exc:
+                raise ValidationError(str(exc)) from exc
 
     def save(self, *args: Any, **kwargs: Any) -> None:
         self.clean()
@@ -753,6 +714,7 @@ class LanguagePreferences(models.Model):  # type: ignore
                     type=article.type,
                     title=article.title,
                     parameters=article.parameters,
+                    order=article.order,
                 )
 
         return preferences  # type: ignore

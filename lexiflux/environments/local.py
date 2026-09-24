@@ -5,7 +5,8 @@ These settings replicate the current local development environment:
 - SQLite database
 - Debug mode enabled
 - Auto-login enabled
-- All AI models available including Ollama
+- AI keys from the environment or .env in the repo root
+- llmbroker state in .llmbroker/ next to the database
 """
 
 import os
@@ -29,6 +30,11 @@ if lexiflux_allowed_hosts := os.getenv("LEXIFLUX_ALLOWED_HOSTS"):
     ALLOWED_HOSTS = [host.strip() for host in lexiflux_allowed_hosts.split(",") if host.strip()]
 else:
     ALLOWED_HOSTS = _default_allowed_hosts
+
+# Its own llmbroker home: the pool exclusions are persistent and would otherwise
+# apply to every other llmbroker user on the machine.
+LLMBROKER_DATASOURCE = None
+LLMBROKER_HOME = BASE_DIR / ".llmbroker"  # noqa: F405
 
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases

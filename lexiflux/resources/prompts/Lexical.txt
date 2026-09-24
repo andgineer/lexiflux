@@ -1,5 +1,5 @@
-Write a lexical article in {user_language} for the word(s) in {text_language} that appear in the text below,
-marked with [HIGHLIGHT][/HIGHLIGHT].
+Write a lexical article in {user_language} for the {text_language} word or phrase "{word}",
+which appears in this sentence: "{sentence}"
 
 The article should analyze and describe the {text_language} word itself,
 not its translation.

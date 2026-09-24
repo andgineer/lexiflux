@@ -4,16 +4,26 @@ from typing import Any
 
 from django.apps import apps
 
+DEFAULT_INLINE_TRANSLATION = {
+    "type": "Dictionary",
+    "parameters": {"dictionary": "GoogleTranslator"},
+}
+
 DEFAULT_LEXICAL_ARTICLES = [
     {
         "type": "AI dictionary",
-        "title": "AI dictionary",
-        "parameters": {"model": "gemini-2.5-flash"},
+        "title": "Article",
+        "parameters": {"model": "pool"},
+    },
+    {
+        "type": "In depth",
+        "title": "In depth",
+        "parameters": {"model": "gpt", "effort": "none", "tier": "priority"},
     },
     {
         "type": "Sentence",
         "title": "Sentence",
-        "parameters": {"model": "gemini-2.5-flash"},
+        "parameters": {"model": "gpt", "effort": "none", "tier": "priority"},
     },
     {
         "type": "Site",
@@ -47,16 +57,17 @@ def create_default_language_preferences(user: Any) -> Any:  # do not use models 
         user=user,
         language=serbian_language,
         user_language=user_language,
-        inline_translation_type="Dictionary",
-        inline_translation_parameters={"dictionary": "GoogleTranslator"},
+        inline_translation_type=DEFAULT_INLINE_TRANSLATION["type"],
+        inline_translation_parameters=dict(DEFAULT_INLINE_TRANSLATION["parameters"]),
     )
 
-    for article in DEFAULT_LEXICAL_ARTICLES:
+    for order, article in enumerate(DEFAULT_LEXICAL_ARTICLES):
         LexicalArticle.objects.create(
             language_preferences=language_preferences,
             type=article["type"],
             title=article["title"],
-            parameters=article["parameters"],
+            parameters=dict(article["parameters"]),
+            order=order,
         )
 
     return language_preferences

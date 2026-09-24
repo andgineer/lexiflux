@@ -51,7 +51,7 @@ jobs:
       run: uv pip install -r requirements.dev.txt
 
     - name: Test with pytest without docker
-      run: "${{ env.PYTEST_CMD }} -m 'not docker'"
+      run: "${{ env.PYTEST_CMD }} -m 'not docker and not playwright'"
 
 # Build with Docker, publishing Allure report, coverage report
   primary-build:
@@ -82,6 +82,9 @@ jobs:
       run: |
         npm install
         npm run build
+
+    - name: Install Chromium for Playwright
+      run: python -m playwright install --with-deps chromium
 
     - name: Start SeleniumHub
       run: |

@@ -109,3 +109,58 @@ class TestUserSignals:
         # Check that no language preferences were created
         assert user.default_language_preferences is None
         assert not LanguagePreferences.objects.filter(user=user).exists()
+
+
+@allure.epic("User")
+@allure.feature("Language Preferences")
+@pytest.mark.django_db
+def test_new_user_gets_the_default_articles_and_inline_translation(db_init):
+    user = get_user_model().objects.create_user(
+        username="defaults", email="defaults@example.com", password="testpass123"
+    )
+    preferences = user.default_language_preferences
+
+    articles = [
+        (article.title, article.type, article.parameters)
+        for article in preferences.get_lexical_articles()
+    ]
+    assert articles == [
+        ("Article", "AI dictionary", {"model": "pool"}),
+        ("In depth", "In depth", {"model": "gpt", "effort": "none", "tier": "priority"}),
+        ("Sentence", "Sentence", {"model": "gpt", "effort": "none", "tier": "priority"}),
+        (
+            "glosbe",
+            "Site",
+            {"url": "https://glosbe.com/{langCode}/{toLangCode}/{term}", "window": True},
+        ),
+    ]
+    assert preferences.inline_translation_type == "Dictionary"
+    assert preferences.inline_translation_parameters == {"dictionary": "GoogleTranslator"}
+
+
+@allure.epic("User")
+@allure.feature("Language Preferences")
+@pytest.mark.django_db
+def test_default_articles_pass_validation(db_init):
+    user = get_user_model().objects.create_user(
+        username="valid", email="valid@example.com", password="testpass123"
+    )
+    for article in user.default_language_preferences.get_lexical_articles():
+        article.full_clean()
+
+
+@allure.epic("User")
+@allure.feature("Language Preferences")
+@pytest.mark.django_db
+def test_preferences_for_another_language_copy_defaults_in_order(db_init):
+    user = get_user_model().objects.create_user(
+        username="copy", email="copy@example.com", password="testpass123"
+    )
+    french = Language.objects.get(name="French")
+    copied = LanguagePreferences.get_or_create_language_preferences(user, french)
+    assert [a.title for a in copied.get_lexical_articles()] == [
+        "Article",
+        "In depth",
+        "Sentence",
+        "glosbe",
+    ]

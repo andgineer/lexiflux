@@ -1,0 +1,64 @@
+{% if kind == "no_keys" %}
+<div class="alert alert-warning" role="alert">
+    <h4 class="alert-heading mb-3">The free pool needs at least one key</h4>
+    <p>Any one of these free keys is enough; more keys make the pool faster and steadier:</p>
+    <ul>
+        {% for key in keys %}
+        <li class="mb-2"><code>{{ key.env_var }}</code>: {{ key.help_html|safe }}</li>
+        {% endfor %}
+    </ul>
+    {% if on_server %}
+    <p class="mb-0">Set the key as an environment variable of the server (on Koyeb, a secret exposed as an env var), then redeploy.</p>
+    {% else %}
+    <p class="mb-0">Put the key into the <code>.env</code> file in the lexiflux folder as <code>NAME=value</code> (in Docker, pass it to <code>docker run</code> with <code>-e</code> or <code>--env-file</code>), or export it as an environment variable.</p>
+    {% endif %}
+</div>
+{% elif kind == "missing_key" %}
+<div class="alert alert-warning" role="alert">
+    <h4 class="alert-heading mb-3">{{ provider_label }} needs an API key</h4>
+    {% if key_help_html %}<p>{{ key_help_html|safe }}</p>{% endif %}
+    {% if on_server %}
+    <p class="mb-0">Set <code>{{ env_var }}</code> as an environment variable of the server (on Koyeb, a secret exposed as an env var), then redeploy.</p>
+    {% else %}
+    <p class="mb-0">Put <code>{{ env_var }}=...</code> into the <code>.env</code> file in the lexiflux folder (in Docker, pass it to <code>docker run</code> with <code>-e</code> or <code>--env-file</code>), or export it as an environment variable.</p>
+    {% endif %}
+</div>
+{% elif kind == "auth" %}
+<div class="alert alert-danger" role="alert">
+    <h4 class="alert-heading mb-3">Key rejected by {{ provider_label }}</h4>
+    <p class="mb-0">The API key was sent and {{ provider_label }} refused it. Check that it is valid and has credit.</p>
+</div>
+{% elif kind == "busy" %}
+<div class="alert alert-info" role="alert">
+    <p class="mb-0">The AI models are busy right now. Please retry{% if retry_in %} in {{ retry_in }} s{% endif %}.</p>
+</div>
+{% elif kind == "cut_off" %}
+<div class="alert alert-info mt-2" role="alert">
+    <p class="mb-0">The answer was cut off. Please retry.</p>
+</div>
+{% elif kind == "retired" %}
+<div class="alert alert-warning" role="alert">
+    <h4 class="alert-heading mb-3">AI Model No Longer Available</h4>
+    <p>The model <strong>{{ model_name }}</strong> has been retired or removed from the available models.</p>
+    <p class="mb-3">This can happen when AI providers update their model lineup or when we update the supported models list.</p>
+
+    <div class="mb-3">
+        <strong>To continue using AI features:</strong>
+        <ol class="mt-2 mb-0">
+            <li class="mb-2">Go to <a href="/language-preferences/" class="alert-link">Language Preferences</a></li>
+            <li class="mb-2">Select a new AI model from the available options</li>
+            <li>Save your preferences</li>
+        </ol>
+    </div>
+
+    <hr>
+    <p class="mb-0">
+        <a href="/language-preferences/" class="btn btn-sm btn-warning">Update Language Preferences</a>
+    </p>
+</div>
+{% else %}
+<div class="alert alert-danger" role="alert">
+    <h4 class="alert-heading">AI Error</h4>
+    <p class="mb-0">An error occurred in the model <strong>{{ model_name }}</strong> ({{ error_type }}). Please retry later.</p>
+</div>
+{% endif %}

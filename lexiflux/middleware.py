@@ -6,6 +6,7 @@ from typing import Any
 from django.contrib.auth import authenticate, login
 from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
 from django.http import HttpResponseNotAllowed, JsonResponse
+from django.middleware.gzip import GZipMiddleware
 
 from lexiflux.lexiflux_settings import settings
 
@@ -78,3 +79,13 @@ class ExceptionJSONResponseMiddleware:
             {"error": error_message or "Internal server error", "details": exception_args},
             status=500,
         )
+
+
+class GZipExceptStreamsMiddleware(GZipMiddleware):
+    def process_response(self, request: Any, response: Any) -> Any:
+        # compress_sequence does not flush per chunk, so gzip would hold the lines back.
+        if response.streaming and response.get("Content-Type", "").startswith(
+            "application/x-ndjson",
+        ):
+            return response
+        return super().process_response(request, response)

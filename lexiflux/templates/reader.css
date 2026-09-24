@@ -22,6 +22,27 @@
   overflow-x: visible;
 }
 
+.lexical-content.keep-line-breaks {
+  white-space: pre-line;
+}
+
+/* Newlines between table rows or in template markup would otherwise render as blank lines. */
+.lexical-content.keep-line-breaks table,
+.lexical-content.keep-line-breaks .alert,
+.lexical-content.keep-line-breaks .lexical-status {
+  white-space: normal;
+}
+
+.lexical-content table {
+  width: auto;
+  margin: 0.25rem 0;
+}
+
+.lexical-content td {
+  padding: 0.125rem 1rem 0.125rem 0;
+  vertical-align: top;
+}
+
 /* Mobile: fix viewport height and ensure bottom navbar is visible */
 @media (max-width: 575px) {
     /* Use dynamic viewport height to account for mobile browser chrome */

@@ -32,6 +32,7 @@ if [[ ! -d ${VENV_FOLDER} ]] ; then
       . ${VENV_FOLDER}/bin/activate
       uv pip install --upgrade pip
       uv pip install -r requirements.dev.txt #  --only-binary spacy
+      playwright install chromium
 
       END_TIME=$(date +%s)
       echo "Environment created in $((END_TIME - $START_TIME)) seconds"

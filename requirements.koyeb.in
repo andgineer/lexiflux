@@ -1,5 +1,5 @@
 # Production requirements for Koyeb deployment
-# Excludes heavy packages like Ollama, includes PostgreSQL support
+# Includes PostgreSQL support
 
 # Core Django and web framework
 django
@@ -20,15 +20,8 @@ whitenoise
 pydantic
 numpy==1.26.4
 
-# AI and language processing (cloud-based only, no local models)
-langchain
-langchain-community
-langchain-core
-langchain-openai
-langchain_anthropic
-langchain_google_genai
-langchain_mistralai
-openai
+# AI: free pool and paid models through llmbroker; broker state in PostgreSQL
+llmbroker[postgres]>=1.11.0
 
 # Text processing and translation
 deep-translator
@@ -54,5 +47,3 @@ genanki
 # Security and utilities
 PyJWT
 psutil
-
-# Note: Ollama is excluded for Koyeb due to memory constraints

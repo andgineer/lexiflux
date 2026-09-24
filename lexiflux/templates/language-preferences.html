@@ -72,18 +72,11 @@
                                 <div v-else-if="inlineTranslation.type === 'Dictionary'">
                                     <div><strong>Dictionary:</strong> [[ inlineTranslation.parameters.dictionary ]]</div>
                                 </div>
-                                <div v-else-if="inlineTranslation.type === 'AI'">
-                                  <div>
-                                    <strong>Model:</strong> [[ getModelTitle(inlineTranslation.parameters.model) ]]
-                                  </div>
-                                  <div>
-                                    <strong>Prompt:</strong> [[ truncateText(inlineTranslation.parameters.prompt, 15) ]]
-                                  </div>
-                                </div>
-                                <div v-else v-for="(value, name) in inlineTranslation.parameters" :key="name">
-                                    <strong>[[ name ]]:</strong>
-                                    <span v-if="name === 'model'">[[ getModelTitle(value) ]]</span>
-                                    <span v-else>[[ value ]]</span>
+                                <div v-else-if="isAiType(inlineTranslation.type)">
+                                    <div><strong>model:</strong> [[ getModelTitle(inlineTranslation.parameters.model) ]]</div>
+                                    <div v-if="hasKnob(inlineTranslation.parameters.model, 'efforts')"><strong>reasoning effort:</strong> [[ formatKnob(inlineTranslation.parameters.effort) ]]</div>
+                                    <div v-if="hasKnob(inlineTranslation.parameters.model, 'tiers')"><strong>processing tier:</strong> [[ formatKnob(inlineTranslation.parameters.tier) ]]</div>
+                                    <div v-if="inlineTranslation.type === 'AI'"><strong>prompt:</strong> [[ truncateText(inlineTranslation.parameters.prompt || '', 15) ]]</div>
                                 </div>
                             </div>
                         </div>
@@ -109,18 +102,11 @@
                                 <div v-else-if="article.type === 'Dictionary'">
                                     <div><strong>Dictionary:</strong> [[ article.parameters.dictionary ]]</div>
                                 </div>
-                                <div v-else-if="article.type === 'AI'">
-                                  <div>
-                                    <strong>Model:</strong> [[ getModelTitle(article.parameters.model) ]]
-                                  </div>
-                                  <div>
-                                    <strong>Prompt:</strong> [[ truncateText(article.parameters.prompt, 15) ]]
-                                  </div>
-                                </div>
-                                <div v-else v-for="(value, name) in article.parameters" :key="name">
-                                    <strong>[[ name ]]:</strong>
-                                    <span v-if="name === 'model'">[[ getModelTitle(value) ]]</span>
-                                    <span v-else>[[ value ]]</span>
+                                <div v-else-if="isAiType(article.type)">
+                                    <div><strong>model:</strong> [[ getModelTitle(article.parameters.model) ]]</div>
+                                    <div v-if="hasKnob(article.parameters.model, 'efforts')"><strong>reasoning effort:</strong> [[ formatKnob(article.parameters.effort) ]]</div>
+                                    <div v-if="hasKnob(article.parameters.model, 'tiers')"><strong>processing tier:</strong> [[ formatKnob(article.parameters.tier) ]]</div>
+                                    <div v-if="article.type === 'AI'"><strong>prompt:</strong> [[ truncateText(article.parameters.prompt || '', 15) ]]</div>
                                 </div>
                     </div>
                     <div>

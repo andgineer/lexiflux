@@ -23,6 +23,7 @@ new Vue({
         let data = {
             articles: [],
             aiModels: JSON.parse('{{ ai_models|escapejs }}'),
+            defaultAiModel: '{{ default_ai_model|escapejs }}',
             availableDictionaries: JSON.parse('{{ translators|escapejs }}'),
             predefinedUrls: [
                 'https://glosbe.com/{langCode}/{toLangCode}/{term}',
@@ -59,10 +60,9 @@ new Vue({
             titlePlaceholder: "Leave empty to autofill",
             aiPromptPlaceholder: `Enter AI chat prompt here. For example:
 
-You will be given a text in {text_language} language.
-ONE word or phrase is marked with [HIGHLIGHT][/HIGHLIGHT]
-Give me synonyms and antonyms of the marked word.
-Add to each translation to {user_language} language.
+The word "{word}" is in {text_language}; it stands in the sentence "{sentence}".
+Give me synonyms and antonyms of the word as it is used in that sentence.
+Add to each its translation to {user_language}.
 `
         };
 
@@ -87,6 +87,9 @@ Add to each translation to {user_language} language.
         this.updateLanguagePreferences();
     },
     computed: {
+        selectedModel() {
+            return this.aiModels.find(m => m.key === this.form.parameters.model) || null;
+        },
         groupedLanguages() {
             return [
                 { label: 'Languages with Preferences', options: this.allLanguages.withPreferences },
@@ -232,6 +235,8 @@ Add to each translation to {user_language} language.
                     this.form.parameters = {
                         dictionary: this.form.parameters.dictionary || ''
                     };
+                } else if (this.isAiType(this.form.type)) {
+                    this.form.parameters = this.withKnobKeys(this.form.parameters);
                 }
                 this.showTitleField = true;
                 this.titleManuallyEdited = true;
@@ -266,6 +271,42 @@ Add to each translation to {user_language} language.
             const model = this.aiModels.find(m => m.key === modelKey);
             return model ? model.title : modelKey;
         },
+        isAiType(type) {
+            return !!type && type !== 'Site' && type !== 'Dictionary';
+        },
+        defaultModelKey() {
+            const model = this.aiModels.find(m => m.key === this.defaultAiModel) || this.aiModels[0];
+            return model ? model.key : '';
+        },
+        knobDefaults(modelKey) {
+            const model = this.aiModels.find(m => m.key === modelKey);
+            const defaults = model ? model.defaults : {};
+            return { effort: defaults.effort || '', tier: defaults.tier || '' };
+        },
+        withKnobKeys(parameters) {
+            return { ...parameters, effort: parameters.effort || '', tier: parameters.tier || '' };
+        },
+        aiParameters(parameters, type) {
+            const known = this.aiModels.some(m => m.key === parameters.model);
+            const result = known
+                ? { model: parameters.model, effort: parameters.effort || '', tier: parameters.tier || '' }
+                : { model: this.defaultModelKey(), ...this.knobDefaults(this.defaultModelKey()) };
+            if (type === 'AI') {
+                result.prompt = parameters.prompt || '';
+            }
+            return result;
+        },
+        onModelChange() {
+            this.form.parameters = { ...this.form.parameters, ...this.knobDefaults(this.form.parameters.model) };
+            this.updateTitle();
+        },
+        hasKnob(modelKey, knobs) {
+            const model = this.aiModels.find(m => m.key === modelKey);
+            return !!model && model[knobs].length > 0;
+        },
+        formatKnob(value) {
+            return value || 'model default';
+        },
         updateParameters() {
             const oldType = this.form.type;
             const oldModel = this.form.parameters ? this.form.parameters.model : null;
@@ -279,11 +320,8 @@ Add to each translation to {user_language} language.
                 if (!('window' in this.form.parameters)) {
                     this.form.parameters.window = true;
                 }
-            } else if (['Translate', 'Sentence', 'Explain', 'Origin', 'Examples', 'Lexical'].includes(this.form.type)) {
-                if (!this.form.parameters || !this.form.parameters.model) {
-                    this.form.parameters = this.form.parameters || {};
-                    this.form.parameters.model = this.aiModels.length > 0 ? this.aiModels[0].key : '';
-                }
+            } else if (this.isAiType(this.form.type)) {
+                this.form.parameters = this.aiParameters(this.form.parameters || {}, this.form.type);
             } else if (this.form.type === 'Dictionary') {
                 this.form.parameters = this.form.parameters || {};
                 if (!this.form.parameters.dictionary && this.availableDictionaries.length > 0) {
@@ -469,7 +507,7 @@ Add to each translation to {user_language} language.
                     dictionary: this.inlineTranslation.parameters.dictionary || ''
                 };
             } else {
-                this.form.parameters = JSON.parse(JSON.stringify(this.inlineTranslation.parameters));
+                this.form.parameters = this.withKnobKeys(JSON.parse(JSON.stringify(this.inlineTranslation.parameters)));
             }
 
             new bootstrap.Modal(this.$refs.articleModal).show();

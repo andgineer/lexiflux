@@ -5,8 +5,8 @@ These settings are for running Lexiflux in a local Docker container:
 - SQLite database (stored in container/volume)
 - Debug mode disabled for production-like behavior
 - Auto-login enabled for convenience
-- Ollama included for local AI model testing
-- UI settings restricted (LEXIFLUX_UI_SETTINGS_ONLY=true)
+- AI keys from the container environment (docker run --env-file)
+- llmbroker state in .llmbroker/ next to the database
 """
 
 import os
@@ -23,6 +23,9 @@ if lexiflux_allowed_hosts := os.environ.get("LEXIFLUX_ALLOWED_HOSTS"):
     ALLOWED_HOSTS = [host.strip() for host in lexiflux_allowed_hosts.split(",") if host.strip()]
 else:
     ALLOWED_HOSTS = ["*"]
+
+LLMBROKER_DATASOURCE = None
+LLMBROKER_HOME = BASE_DIR / ".llmbroker"  # noqa: F405
 
 # Database - SQLite for local Docker (can be mounted as volume)
 DATABASES = {

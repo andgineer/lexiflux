@@ -18,3 +18,5 @@ coverage/
 Lexiflux_Calibre_Plugin.zip
 staticfiles/
 test-koyeb.db
+.llmbroker/
+experiments/.context-bench/broker-home/

@@ -173,11 +173,7 @@
                          id="lexical-article-{{ forloop.counter }}"
                          role="tabpanel"
                          aria-labelledby="lexical-tab-{{ forloop.counter }}">
-                        <div id="lexical-content-{{ forloop.counter }}" class="lexical-content">
-                            <div class="spinner-border text-primary" role="status">
-                                <span class="visually-hidden">Loading...</span>
-                            </div>
-                        </div>
+                        <div id="lexical-content-{{ forloop.counter }}" class="lexical-content{% if article.keeps_line_breaks %} keep-line-breaks{% endif %}"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div></div>
                         <iframe id="lexical-frame-{{ forloop.counter }}" src="" style="width:100%; height:100%; border:none;"></iframe>
                     </div>
                     {% endfor %}

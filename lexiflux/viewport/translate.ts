@@ -1,10 +1,12 @@
 import { log } from './utils';
 import { viewport } from './viewport';
 import { spanManager, TranslationSpan } from './TranslationSpanManager';
+import { ArticleStreamEvent, CUT_OFF_ERROR, escapeHtml, markdownEmphasis, readNdjson } from './articleStream';
 
 
 interface TranslationResponse {
   article?: string;
+  error?: boolean;
   url?: string | null;
   window?: boolean | null;
 }
@@ -18,6 +20,15 @@ let currentSelection: {
 };
 
 let dictionaryWindows: { [key: string]: Window | null } = {};
+
+let panelStreams: { [articleId: string]: AbortController } = {};
+
+// Trimmed: `keep-line-breaks` panels render the surrounding newlines as blank lines.
+const CUT_OFF_NOTICE = `
+  <div class="alert alert-info mt-2" role="alert">
+    <p class="mb-0">The answer was cut off. Please retry.</p>
+  </div>
+`.trim();
 
 function sendTranslationRequest(selectedRange: Range | null = null): void {
   const activePanelId = getActiveLexicalArticleId();
@@ -112,25 +123,93 @@ function createRangeFromWords(firstWordId: number, lastWordId: number): Range {
 
 function handleLexicalArticleUpdate(activePanelId: string, wordIds: number[]): void {
   const lexicalArticle = lexicalArticleNumFromId(activePanelId);
-  if (lexicalArticle) {
-    if (currentSelection.updatedPanels.has(lexicalArticle)) {
+  if (!lexicalArticle || currentSelection.updatedPanels.has(lexicalArticle)) {
+    return;
+  }
+  if (panelStreams[lexicalArticle] && !panelStreams[lexicalArticle].signal.aborted) {
+    return;
+  }
+  showSpinnerInLexicalPanel(lexicalArticle);
+  streamLexicalArticle(lexicalArticle, createRequestParams(wordIds, lexicalArticle));
+}
+
+function abortPanelStream(articleId: string): void {
+  const controller = panelStreams[articleId];
+  if (controller) {
+    controller.abort();
+    delete panelStreams[articleId];
+  }
+}
+
+function abortAllPanelStreams(): void {
+  Object.keys(panelStreams).forEach(abortPanelStream);
+}
+
+async function streamLexicalArticle(articleId: string, params: URLSearchParams): Promise<void> {
+  abortPanelStream(articleId);
+  const controller = new AbortController();
+  panelStreams[articleId] = controller;
+  const contentDiv = document.getElementById(`lexical-content-${articleId}`) as HTMLElement;
+  const iframe = document.getElementById(`lexical-frame-${articleId}`) as HTMLIFrameElement | null;
+  let buffer = '';
+  let failed = false;
+  let sawDone = false;
+  let sawSite = false;
+
+  const onEvent = (event: ArticleStreamEvent): void => {
+    if (controller.signal.aborted || !contentDiv) {
       return;
     }
-    showSpinnerInLexicalPanel(lexicalArticle);
-    const params = createRequestParams(wordIds, lexicalArticle);
-
-    makeRequest(params)
-      .then(result => {
-        if (result) {
-          updateLexicalPanel(result.data, activePanelId);
-        } else {
-          showErrorInLexicalPanel(lexicalArticle);
+    switch (event.event) {
+      case 'delta':
+      case 'replace':
+        buffer = event.event === 'delta' ? buffer + (event.text || '') : (event.text || '');
+        contentDiv.innerHTML = markdownEmphasis(buffer);
+        if (iframe) iframe.style.display = 'none';
+        break;
+      case 'error':
+        failed = true;
+        contentDiv.innerHTML = event.kind === CUT_OFF_ERROR
+          ? markdownEmphasis(buffer) + (event.html || '')
+          : (event.html || '');
+        if (iframe) iframe.style.display = 'none';
+        break;
+      case 'site':
+        sawSite = true;
+        showSiteInLexicalPanel(articleId, event.url || '', !!event.window);
+        break;
+      case 'done':
+        sawDone = true;
+        if (!failed) {
+          currentSelection.updatedPanels.add(articleId);
         }
-      })
-      .catch((error) => {
-        console.error('Error in handleLexicalArticleUpdate:', error);
-        showErrorInLexicalPanel(lexicalArticle);
-      });
+        break;
+    }
+  };
+
+  try {
+    const response = await fetch(`/translate/stream?${params.toString()}`, { signal: controller.signal });
+    if (!response.ok || !response.body) {
+      throw new Error(`Article stream failed with status ${response.status}`);
+    }
+    await readNdjson(response.body.getReader(), onEvent);
+    // The server always ends with `done`; without it the connection dropped mid-answer.
+    if (!sawDone && !failed && !sawSite && !controller.signal.aborted) {
+      if (buffer && contentDiv) {
+        contentDiv.innerHTML = markdownEmphasis(buffer) + CUT_OFF_NOTICE;
+      } else {
+        showErrorInLexicalPanel(articleId);
+      }
+    }
+  } catch (error) {
+    if (!controller.signal.aborted) {
+      console.error('Error in lexical article stream:', error);
+      showErrorInLexicalPanel(articleId);
+    }
+  } finally {
+    if (panelStreams[articleId] === controller) {
+      delete panelStreams[articleId];
+    }
   }
 }
 
@@ -310,7 +389,8 @@ function updateTranslationSpan(data: TranslationResponse, translationSpan: HTMLS
   const originalTextDiv = translationSpan.querySelector('.original-text') as HTMLElement;
 
   if (data.article) {
-    translationTextDiv.textContent = data.article;
+    // Error HTML comes from the server's autoescaped template; article text is model output.
+    translationTextDiv.innerHTML = data.error ? data.article : markdownEmphasis(escapeHtml(data.article));
 
     // Adjust width and wrapping
     adjustTranslationWidth(translationSpan, translationTextDiv, originalTextDiv);
@@ -390,7 +470,7 @@ function showErrorInLexicalPanel(articleId: string): void {
       <div class="alert alert-danger" role="alert">
         Failed to load lexical article. Please try again.
       </div>
-    `;
+    `.trim();
   }
 }
 
@@ -426,59 +506,24 @@ function getNextNode(node: Node): Node | null {
   return null;
 }
 
-function updateLexicalPanel(data: TranslationResponse, activePanelId: string): void {
-  // activePanelId - num of the lexical article
-  let articleId = lexicalArticleNumFromId(activePanelId);
-
-
-  if (currentSelection.updatedPanels.has(articleId)) {
-    return;
-  }
-
+function showSiteInLexicalPanel(articleId: string, url: string, inWindow: boolean): void {
   const contentDiv = document.getElementById(`lexical-content-${articleId}`) as HTMLElement;
   const iframe = document.getElementById(`lexical-frame-${articleId}`) as HTMLIFrameElement;
   const windowKey = `Lexical-${articleId}`;
+  const windowFeatures = 'location=no,menubar=no,toolbar=no,scrollbars=yes,width=800,height=600';  // todo: width from window
 
-  // Show spinner
-  contentDiv.innerHTML = `
-    <div class="spinner-border text-primary" role="status">
-      <span class="visually-hidden">Loading...</span>
-    </div>
-  `;
-
-  if (data.url) {
-    // Handle Site type article
-    const url = data.url;
-    const windowFeatures = 'location=no,menubar=no,toolbar=no,scrollbars=yes,width=800,height=600';  // todo: width from window
-
-    if (data.window) {
-      // Hide spinner and show button
-      contentDiv.innerHTML = `
-        <button id="openWindowButton-${articleId}" class="btn btn-primary btn-sm">Open in separate window</button>
-      `;
-      const openWindowButton = document.getElementById(`openWindowButton-${articleId}`);
-      openWindowButton?.removeEventListener('click', () => handleOpenLexicalWindow(url, windowKey, windowFeatures));
-      openWindowButton?.addEventListener('click', () => handleOpenLexicalWindow(url, windowKey, windowFeatures));
-      openWindowButton?.click();
-    } else {
-      // Load URL in iframe
-      contentDiv.innerHTML = ''; // Hide spinner
-      iframe.src = url;
-      iframe.style.display = 'block';
-    }
-  } else if (data.article) {
-    contentDiv.innerHTML = data.article;
-    iframe.style.display = 'none';
-  } else {
-    // Handle error case
+  if (inWindow) {
     contentDiv.innerHTML = `
-      <div class="alert alert-danger" role="alert">
-        Failed to load lexical article. Please try again.
-      </div>
+      <button id="openWindowButton-${articleId}" class="btn btn-primary btn-sm">Open in separate window</button>
     `;
+    const openWindowButton = document.getElementById(`openWindowButton-${articleId}`);
+    openWindowButton?.addEventListener('click', () => handleOpenLexicalWindow(url, windowKey, windowFeatures));
+    openWindowButton?.click();
+  } else {
+    contentDiv.innerHTML = '';
+    iframe.src = url;
+    iframe.style.display = 'block';
   }
-
-  currentSelection.updatedPanels.add(articleId);
 }
 
 function openDictionaryWindow(url: string, windowKey: string, windowFeatures: string): Window | null {
@@ -514,7 +559,7 @@ function showSpinnerInLexicalPanel(articleId: string): void {
   const contentDiv = document.getElementById(`lexical-content-${articleId}`) as HTMLElement;
   if (contentDiv) {
     contentDiv.innerHTML = `
-      <div class="d-flex flex-column align-items-center">
+      <div class="lexical-status d-flex flex-column align-items-center">
         <div class="spinner-border text-primary mb-3" role="status">
           <span class="visually-hidden">Loading...</span>
         </div>
@@ -522,7 +567,7 @@ function showSpinnerInLexicalPanel(articleId: string): void {
           <small>Generating AI response. This may take a moment...</small>
         </p>
       </div>
-    `;
+    `.trim();
   }
 }
 
@@ -537,6 +582,7 @@ function lexicalPanelSwitched(tabId: string): void {
 }
 
 function clearLexicalPanel(): void {
+  abortAllPanelStreams();
   currentSelection.wordIds = null;
   currentSelection.updatedPanels.clear();
 

@@ -1,5 +1,6 @@
 import allure
 import pytest
+from django.contrib.auth import get_user_model
 from django.urls import reverse
 from unittest.mock import patch, MagicMock
 
@@ -126,7 +127,7 @@ def test_translate_view_retired_model_error(client, user, book):
     # Set to an AI model type that would use LLM
     language_preferences.inline_translation_type = "Translate"
     language_preferences.inline_translation_parameters = {
-        "model": "claude-sonnet-4-0"  # This model doesn't exist in chat_models.yaml
+        "model": "claude-sonnet-4-0"  # not an offered model
     }
     language_preferences.save()
 
@@ -146,3 +147,503 @@ def test_translate_view_retired_model_error(client, user, book):
     assert "AI Model No Longer Available" in data["article"]
     assert "claude-sonnet-4-0" in data["article"]
     assert "/language-preferences/" in data["article"]
+
+
+@allure.epic("Pages endpoints")
+@allure.feature("Reader")
+@pytest.mark.django_db
+def test_translate_keeps_the_whole_error_alert_despite_its_hr(client, user, book):
+    client.force_login(user)
+    language_preferences = LanguagePreferences.get_or_create_language_preferences(
+        user=user, language=book.language
+    )
+    language_preferences.inline_translation_type = "Translate"
+    language_preferences.inline_translation_parameters = {"model": "claude-sonnet-4-0"}
+    language_preferences.save()
+
+    response = client.get(
+        reverse("translate"),
+        {
+            "lexical-article": "0",
+            "book-code": book.code,
+            "book-page-number": "1",
+            "word-ids": "1.2",
+        },
+    )
+
+    article = response.json()["article"]
+    assert "<hr>" in article
+    assert "Update Language Preferences" in article
+    assert article.count("<div") == article.count("</div>")
+
+
+@allure.epic("Pages endpoints")
+@allure.feature("Reader")
+@pytest.mark.django_db
+@patch("lexiflux.views.lexical_views.generate_article", return_value="AI answer<hr>more")
+def test_translate_inline_ai_goes_through_generate_article(mock_generate, client, user, book):
+    client.force_login(user)
+    language_preferences = LanguagePreferences.get_or_create_language_preferences(
+        user=user, language=book.language
+    )
+    language_preferences.inline_translation_type = "Translate"
+    language_preferences.inline_translation_parameters = {"model": "gpt", "effort": "low"}
+    language_preferences.save()
+
+    response = client.get(
+        reverse("translate"),
+        {
+            "lexical-article": "0",
+            "book-code": book.code,
+            "book-page-number": "1",
+            "word-ids": "2",
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.json() == {"article": "AI answer"}
+    req = mock_generate.call_args.args[0]
+    assert req.article_type == "Translate"
+    assert (req.model, req.effort, req.tier) == ("gpt", "low", None)
+    assert req.word == "page"
+    assert req.sentence == "Content of page 1"
+    assert req.text_language == book.language.name
+    assert req.user_language == language_preferences.user_language.name
+    assert req.user == user
+
+
+@allure.epic("Pages endpoints")
+@allure.feature("Reader")
+@pytest.mark.django_db
+def test_translate_serves_only_the_inline_article(client, user, book):
+    client.force_login(user)
+
+    response = client.get(
+        reverse("translate"),
+        {
+            "lexical-article": "1",
+            "book-code": book.code,
+            "book-page-number": "1",
+            "word-ids": "2",
+        },
+    )
+
+    assert response.status_code == 400
+
+
+def _reader(reader, book, user):
+    if reader == "owner":
+        return user
+    book.public = reader == "other-public"
+    book.save()
+    return get_user_model().objects.create_user(
+        username="reader", email="reader@example.com", password=USER_PASSWORD, is_approved=True
+    )
+
+
+READERS = [("owner", 200), ("other-private", 403), ("other-public", 200)]
+
+
+@allure.epic("Pages endpoints")
+@allure.feature("Reader")
+@pytest.mark.django_db
+@pytest.mark.parametrize("reader, status", READERS)
+@patch("lexiflux.views.lexical_views.get_translator")
+def test_translate_checks_the_book_can_be_read(
+    mock_get_translator, reader, status, client, user, book
+):
+    mock_get_translator.return_value.translate.side_effect = lambda text: f"ECHO:{text}"
+    client.force_login(_reader(reader, book, user))
+
+    response = client.get(
+        reverse("translate"),
+        {
+            "lexical-article": "0",
+            "book-code": book.code,
+            "book-page-number": "1",
+            "word-ids": "0.1.2.3",
+        },
+    )
+
+    assert response.status_code == status
+    if status == 403:
+        assert "ECHO" not in response.content.decode()
+        mock_get_translator.return_value.translate.assert_not_called()
+    else:
+        assert response.json() == {"article": "ECHO:Content of page 1"}
+
+
+@allure.epic("Pages endpoints")
+@allure.feature("Reader")
+@pytest.mark.django_db
+@pytest.mark.parametrize("reader, status", READERS)
+@patch("lexiflux.views.lexical_views.get_translator")
+def test_translate_stream_checks_the_book_can_be_read(
+    mock_get_translator, reader, status, client, user, book
+):
+    from lexiflux.models import LexicalArticle
+
+    mock_get_translator.return_value.translate.side_effect = lambda text: f"ECHO:{text}"
+    reading_user = _reader(reader, book, user)
+    client.force_login(reading_user)
+    language_preferences = LanguagePreferences.get_or_create_language_preferences(
+        user=reading_user, language=book.language
+    )
+    LexicalArticle.objects.create(
+        language_preferences=language_preferences,
+        type="Dictionary",
+        title="Google",
+        parameters={"dictionary": "GoogleTranslator"},
+        order=10,
+    )
+    article_number = language_preferences.get_lexical_articles().count()
+
+    response = client.get(
+        reverse("translate_stream"), _stream_params(book, article_number, word_ids="0.1.2.3")
+    )
+
+    assert response.status_code == status
+    if status == 403:
+        assert not response.streaming
+        mock_get_translator.return_value.translate.assert_not_called()
+    else:
+        assert _stream_events(response) == [
+            {"event": "delta", "text": "ECHO:Content of page 1"},
+            {"event": "done"},
+        ]
+
+
+def _stream_params(book, lexical_article, word_ids="2"):
+    return {
+        "lexical-article": str(lexical_article),
+        "book-code": book.code,
+        "book-page-number": "1",
+        "word-ids": word_ids,
+    }
+
+
+def _stream_events(response):
+    import json
+
+    body = b"".join(response.streaming_content).decode("utf-8")
+    assert body.endswith("\n")
+    return [json.loads(line) for line in body.splitlines()]
+
+
+@allure.epic("Pages endpoints")
+@allure.feature("Reader")
+@pytest.mark.django_db
+def test_translate_stream_ai_article_events(client, user, book):
+    from lexiflux.language.llm import ArticleError, ArticleEvent
+
+    client.force_login(user)
+    language_preferences = LanguagePreferences.get_or_create_language_preferences(
+        user=user, language=book.language
+    )
+    requests = []
+
+    def fake_stream(req):
+        requests.append(req)
+        yield ArticleEvent.delta("Hel")
+        yield ArticleEvent.delta("lo")
+        yield ArticleEvent.replace("Whole answer")
+        yield ArticleEvent.error(ArticleError("cut_off", "<div>cut off</div>"))
+
+    with patch("lexiflux.views.lexical_views.stream_article", side_effect=fake_stream):
+        response = client.get(reverse("translate_stream"), _stream_params(book, 2))
+        events = _stream_events(response)
+
+    assert response.status_code == 200
+    assert response.streaming
+    assert response["Content-Type"] == "application/x-ndjson"
+    assert response["Cache-Control"] == "no-cache"
+    assert response["X-Accel-Buffering"] == "no"
+    assert events == [
+        {"event": "delta", "text": "Hel"},
+        {"event": "delta", "text": "lo"},
+        {"event": "replace", "text": "Whole answer"},
+        {"event": "error", "kind": "cut_off", "html": "<div>cut off</div>"},
+        {"event": "done"},
+    ]
+    (req,) = requests
+    assert req.article_type == "In depth"
+    assert (req.model, req.effort, req.tier) == ("gpt", "none", "priority")
+    assert req.word == "page"
+    assert req.sentence == "Content of page 1"
+    assert req.text_language == book.language.name
+    assert req.user_language == language_preferences.user_language.name
+    assert req.user == user
+
+
+@allure.epic("Pages endpoints")
+@allure.feature("Reader")
+@pytest.mark.django_db
+def test_translate_stream_ai_article_over_fake_broker(client, user, book):
+    client.force_login(user)
+    LanguagePreferences.get_or_create_language_preferences(user=user, language=book.language)
+    stream = MagicMock()
+    stream.__enter__.return_value = iter(["An ", "article"])
+    llms = MagicMock()
+    llms.stream.return_value = stream
+
+    with patch("lexiflux.language.llm.llms_for", return_value=llms):
+        response = client.get(reverse("translate_stream"), _stream_params(book, 1))
+        events = _stream_events(response)
+
+    assert events == [
+        {"event": "delta", "text": "An "},
+        {"event": "delta", "text": "article"},
+        {"event": "done"},
+    ]
+    assert llms.stream.call_args.kwargs["operation"] == "AI dictionary"
+
+
+@allure.epic("Pages endpoints")
+@allure.feature("Reader")
+@pytest.mark.django_db
+def test_translate_stream_site_article_events(client, user, book):
+    client.force_login(user)
+    language_preferences = LanguagePreferences.get_or_create_language_preferences(
+        user=user, language=book.language
+    )
+
+    response = client.get(reverse("translate_stream"), _stream_params(book, 4))
+
+    assert response.status_code == 200
+    assert _stream_events(response) == [
+        {
+            "event": "site",
+            "url": f"https://glosbe.com/{book.language.google_code}/"
+            f"{language_preferences.user_language.google_code}/page",
+            "window": True,
+        },
+        {"event": "done"},
+    ]
+
+
+@allure.epic("Pages endpoints")
+@allure.feature("Reader")
+@pytest.mark.django_db
+@patch("lexiflux.views.lexical_views.get_translator")
+def test_translate_stream_dictionary_article_events(mock_get_translator, client, user, book):
+    from lexiflux.models import LexicalArticle
+
+    client.force_login(user)
+    language_preferences = LanguagePreferences.get_or_create_language_preferences(
+        user=user, language=book.language
+    )
+    LexicalArticle.objects.create(
+        language_preferences=language_preferences,
+        type="Dictionary",
+        title="Google",
+        parameters={"dictionary": "GoogleTranslator"},
+        order=10,
+    )
+    mock_get_translator.return_value.translate.return_value = "stranica"
+
+    response = client.get(reverse("translate_stream"), _stream_params(book, 5))
+
+    assert _stream_events(response) == [
+        {"event": "delta", "text": "stranica"},
+        {"event": "done"},
+    ]
+    mock_get_translator.return_value.translate.assert_called_once_with("page")
+
+
+@allure.epic("Pages endpoints")
+@allure.feature("Reader")
+@pytest.mark.django_db
+@patch("lexiflux.views.lexical_views.get_translator")
+def test_translate_stream_dictionary_failure_is_an_error_event(
+    mock_get_translator, client, user, book
+):
+    from lexiflux.models import LexicalArticle
+
+    client.force_login(user)
+    language_preferences = LanguagePreferences.get_or_create_language_preferences(
+        user=user, language=book.language
+    )
+    LexicalArticle.objects.create(
+        language_preferences=language_preferences,
+        type="Dictionary",
+        title="Google",
+        parameters={"dictionary": "GoogleTranslator"},
+        order=10,
+    )
+    mock_get_translator.return_value.translate.side_effect = RuntimeError("down <now>")
+
+    events = _stream_events(client.get(reverse("translate_stream"), _stream_params(book, 5)))
+
+    assert [e["event"] for e in events] == ["error", "done"]
+    assert events[0]["kind"] == "generic"
+    assert "RuntimeError" in events[0]["html"]
+    assert "down" not in events[0]["html"]
+
+
+@allure.epic("Pages endpoints")
+@allure.feature("Reader")
+@pytest.mark.django_db
+def test_translate_stream_is_not_gzipped(client, user, book):
+    from lexiflux.language.llm import ArticleEvent
+
+    client.force_login(user)
+    LanguagePreferences.get_or_create_language_preferences(user=user, language=book.language)
+
+    def long_stream(req):
+        for _ in range(20):
+            yield ArticleEvent.delta("a long enough answer to be worth compressing " * 5)
+
+    with patch("lexiflux.views.lexical_views.stream_article", side_effect=long_stream):
+        response = client.get(
+            reverse("translate_stream"),
+            _stream_params(book, 1),
+            HTTP_ACCEPT_ENCODING="gzip, deflate",
+        )
+        events = _stream_events(response)
+
+    assert not response.has_header("Content-Encoding")
+    assert len(events) == 21
+    assert events[-1] == {"event": "done"}
+
+
+@allure.epic("Pages endpoints")
+@allure.feature("Reader")
+@pytest.mark.django_db
+def test_other_responses_are_still_gzipped(client, user, book):
+    client.force_login(user)
+
+    response = client.get(reverse("language-preferences"), HTTP_ACCEPT_ENCODING="gzip")
+
+    assert response["Content-Encoding"] == "gzip"
+
+
+@allure.epic("Pages endpoints")
+@allure.feature("Reader")
+@pytest.mark.django_db
+def test_translate_stream_closing_the_response_closes_the_article_stream(client, user, book):
+    from lexiflux.language.llm import ArticleEvent
+
+    client.force_login(user)
+    LanguagePreferences.get_or_create_language_preferences(user=user, language=book.language)
+    closed = []
+
+    def endless_stream(req):
+        try:
+            while True:
+                yield ArticleEvent.delta("x")
+        finally:
+            closed.append(True)
+
+    with patch("lexiflux.views.lexical_views.stream_article", side_effect=endless_stream):
+        response = client.get(reverse("translate_stream"), _stream_params(book, 1))
+        next(iter(response.streaming_content))
+        response.close()
+
+    assert closed == [True]
+
+
+@allure.epic("Pages endpoints")
+@allure.feature("Reader")
+@pytest.mark.django_db
+def test_translate_stream_unknown_article(client, user, book):
+    client.force_login(user)
+    LanguagePreferences.get_or_create_language_preferences(user=user, language=book.language)
+
+    response = client.get(reverse("translate_stream"), _stream_params(book, 99))
+
+    assert response.status_code == 404
+    assert response.json() == {"error": "Lexical article not found"}
+
+
+@allure.epic("Pages endpoints")
+@allure.feature("Reader")
+@pytest.mark.django_db
+def test_translate_stream_requires_login(client, book):
+    response = client.get(reverse("translate_stream"), _stream_params(book, 1))
+
+    assert response.status_code == 302
+    assert "login/?next=" in response.url
+
+
+def _inline_ai(client, user, book):
+    client.force_login(user)
+    language_preferences = LanguagePreferences.get_or_create_language_preferences(
+        user=user, language=book.language
+    )
+    language_preferences.inline_translation_type = "Translate"
+    language_preferences.inline_translation_parameters = {"model": "gpt", "effort": "low"}
+    language_preferences.save()
+
+
+def _get_inline(client, book):
+    return client.get(
+        reverse("translate"),
+        {
+            "lexical-article": "0",
+            "book-code": book.code,
+            "book-page-number": "1",
+            "word-ids": "2",
+        },
+    )
+
+
+def _no_keys_error():
+    from lexiflux.language.llm import ArticleError
+
+    return ArticleError("no_keys", "<div>Set GROQ_API_KEY</div>")
+
+
+@allure.epic("Pages endpoints")
+@allure.feature("Reader")
+@pytest.mark.django_db
+def test_translate_ai_error_saves_no_history(client, user, book):
+    from lexiflux.models import TranslationHistory
+
+    _inline_ai(client, user, book)
+
+    with patch("lexiflux.views.lexical_views.generate_article", side_effect=_no_keys_error()):
+        response = _get_inline(client, book)
+
+    assert response.json() == {"article": "<div>Set GROQ_API_KEY</div>", "error": True}
+    assert not TranslationHistory.objects.filter(user=user).exists()
+
+
+@allure.epic("Pages endpoints")
+@allure.feature("Reader")
+@pytest.mark.django_db
+def test_translate_ai_error_keeps_the_earlier_translation(client, user, book):
+    from lexiflux.models import TranslationHistory
+
+    _inline_ai(client, user, book)
+    with patch("lexiflux.views.lexical_views.generate_article", return_value="страница"):
+        _get_inline(client, book)
+    before = TranslationHistory.objects.get(user=user, term="page")
+
+    with patch("lexiflux.views.lexical_views.generate_article", side_effect=_no_keys_error()):
+        response = _get_inline(client, book)
+
+    assert response.json()["error"] is True
+    after = TranslationHistory.objects.get(user=user, term="page")
+    assert after.translation == "страница"
+    assert after.lookup_count == 1
+    assert after.last_lookup == before.last_lookup
+
+
+@allure.epic("Pages endpoints")
+@allure.feature("Reader")
+@pytest.mark.django_db
+def test_translate_success_creates_then_updates_history(client, user, book):
+    from lexiflux.models import TranslationHistory
+
+    _inline_ai(client, user, book)
+    with patch("lexiflux.views.lexical_views.generate_article", return_value="страница<hr>more"):
+        _get_inline(client, book)
+    first = TranslationHistory.objects.get(user=user, term="page")
+    assert (first.translation, first.lookup_count) == ("страница", 1)
+
+    with patch("lexiflux.views.lexical_views.generate_article", return_value="лист"):
+        _get_inline(client, book)
+
+    second = TranslationHistory.objects.get(user=user, term="page")
+    assert (second.translation, second.lookup_count) == ("лист", 2)
+    assert second.book == book

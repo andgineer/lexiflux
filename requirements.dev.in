@@ -12,6 +12,7 @@ pytz
 django-debug-toolbar
 pytest-xdist
 requests_mock
+pytest-playwright
 
 # build & reqs management
 

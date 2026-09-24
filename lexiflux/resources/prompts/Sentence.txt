@@ -1,7 +1,9 @@
-Below given a text in {detected_language} language.
+Below given a text in {text_language} language.
 Give translation to {user_language} language.
 
 Critical instructions:
 - place into result only the translation
 - do not add to the translation any comments except the translation itself
 - translation should be to {user_language} language
+
+The text is: {sentence}

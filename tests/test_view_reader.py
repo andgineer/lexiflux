@@ -30,6 +30,19 @@ def test_reader_view_renders_for_authenticated_user(client, user, book):
 @allure.epic("Pages endpoints")
 @allure.feature("Reader")
 @pytest.mark.django_db
+def test_reader_view_keeps_line_breaks_only_in_plain_text_article_panels(client, user, book):
+    client.force_login(user)
+    response = client.get(reverse("reader") + f"?book-code={book.code}")
+
+    soup = BeautifulSoup(response.content.decode(), "html.parser")
+    panels = soup.select(".lexical-content")
+    # Defaults: Article (AI dictionary), In depth, Sentence, glosbe (Site).
+    assert ["keep-line-breaks" in panel["class"] for panel in panels] == [True, True, True, False]
+
+
+@allure.epic("Pages endpoints")
+@allure.feature("Reader")
+@pytest.mark.django_db
 def test_reader_view_redirects_to_latest_book_when_book_code_is_none(client, user, book):
     client.force_login(user)
 

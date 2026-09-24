@@ -1,10 +1,17 @@
 # Override ALLOWED_HOSTS to allow all hosts during testing
 import os
+import tempfile
+from pathlib import Path
 
 os.environ.setdefault("LEXIFLUX_ENV", "local")
 from lexiflux.environments import *
 
 ALLOWED_HOSTS = ["*"]
+
+# Never the repo's .llmbroker nor the machine-wide llmbroker cache.
+LLMBROKER_HOME = Path(tempfile.mkdtemp(prefix="lexiflux-llmbroker-"))
+# Also for llmbroker calls made without home=, which fall back to $LLMBROKER_HOME.
+os.environ["LLMBROKER_HOME"] = str(LLMBROKER_HOME)
 
 LOGGING = {
     "version": 1,

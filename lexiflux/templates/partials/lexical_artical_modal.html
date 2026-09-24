@@ -45,15 +45,31 @@
                             <label class="form-check-label" for="openInNewWindow">Open in new window</label>
                         </div>
                     </div>
-                    <div v-if="['Translate', 'Sentence', 'Explain', 'Origin', 'Examples', 'Lexical', 'AI dictionary'].includes(form.type)">
+                    <div v-if="isAiType(form.type)">
                         <div class="mb-3">
-                            <label class="form-label">AI Model</label>
-                            <select v-model="form.parameters.model" @change="updateParameters" class="form-select">
-                                <option value="">Select model</option>
+                            <label for="model-select" class="form-label">AI Model</label>
+                            <select id="model-select" v-model="form.parameters.model" @change="onModelChange" class="form-select">
                                 <option v-for="model in aiModels" :key="model.key" :value="model.key">
                                     [[ model.title ]]
                                 </option>
                             </select>
+                        </div>
+                        <div class="mb-3" v-if="selectedModel && selectedModel.efforts.length">
+                            <label for="effort-select" class="form-label">Reasoning effort</label>
+                            <select id="effort-select" v-model="form.parameters.effort" class="form-select">
+                                <option value="">Model default</option>
+                                <option v-for="effort in selectedModel.efforts" :key="effort" :value="effort">[[ effort ]]</option>
+                            </select>
+                        </div>
+                        <div class="mb-3" v-if="selectedModel && selectedModel.tiers.length">
+                            <label for="tier-select" class="form-label">Processing tier</label>
+                            <select id="tier-select" v-model="form.parameters.tier" class="form-select">
+                                <option value="">Model default</option>
+                                <option v-for="tier in selectedModel.tiers" :key="tier" :value="tier">[[ tier ]]</option>
+                            </select>
+                            <small id="priority-note" class="form-text text-muted" v-if="form.parameters.tier === 'priority'">
+                                About 2× the price, about 3× faster (measured on Sol).
+                            </small>
                         </div>
                     </div>
                    <div v-if="form.type === 'Dictionary'">
@@ -66,19 +82,10 @@
                     </div>
                    <div v-if="form.type === 'AI'">
                      <div class="mb-3">
-                        <label class="form-label">AI Model</label>
-                        <select id="model-select" v-model="form.parameters.model" @change="updateParameters" class="form-select">
-                            <option value="">Select model</option>
-                            <option v-for="model in aiModels" :key="model.key" :value="model.key">
-                                [[ model.title ]]
-                            </option>
-                        </select>
-                     </div>
-                     <div class="mb-3">
                        Prompt
                        <textarea v-model="form.parameters.prompt" class="form-control" rows="6" :placeholder="aiPromptPlaceholder"></textarea>
                        <small class="form-text text-muted">
-                          Available fields: {text_language}, {detected_language}, {user_language}, [HIGHLIGHT], [/HIGHLIGHT], [FRAGMENT], [/FRAGMENT]
+                          Available fields: {word}, {sentence}, {text_language}, {user_language}
                        </small>
                      </div>
                    </div>

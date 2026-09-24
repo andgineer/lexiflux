@@ -17,7 +17,6 @@ from django.core.exceptions import ObjectDoesNotExist
 logger = logging.getLogger()
 
 SKIP_AUTH_ENV = "LEXIFLUX_SKIP_AUTH"
-UI_SETTINGS_ONLY_ENV = "LEXIFLUX_UI_SETTINGS_ONLY"
 ENV_NAME_ENV = "LEXIFLUX_ENV_NAME"
 
 AUTOLOGIN_USER_NAME = "lexiflux"
@@ -52,9 +51,6 @@ class EnvironmentVars:
 
     env_name: str
     skip_auth: bool
-    ui_settings_only: (  # user cannot edit environment vars
-        bool
-    )
 
     default_user_name: str
     default_user_password: str
@@ -83,7 +79,6 @@ class EnvironmentVars:
         return cls(
             env_name=os.environ.get(ENV_NAME_ENV, "local"),
             skip_auth=skip_auth,
-            ui_settings_only=os.environ.get(UI_SETTINGS_ONLY_ENV, "").lower() == "true",
             default_user_name=AUTOLOGIN_USER_NAME,
             default_user_password=AUTOLOGIN_USER_PASSWORD,
             default_user_email=AUTOLOGIN_USER_EMAIL,

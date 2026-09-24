@@ -23,6 +23,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ### Testing and Quality
 - `source ./activate.sh && invoke test` - Run Python tests with pytest and generate Allure report
 - `source ./activate.sh && invoke selenium` - Run Selenium end-to-end tests
+- `source ./activate.sh && python -m pytest -m playwright tests` - Run Playwright tests of the reader's AI panels (headless; add `--headed` to watch). Needs `invoke buildjs` and `playwright install chromium`
+- `source ./activate.sh && LEXIFLUX_REAL_LLM=1 python -m pytest -m real_llm tests` - Opt-in smoke of a real free-pool Article in the browser (free pool only, pool keys in `.env`)
 - `source ./activate.sh && invoke pre` - Run pre-commit hooks (formatting, linting)
 - `npm test` - Run JavaScript/TypeScript tests with Jest
 - `npm run build` - Build frontend bundle
@@ -52,12 +54,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Views**: Organized by feature in `lexiflux/views/` (reader, library, auth, language preferences, etc.)
 - **Language Processing**: `lexiflux/language/` - Text processing, translation, and NLP features
 - **Book Import**: `lexiflux/ebook/` - Support for EPUB, HTML, plain text, and URL imports
-- **AI Integration**: LangChain-based chat models (OpenAI, Anthropic, Google, Mistral, Ollama)
+- **AI Integration**: llmbroker (`lexiflux/language/broker.py`): the free-tier pool plus direct paid models (`gpt`, `gpt-fast`, `opus`); sidebar articles stream as NDJSON from `/translate/stream`. Rules in `specs/ai-articles.md`
 
 ### Frontend Architecture
 - **TypeScript**: Main entry point is `lexiflux/viewport/main.ts`
 - **Webpack**: Bundles TypeScript to `lexiflux/static/lexiflux/bundle.js`
-- **Vue.js**: Used for interactive components (language preferences, AI settings, etc.)
+- **Vue.js**: Used for interactive components (language preferences, words export, etc.)
 - **Bootstrap**: UI framework with HTMX for dynamic interactions
 - **Core Modules**:
   - `viewport.ts` - Text rendering and reading position management
@@ -83,7 +85,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ### Testing Strategy
 - **Python Tests**: pytest with Django integration, coverage reporting
 - **JavaScript Tests**: Jest with DOM testing utilities
-- **E2E Tests**: Selenium with page object pattern
+- **E2E Tests**: Selenium with page object pattern; Playwright (`tests/e2e_playwright/`) for the streaming AI panels, with `stream_article` replaced by a scripted fake
 - **Test Data**: Sample books and fixtures in `tests/resources/`
 - **CI/CD**: GitHub Actions with Allure reporting
 
@@ -101,7 +103,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
   - `local` - Local development with SQLite and auto-login
   - `docker` - Local Docker with SQLite and simplified static serving
   - `koyeb` - Production deployment with PostgreSQL
-- AI model configurations in `lexiflux/resources/chat_models.yaml`
+- Offered AI models and their knobs in `lexiflux/language/ai_models.py`; API keys only from the environment or `.env` (read by llmbroker), never stored in lexiflux
 - Translation prompts in `lexiflux/resources/prompts/`
 - Docker support with compose file for services (docker-compose.yaml for Selenium tests only)
 - Separate docker-compose.postgres.yaml for PostgreSQL debugging (not for regular tests)

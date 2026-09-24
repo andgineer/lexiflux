@@ -7,6 +7,9 @@ import allure
 from tests.conftest import USER_PASSWORD
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.common.by import By
+
+from lexiflux.language.llm import ArticleEvent
 
 from tests.page_models.reader_page import ReaderPage
 
@@ -37,7 +40,7 @@ def mock_translate(text):
     return "Mocked translation of: " + text
 
 
-def mock_generate_article(**kwargs):
+def mock_generate_article(*args, **kwargs):
     return "Mocked article content"
 
 
@@ -48,18 +51,15 @@ def mock_generate_article(**kwargs):
 @pytest.mark.selenium
 @pytest.mark.django_db
 @patch("lexiflux.views.lexical_views.get_translator")
-@patch("lexiflux.views.lexical_views.Llm")
+@patch("lexiflux.views.lexical_views.generate_article")
 def test_e2e_reader_page_click_to_translate(
-    mock_llm, mock_get_translator, browser, approved_user, book
+    mock_generate, mock_get_translator, browser, approved_user, book
 ):
     mock_translator = MagicMock()
     mock_translator.translate.side_effect = mock_translate
     mock_get_translator.return_value = mock_translator
 
-    mock_llm_instance = MagicMock()
-    mock_llm_instance.generate_article.side_effect = mock_generate_article
-    mock_llm_instance.mark_term_and_sentence.return_value = "Mocked marked text"
-    mock_llm.return_value = mock_llm_instance
+    mock_generate.side_effect = mock_generate_article
 
     with allure.step("Login and navigate to reader"):
         browser.login(approved_user, USER_PASSWORD)
@@ -99,3 +99,77 @@ def test_e2e_reader_page_click_to_translate(
             raise e
 
     browser.take_screenshot("Final")
+
+
+def fake_stream_article(requests):
+    def stream(req):
+        requests.append(req)
+        yield ArticleEvent.delta(f"**{req.article_type}** on ")
+        yield ArticleEvent.delta(f"{req.model}: {req.word}")
+
+    return stream
+
+
+@allure.epic("End-to-end (selenium)")
+@allure.feature("Reader page")
+@allure.story("Default sidebar articles stream into their panels")
+@pytest.mark.docker
+@pytest.mark.selenium
+@pytest.mark.django_db
+@patch("lexiflux.views.lexical_views.get_translator")
+def test_e2e_reader_page_default_sidebar_articles(
+    mock_get_translator, browser, approved_user, book
+):
+    mock_translator = MagicMock()
+    mock_translator.translate.side_effect = mock_translate
+    mock_get_translator.return_value = mock_translator
+    requests = []
+
+    with patch(
+        "lexiflux.views.lexical_views.stream_article", side_effect=fake_stream_article(requests)
+    ):
+        browser.login(approved_user, USER_PASSWORD)
+        browser.goto(reverse("reader") + f"?book-code={book.code}")
+        reader_page = ReaderPage(browser)
+        reader_page.wait_for_page_load()
+
+        with allure.step("The sidebar has the default tabs"):
+            assert reader_page.sidebar_tab_titles() == ["Article", "In depth", "Sentence", "glosbe"]
+
+        with allure.step("Article streams from the free pool"):
+            reader_page.click_word("page")
+            reader_page.open_sidebar()
+            article = reader_page.wait_for_article(1, "pool: page")
+            assert article.find_element(By.TAG_NAME, "b").text == "AI dictionary"
+
+        with allure.step("In depth streams from Sol with its default knobs"):
+            reader_page.switch_sidebar_tab(2)
+            reader_page.wait_for_article(2, "gpt: page")
+
+        browser.take_screenshot("Sidebar articles")
+
+    by_type = {req.article_type: req for req in requests}
+    assert (by_type["AI dictionary"].model, by_type["AI dictionary"].effort) == ("pool", None)
+    assert (by_type["In depth"].model, by_type["In depth"].effort, by_type["In depth"].tier) == (
+        "gpt",
+        "none",
+        "priority",
+    )
+
+
+@allure.epic("End-to-end (selenium)")
+@allure.feature("Reader page")
+@allure.story("The menu has no AI Settings item")
+@pytest.mark.docker
+@pytest.mark.selenium
+@pytest.mark.django_db
+def test_e2e_reader_page_menu_has_no_ai_settings(browser, approved_user, book):
+    browser.login(approved_user, USER_PASSWORD)
+    browser.goto(reverse("reader") + f"?book-code={book.code}")
+    reader_page = ReaderPage(browser)
+    reader_page.wait_for_page_load()
+
+    titles = reader_page.menu_item_titles()
+
+    assert "Dictionary & AI Insights Settings" in titles
+    assert not [title for title in titles if "AI Connections" in title or "AI Settings" in title]

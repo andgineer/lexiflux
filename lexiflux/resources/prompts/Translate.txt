@@ -1,15 +1,15 @@
-Below given a text in {detected_language} language.
-Translate to {user_language} language only the word(s) enclosed in [HIGHLIGHT][/HIGHLIGHT] tags - like
-[HIGHLIGHT]the word[/HIGHLIGHT].
+Below given a word or phrase in {text_language} language and the sentence it stands in.
+Translate to {user_language} language only the word or phrase.
 
-Give translation of the term in the exact text fragment marked
-with [FRAGMENT][/FRAGMENT], like this:
-[FRAGMENT]This is the marked text fragment containing [HIGHLIGHT]the word[/HIGHLIGHT].[/FRAGMENT]
+Give translation of the word or phrase in the exact sense it has in that sentence.
 
-If the term is not {text_language} word(s), prefix the result with the term language name in
+If the word or phrase is not {text_language}, prefix the result with its language name in
 parentheses, like (Latin).
 
 Critical instructions:
-- place into result only the translation of the term and not the text you translate
-- give translation only for the term in the marked sentence, not in general
+- place into result only the translation of the word or phrase and not the sentence
+- give translation only for the word or phrase as used in the sentence, not in general
 - do not add to the translation any comments except the translation itself.
+
+The word or phrase: "{word}"
+The sentence: "{sentence}"

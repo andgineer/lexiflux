@@ -24,6 +24,17 @@ EMAIL_HOST_PASSWORD=your-app-password
 EMAIL_USE_TLS=True
 DEFAULT_FROM_EMAIL=your-email@gmail.com
 
+# AI keys (set as Koyeb secrets). See docs/src/en/aimodels.md#keys
+# Free pool: at least one of these; more keys make it faster and more reliable.
+# OPENROUTER_API_KEY is not used by Lexiflux.
+# GROQ_API_KEY=your-groq-api-key
+# GEMINI_API_KEY=your-gemini-api-key
+# ZAI_API_KEY=your-zai-api-key
+# Paid articles: GPT-5.6 Sol and Luna
+# OPENAI_API_KEY=your-openai-api-key
+# Paid articles: Claude Opus
+# ANTHROPIC_API_KEY=your-anthropic-api-key
+
 # Custom Domain (if using)
 ALLOWED_HOSTS=lexiflux.sorokin.engineer,your-koyeb-app.koyeb.app
 

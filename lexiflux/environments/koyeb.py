@@ -5,7 +5,8 @@ These settings are for deploying Lexiflux on Koyeb cloud platform:
 - PostgreSQL database via DATABASE_URL
 - Production security settings
 - Social authentication required (no auto-login)
-- Ollama disabled (memory constraints)
+- AI keys from Koyeb secrets exposed as env vars
+- llmbroker state in the same PostgreSQL
 - Proper static file configuration
 """
 
@@ -40,6 +41,9 @@ DATABASES = {
 if not DATABASES["default"]:
     raise ValueError("DATABASE_URL environment variable is required for Koyeb deployment")
 
+# llmbroker accepts only postgresql://, while hosts often hand out postgres://.
+LLMBROKER_DATASOURCE = "postgresql://" + os.environ["DATABASE_URL"].split("://", 1)[1]
+
 # Static files configuration with WhiteNoise
 STATIC_ROOT = BASE_DIR / "staticfiles"  # noqa: F405
 STATICFILES_DIRS = [
@@ -61,7 +65,7 @@ MIDDLEWARE = [
     "allauth.account.middleware.AccountMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    "django.middleware.gzip.GZipMiddleware",
+    "lexiflux.middleware.GZipExceptStreamsMiddleware",
     # AutoLoginMiddleware removed for production
 ]
 

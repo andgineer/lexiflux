@@ -25,7 +25,7 @@
 - Naming: Python tests `tests/test_*.py`; modules, functions `snake_case`; classes `PascalCase`.
 
 ## Testing Guidelines
-- Frameworks: Pytest (+ markers: `docker`, `selenium`) and Jest for TS.
+- Frameworks: Pytest (+ markers: `docker`, `selenium`, `playwright`, `real_llm`) and Jest for TS.
 - Coverage: Jest writes to `coverage/`; Python coverage reported in CI. Add/keep tests for new logic.
 - Django settings for tests: `pytest.ini` sets `DJANGO_SETTINGS_MODULE=tests.django_settings`.
 

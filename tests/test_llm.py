@@ -1,690 +1,472 @@
-import pytest
+from dataclasses import replace
+from datetime import UTC, datetime, timedelta
+from types import SimpleNamespace
+from unittest.mock import patch
+
 import allure
-from unittest.mock import patch, MagicMock, PropertyMock, Mock
-from lexiflux.models import BookPage, Book, TranslationHistory, AIModelConfig
+import httpx
+import pytest
+from llmbroker import (
+    AuthError,
+    LLMTimeoutError,
+    MissingKeyError,
+    NoLLMAvailableError,
+    ProviderError,
+    RateLimitError,
+    StreamInterruptedError,
+    StreamReplacementError,
+    UnknownModelError,
+)
+
+from lexiflux.language import llm
 from lexiflux.language.llm import (
-    Llm,
-    AIModelError,
-    AIModelRetiredError,
-    _remove_word_marks,
-    _remove_sentence_marks,
-    _extract_sentence,
-    find_nth_occurrence,
-    safe_float,
-    TextOutputParser,
+    ArticleError,
+    ArticleEvent,
+    ArticleRequest,
+    build_prompt,
+    generate_article,
+    stream_article,
 )
-from lexiflux.language.sentence_extractor_llm import (
-    SENTENCE_START_MARK,
-    SENTENCE_END_MARK,
-    WORD_START_MARK,
-    WORD_END_MARK,
-)
-from lexiflux.views.lexical_views import get_context_for_translation_history
 
 
-def get_first_chatopenai_model(llm_instance: Llm) -> str:
-    """Get the first ChatOpenAI model from llm_instance.chat_models."""
-    chat_models = llm_instance.chat_models
-    model_name = next(
-        (name for name, info in chat_models.items() if info.get("model") == "ChatOpenAI"),
-        list(chat_models.keys())[0] if chat_models else None,
-    )
-    if not model_name:
-        raise ValueError("No models found in chat_models")
-    return model_name
+class FakeStream:
+    def __init__(self, script):
+        self.script = list(script)
+        self.closed = False
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        if self.closed or not self.script:
+            raise StopIteration
+        item = self.script.pop(0)
+        if isinstance(item, BaseException):
+            raise item
+        return item
+
+    def close(self):
+        self.closed = True
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *exc):
+        self.close()
+
+
+class FakeDirectClient:
+    def __init__(self, script, answer):
+        self.script = script
+        self.answer = answer
+        self.closed = False
+        self.stream_closed = False
+        self.calls = []
+
+    def stream(self, prompt=None, *, messages=None, timeout=None, params=None):
+        self.calls.append({"prompt": prompt, "messages": messages, "params": params})
+        try:
+            for item in self.script:
+                if isinstance(item, BaseException):
+                    raise item
+                yield item
+        finally:
+            self.stream_closed = True
+
+    def ask(self, prompt=None, *, messages=None, timeout=None, params=None):
+        self.calls.append({"prompt": prompt, "messages": messages, "params": params})
+        if isinstance(self.answer, BaseException):
+            raise self.answer
+        return SimpleNamespace(text=self.answer)
+
+    def close(self):
+        self.closed = True
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *exc):
+        self.close()
+
+
+class FakeLLMs:
+    def __init__(self, script=(), answer="whole answer", direct_error=None):
+        self.script = list(script)
+        self.answer = answer
+        self.direct_error = direct_error
+        self.streams = []
+        self.clients = []
+        self.calls = []
+
+    def stream(self, prompt, **kwargs):
+        self.calls.append(("stream", prompt, kwargs))
+        stream = FakeStream(self.script)
+        self.streams.append(stream)
+        return stream
+
+    def ask(self, prompt, **kwargs):
+        self.calls.append(("ask", prompt, kwargs))
+        if isinstance(self.answer, BaseException):
+            raise self.answer
+        return SimpleNamespace(text=self.answer)
+
+    def direct(self, model):
+        self.calls.append(("direct", model, {}))
+        if self.direct_error is not None:
+            raise self.direct_error
+        client = FakeDirectClient(self.script, self.answer)
+        self.clients.append(client)
+        return client
+
+
+@pytest.fixture(autouse=True)
+def clean_cache():
+    llm.clear_cache()
+    yield
+    llm.clear_cache()
 
 
 @pytest.fixture
-def mock_book_page(book):
-    page = BookPage.objects.get(book=book, number=1)
-    content = "Word1 word2. Word3 word4. Word5 word6 word7. Word8 word9. Word10 word11 word12."
-
-    words_cache = [
-        (0, 5),
-        (6, 11),
-        (13, 18),
-        (19, 24),
-        (26, 31),  # 0 - 4
-        (32, 37),
-        (38, 43),
-        (45, 50),
-        (51, 56),
-        (58, 64),  # 5 - 9
-        (65, 71),
-        (72, 78),
-    ]
-
-    word_sentence_mapping_cache = {
-        0: 0,
-        1: 0,
-        2: 1,
-        3: 1,
-        4: 2,
-        5: 2,
-        6: 2,
-        7: 3,
-        8: 3,
-        9: 4,
-        10: 4,
-        11: 4,
-    }
-
-    with (
-        patch("lexiflux.models.BookPage.words", new_callable=PropertyMock) as mock_words,
-        patch(
-            "lexiflux.models.BookPage.word_sentence_mapping", new_callable=PropertyMock
-        ) as mock_word_sentence_mapping,
-        patch("lexiflux.models.BookPage.content", new_callable=PropertyMock) as mock_content,
-    ):
-        mock_words.return_value = words_cache
-        mock_word_sentence_mapping.return_value = word_sentence_mapping_cache
-        mock_content.return_value = content
-        yield page
+def fake():
+    holder = {"llms": FakeLLMs()}
+    with patch("lexiflux.language.llm.llms_for", side_effect=lambda user: holder["llms"]):
+        yield holder
 
 
-@pytest.fixture
-def llm_instance():
-    return Llm()
-
-
-@allure.epic("Language Tools")
-@allure.feature("Term and Sentence Marking")
-def test_mark_term_and_sentence_success(mock_book_page, llm_instance):
-    # Prepare test data
-    data = {
-        "book_code": mock_book_page.book.code,
-        "book_page_number": mock_book_page.number,
-        "term_word_ids": [4, 5],  # "Word5 word6"
-    }
-
-    # Call the method
-    result = llm_instance.mark_term_and_sentence(llm_instance.hashable_dict(data), context_words=2)
-
-    expected_result = (
-        f"Word3 word4. {SENTENCE_START_MARK}{WORD_START_MARK}Word5 word6{WORD_END_MARK} "
-        f"word7{SENTENCE_END_MARK}. Word8 word9"
+def make_request(**changes):
+    req = ArticleRequest(
+        article_type="AI dictionary",
+        model="pool",
+        effort=None,
+        tier=None,
+        prompt=None,
+        word="made out",
+        sentence="She made out a shape in the fog.",
+        text_language="English",
+        user_language="Serbian",
+        user=SimpleNamespace(id=7),
     )
-
-    assert result == expected_result
-
-    # Test with different term and context
-    data["term_word_ids"] = [9, 10]  # "Word10 word11"
-    result = llm_instance.mark_term_and_sentence(llm_instance.hashable_dict(data), context_words=3)
-
-    expected_result = (
-        f"Word5 word6 word7. Word8 word9. {SENTENCE_START_MARK}{WORD_START_MARK}Word10 "
-        f"word11{WORD_END_MARK} word12{SENTENCE_END_MARK}"
-    )
-
-    assert result == expected_result
+    return replace(req, **changes)
 
 
-@allure.epic("Language Tools")
-@allure.feature("Term and Sentence Marking")
-@pytest.mark.parametrize(
-    "term_word_ids, expected_term",
-    [
-        ([0, 1], "Word1 word2"),
-        ([4, 5], "Word5 word6"),
-        ([9, 10, 11], "Word10 word11 word12"),
-    ],
-)
-def test_mark_term_and_sentence_different_terms(
-    mock_book_page, llm_instance, term_word_ids, expected_term
-):
-    data = {
-        "book_code": mock_book_page.book.code,
-        "book_page_number": mock_book_page.number,
-        "term_word_ids": term_word_ids,
-    }
-
-    result = llm_instance.mark_term_and_sentence(llm_instance.hashable_dict(data), context_words=2)
-    print(f"Marked text for term '{expected_term}': {result}")
-
-    assert f"{WORD_START_MARK}{expected_term}{WORD_END_MARK}" in result
-
-
-@allure.epic("Language Tools")
-@allure.feature("Term and Sentence Marking")
-@pytest.mark.parametrize(
-    "context_words, expected_words_before, expected_words_after",
-    [
-        (1, 2, 0),  # include word4(+3 in the same sentence) and word7 (in the same sentence as term
-        (2, 2, 3),  # include word3 and word8 (+9 in the same sentence)
-        (5, 4, 6),  # include word1 and word11 (plus ".")
-    ],
-)
-def test_mark_term_and_sentence_different_context(
-    mock_book_page, llm_instance, context_words, expected_words_before, expected_words_after
-):
-    data = {
-        "book_code": mock_book_page.book.code,
-        "book_page_number": mock_book_page.number,
-        "term_word_ids": [4, 5],  # "Word5 word6"
-    }
-
-    result = (
-        llm_instance.mark_term_and_sentence(
-            llm_instance.hashable_dict(data), context_words=context_words
-        )
-        .replace(WORD_START_MARK, "")
-        .replace(WORD_END_MARK, "")
-    )
-    print(f"Marked text with context_words={context_words}: {result}")
-
-    words_before = result.split(SENTENCE_START_MARK)[0].split()
-    words_after = result.split(SENTENCE_END_MARK)[1].split()
-
-    assert len(words_before) == expected_words_before
-    assert len(words_after) == expected_words_after
-
-
-@pytest.fixture
-def mock_llm():
-    with patch("lexiflux.views.lexical_views.Llm") as mock:
-        yield mock
-
-
-@allure.epic("Language Tools")
-@allure.feature("Term and Sentence Marking")
-def test_get_context_for_translation_history(mock_llm):
-    # Setup
-    book = Mock(spec=Book)
-    book.code = "TEST_BOOK"
-    book_page = Mock(spec=BookPage)
-    book_page.number = 42
-    term_word_ids = [1, 2, 3]
-
-    # Configure mock
-    mock_llm_instance = mock_llm.return_value
-    mock_llm_instance.hashable_dict.return_value = {
-        "book_code": "TEST_BOOK",
-        "book_page_number": 42,
-        "term_word_ids": [1, 2, 3],
-    }
-    mock_llm_instance.mark_term_and_sentence.return_value = f"Some context {SENTENCE_START_MARK}This is a {WORD_START_MARK}test{WORD_END_MARK} sentence.{SENTENCE_END_MARK} More context."
-
-    # Call the function
-    result = get_context_for_translation_history(book, book_page, term_word_ids)
-
-    # Assertions
-    expected_result = f"Some context {TranslationHistory.CONTEXT_MARK}This is a {TranslationHistory.CONTEXT_MARK} sentence.{TranslationHistory.CONTEXT_MARK} More context."
-    assert result == expected_result
-
-    # Verify mock calls
-    mock_llm_instance.hashable_dict.assert_called_once_with(
-        {
-            "book_code": "TEST_BOOK",
-            "book_page_number": 42,
-            "term_word_ids": [1, 2, 3],
-        }
-    )
-    mock_llm_instance.mark_term_and_sentence.assert_called_once_with(
-        mock_llm_instance.hashable_dict.return_value, context_words=10
+def direct_request(**changes):
+    return make_request(
+        **{"article_type": "In depth", "model": "gpt", "effort": "none", "tier": "priority"}
+        | changes
     )
 
 
-@allure.epic("Language Tools")
-@allure.feature("Term and Sentence Marking")
-def test_get_context_for_translation_history_error_handling(mock_llm):
-    # Setup
-    book = Mock(spec=Book)
-    book_page = Mock(spec=BookPage)
-    term_word_ids = [1, 2, 3]
-
-    # Configure mock to raise an exception
-    mock_llm_instance = mock_llm.return_value
-    mock_llm_instance.mark_term_and_sentence.side_effect = Exception("LLM error")
-
-    # Call the function and check for exception
-    with pytest.raises(Exception, match="LLM error"):
-        get_context_for_translation_history(book, book_page, term_word_ids)
+def events(req):
+    return list(stream_article(req))
 
 
-@allure.epic("Language Tools")
-@allure.feature("Term Detection")
-class TestTermDetection:
+@allure.epic("AI articles")
+@allure.feature("Prompts")
+class TestPrompts:
     @pytest.mark.parametrize(
-        "text,term,occurrence,expected",
+        "article_type",
+        ["AI dictionary", "In depth", "Translate", "Explain", "Lexical", "Origin"],
+    )
+    def test_prompt_has_language_names_word_and_sentence(self, article_type):
+        prompt = build_prompt(make_request(article_type=article_type))
+        assert "English" in prompt
+        assert "Serbian" in prompt
+        assert "made out" in prompt
+        assert "She made out a shape in the fog." in prompt
+        for leftover in ("{", "}", "[HIGHLIGHT]", "[FRAGMENT]"):
+            assert leftover not in prompt
+
+    def test_sentence_prompt_takes_sentence_only(self):
+        prompt = build_prompt(make_request(article_type="Sentence", word="zzz"))
+        assert "She made out a shape in the fog." in prompt
+        assert "zzz" not in prompt
+        assert "Serbian" in prompt
+
+    def test_custom_ai_on_pool_joins_prompt_and_input(self, fake):
+        req = make_request(article_type="AI", prompt="Give synonyms in {user_language}.")
+        events(req)
+        prompt = fake["llms"].calls[0][1]
+        assert prompt.startswith("Give synonyms in Serbian.")
+        assert '"made out"' in prompt
+        assert '"She made out a shape in the fog."' in prompt
+
+    def test_custom_ai_on_direct_sends_system_and_user_messages(self, fake):
+        fake["llms"] = FakeLLMs(script=["x"])
+        events(direct_request(article_type="AI", prompt="Give synonyms."))
+        call = fake["llms"].clients[0].calls[0]
+        assert call["prompt"] is None
+        assert call["messages"][0] == {"role": "system", "content": "Give synonyms."}
+        assert call["messages"][1]["role"] == "user"
+        assert '"made out"' in call["messages"][1]["content"]
+
+
+@allure.epic("AI articles")
+@allure.feature("Streaming")
+class TestStreamArticle:
+    def test_pool_deltas(self, fake):
+        fake["llms"] = FakeLLMs(script=["Hel", "lo"])
+        assert events(make_request()) == [ArticleEvent.delta("Hel"), ArticleEvent.delta("lo")]
+        name, prompt, kwargs = fake["llms"].calls[0]
+        assert name == "stream"
+        assert kwargs == {"operation": "AI dictionary", "fastest_of": 2, "wait": 25}
+        assert fake["llms"].streams[0].closed
+
+    def test_direct_deltas_with_knob_params(self, fake):
+        fake["llms"] = FakeLLMs(script=["a", "b"])
+        assert events(direct_request()) == [ArticleEvent.delta("a"), ArticleEvent.delta("b")]
+        assert fake["llms"].calls[0][:2] == ("direct", "gpt")
+        client = fake["llms"].clients[0]
+        assert client.calls[0]["params"] == {"reasoning_effort": "none", "service_tier": "priority"}
+        assert "made out" in client.calls[0]["prompt"]
+        assert client.closed
+        assert client.stream_closed
+
+    def test_replacement_replaces_whole_answer(self, fake):
+        replacement = StreamReplacementError(
+            "lost the race",
+            replacement=SimpleNamespace(text="complete answer"),
+            streamed_llm_name="slow",
+        )
+        fake["llms"] = FakeLLMs(script=["provis", replacement])
+        assert events(make_request()) == [
+            ArticleEvent.delta("provis"),
+            ArticleEvent.replace("complete answer"),
+        ]
+        assert events(make_request()) == [ArticleEvent.delta("complete answer")]
+
+    @pytest.mark.parametrize(
+        "error",
         [
-            (
-                "The cat sat on the mat. The cat ran.",
-                "cat",
-                1,
-                {
-                    "term_word_ids": [1],
-                    "word_slices": [
-                        (0, 3),
-                        (4, 7),
-                        (8, 11),
-                        (12, 14),
-                        (15, 18),
-                        (19, 22),
-                        (24, 27),
-                        (28, 31),
-                        (32, 35),
-                    ],
-                },
-            ),
-            (
-                "The cat sat on the mat. The cat ran.",
-                "cat",
-                2,
-                {
-                    "term_word_ids": [7],
-                    "word_slices": [
-                        (0, 3),
-                        (4, 7),
-                        (8, 11),
-                        (12, 14),
-                        (15, 18),
-                        (19, 22),
-                        (24, 27),
-                        (28, 31),
-                        (32, 35),
-                    ],
-                },
-            ),
+            StreamInterruptedError("died", llm_name="x"),
+            LLMTimeoutError("wait ran out"),
+            httpx.ReadError("connection reset"),
         ],
     )
-    def test_detect_term_words(self, text, term, occurrence, expected):
-        llm = Llm()
-        result = llm.detect_term_words(text, term, occurrence)
-        assert result["term_word_ids"] == expected["term_word_ids"]
-        assert len(result["word_slices"]) == len(expected["word_slices"])
+    def test_error_after_text_keeps_text_and_says_cut_off(self, fake, error):
+        fake["llms"] = FakeLLMs(script=["partial", error])
+        result = events(make_request())
+        assert result[0] == ArticleEvent.delta("partial")
+        assert result[1].event == "error"
+        assert result[1].kind == ArticleError.CUT_OFF
+        assert "cut off" in result[1].html
+        assert len(result) == 2
 
+    def test_cut_off_answer_is_not_cached(self, fake):
+        fake["llms"] = FakeLLMs(script=["partial", LLMTimeoutError("t")])
+        events(make_request())
+        fake["llms"] = FakeLLMs(script=["fresh"])
+        assert events(make_request()) == [ArticleEvent.delta("fresh")]
 
-@allure.epic("Language Tools")
-@allure.feature("Model Settings")
-class TestModelSettings:
-    def test_get_model_settings_with_user_config(self, db_init, approved_user):
-        llm = Llm()
-        model_class = "ChatOpenAI"
-
-        # Create mock AIModelConfig with a real Django user
-        config = AIModelConfig(
-            user=approved_user,  # Use the approved_user fixture
-            chat_model=model_class,
-            settings={"api_key": "test_key", "temperature": 0.7},
-        )
-
-        with patch(
-            "lexiflux.models.AIModelConfig.get_or_create_ai_model_config", return_value=config
-        ):
-            settings = llm.get_model_settings(approved_user, model_class)
-            assert settings["api_key"] == "test_key"
-            assert settings["temperature"] == 0.7
-
-    def test_get_model_settings_from_db(self, db_init, approved_user):
-        llm = Llm()
-        model_class = "ChatOpenAI"
-
-        # Create mock AIModelConfig with settings
-        config = AIModelConfig(
-            user=approved_user,  # Use the approved_user fixture
-            chat_model=model_class,
-            settings={"temperature": 0.7, "api_key": "db_key"},
-        )
-
-        with patch(
-            "lexiflux.models.AIModelConfig.get_or_create_ai_model_config", return_value=config
-        ):
-            settings = llm.get_model_settings(approved_user, model_class)
-            assert settings["temperature"] == 0.7
-            assert settings["api_key"] == "db_key"
-
-
-@allure.epic("Language Tools")
-@allure.feature("Model Management")
-class TestModelManagement:
-    def test_get_or_create_model_openai(self, request, approved_user, llm_instance):
-        llm = Llm()
-        model_name = get_first_chatopenai_model(llm_instance)
-        params = {"model": model_name, "user": approved_user}
-
-        mock_settings = {"api_key": "test_key", "temperature": 0.7}
-        with patch.object(Llm, "get_model_settings", return_value=mock_settings):
-            if request.config.getoption("--use-llm"):
-                model = llm._get_or_create_model(params)
-                assert model is not None
-            else:
-                mock_chat = MagicMock()
-                with patch(
-                    "lexiflux.language.llm.ChatOpenAI", return_value=mock_chat
-                ) as mock_openai:
-                    model = llm._get_or_create_model(params)
-
-                    # Verify the model was created with correct parameters
-                    mock_openai.assert_called_once_with(
-                        model=model_name, api_key="test_key", temperature=0.7
-                    )
-                    assert model is mock_chat
-
-    def test_get_or_create_model_invalid(self, approved_user):
-        llm = Llm()
-        params = {"model": "invalid_model", "user": approved_user}
-
-        with pytest.raises(AIModelRetiredError):
-            llm._get_or_create_model(params)
-
-
-@allure.epic("Language Tools")
-@allure.feature("Article Generation")
-class TestArticleGeneration:
     @pytest.mark.parametrize(
-        "article_name,expected_prompt_file",
+        "error, kind",
         [
-            ("Translate", "Translate.txt"),
-            ("Lexical", "Lexical.txt"),
-            ("Explain", "Explain.txt"),
-            ("Origin", "Origin.txt"),
-            ("Sentence", "Sentence.txt"),
-            ("Origin", "Origin.txt"),
+            (LLMTimeoutError("wait ran out"), ArticleError.BUSY),
+            (httpx.ConnectError("refused"), ArticleError.GENERIC),
+            (NoLLMAvailableError("none", reason="no_keys"), ArticleError.NO_KEYS),
+            (NoLLMAvailableError("none", reason="timeout"), ArticleError.BUSY),
         ],
     )
-    def test_generate_article_cached_with_different_articles(
-        self,
-        request,
-        mock_book_page,
-        llm_instance,
-        approved_user,
-        article_name,
-        expected_prompt_file,
-    ):
-        # Prepare test data
-        model_name = get_first_chatopenai_model(llm_instance)
-        params = {"model": model_name, "user": approved_user}
-        data = {
-            "book_code": mock_book_page.book.code,
-            "book_page_number": mock_book_page.number,
-            "term_word_ids": [4, 5],  # "Word5 word6"
-            "text_language": "en",
-            "user_language": "fr",
+    def test_error_before_text(self, fake, error, kind):
+        fake["llms"] = FakeLLMs(script=[error])
+        result = events(make_request())
+        assert len(result) == 1
+        assert result[0].event == "error"
+        assert result[0].kind == kind
+
+    def test_direct_errors_at_direct(self, fake):
+        fake["llms"] = FakeLLMs(direct_error=MissingKeyError("no key"))
+        result = events(direct_request())
+        assert result[0].kind == ArticleError.MISSING_KEY
+        assert "OPENAI_API_KEY" in result[0].html
+
+    def test_cache_hit_replays_one_delta(self, fake):
+        fake["llms"] = FakeLLMs(script=["one ", "two ", "three"])
+        events(make_request())
+        fake["llms"] = FakeLLMs(script=["other"])
+        assert events(make_request()) == [ArticleEvent.delta("one two three")]
+        assert fake["llms"].calls == []
+
+    def test_cache_key_includes_knobs_and_user(self, fake):
+        fake["llms"] = FakeLLMs(script=["first"])
+        events(direct_request())
+        fake["llms"] = FakeLLMs(script=["second"])
+        assert events(direct_request(tier="standard")) == [ArticleEvent.delta("second")]
+        fake["llms"] = FakeLLMs(script=["third"])
+        assert events(direct_request(user=SimpleNamespace(id=8))) == [ArticleEvent.delta("third")]
+
+    def test_closing_early_closes_pool_stream(self, fake):
+        fake["llms"] = FakeLLMs(script=["a", "b", "c"])
+        gen = stream_article(make_request())
+        assert next(gen) == ArticleEvent.delta("a")
+        gen.close()
+        assert fake["llms"].streams[0].closed
+
+    def test_closing_early_closes_direct_client(self, fake):
+        fake["llms"] = FakeLLMs(script=["a", "b", "c"])
+        gen = stream_article(direct_request())
+        assert next(gen) == ArticleEvent.delta("a")
+        gen.close()
+        client = fake["llms"].clients[0]
+        assert client.stream_closed
+        assert client.closed
+
+    def test_early_close_is_not_cached(self, fake):
+        fake["llms"] = FakeLLMs(script=["a", "b"])
+        gen = stream_article(make_request())
+        next(gen)
+        gen.close()
+        fake["llms"] = FakeLLMs(script=["fresh"])
+        assert events(make_request()) == [ArticleEvent.delta("fresh")]
+
+    def test_unknown_option_shows_retired_message(self, fake):
+        result = events(make_request(model="claude-sonnet-4-0"))
+        assert result[0].kind == ArticleError.RETIRED
+        assert "claude-sonnet-4-0" in result[0].html
+        assert fake["llms"].calls == []
+
+    def test_dropped_catalog_alias_shows_retired_message(self, fake):
+        with patch("lexiflux.language.ai_models._catalog_providers", return_value={}):
+            result = events(direct_request())
+        assert result[0].kind == ArticleError.RETIRED
+
+    def test_event_dicts(self):
+        assert ArticleEvent.delta("x").to_dict() == {"event": "delta", "text": "x"}
+        assert ArticleEvent.replace("y").to_dict() == {"event": "replace", "text": "y"}
+        assert ArticleEvent.error(ArticleError("busy", "<p>b</p>")).to_dict() == {
+            "event": "error",
+            "kind": "busy",
+            "html": "<p>b</p>",
         }
 
-        # Read expected prompt
-        import os
-        from django.conf import settings
 
-        prompt_path = os.path.join(
-            settings.BASE_DIR, "lexiflux", "resources", "prompts", expected_prompt_file
+@allure.epic("AI articles")
+@allure.feature("Inline article")
+class TestGenerateArticle:
+    def test_pool_ask(self, fake):
+        assert generate_article(make_request()) == "whole answer"
+        name, _, kwargs = fake["llms"].calls[0]
+        assert name == "ask"
+        assert kwargs["operation"] == "AI dictionary"
+
+    def test_direct_ask(self, fake):
+        assert generate_article(direct_request()) == "whole answer"
+        client = fake["llms"].clients[0]
+        assert client.calls[0]["params"] == {"reasoning_effort": "none", "service_tier": "priority"}
+        assert client.closed
+
+    def test_cached(self, fake):
+        generate_article(make_request())
+        fake["llms"] = FakeLLMs(answer="other")
+        assert generate_article(make_request()) == "whole answer"
+
+    def test_error_raises_article_error(self, fake):
+        fake["llms"] = FakeLLMs(answer=AuthError("rejected", status=401))
+        with pytest.raises(ArticleError) as exc_info:
+            generate_article(make_request(model="opus", article_type="Origin"))
+        assert exc_info.value.kind == ArticleError.AUTH
+        assert "Anthropic" in exc_info.value.html
+
+
+@allure.epic("AI articles")
+@allure.feature("Errors")
+class TestErrorMessages:
+    def error_for(self, exc, req=None, had_text=False):
+        return llm.article_error(exc, req or make_request(), had_text=had_text)
+
+    def test_no_keys_lists_pool_keys_with_links_and_env_vars(self):
+        error = self.error_for(NoLLMAvailableError("none", reason="no_keys"))
+        assert error.kind == ArticleError.NO_KEYS
+        assert "The free pool needs at least one key" in error.html
+        assert "GROQ_API_KEY" in error.html
+        assert '<a href="https://console.groq.com/keys"' in error.html
+        assert ".env" in error.html
+        assert "ai-settings" not in error.html
+
+    def test_no_keys_on_koyeb_points_to_server_environment(self):
+        with patch("lexiflux.language.llm.keys_on_server", return_value=True):
+            error = self.error_for(NoLLMAvailableError("none", reason="no_keys"))
+        assert "environment variable of the server" in error.html
+        assert ".env" not in error.html
+
+    def test_busy_with_retry_at(self):
+        retry_at = datetime.now(UTC) + timedelta(seconds=30)
+        error = self.error_for(NoLLMAvailableError("none", reason="timeout", retry_at=retry_at))
+        assert error.kind == ArticleError.BUSY
+        assert "retry in 30 s" in error.html or "retry in 29 s" in error.html
+
+    def test_no_keys_omits_keys_that_serve_only_excluded_pool_models(self):
+        error = self.error_for(NoLLMAvailableError("none", reason="no_keys"))
+        assert "OPENROUTER_API_KEY" not in error.html
+        for ref in ("GROQ_API_KEY", "GEMINI_API_KEY", "ZAI_API_KEY"):
+            assert ref in error.html
+
+    def test_only_excluded_pool_models_payable_shows_the_no_keys_message(self):
+        error = self.error_for(NoLLMAvailableError("none", reason="all_disabled"))
+        assert error.kind == ArticleError.NO_KEYS
+        assert "GROQ_API_KEY" in error.html
+        assert "OPENROUTER_API_KEY" not in error.html
+
+    def test_busy_without_retry_at(self):
+        error = self.error_for(NoLLMAvailableError("none", reason="timeout"))
+        assert error.kind == ArticleError.BUSY
+        assert "retry in" not in error.html
+
+    def test_missing_key(self):
+        error = self.error_for(MissingKeyError("no key"), direct_request())
+        assert error.kind == ArticleError.MISSING_KEY
+        assert "OpenAI" in error.html
+        assert "OPENAI_API_KEY" in error.html
+        assert "platform.openai.com" in error.html
+
+    def test_auth(self):
+        error = self.error_for(AuthError("rejected", status=401), direct_request())
+        assert error.kind == ArticleError.AUTH
+        assert "Key rejected by OpenAI" in error.html
+
+    def test_rate_limit_with_retry_after(self):
+        error = self.error_for(
+            RateLimitError("slow down", status=429, retry_after=12), direct_request()
         )
-        with open(prompt_path, "r", encoding="utf8") as f:
-            expected_prompt = f.read().strip()
+        assert error.kind == ArticleError.BUSY
+        assert "retry in 12 s" in error.html
 
-        # Expected response from the AI model
-        expected_response = "AI generated response"
+    def test_unknown_model(self):
+        error = self.error_for(UnknownModelError("gone"), direct_request())
+        assert error.kind == ArticleError.RETIRED
+        assert "AI Model No Longer Available" in error.html
 
-        if request.config.getoption("--use-llm"):
-            # Use real LLM
-            result = llm_instance._generate_article_cached(
-                article_name, llm_instance.hashable_dict(params), llm_instance.hashable_dict(data)
-            )
-            assert isinstance(result, str)
-            assert len(result) > 0
-        else:
-            # Mock the AI model responses
-            mock_chat = MagicMock()
-            mock_chat.invoke.return_value = expected_response
-
-            # Create a pipeline that mimics langchain's behavior
-            class MockPipeline:
-                def __init__(self, response):
-                    self.response = response
-
-                def invoke(self, *args, **kwargs):
-                    return self.response
-
-            mock_pipeline = MockPipeline(expected_response)
-
-            # Mock the factory function to return our pipeline
-            original_factory = llm_instance._article_pipelines_factory[article_name]
-            llm_instance._article_pipelines_factory[article_name] = lambda model: mock_pipeline
-
-            try:
-                with patch(
-                    "lexiflux.language.llm.ChatOpenAI", return_value=mock_chat
-                ) as mock_openai:
-                    # Call the method
-                    result = llm_instance._generate_article_cached(
-                        article_name,
-                        llm_instance.hashable_dict(params),
-                        llm_instance.hashable_dict(data),
-                    )
-
-                    # Verify the result
-                    assert result == expected_response
-
-                    # Verify ChatOpenAI was initialized correctly
-                    mock_openai.assert_called_once()
-                    call_kwargs = mock_openai.call_args.kwargs
-                    assert call_kwargs["model"] == model_name
-                    assert "temperature" in call_kwargs
-            finally:
-                # Restore the original factory function
-                llm_instance._article_pipelines_factory[article_name] = original_factory
-
-    def test_generate_article_cached_ai_type(
-        self, request, mock_book_page, llm_instance, approved_user
-    ):
-        # Prepare test data
-        model_name = get_first_chatopenai_model(llm_instance)
-        params = {
-            "model": model_name,
-            "user": approved_user,
-            "prompt": "Custom system prompt for AI article",
-        }
-        data = {
-            "book_code": mock_book_page.book.code,
-            "book_page_number": mock_book_page.number,
-            "term_word_ids": [4, 5],
-            "text_language": "en",
-            "user_language": "fr",
-        }
-
-        expected_response = "AI generated response for custom prompt"
-
-        if request.config.getoption("--use-llm"):
-            # Use real LLM
-            result = llm_instance._generate_article_cached(
-                "AI", llm_instance.hashable_dict(params), llm_instance.hashable_dict(data)
-            )
-            assert isinstance(result, str)
-            assert len(result) > 0
-        else:
-            # Mock the AI model and its response
-            mock_chat = MagicMock()
-            mock_chat.invoke.return_value = "AI generated response for custom prompt"
-
-            # Create a pipeline that mimics langchain's behavior
-            class MockPipeline:
-                def __init__(self, response):
-                    self.response = response
-
-                def invoke(self, messages):
-                    return self.response
-
-            mock_pipeline = MockPipeline(expected_response)
-
-            # Mock the factory function
-            original_factory = llm_instance._article_pipelines_factory["AI"]
-            llm_instance._article_pipelines_factory["AI"] = lambda model: mock_pipeline
-
-            try:
-                with patch(
-                    "lexiflux.language.llm.ChatOpenAI", return_value=mock_chat
-                ) as mock_openai:
-                    result = llm_instance._generate_article_cached(
-                        "AI", llm_instance.hashable_dict(params), llm_instance.hashable_dict(data)
-                    )
-
-                    # Verify the result
-                    assert result == expected_response
-
-                    # Verify ChatOpenAI was initialized correctly
-                    mock_openai.assert_called_once()
-                    call_kwargs = mock_openai.call_args.kwargs
-                    assert call_kwargs["model"] == model_name
-                    assert "temperature" in call_kwargs
-            finally:
-                # Restore the original factory function
-                llm_instance._article_pipelines_factory["AI"] = original_factory
-
-    def test_generate_article_cached_invalid_article(self, llm_instance, approved_user):
-        # Prepare test data
-        model_name = get_first_chatopenai_model(llm_instance)
-        params = {"model": model_name, "user": approved_user}
-        data = {"text": "Sample text", "text_language": "en", "user_language": "fr"}
-
-        with pytest.raises(ValueError, match="AI insight 'InvalidArticle' not found"):
-            llm_instance._generate_article_cached(
-                "InvalidArticle",
-                llm_instance.hashable_dict(params),
-                llm_instance.hashable_dict(data),
-            )
-
-    def test_generate_article_error_handling(self, approved_user):
-        llm = Llm()
-        article_name = "Translate"
-        model_name = get_first_chatopenai_model(llm)
-        params = {"model": model_name, "user": approved_user}
-        data = {"text": "Test text"}
-
-        with patch.object(Llm, "_generate_article_cached", side_effect=Exception("Test error")):
-            with pytest.raises(AIModelError) as exc_info:
-                llm.generate_article(article_name, params, data)
-
-            assert exc_info.value.model_name == model_name
-            assert "Test error" in str(exc_info.value)
-
-    def test_generate_article_invalid_article(self):
-        llm = Llm()
-        article_name = "InvalidArticle"
-        # Get first ChatOpenAI model from available models
-        chat_models = llm.chat_models
-        model_name = next(
-            (name for name, info in chat_models.items() if info.get("model") == "ChatOpenAI"),
-            list(chat_models.keys())[0] if chat_models else None,
-        )
-        if not model_name:
-            raise ValueError("No models found in chat_models")
-        params = {"model": model_name, "user": MagicMock()}
-        data = {"text": "Test text"}
-
-        with pytest.raises(AIModelError) as exc_info:
-            llm.generate_article(article_name, params, data)
-
-        assert "AI insight 'InvalidArticle' not found" in str(exc_info.value)
-
-    @patch("lexiflux.language.llm.ChatOpenAI")
-    def test_generate_article_api_error(self, mock_chat_openai, approved_user, book):
-        llm = Llm()
-        article_name = "Translate"
-        model_name = get_first_chatopenai_model(llm)
-        params = {"model": model_name, "user": approved_user}
-        data = {
-            "text": "Test text",
-            "text_language": "en",
-            "user_language": "fr",
-            # "book_code": "some-book-code",
-            "book_page_number": 2,
-            "term_word_ids": [1, 2, 3],
-        }
-
-        # Simulate an API error
-        mock_chat_openai.side_effect = ValueError("API Error")
-
-        with pytest.raises(AIModelError) as exc_info:
-            llm.generate_article(article_name, params, data)
-
-        assert "'book_code'" in str(exc_info.value)
-        assert exc_info.value.model_name == model_name
-
-
-@allure.epic("Language Tools")
-@allure.feature("Text Processing")
-class TestTextProcessing:
-    @pytest.mark.parametrize(
-        "text, expected",
-        [
-            (f"{WORD_START_MARK}test{WORD_END_MARK}", "test"),
-            (f"before {WORD_START_MARK}test{WORD_END_MARK} after", "before test after"),
-        ],
-    )
-    def test_remove_word_marks(self, text, expected):
-        assert _remove_word_marks(text) == expected
+    def test_generic_shows_the_exception_type_and_logs_the_text(self, caplog):
+        error = self.error_for(ProviderError("upstream exploded", status=500))
+        assert error.kind == ArticleError.GENERIC
+        assert "ProviderError" in error.html
+        assert "upstream exploded" not in error.html
+        logged = [r for r in caplog.records if r.levelname == "ERROR"]
+        assert logged and "upstream exploded" in str(logged[-1].exc_info[1])
 
     @pytest.mark.parametrize(
-        "text, expected",
+        ("exc", "req"),
         [
-            (f"{SENTENCE_START_MARK}test{SENTENCE_END_MARK}", "test"),
-            (f"before {SENTENCE_START_MARK}test{SENTENCE_END_MARK} after", "before test after"),
+            (NoLLMAvailableError("none", reason="no_keys"), None),
+            (NoLLMAvailableError("none", reason="all_disabled"), None),
+            (MissingKeyError("no key"), "direct"),
+            (AuthError("rejected", status=401), "direct"),
+            (UnknownModelError("gone"), "direct"),
+            (ProviderError("upstream exploded", status=500), None),
         ],
     )
-    def test_remove_sentence_marks(self, text, expected):
-        assert _remove_sentence_marks(text) == expected
+    def test_error_html_has_no_surrounding_whitespace(self, exc, req):
+        # keep-line-breaks panels (white-space: pre-line) show it as blank lines.
+        error = self.error_for(exc, direct_request() if req else None)
+        assert error.html == error.html.strip()
+        assert error.html.startswith("<div")
 
-    @pytest.mark.parametrize(
-        "text, expected",
-        [
-            (f"before {SENTENCE_START_MARK}test{SENTENCE_END_MARK} after", "test"),
-            (f"{SENTENCE_START_MARK}test{SENTENCE_END_MARK}", "test"),
-            (
-                f"{WORD_START_MARK}word{WORD_END_MARK} in {SENTENCE_START_MARK}sentence{SENTENCE_END_MARK}",
-                "sentence",
-            ),
-        ],
-    )
-    def test_extract_sentence(self, text, expected):
-        assert _extract_sentence(text) == expected
+    def test_cut_off_html_has_no_surrounding_whitespace(self):
+        error = self.error_for(StreamInterruptedError("died", llm_name="x"), had_text=True)
+        assert error.kind == ArticleError.CUT_OFF
+        assert error.html == error.html.strip()
 
-
-@allure.epic("Language Tools")
-@allure.feature("Utility Functions")
-class TestUtilityFunctions:
-    @pytest.mark.parametrize(
-        "text, substring, occurrence, expected",
-        [
-            ("hello hello hello", "hello", 1, 0),
-            ("hello hello hello", "hello", 2, 6),
-            ("hello hello hello", "hello", 3, 12),
-            ("hello hello hello", "hello", 4, -1),
-            ("test text", "missing", 1, -1),
-        ],
-    )
-    def test_find_nth_occurrence(self, text, substring, occurrence, expected):
-        assert find_nth_occurrence(substring, text, occurrence) == expected
-
-    @pytest.mark.parametrize(
-        "value, expected",
-        [
-            (0.7, 0.7),
-            ("0.7", 0.7),
-            (None, 0.5),
-            ("invalid", 0.5),
-        ],
-    )
-    def test_safe_float(self, value, expected):
-        assert safe_float(value) == expected
-
-    def test_text_output_parser(self):
-        parser = TextOutputParser()
-        text = f"{WORD_START_MARK}word{WORD_END_MARK} in {SENTENCE_START_MARK}sentence{SENTENCE_END_MARK}"
-        expected = "word in sentence"
-        assert parser.parse(text) == expected
-
-
-@allure.epic("Language Tools")
-@allure.feature("Error Handling")
-class TestErrorHandling:
-    def test_ai_model_error(self):
-        error = AIModelError("gpt-5", "ChatOpenAI", "API error")
-        assert error.model_name == "gpt-5"
-        assert error.model_class == "ChatOpenAI"
-        assert error.error_message == "API error"
-        assert str(error) == "AI class `ChatOpenAI` error for model `gpt-5`: API error"
-
-    def test_ai_model_retired_error(self):
-        error = AIModelRetiredError("claude-sonnet-4-0")
-        assert error.model_name == "claude-sonnet-4-0"
-        assert str(error) == "AI model `claude-sonnet-4-0` has been retired or removed"
+    def test_markdown_links_escape_quotes(self):
+        text = llm.markdown_links('[key](https://x.io/a"onmouseover="alert(1)) and "q"')
+        assert '"onmouseover="' not in text
+        assert "&quot;" in text
+        assert text.startswith('<a href="https://x.io/a&quot;onmouseover=&quot;alert(1"')

@@ -106,7 +106,7 @@ def test_save_inline_translation(client, approved_user, language):
     data = {
         "language_id": language.google_code,
         "type": "Translate",
-        "parameters": {"model": "test_model"},
+        "parameters": {"model": "gpt"},
     }
 
     response = client.post(url, json.dumps(data), content_type="application/json")
@@ -119,7 +119,7 @@ def test_save_inline_translation(client, approved_user, language):
     # Verify the update
     lang_prefs.refresh_from_db()
     assert lang_prefs.inline_translation_type == "Translate"
-    assert lang_prefs.inline_translation_parameters == {"model": "test_model"}
+    assert lang_prefs.inline_translation_parameters == {"model": "gpt"}
 
 
 @allure.epic("Pages endpoints")
@@ -129,7 +129,7 @@ class TestLexicalArticleManagement:
     """Test suite for lexical article management endpoints."""
 
     @pytest.fixture
-    def base_url(self):
+    def lang_prefs_url(self):
         return reverse("manage_lexical_article")
 
     @pytest.fixture
@@ -139,17 +139,21 @@ class TestLexicalArticleManagement:
             "language_id": language.google_code,
             "type": "Translate",
             "title": "Test Article",
-            "parameters": {"model": "test_model"},
+            "parameters": {"model": "gpt"},
         }
 
-    def test_add_lexical_article(self, client, approved_user, language, base_url, article_data):
+    def test_add_lexical_article(
+        self, client, approved_user, language, lang_prefs_url, article_data
+    ):
         """Test adding a new lexical article."""
         client.force_login(approved_user)
 
         # Create language preferences first
         LanguagePreferences.get_or_create_language_preferences(approved_user, language)
 
-        response = client.post(base_url, json.dumps(article_data), content_type="application/json")
+        response = client.post(
+            lang_prefs_url, json.dumps(article_data), content_type="application/json"
+        )
 
         assert response.status_code == 200
         response_data = json.loads(response.content)
@@ -162,7 +166,7 @@ class TestLexicalArticleManagement:
         assert article.type == article_data["type"]
         assert article.parameters == article_data["parameters"]
 
-    def test_edit_lexical_article(self, client, approved_user, language, base_url):
+    def test_edit_lexical_article(self, client, approved_user, language, lang_prefs_url):
         """Test editing an existing lexical article."""
         client.force_login(approved_user)
 
@@ -172,7 +176,7 @@ class TestLexicalArticleManagement:
             language_preferences=lang_prefs,
             type="Translate",
             title="Original Title",
-            parameters={"model": "old_model"},
+            parameters={"model": "gpt-fast"},
         )
 
         edit_data = {
@@ -181,10 +185,12 @@ class TestLexicalArticleManagement:
             "id": article.id,
             "type": "Translate",
             "title": "Updated Title",
-            "parameters": {"model": "new_model"},
+            "parameters": {"model": "opus"},
         }
 
-        response = client.post(base_url, json.dumps(edit_data), content_type="application/json")
+        response = client.post(
+            lang_prefs_url, json.dumps(edit_data), content_type="application/json"
+        )
 
         assert response.status_code == 200
         response_data = json.loads(response.content)
@@ -193,9 +199,9 @@ class TestLexicalArticleManagement:
         # Verify the update
         article.refresh_from_db()
         assert article.title == "Updated Title"
-        assert article.parameters == {"model": "new_model"}
+        assert article.parameters == {"model": "opus"}
 
-    def test_delete_lexical_article(self, client, approved_user, language, base_url):
+    def test_delete_lexical_article(self, client, approved_user, language, lang_prefs_url):
         """Test deleting a lexical article."""
         client.force_login(approved_user)
 
@@ -205,12 +211,14 @@ class TestLexicalArticleManagement:
             language_preferences=lang_prefs,
             type="Translate",
             title="To Be Deleted",
-            parameters={"model": "test_model"},
+            parameters={"model": "gpt"},
         )
 
         delete_data = {"action": "delete", "language_id": language.google_code, "id": article.id}
 
-        response = client.post(base_url, json.dumps(delete_data), content_type="application/json")
+        response = client.post(
+            lang_prefs_url, json.dumps(delete_data), content_type="application/json"
+        )
 
         assert response.status_code == 200
         response_data = json.loads(response.content)
@@ -237,8 +245,8 @@ def test_update_article_order_success(client, approved_user, language):
             language_preferences=lang_prefs,
             type="Translate",
             title=f"Article {i + 1}",
-            parameters={"model": f"model{i + 1}"},
-            order=i,
+            parameters={"model": ["pool", "gpt", "opus"][i]},
+            order=DEFAULT_ARTICLES_NUM + i,
         )
         articles.append(article)
 
@@ -291,8 +299,8 @@ def test_update_article_order_to_end(client, approved_user, language):
             language_preferences=lang_prefs,
             type="Translate",
             title=f"Article {i + 1}",
-            parameters={"model": f"model{i + 1}"},
-            order=i,
+            parameters={"model": ["pool", "gpt", "opus"][i]},
+            order=DEFAULT_ARTICLES_NUM + i,
         )
         articles.append(article)
 
@@ -383,3 +391,187 @@ def test_save_inline_translation_invalid_dictionary(client, approved_user, langu
     response_data = json.loads(response.content)
     assert response_data["status"] == "error"
     assert "cannot translate" in response_data["message"]
+
+
+@allure.epic("Pages endpoints")
+@allure.story("Language Preferences")
+@pytest.mark.django_db
+def test_editor_offers_the_models_with_their_knobs(client, approved_user):
+    client.force_login(approved_user)
+
+    response = client.get(reverse("language-preferences"))
+
+    models = {model["key"]: model for model in json.loads(response.context["ai_models"])}
+    assert list(models) == ["pool", "gpt", "gpt-fast", "opus"]
+    assert models["pool"]["efforts"] == [] and models["pool"]["tiers"] == []
+    assert models["pool"]["defaults"] == {}
+    assert models["gpt"]["efforts"] == ["none", "low", "medium", "high"]
+    assert models["gpt"]["tiers"] == ["priority", "standard"]
+    assert models["gpt"]["defaults"] == {"effort": "none", "tier": "priority"}
+    assert models["gpt-fast"]["defaults"] == {"effort": "low", "tier": "priority"}
+    assert models["opus"]["tiers"] == []
+    assert models["opus"]["defaults"] == {"effort": "low"}
+    assert response.context["default_ai_model"] == "gpt"
+
+    page = response.content.decode()
+    assert "defaultAiModel: 'gpt'" in page
+    assert 'id="effort-select"' in page
+    assert 'id="tier-select"' in page
+    assert "about 3× faster (measured on Sol)" in page
+    assert "[HIGHLIGHT]" not in page
+    assert "{sentence}" in page
+
+
+@allure.epic("Pages endpoints")
+@allure.story("Language Preferences")
+@pytest.mark.django_db
+def test_editor_hides_a_model_the_catalog_dropped(client, approved_user):
+    client.force_login(approved_user)
+
+    with patch(
+        "lexiflux.language.ai_models._catalog_providers",
+        return_value={"gpt": "openai", "gpt-fast": "openai"},
+    ):
+        response = client.get(reverse("language-preferences"))
+
+    keys = [model["key"] for model in json.loads(response.context["ai_models"])]
+    assert keys == ["pool", "gpt", "gpt-fast"]
+
+
+@allure.epic("Pages endpoints")
+@allure.story("Language Preferences")
+@pytest.mark.django_db
+class TestArticleKnobs:
+    def _post(self, client, data):
+        return client.post(
+            reverse("manage_lexical_article"), json.dumps(data), content_type="application/json"
+        )
+
+    def _add(self, client, language, parameters, article_type="In depth"):
+        return self._post(
+            client,
+            {
+                "action": "add",
+                "language_id": language.google_code,
+                "type": article_type,
+                "title": "Knobs",
+                "parameters": parameters,
+            },
+        )
+
+    @pytest.fixture(autouse=True)
+    def logged_in(self, client, approved_user, language):
+        client.force_login(approved_user)
+        return LanguagePreferences.get_or_create_language_preferences(approved_user, language)
+
+    def test_knobs_are_saved_in_the_parameters(self, client, language):
+        response = self._add(
+            client, language, {"model": "gpt", "effort": "high", "tier": "standard"}
+        )
+
+        assert response.status_code == 200
+        article = LexicalArticle.objects.get(id=response.json()["id"])
+        assert article.parameters == {"model": "gpt", "effort": "high", "tier": "standard"}
+
+    def test_model_default_knobs_and_foreign_parameters_are_dropped(self, client, language):
+        response = self._add(
+            client,
+            language,
+            {"model": "gpt-fast", "effort": "", "tier": "", "url": "https://x", "prompt": "p"},
+        )
+
+        assert response.status_code == 200
+        article = LexicalArticle.objects.get(id=response.json()["id"])
+        assert article.parameters == {"model": "gpt-fast"}
+
+    @pytest.mark.parametrize(
+        "parameters",
+        [
+            {"model": "opus", "tier": "priority"},
+            {"model": "pool", "effort": "low"},
+            {"model": "gpt", "effort": "extreme"},
+            {"model": "claude-sonnet-4-0"},
+        ],
+    )
+    def test_invalid_knobs_are_rejected_on_add(self, client, language, parameters):
+        response = self._add(client, language, parameters)
+
+        assert response.status_code == 400
+        assert response.json()["status"] == "error"
+        assert not LexicalArticle.objects.filter(title="Knobs").exists()
+
+    def test_invalid_knob_is_rejected_on_edit(self, client, language, logged_in):
+        article = LexicalArticle.objects.create(
+            language_preferences=logged_in,
+            type="Translate",
+            title="Edit me",
+            parameters={"model": "gpt", "effort": "none"},
+            order=10,
+        )
+
+        response = self._post(
+            client,
+            {
+                "action": "edit",
+                "language_id": language.google_code,
+                "id": article.id,
+                "type": "Translate",
+                "title": "Edit me",
+                "parameters": {"model": "opus", "tier": "priority"},
+            },
+        )
+
+        assert response.status_code == 400
+        article.refresh_from_db()
+        assert article.parameters == {"model": "gpt", "effort": "none"}
+
+    def test_edit_changes_model_and_knobs(self, client, language, logged_in):
+        article = LexicalArticle.objects.create(
+            language_preferences=logged_in,
+            type="Translate",
+            title="Edit me",
+            parameters={"model": "gpt", "effort": "none", "tier": "priority"},
+            order=10,
+        )
+
+        response = self._post(
+            client,
+            {
+                "action": "edit",
+                "language_id": language.google_code,
+                "id": article.id,
+                "type": "Translate",
+                "title": "Edit me",
+                "parameters": {"model": "opus", "effort": "low", "tier": ""},
+            },
+        )
+
+        assert response.status_code == 200
+        article.refresh_from_db()
+        assert article.parameters == {"model": "opus", "effort": "low"}
+
+    def test_inline_translation_keeps_valid_knobs_and_rejects_invalid(
+        self, client, language, logged_in
+    ):
+        url = reverse("save_inline_translation")
+        valid = {
+            "language_id": language.google_code,
+            "type": "Translate",
+            "parameters": {"model": "gpt-fast", "effort": "low", "tier": "priority"},
+        }
+        invalid = {**valid, "parameters": {"model": "opus", "tier": "priority"}}
+
+        assert (
+            client.post(url, json.dumps(valid), content_type="application/json").status_code == 200
+        )
+        assert (
+            client.post(url, json.dumps(invalid), content_type="application/json").status_code
+            == 400
+        )
+
+        logged_in.refresh_from_db()
+        assert logged_in.inline_translation_parameters == {
+            "model": "gpt-fast",
+            "effort": "low",
+            "tier": "priority",
+        }

@@ -1,33 +1,33 @@
 """Views for the translation and lexical sidebar."""
 
+import html
+import json
+import logging
 import urllib.parse
+from collections.abc import Iterator
 from typing import Any
 
 import django.utils.timezone
-from django.http import HttpRequest, HttpResponse, JsonResponse
-from django.template import TemplateDoesNotExist
-from django.template.loader import render_to_string
+from django.http import HttpRequest, HttpResponse, JsonResponse, StreamingHttpResponse
 from pydantic import Field
 
 from lexiflux.api import ViewGetParamsModel, get_params
 from lexiflux.auth import smart_login_required
 from lexiflux.custom_user import get_custom_user
-from lexiflux.language.llm import (
-    SENTENCE_END_MARK,
-    SENTENCE_START_MARK,
-    WORD_END_MARK,
-    WORD_START_MARK,
-    AIModelError,
-    AIModelRetiredError,
-    Llm,
-    logger,
+from lexiflux.language.llm import ArticleError, ArticleRequest, generate_article, stream_article
+from lexiflux.language.term_context import (
+    TermContext,
+    sentences_word_ids,
+    term_context,
+    words_span,
 )
-from lexiflux.language.parse_html_text_content import extract_content_from_html
 from lexiflux.language.translation import get_translator
-from lexiflux.lexiflux_settings import settings
 from lexiflux.models import Book, BookPage, CustomUser, LanguagePreferences, TranslationHistory
 
-MAX_SENTENCE_LENGTH = 100
+logger = logging.getLogger(__name__)
+
+HISTORY_CONTEXT_WORDS = 10
+NDJSON_CONTENT_TYPE = "application/x-ndjson"
 
 
 class TranslateGetParams(ViewGetParamsModel):
@@ -43,17 +43,56 @@ class TranslateGetParams(ViewGetParamsModel):
     )
 
 
-def get_llm_errors_folder() -> str:
-    """Get the folder for LLM errors."""
-    return "llm-error" if settings.lexiflux.ui_settings_only else "llm-error-env"
+def _generic_error_text(exc: Exception) -> str:
+    # The exception text may carry secrets or internals; the traceback goes to the log instead.
+    return f"An error occurred ({type(exc).__name__}). Please retry later."
 
 
-def get_lexical_article(  # noqa: PLR0913,PLR0911
+def _languages_error(book_page: BookPage, language_preferences: LanguagePreferences) -> str | None:
+    if not book_page.book.language:
+        return "Error: Book language is not set"
+    if not language_preferences.user_language:
+        return "Error: User language is not set"
+    return None
+
+
+def _site_link(
+    article_params: dict[str, Any],
+    context: TermContext,
+    book_page: BookPage,
+    language_preferences: LanguagePreferences,
+) -> dict[str, Any]:
+    return {
+        "url": article_params.get("url", "").format(
+            term=urllib.parse.quote(context.word),
+            lang=book_page.book.language.name.lower(),
+            langCode=book_page.book.language.google_code,
+            toLang=language_preferences.user_language.name.lower(),
+            toLangCode=language_preferences.user_language.google_code,
+        ),
+        "window": article_params.get("window", True),
+    }
+
+
+def _dictionary_article(
+    article_params: dict[str, Any],
+    context: TermContext,
+    book_page: BookPage,
+    language_preferences: LanguagePreferences,
+) -> str:
+    translator = get_translator(
+        article_params["dictionary"],
+        book_page.book.language.name.lower(),
+        language_preferences.user_language.name.lower(),
+    )
+    return translator.translate(context.word)
+
+
+def get_lexical_article(  # noqa: PLR0913
     article_name: str,
     article_params: dict[str, Any],
-    selected_text: str,
+    context: TermContext,
     book_page: BookPage,
-    term_word_ids: list[int],
     language_preferences: LanguagePreferences,
     user: CustomUser,
 ) -> dict[str, Any]:
@@ -61,87 +100,73 @@ def get_lexical_article(  # noqa: PLR0913,PLR0911
 
     Return {"article": str, "error": bool} dictionary.
     """
-    # Validate required languages are set
-    if not book_page.book.language:
-        return {"article": "Error: Book language is not set", "error": True}
-    if not language_preferences.user_language:
-        return {"article": "Error: User language is not set", "error": True}
+    if error := _languages_error(book_page, language_preferences):
+        return {"article": error, "error": True}
 
     if article_name == "Site":
-        return {
-            "url": article_params.get("url", "").format(
-                term=urllib.parse.quote(selected_text),
-                lang=book_page.book.language.name.lower(),
-                langCode=book_page.book.language.google_code,
-                toLang=language_preferences.user_language.name.lower(),
-                toLangCode=language_preferences.user_language.google_code,
-            ),
-            "window": article_params.get("window", True),
-        }
+        return _site_link(article_params, context, book_page, language_preferences)
 
     if article_name == "Dictionary":
-        translator = get_translator(
-            article_params["dictionary"],
-            book_page.book.language.name.lower(),
-            language_preferences.user_language.name.lower(),
-        )
-        return {"article": translator.translate(selected_text)}
+        return {
+            "article": _dictionary_article(
+                article_params,
+                context,
+                book_page,
+                language_preferences,
+            ),
+        }
 
     try:
-        llm = Llm()
-        data = llm.generate_article(
-            article_name=article_name,
-            params={**article_params, "user": user},
-            data={
-                "book_code": book_page.book.code,
-                "book_page_number": book_page.number,
-                "user_language": language_preferences.user_language.google_code,
-                "term_word_ids": term_word_ids,
-                "text_language": book_page.book.language.google_code,
-            },
+        article = generate_article(
+            article_request(
+                article_name,
+                article_params,
+                context,
+                book_page.book.language.name,
+                language_preferences.user_language.name,
+                user,
+            ),
         )
-        return {"article": str(data)}
-    except AIModelRetiredError as e:
-        error_template_folder = get_llm_errors_folder()
-        error_message = render_to_string(
-            f"{error_template_folder}/retired_model.html",
-            {"model_name": e.model_name},
-        )
-        return {"article": error_message, "error": True}
-    except AIModelError as e:
-        error_template_folder = get_llm_errors_folder()
-        try:
-            if not e.show_api_key_info:
-                raise TemplateDoesNotExist("fallback to general error template") from e
-            error_message = render_to_string(
-                f"{error_template_folder}/{e.model_class}.html",
-                {"model_name": e.model_name, "error_message": e.error_message},
-            )
-        except TemplateDoesNotExist:
-            # Fallback to generic error template if specific template doesn't exist
-            error_message = render_to_string(
-                f"{error_template_folder}/generic_error.html",
-                {
-                    "model_class": e.model_class,
-                    "model_name": e.model_name,
-                    "error_message": e.error_message,
-                },
-            )
-        return {"article": error_message, "error": True}
+        return {"article": article}
+    except ArticleError as e:
+        return {"article": e.html, "error": True}
     except Exception as e:  # noqa: BLE001
-        return {"article": f"An error occurred: {e}", "error": True}
+        logger.exception("Lexical article failed")
+        return {"article": _generic_error_text(e), "error": True}
+
+
+def article_request(  # noqa: PLR0913
+    article_type: str,
+    article_params: dict[str, Any],
+    context: TermContext,
+    text_language: str,
+    user_language: str,
+    user: CustomUser,
+) -> ArticleRequest:
+    return ArticleRequest(
+        article_type=article_type,
+        model=article_params.get("model", ""),
+        effort=article_params.get("effort") or None,
+        tier=article_params.get("tier") or None,
+        prompt=article_params.get("prompt"),
+        word=context.word,
+        sentence=context.sentence,
+        text_language=text_language,
+        user_language=user_language,
+        user=user,
+    )
 
 
 @smart_login_required
 @get_params(TranslateGetParams)
-def translate(request: HttpRequest, params: TranslateGetParams) -> HttpResponse:  # pylint: disable=too-many-locals
-    """Translate the selected text.
-
-    The selected text is defined by the word IDs.
-    If the lexical article is provided, the article is generated for the selected text.
-    """
+def translate(request: HttpRequest, params: TranslateGetParams) -> HttpResponse:
+    if params.lexical_article != "0":
+        return JsonResponse(
+            {"error": "Sidebar articles are served by /translate/stream"},
+            status=400,
+        )
     user = get_custom_user(request)
-    book = Book.objects.get(code=params.book_code)
+    book = Book.get_if_can_be_read(user, code=params.book_code)
     book_page = BookPage.objects.get(book=book, number=params.book_page_number)
 
     language_preferences = LanguagePreferences.get_or_create_language_preferences(
@@ -151,98 +176,151 @@ def translate(request: HttpRequest, params: TranslateGetParams) -> HttpResponse:
 
     assert params.word_ids is not None
     term_word_ids = [int(_id) for _id in params.word_ids.split(".")]
-    term_text = extract_content_from_html(
-        book_page.content[
-            book_page.words[term_word_ids[0]][0] : book_page.words[term_word_ids[-1]][1]
-        ],
-    )
+    context = term_context(book_page, term_word_ids)
+    term_text = context.word
     logger.info(f"Selected text: {term_text}")
 
     if term_text.strip() == "":
         return JsonResponse({"error": "Selected text is empty"}, status=400)
 
-    result: dict[str, Any] = {}
+    result = get_lexical_article(
+        language_preferences.inline_translation_type,
+        language_preferences.inline_translation_parameters,
+        context,
+        book_page,
+        language_preferences,
+        user,
+    )
+    if result.get("error"):
+        return JsonResponse(result)
 
-    if int(params.lexical_article) == 0:
-        article_type = language_preferences.inline_translation_type
-        article_parameters = language_preferences.inline_translation_parameters
-        result.update(
-            get_lexical_article(
-                article_type,
-                article_parameters,
-                term_text,
-                book_page,
-                term_word_ids,
-                language_preferences,
-                user,
-            ),
-        )
-        result["article"] = result["article"].split("<hr>")[0]
-
-        # Create or update TranslationHistory instance
-        context = get_context_for_translation_history(book, book_page, term_word_ids)
-        translation_history, created = TranslationHistory.objects.update_or_create(
-            term=term_text,
-            source_language=book.language,
-            user=user,
-            defaults={
-                "translation": result["article"],
-                "target_language": language_preferences.user_language,
-                "context": context,
-                "book": book,
-            },
-        )
-        if not created:
-            translation_history.lookup_count += 1
-            translation_history.last_lookup = django.utils.timezone.now()
-            translation_history.save()
-
-    else:
-        all_articles = language_preferences.lexical_articles.all()  # type: ignore[attr-defined]
-        article_index = int(params.lexical_article) - 1
-
-        if 0 <= article_index < len(all_articles):
-            article = all_articles[article_index]
-            result.update(
-                get_lexical_article(
-                    article.type,
-                    article.parameters,
-                    term_text,
-                    book_page,
-                    term_word_ids,
-                    language_preferences,
-                    user,
-                ),
-            )
-        else:
-            return JsonResponse({"error": "Lexical article not found"}, status=404)
+    result["article"] = result["article"].split("<hr>")[0]
+    history_context = get_context_for_translation_history(book_page, term_word_ids)
+    translation_history, created = TranslationHistory.objects.update_or_create(
+        term=term_text,
+        source_language=book.language,
+        user=user,
+        defaults={
+            "translation": result["article"],
+            "target_language": language_preferences.user_language,
+            "context": history_context,
+            "book": book,
+        },
+    )
+    if not created:
+        translation_history.lookup_count += 1
+        translation_history.last_lookup = django.utils.timezone.now()
+        translation_history.save()
     return JsonResponse(result)
 
 
-def get_context_for_translation_history(
-    book: Book,
-    book_page: BookPage,
-    term_word_ids: list[int],
-) -> str:
-    """Get the context for the term to save in Translation History.
+def _ndjson_line(event: dict[str, Any]) -> bytes:
+    return (json.dumps(event, ensure_ascii=False) + "\n").encode("utf-8")
 
-    Surround the sentence with the term with {CONTEXT_MARK}.
 
-    Replace the term inside it with single {CONTEXT_MARK}.
-    """
-    llm = Llm()
-    data = {
-        "book_code": book.code,
-        "book_page_number": book_page.number,
-        "term_word_ids": term_word_ids,
+def _error_event(message: str) -> dict[str, str]:
+    return {
+        "event": "error",
+        "kind": ArticleError.GENERIC,
+        "html": f'<div class="alert alert-danger" role="alert">{html.escape(message)}</div>',
     }
-    marked_context = llm.mark_term_and_sentence(llm.hashable_dict(data), context_words=10)
 
-    # Replace sentence marks with CONTEXT_MARK
-    context = marked_context.replace(SENTENCE_START_MARK, TranslationHistory.CONTEXT_MARK)
-    context = context.replace(SENTENCE_END_MARK, TranslationHistory.CONTEXT_MARK)
 
-    # Replace the marked words (including surrounding marks) with a single CONTEXT_MARK
-    start_index = context.find(WORD_START_MARK)
-    end_index = context.find(WORD_END_MARK, start_index) + len(WORD_END_MARK)
-    return context[:start_index] + TranslationHistory.CONTEXT_MARK + context[end_index:]
+def _article_events(  # noqa: PLR0913
+    article_type: str,
+    article_params: dict[str, Any],
+    context: TermContext,
+    book_page: BookPage,
+    language_preferences: LanguagePreferences,
+    user: CustomUser,
+) -> Iterator[dict[str, Any]]:
+    if error := _languages_error(book_page, language_preferences):
+        yield _error_event(error)
+    elif article_type == "Site":
+        yield {
+            "event": "site",
+            **_site_link(article_params, context, book_page, language_preferences),
+        }
+    elif article_type == "Dictionary":
+        try:
+            text = _dictionary_article(article_params, context, book_page, language_preferences)
+            yield {"event": "delta", "text": text}
+        except Exception as e:  # noqa: BLE001
+            logger.exception("Dictionary article failed")
+            yield _error_event(_generic_error_text(e))
+    else:
+        req = article_request(
+            article_type,
+            article_params,
+            context,
+            book_page.book.language.name,
+            language_preferences.user_language.name,
+            user,
+        )
+        for event in stream_article(req):
+            yield event.to_dict()
+    yield {"event": "done"}
+
+
+@smart_login_required
+@get_params(TranslateGetParams)
+def translate_stream(request: HttpRequest, params: TranslateGetParams) -> HttpResponse:
+    user = get_custom_user(request)
+    book = Book.get_if_can_be_read(user, code=params.book_code)
+    book_page = BookPage.objects.get(book=book, number=params.book_page_number)
+    language_preferences = LanguagePreferences.get_or_create_language_preferences(
+        user,
+        book.language,  # type: ignore[arg-type]
+    )
+
+    assert params.word_ids is not None
+    context = term_context(book_page, [int(_id) for _id in params.word_ids.split(".")])
+    if context.word.strip() == "":
+        return JsonResponse({"error": "Selected text is empty"}, status=400)
+
+    all_articles = list(language_preferences.get_lexical_articles())
+    article_index = int(params.lexical_article) - 1
+    if not 0 <= article_index < len(all_articles):
+        return JsonResponse({"error": "Lexical article not found"}, status=404)
+    article = all_articles[article_index]
+
+    events = _article_events(
+        article.type,
+        article.parameters,
+        context,
+        book_page,
+        language_preferences,
+        user,
+    )
+    response = StreamingHttpResponse(
+        (_ndjson_line(event) for event in events),
+        content_type=NDJSON_CONTENT_TYPE,
+    )
+    response["Cache-Control"] = "no-cache"
+    response["X-Accel-Buffering"] = "no"
+    return response
+
+
+def get_context_for_translation_history(book_page: BookPage, term_word_ids: list[int]) -> str:
+    text = book_page.content
+    mapping = book_page.word_sentence_mapping
+    last_word = len(book_page.words) - 1
+    context = term_context(book_page, term_word_ids)
+
+    context_start, context_end = words_span(
+        book_page,
+        sentences_word_ids(
+            book_page,
+            mapping[max(0, term_word_ids[0] - HISTORY_CONTEXT_WORDS)],
+            mapping[min(last_word, term_word_ids[-1] + HISTORY_CONTEXT_WORDS)],
+        ),
+    )
+    sentence_start, sentence_end = context.sentence_span
+    term_start, term_end = context.term_span
+    mark = TranslationHistory.CONTEXT_MARK
+    return (
+        f"{text[context_start:sentence_start]}{mark}"
+        f"{text[sentence_start:term_start]}{mark}"
+        f"{text[term_end:sentence_end]}{mark}"
+        f"{text[sentence_end:context_end]}"
+    )

@@ -15,7 +15,7 @@ from django.views.decorators.http import require_http_methods
 
 from lexiflux.auth import smart_login_required
 from lexiflux.custom_user import get_custom_user
-from lexiflux.language.llm import Llm
+from lexiflux.language.ai_models import DEFAULT_AI_MODEL, editor_models, validate_knobs
 from lexiflux.language.translation import Translator, get_translator
 from lexiflux.language_preferences_default import create_default_language_preferences
 from lexiflux.models import (
@@ -85,11 +85,6 @@ def language_preferences_editor(request: HttpRequest) -> HttpResponse:
     articles_json = json.dumps(articles)
     inline_translation_json = json.dumps(language_preferences.inline_translation)
 
-    llm = Llm()
-    ai_models = [
-        {"key": key, "title": value["title"], "suffix": value["suffix"]}
-        for key, value in llm.chat_models.items()
-    ]
     translators = Translator.available_translators()
 
     context = {
@@ -101,7 +96,8 @@ def language_preferences_editor(request: HttpRequest) -> HttpResponse:
         "default_language_preferences": language_preferences,
         "inline_translation": inline_translation_json,
         "lexical_article_types": LexicalArticleType.choices,
-        "ai_models": json.dumps(ai_models),
+        "ai_models": json.dumps(editor_models()),
+        "default_ai_model": DEFAULT_AI_MODEL,
         "translators": json.dumps(translators),
     }
 
@@ -175,6 +171,16 @@ def update_user_language(request: HttpRequest) -> JsonResponse:
         return JsonResponse({"status": "error", "message": str(e)})
 
 
+def article_parameters(article_type: str, parameters: dict[str, Any]) -> dict[str, Any]:
+    # An empty knob means the model default, so it is not stored.
+    allowed = LEXICAL_ARTICLE_PARAMETERS.get(article_type, [])
+    return {
+        name: value
+        for name, value in parameters.items()
+        if name in allowed and not (name in ("effort", "tier") and not value)
+    }
+
+
 def check_article_params(
     article_type: str,
     parameters: dict[str, str],
@@ -219,6 +225,15 @@ def check_article_params(
                 f"Error checking translation from {source_language} to {target_language} "
                 f"with {dictionary_name}: {str(e)}",
             )
+    elif article_type != "Site":
+        try:
+            validate_knobs(
+                parameters.get("model", ""),
+                parameters.get("effort") or None,
+                parameters.get("tier") or None,
+            )
+        except ValueError as e:
+            return JsonResponse({"status": "error", "message": str(e)}, status=400)
     return None
 
 
@@ -236,15 +251,11 @@ def save_inline_translation(request: HttpRequest) -> JsonResponse:
     if error_response := check_article_params(translation_type, parameters, language_preferences):
         return error_response
 
-    # Filter the parameters to only include valid ones for the selected type
-    filtered_parameters = {
-        k: v
-        for k, v in parameters.items()
-        if k in LEXICAL_ARTICLE_PARAMETERS.get(translation_type, [])
-    }
-
     language_preferences.inline_translation_type = translation_type
-    language_preferences.inline_translation_parameters = filtered_parameters
+    language_preferences.inline_translation_parameters = article_parameters(
+        translation_type,
+        parameters,
+    )
     language_preferences.save()
 
     return JsonResponse(
@@ -331,10 +342,12 @@ def add_lexical_article(
             language_preferences=language_preferences,
             type=data["type"],
             title=data["title"],
-            parameters=data["parameters"],
+            parameters=article_parameters(data["type"], data["parameters"]),
             order=new_order,  # Set the order to the end of the list
         )
         return JsonResponse({"status": "success", "id": article.id})
+    except ValidationError as e:
+        return JsonResponse({"status": "error", "message": " ".join(e.messages)}, status=400)
     except IntegrityError:
         return JsonResponse(
             {"status": "error", "message": "An article with this title already exists"},
@@ -377,12 +390,15 @@ def edit_lexical_article(
 
         article.type = data.get("type", article.type)
         article.title = data.get("title", article.title)
-        article.parameters = data.get("parameters", article.parameters)
+        article.parameters = article_parameters(
+            article.type,
+            data.get("parameters", article.parameters),
+        )
         article.full_clean()  # Validate the model
         article.save()
         return JsonResponse({"status": "success", "id": article.id})
     except ValidationError as e:
-        return JsonResponse({"status": "error", "message": str(e)}, status=400)
+        return JsonResponse({"status": "error", "message": " ".join(e.messages)}, status=400)
     except Exception:  # noqa: BLE001
         logger.exception("Error editing article")
         return JsonResponse({"status": "error", "message": "Failed to edit article"}, status=500)

@@ -1,0 +1,217 @@
+{
+ "en-spring": {
+  "H2": "C-pool",
+  "V8": "B-groq",
+  "L2": "C-groq",
+  "D6": "A-gemini",
+  "M4": "B-gemini",
+  "M2": "C-gemini",
+  "C6": "A-groq"
+ },
+ "en-saw": {
+  "F6": "C-pool",
+  "W7": "B-gemini",
+  "F4": "A-groq",
+  "K2": "B-groq",
+  "X7": "A-gemini",
+  "K4": "C-gemini",
+  "C5": "C-groq"
+ },
+ "en-make-out": {
+  "J7": "A-gemini",
+  "P3": "B-gemini",
+  "A3": "B-groq",
+  "K4": "C-gemini",
+  "X8": "C-pool",
+  "X7": "C-groq",
+  "D3": "A-groq"
+ },
+ "en-file": {
+  "P6": "B-groq",
+  "S2": "A-groq",
+  "K3": "B-gemini",
+  "D9": "C-groq",
+  "P7": "A-gemini",
+  "U3": "C-pool",
+  "Q7": "C-gemini"
+ },
+ "en-fine": {
+  "P7": "C-gemini",
+  "Q7": "A-groq",
+  "T7": "C-pool",
+  "P5": "B-groq",
+  "V6": "A-gemini",
+  "J9": "C-groq",
+  "K4": "B-gemini"
+ },
+ "en-bear": {
+  "J6": "B-gemini",
+  "T8": "A-groq",
+  "C6": "A-gemini",
+  "K2": "C-pool",
+  "P6": "C-gemini",
+  "U4": "C-groq",
+  "Y2": "B-groq"
+ },
+ "en-at-any-rate": {
+  "X8": "B-groq",
+  "T2": "A-groq",
+  "L9": "A-gemini",
+  "T9": "C-gemini",
+  "W3": "B-gemini",
+  "Y3": "C-pool",
+  "R4": "C-groq"
+ },
+ "en-bill": {
+  "L8": "A-gemini",
+  "X6": "B-groq",
+  "X4": "C-gemini",
+  "Z4": "C-groq",
+  "E6": "B-gemini",
+  "X2": "C-pool",
+  "S9": "A-groq"
+ },
+ "de-schloss": {
+  "S4": "A-gemini",
+  "Z8": "C-gemini",
+  "F2": "B-groq",
+  "L8": "A-groq",
+  "J2": "C-groq",
+  "H8": "B-gemini",
+  "T7": "C-pool"
+ },
+ "de-leiter": {
+  "U8": "C-pool",
+  "Y9": "A-gemini",
+  "Z5": "A-groq",
+  "Y2": "B-groq",
+  "V8": "C-groq",
+  "F7": "C-gemini",
+  "H4": "B-gemini"
+ },
+ "de-aufstehen": {
+  "H5": "B-gemini",
+  "L8": "C-groq",
+  "Y9": "C-gemini",
+  "Z2": "B-groq",
+  "D9": "A-groq",
+  "H8": "A-gemini",
+  "P3": "C-pool"
+ },
+ "de-gericht": {
+  "B5": "B-groq",
+  "J8": "A-groq",
+  "Z8": "C-groq",
+  "H5": "A-gemini",
+  "N8": "C-gemini",
+  "Y3": "C-pool",
+  "L2": "B-gemini"
+ },
+ "de-bank": {
+  "G6": "C-gemini",
+  "L3": "C-groq",
+  "D4": "A-gemini",
+  "C5": "C-pool",
+  "K9": "A-groq",
+  "J6": "B-gemini",
+  "W2": "B-groq"
+ },
+ "de-haken": {
+  "V7": "C-gemini",
+  "F7": "C-groq",
+  "W4": "A-groq",
+  "D8": "A-gemini",
+  "X5": "B-gemini",
+  "A6": "C-pool",
+  "E8": "B-groq"
+ },
+ "de-reinen-wein": {
+  "Z9": "A-groq",
+  "V7": "A-gemini",
+  "B5": "B-groq",
+  "R7": "C-gemini",
+  "Z8": "C-groq",
+  "F5": "B-gemini",
+  "W3": "C-pool"
+ },
+ "de-fluegel": {
+  "U8": "B-groq",
+  "F2": "C-pool",
+  "M2": "B-gemini",
+  "C3": "A-groq",
+  "Y2": "C-groq",
+  "U9": "A-gemini",
+  "B8": "C-gemini"
+ },
+ "sr-grad": {
+  "V4": "A-groq",
+  "L9": "C-gemini",
+  "X3": "B-gemini",
+  "N4": "B-groq",
+  "G9": "C-pool",
+  "G5": "A-gemini",
+  "M9": "C-groq"
+ },
+ "sr-jezik": {
+  "S2": "A-groq",
+  "W8": "C-groq",
+  "M6": "B-gemini",
+  "B2": "A-gemini",
+  "F4": "B-groq",
+  "U5": "C-pool",
+  "P2": "C-gemini"
+ },
+ "sr-vratiti-se": {
+  "C4": "B-gemini",
+  "X4": "A-groq",
+  "S4": "C-gemini",
+  "S7": "B-groq",
+  "W9": "C-groq",
+  "J7": "C-pool",
+  "S8": "A-gemini"
+ },
+ "sr-luk": {
+  "M8": "C-pool",
+  "T5": "B-groq",
+  "H2": "A-gemini",
+  "L5": "B-gemini",
+  "R5": "A-groq",
+  "H8": "C-groq",
+  "X3": "C-gemini"
+ },
+ "sr-kosa": {
+  "K5": "C-gemini",
+  "E9": "A-gemini",
+  "A7": "B-gemini",
+  "R8": "C-groq",
+  "L6": "C-pool",
+  "E2": "B-groq",
+  "B8": "A-groq"
+ },
+ "sr-sat": {
+  "M5": "A-groq",
+  "B8": "A-gemini",
+  "V5": "C-gemini",
+  "T2": "C-groq",
+  "J6": "B-groq",
+  "J5": "B-gemini"
+ },
+ "sr-koplje": {
+  "B6": "C-groq",
+  "E4": "C-pool",
+  "G9": "B-gemini",
+  "C9": "A-groq",
+  "W8": "C-gemini",
+  "Q6": "A-gemini",
+  "U2": "B-groq"
+ },
+ "sr-kljuc": {
+  "J4": "C-gemini",
+  "E3": "B-gemini",
+  "G3": "B-groq",
+  "H6": "A-groq",
+  "P6": "C-pool",
+  "E9": "A-gemini",
+  "X6": "C-groq"
+ }
+}

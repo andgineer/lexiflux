@@ -9,31 +9,32 @@ lexiflux stops using LangChain. Every AI article goes through llmbroker:
   (GPT-5.6 Sol) with reasoning off and priority processing: the configuration
   echo-words measured best for the "Подробнее" article on 2026-09-21;
 - sidebar articles stream into the pane;
-- the AI Settings page builds its key tabs from llmbroker's catalog and key hints
-  instead of hard-coded provider classes;
+- lexiflux holds no API keys: llmbroker reads the operator's keys from the environment
+  and `.env`, and the AI Settings page is removed;
 - temperature is replaced by two per-article knobs, reasoning effort and processing
   tier, with measured defaults.
 
 Evidence behind the model set and defaults: `../echo-words/spec/decision-llm-backend.md`,
 sections "The deeper article: Sol, with reasoning off, on priority processing — 2026-09-21",
 "Streamed racing with whole-answer replacement is the shipped adapter — 2026-09-06" and
-"The paid tier: `gpt-5.6-luna` is the one worth reaching for".
+"The paid tier: `gpt-5.6-luna` is the one worth reaching for". Evidence behind the context
+and the prompts: lexiflux's own bench, Phase 1 below.
 
-## Decisions taken in the brainstorm
+## Decisions
 
 | Topic | Decision |
 |---|---|
-| Broker shape | One process-wide sync `llmbroker.Broker`; each request uses `broker.for_scope(f"u-{user.id}")` |
-| Keys, cloud (Koyeb) | The user's own keys only. No env fallback for any key, pool or paid |
-| Keys, local and Docker | The user's key if set, else env and `.env` in the repo root. `invoke rundocker` passes `--env-file .env` |
-| Key migration | None. Old `AIModelConfig` rows are dropped |
-| Article migration | One-time reset: every user's articles and inline-translation setting are recreated from the new defaults. Future migrations never delete user-defined articles |
+| Broker shape | One process-wide sync `llmbroker.Broker`; each request uses `broker.for_scope(f"u-{user.id}")`, which only attributes journal rows to the user |
+| Keys | lexiflux stores, reads and shows no keys. llmbroker reads the operator's keys from env and `.env` in the repo root; on Koyeb they are Koyeb secrets exposed as env vars. Every user spends the operator's keys, paid models included. `AIModelConfig` rows are dropped and the AI Settings page is removed |
+| Broker state | Locally and in Docker: lexiflux's own llmbroker home (`BASE_DIR / ".llmbroker"`, git- and docker-ignored), so the persistent pool exclusions do not leak into other llmbroker users on the machine. On Koyeb: lexiflux's Postgres (`DATABASE_URL`), so the pool's learned model ordering survives deploys. Keys stay in env there too |
+| Existing data | No data migration. lexiflux has a single user, the author, and no database to carry over: he recreates his local DB with `invoke init-db` (it drops the old one), and it gets the new default articles through the normal defaults path. The migration is schema-only |
 | Offered models | `pool`, `gpt` (Sol), `gpt-fast` (Luna), `opus`. Sonnet, Haiku, gpt-mini, Gemini paid, Grok, DeepSeek, Mistral and Ollama are dropped |
 | Knobs | Reasoning effort and processing tier, per article, with per-model defaults, only for providers where measured |
-| Streaming | In v1. NDJSON over `fetch`; pool uses `fastest_of=2, wait=25` with whole-answer replacement |
-| Serving | Stays WSGI (`runserver`). llmbroker gets a sync `stream()` |
-| Term context | The prompt gets two plain values, the selected **word** and its **sentence**. The `[FRAGMENT]`/`[HIGHLIGHT]` marks go away. An experiment checks this before the prompt ships |
-| Prompts | AI dictionary → echo-words short-article rules; new In depth → echo-words extended prompt verbatim; Origin gets the "only where you know it" rule; all prompts get language names instead of Google codes |
+| Streaming | In v1. NDJSON over `fetch`; pool uses `fastest_of=2, wait=25` with whole-answer replacement. The streaming response bypasses `GZipMiddleware` |
+| Serving | Stays WSGI (`runserver`). llmbroker gets a sync `stream()` (Phase 0) |
+| Term context | The prompt gets two plain values, the selected **word** and its **sentence**, as echo-words does. No `[FRAGMENT]`/`[HIGHLIGHT]` marks. A sentence shorter than 6 words is extended with its neighbours (Phase 1 result) |
+| Prompts | AI dictionary → echo-words short-article rules; new In depth → echo-words extended prompt plus one sentence naming the whole unit; Origin gets the "only where you know it" rule; all prompts get language names instead of Google codes |
+| Rendering | AI article panels keep the answer's line breaks; Markdown `**x**`/`*x*` in an answer is shown as bold/italic |
 
 ### Offered models and default knobs
 
@@ -54,7 +55,7 @@ Only what echo-words sent (`experiments/tier_screen.py`, lines 72–101). Anythi
 | openai | `none`/`low`/`medium`/`high` → `{"reasoning_effort": v}` | `priority` → `{"service_tier": "priority"}`; `standard` → nothing |
 | anthropic | `none` → `{"thinking": {"type": "disabled"}}`; `low`/`medium`/`high` → `{"reasoning_effort": v}` | not offered |
 
-### Default articles (new users and the one-time reset)
+### Default articles (new users)
 
 | Title | Type | Parameters |
 |---|---|---|
@@ -66,7 +67,7 @@ Only what echo-words sent (`experiments/tier_screen.py`, lines 72–101). Anythi
 Inline translation: `Dictionary` / `GoogleTranslator` (unchanged default).
 Any AI article type a user adds defaults to `gpt`, `none`, `priority`.
 
-## Context (discovered in the brainstorm)
+## Context
 
 lexiflux:
 - `lexiflux/language/llm.py`: LangChain pipelines, `mark_term_and_sentence` (lines ~310–400),
@@ -80,300 +81,301 @@ lexiflux:
 - `lexiflux/language_preferences_default.py`: `DEFAULT_LEXICAL_ARTICLES`
 - `lexiflux/views/lexical_views.py`: `get_lexical_article`, `translate`,
   `get_context_for_translation_history` (line 222), `get_llm_errors_folder`
-- `lexiflux/views/ai_settings_views.py`, `lexiflux/templates/ai-settings.html`,
-  `lexiflux/templates/ai-settings-vue.js`
+- AI Settings, all removed: `lexiflux/views/ai_settings_views.py`,
+  `lexiflux/templates/ai-settings.html`, `lexiflux/templates/ai-settings-vue.js`, its routes in
+  `lexiflux/urls.py`, its link in `lexiflux/templates/hamburger.html`
 - `lexiflux/views/language_preferences_views.py` (line 88: `ai_models` from `chat_models`),
   `lexiflux/templates/language-preferences-vue.js`,
   `lexiflux/templates/partials/lexical_artical_modal.html` (model selects at lines 51, 70)
 - `lexiflux/templates/llm-error/*.html`, `lexiflux/templates/llm-error-env/*.html` (12 files)
 - `lexiflux/viewport/translate.ts`: `makeRequest` (line 148), `updateLexicalPanel` (430),
-  `showSpinnerInLexicalPanel`
+  `showSpinnerInLexicalPanel`; `.lexical-content` has no `white-space` rule
 - `lexiflux/templates/reader.html` (article tabs, lines 155–171), `lexiflux/views/reader_views.py`
-- `lexiflux/environments/{base,local,docker,koyeb}.py`, `lexiflux/lexiflux_settings.py`
-  (`ui_settings_only`)
+- `lexiflux/environments/{base,local,docker,koyeb}.py` (`GZipMiddleware` in `base.py` line 62 and
+  `koyeb.py` line 64; `DATABASE_URL` in `koyeb.py`), `lexiflux/lexiflux_settings.py`
 - `docker/Dockerfile` (Ollama: lines 15, 34, 41), `docker/start.sh` (line 3),
   `docker/start_ollama.sh`, `tasks.py` `rundocker` (line 304), `.dockerignore`
 - `requirements.in` (lines 13–23), `requirements.koyeb.in` (lines 24–31)
 - `tests/profile_llm.py`, `llm_benchmark.json`: the old profiler, superseded by the echo-words research
 - `experiments/lexical_articles.ipynb`
 - Docs: `docs/src/en/aimodels.md`, `docs/src/en/docker.md`
+- Phase 1 bench: `experiments/context_bench.py`, `experiments/context_bench_aggregate.py`,
+  `experiments/context_bench.json`, `experiments/.context-bench/review/`,
+  `experiments/context_bench_prompts/`
 
-llmbroker (`../llmbroker`, v1.10.5):
-- `src/llmbroker/sync.py`: sync `Broker`/`LLMs` over a background loop thread, no `stream()`
-- `src/llmbroker/broker/broker.py`: `for_scope` (line 249) caches a `KeyRing` per scope;
-  `rebuild` (267) is the only re-read
-- `src/llmbroker/broker/keyring.py`: "The keys of one scope, read once and held until the
-  pool is rebuilt"
-- `src/llmbroker/broker/curated.py`: `curated_pool()`, `curated_paid()` (`CuratedModel.provider.id`),
-  `curated_providers()` (`key_help`, `label`)
-- `src/llmbroker/protocols/secrets.py`: `SecretsProtocol.resolve`, optional `refs(prefix)`
+llmbroker (`../llmbroker`; Phase 0 released as 1.11.0):
+- `src/llmbroker/sync.py`: sync `Broker`/`LLMs` over a background loop thread
+- `src/llmbroker/broker/curated.py`: `curated_pool()` (`configs`, `keys` with `help`),
+  `curated_paid()` (`CuratedModel.provider.id`), `curated_providers()` (`key_help`, `label`)
 - `src/llmbroker/standalone/secrets.py`: `Secrets(env_file)`, env first, then the file
+- `Broker("postgresql://…")` needs the `llmbroker[postgres]` extra (asyncpg); `secrets=` picks
+  the key source separately from the datasource
 - `downstream.toml`: hosts checked on every llmbroker change
 
-## Phase 0 — llmbroker: sync streaming and per-scope key refresh
+## Phase 0 — llmbroker: sync streaming (released as 1.11.0)
 
-Done in `../llmbroker`; lexiflux cannot stream under WSGI without it.
+Released as llmbroker 1.11.0 after five review rounds. Gate green: `invoke pre`,
+`invoke test` (both passes), `invoke downstream` (dinary, echo-words, lexiflux: no regression).
 
-- [ ] Sync `stream()` on `Broker`, on the scoped `LLMs` (`for_scope`) and on the sync
-  `DirectClient`, with the same arguments as the async ones (`operation`, `wait`,
-  `fastest_of`, `stream_selection_window`; `params` on direct). It returns a sync iterator
-  of text deltas that runs the async stream on the broker's loop thread and hands
-  deltas back through a thread-safe queue
-- [ ] The sync iterator raises the same exceptions at the same points:
-  `StreamReplacementError` (with `.replacement`), `StreamInterruptedError`,
-  `NoLLMAvailableError`, `MissingKeyError`, `AuthError`, `RateLimitError`
-- [ ] Closing the iterator early (`close()` / garbage collection / `GeneratorExit` in the
-  consumer) cancels the underlying async stream, so an aborted HTTP response stops the
-  provider call
-- [ ] Per-scope key refresh: a call on `AsyncBroker` and the sync `Broker` that drops one
-  scope's cached `KeyRing`, so the next `for_scope(scope)` re-reads that scope's keys.
-  Proposed name `forget_scope(scope)`; final name follows llmbroker's conventions. Record
-  it in `specs/reference/decisions.md` next to `the-broker-is-the-installation-a-caller-is-a-scope`
-- [ ] Tests in llmbroker for the sync stream (deltas, replacement, interruption, early
-  close cancels) and for `forget_scope` (a changed key is used on the next call; other
-  scopes keep their rings)
-- [ ] Docs: `docs/src/en/async.md` and `docs/src/en/direct.md` stop saying streaming is
-  async-only; `docs/src/en/server.md#multiuser` documents `forget_scope`
-- [ ] Add lexiflux to `downstream.toml` as a host (after Phase 2 lands, so its tests exist)
-- [ ] Release a new llmbroker version to PyPI
+The API lexiflux uses:
+- `Broker.stream(...)` and `LLMs.stream(...)` (scoped, from `for_scope`), with the async
+  arguments (`operation`, `wait`, `fastest_of`, `stream_selection_window`, …), return
+  `llmbroker.Stream`: an iterator of text deltas and a context manager; `close()` cancels the
+  provider call. Each `next()` runs one pull of the async stream on the broker's loop thread
+- `DirectClient.stream(prompt, *, messages=None, timeout=None, params=None) -> Iterator[str]`
+  over blocking httpx; closing it closes the connection. `llms.direct(model)` returns a
+  `DirectClient` that owns an HTTP client and is closed with `with`
+- Pooled stream errors: at the first `next()`, `NoLLMAvailableError` with `.reason`
+  `no_keys` / `empty_pool` / `all_disabled` / `excluded` / `timeout` (`.retry_at` on
+  `timeout`) or `ProviderError`; `AuthError`, `RateLimitError` and `MissingKeyError` never
+  reach a pooled caller. Mid-stream: `StreamInterruptedError`, `LLMTimeoutError` (`wait` ran
+  out), `StreamReplacementError` (`.replacement.text`)
+- Direct stream errors: `MissingKeyError` / `UnknownModelError` at `direct(...)`;
+  `AuthError`, `RateLimitError` (`.retry_after`), `ProviderError`,
+  `InvalidProviderResponseError`, `LLMTimeoutError` at the first `next()`; mid-stream
+  `LLMTimeoutError` or a raw `httpx.TransportError`
+- A stream whose broker was garbage-collected raises `RuntimeError("the broker is closed")`
 
-Verify: `cd ../llmbroker && source ./activate.sh && invoke test && invoke downstream`
+Lifetime contract (added after four review rounds all found defects in shutdown by garbage
+collection):
+- A sync `Stream` and a scoped `LLMs` keep their broker alive, so a broker with a live stream
+  or scoped caller is never collected
+- Closing the broker (`with llmbroker.Broker(...) as broker:`, or `close()`) is the orderly
+  shutdown: it closes owned streams and settles and journals them
+- A broker that is simply dropped is still cleaned up, as a best-effort backstop: collection
+  and interpreter exit never block the collecting thread and promise no journal row for an
+  answer still in flight
+- Reviews judge the sync layer against this contract; behaviour it does not promise is not a
+  finding
 
-## Phase 1 — Experiment: word + sentence context for the default article
+Remaining:
+- [x] Review → fix loop until a fresh review is clean
+- [x] Release 1.11.0: commit and push llmbroker `main`, then `invoke ver-feature`. Only with the
+  user's explicit go-ahead
+- [x] After Phase 7: add lexiflux to `downstream.toml` as a host
 
-Runs on llmbroker 1.10.5 (async API). Can run in parallel with Phase 0. It decides the
-wording of the new AI dictionary prompt before Phase 3 ships it.
+## Phase 1 — Experiment: context and prompt for the default article (done)
 
-Harness: `experiments/context_bench.py` (outside CI; `experiments/` is in `.dockerignore`).
+Bench: 24 words (8 English, 8 German, 8 Serbian) in real sentences, target language English.
+Answers were scored blind by six fresh reviewers (1–5, serious errors quoted, whether the
+article leads with the sense used in the passage, whether it heads the dictionary form,
+format). Files are listed under Context.
 
-- [ ] Items: 24, eight each of English, German, Serbian (Cyrillic and Latin mixed), target
-  language English. Each item is a real sentence (from `tests/resources` books where one
-  fits) plus the selected word ids, covering:
-  - polysemy where the sense in the sentence is not the most common one
-    (en `spring`/`fine`, de `Schloss`/`Bank`, sr `град` hail, `коса` scythe)
-  - a word repeated in its sentence in different senses (the one case the marks disambiguate)
-  - a separable or reflexive verb with only one piece selected (de `steht` in `Er steht um sieben auf`, sr `се`)
-  - a multi-word selection
-  - a sentence NLTK cuts short (abbreviation, dialogue line) where the neighbouring
-    sentence carries the sense
-- [ ] Arms:
-  - **A**: current `AI dictionary.txt` prompt, current marked passage (`mark_term_and_sentence`
-    with 10 context words)
-  - **B**: new prompt (echo-words short-article rules, see Phase 3), marked passage
-  - **C**: new prompt, `word` + `sentence`
-- [ ] Hold the model fixed across arms: declare the pool's two workhorses,
-  `google-gemini-3.5-flash-lite` and `groq-gpt-oss-120b`, as custom `LLMConfig`s from
-  `curated_pool().configs` under their own names and call them with `direct()`. Run each
-  arm on both. Also run arm C once through the real pool (`stream`, `fastest_of=2`, `wait=25`)
-  as a production-shaped smoke
-- [ ] Record per answer: text, model, first-delta and whole-answer latency, length
-- [ ] Blind review as in echo-words: one fresh reviewer (Claude subagent) per four words
-  of one language, scoring every arm's answer to a word side by side under labels drawn
-  afresh per word, anchored 5 = nothing false and useful, 2 = a serious error in the core,
-  1 = several. Each reviewer also records per answer:
-  - leads with the sense used in the sentence (yes/no)
-  - heads the selected unit's lemma, or the whole separable/reflexive unit (yes/no)
-  - every serious error, quoted
-  - contract: only `<b>`, `<i>`, `<table>`, `<tr>`, `<td>`; no Markdown or code fences;
-    written in the target language
-- [ ] Decision rule: ship **C** unless **B** beats it on context-sense hits or serious
-  errors with a 95% paired bootstrap interval excluding zero. **A** vs **B** is reported as
-  the value of the prompt change alone. If B wins only on the repeated-word class, ship C
-  and add the occurrence index to the prompt (e.g. `the second "saw"`) as a follow-up
-- [ ] In depth smoke on `gpt`, none, priority: 6 items with the `context_note` form, to
-  confirm the HTML contract and length in lexiflux's pane (≈ $0.25)
-- [ ] Write the result, with the numbers, into `specs/ai-articles.md` (Phase 7)
+Results, on Gemini 3.5 Flash Lite (the model that answers almost every pool request in
+steady state; 24 answers per row):
 
-Verify: `source ./activate.sh && python experiments/context_bench.py --arms A,B,C --out experiments/context_bench.json`
+| Instructions | How the word is given | Score /5 | Serious errors | Leads with the sense in the text | Format kept |
+|---|---|---|---|---|---|
+| current lexiflux prompt | passage with marks (today's code) | 3.17 | 15 | 24/24 | 0/24 |
+| echo-words short-article rules | passage with marks | 3.88 | 8 | 24/24 | 22/24 |
+| echo-words short-article rules | word + sentence | 3.58 | 9 | 17/24 | 19/24 |
+
+- The echo-words rules beat the current prompt clearly; answers shrink from ~3200 to
+  ~900–1500 characters.
+- Word + sentence lost only on two stress classes the bench over-represents (12 of 24
+  items): the splitter cutting a sentence short at an abbreviation or a dialogue line (the
+  sense-in-text hit 2/6 against 6/6), and one word repeated in a sentence in two senses (3/6
+  against 6/6). On the 12 ordinary items (polysemy, multi-word, separable verbs) word +
+  sentence was as good or better: sense-in-text 12/12 against 12/12, score 4.25 against 3.92,
+  serious errors 1 against 2. Word + sentence ships, with the short-sentence extension below
+  covering the splitter case; the repeated-word case is rare and accepted
+- The pool: on a cold broker Groq gpt-oss-120b wrote 10 of 23 answers (2.2/5, 23 serious
+  errors) and Gemini 13 (3.85/5, 4 serious errors); first text p50 3.0 s, p90 14.5 s, one
+  timeout. Three minutes later, warm, Gemini wrote 20 of 24, first text p50 0.9 s, p90 1.6 s.
+  In echo-words' steady state Gemini writes ~97% of answers. Hence persistent broker state on
+  Koyeb
+- In depth on `gpt` (none, priority), 12 answers: all within the HTML contract and 4000
+  characters (2.6–3.6k), about $0.035 per article. The verbatim echo-words prompt headed
+  the selected piece (`made`, `steht`, `vratio`) instead of the unit; one added sentence made
+  it head `make out`, `aufstehen`, `vratiti se` at the same length and cost
+- Every answer under the new rules lays itself out with line breaks, which the pane
+  currently collapses; Groq and some pool answers use Markdown emphasis
 
 ## Phase 2 — Dependencies and the broker module
 
-- [ ] `requirements.in` and `requirements.koyeb.in`: remove `langchain`, `langchain-community`,
-  `langchain-core`, `langchain-openai`, `langchain_anthropic`, `langchain_google_genai`,
-  `langchain_mistralai`, `langchain_ollama`, `openai`, `ollama`; add `llmbroker>=<Phase 0 version>`
-- [ ] `source ./activate.sh && invoke reqs`; Koyeb env: `source .venv-koyeb/bin/activate && uv pip install -r requirements.koyeb.txt`
-- [ ] New `lexiflux/language/broker.py`:
-  - `get_broker() -> llmbroker.Broker`: lazily created once per process, `direct=` the
-    aliases of the offered models, `secrets=LexifluxSecrets()`; closed at process exit
+- [x] `requirements.in`: remove `langchain`, `langchain-community`, `langchain-core`,
+  `langchain-openai`, `langchain_anthropic`, `langchain_google_genai`, `langchain_mistralai`,
+  `langchain_ollama`, `openai`, `ollama`; add `llmbroker>=1.11.0`. `requirements.koyeb.in`:
+  the same removals, add `llmbroker[postgres]>=1.11.0`
+- [x] `requirements*.txt` recompiled against llmbroker 1.11.0 from PyPI, without `--upgrade`
+  (only llmbroker, `tomli-w` and, for Koyeb, `asyncpg` added); `.venv` and `.venv-koyeb` synced
+- [x] New `lexiflux/language/broker.py`:
+  - `get_broker() -> llmbroker.Broker`: lazily created once per process with
+    `secrets=llmbroker.Secrets(BASE_DIR / ".env")`, `direct=` the aliases of the offered paid
+    models, and the datasource from a setting: none in `environments/local.py` and
+    `environments/docker.py`, `DATABASE_URL` in `environments/koyeb.py`; `home=` from
+    `LLMBROKER_HOME` (`BASE_DIR / ".llmbroker"` locally and in Docker, none on Koyeb), also
+    passed to every `curated_*()` catalog read. Closed at process exit
   - `llms_for(user) -> LLMs`: `get_broker().for_scope(f"u-{user.id}")`
-  - `forget_user_keys(user)`: calls the Phase 0 per-scope refresh
-- [ ] `LexifluxSecrets` implements `SecretsProtocol.resolve` and `refs(prefix)`, **async,
-  using Django's async ORM** (`afirst`, async iteration). It runs on the broker's loop
-  thread, where the sync ORM raises `SynchronousOnlyOperation`:
-  - `u-<id>/<REF>` → that user's stored key for `<REF>`
-  - bare `<REF>` → `llmbroker.Secrets(BASE_DIR / ".env").resolve(ref)` when
-    `settings.LLM_KEYS_FROM_ENV` is true, else missing (follow the protocol's missing-key convention)
-  - `refs("u-<id>/")` → that user's stored refs, one query
-- [ ] `LLM_KEYS_FROM_ENV`: `True` in `environments/local.py` and `environments/docker.py`,
-  `False` in `environments/koyeb.py`
-- [ ] New `lexiflux/language/ai_models.py`: the offered-model table and knob vocabulary
+- [x] New `lexiflux/language/ai_models.py`: the offered-model table and knob vocabulary
   above; `request_params(model, effort, tier) -> dict`; `default_knobs(model)`;
   `provider_of(model)` read from `curated_paid()` by alias. A catalog alias that
   disappears makes that option unavailable, and its articles show the retired-model message
 
 ## Phase 3 — Context, prompts and article generation
 
-- [ ] New `term_context(page, term_word_ids) -> TermContext(word, sentence)` (in
-  `lexiflux/language/`), using `page.words` and `page.word_sentence_mapping`: the sentence
-  is the span of all words whose sentence id lies between the first and last selected
-  word's sentence ids, HTML-stripped with `extract_content_from_html`. Also returns the
-  offsets `get_context_for_translation_history` needs
-- [ ] Rewrite `get_context_for_translation_history` on those offsets. The stored format
+- [x] New `term_context(page, term_word_ids) -> TermContext(word, sentence)` (in
+  `lexiflux/language/`), using `page.words` and `page.word_sentence_mapping`: `word` is the
+  selected words as they stand; the sentence is the span of all words whose sentence id lies
+  between the first and last selected word's sentence ids, HTML-stripped with
+  `extract_content_from_html`. When that span has fewer than 6 words, it is extended with the
+  previous and the next sentence where they exist. Also returns the offsets
+  `get_context_for_translation_history` needs
+- [x] Rewrite `get_context_for_translation_history` on those offsets. The stored format
   (`TranslationHistory.CONTEXT_MARK` around the sentence and in place of the term, ≥10
   context words expanded to full sentences) stays identical; a test pins it
-- [ ] Prompts in `lexiflux/resources/prompts/`, with placeholders `{word}`, `{sentence}`,
+- [x] Prompts in `lexiflux/resources/prompts/`, with placeholders `{word}`, `{sentence}`,
   `{text_language}`, `{user_language}` (language **names** from `Language.name`):
-  - `AI dictionary.txt`: echo-words `_INTRO` + `_SELECTED_ARTICLE` + `_FORMAT_RULES`
-    from `../echo-words/src/echo_words/prompt.py`, without the `===CARD===` JSON parts;
-    the request line in the form Phase 1 selected
-  - `In depth.txt`: echo-words `_EXTENDED_PROMPT` verbatim, `bound` = 4000 characters,
-    `context_note` = `The word was met in this context: "{sentence}"`
+  - `AI dictionary.txt`: `experiments/context_bench_prompts/AI dictionary.C.txt` as is
+  - `In depth.txt`: `experiments/context_bench_prompts/In depth.unit.txt` as is (echo-words
+    `_EXTENDED_PROMPT`, bound 4000 characters, the context note, and the sentence naming
+    the whole unit)
   - `Origin.txt`: replace "Time period of first known use" with echo-words rule 5 ("Origin
     only where you know it … leave it out")
   - `Sentence.txt`: takes `{sentence}` only
   - `Translate.txt`, `Explain.txt`, `Lexical.txt`: rewritten from marks to `{word}` +
     `{sentence}`, otherwise unchanged
-  - custom `AI` type: system = user's prompt, user message = word + sentence
-- [ ] Rewrite `lexiflux/language/llm.py` without LangChain:
+  - custom `AI` type: the user's prompt followed by word + sentence (on the direct path as a
+    system and a user message; the pool takes one prompt string, so there they are joined)
+- [x] Rewrite `lexiflux/language/llm.py` without LangChain:
   - `ArticleRequest(article_type, model, effort, tier, prompt, word, sentence,
     text_language, user_language, user)` built by the view
   - `stream_article(req) -> Iterator[ArticleEvent]` for sidebar articles:
-    - `pool` → `llms_for(user).stream(prompt, operation=article_type, fastest_of=2, wait=25)`;
+    - `pool` → `with llms_for(user).stream(prompt, operation=article_type, fastest_of=2, wait=25) as stream:`;
       on `StreamReplacementError` emit `replace(exc.replacement.text)`
-    - direct → `llms_for(user).direct(model).stream(prompt, params=request_params(...))`
-    - on `StreamInterruptedError` after text: emit the error event, keep the text
+    - direct → `with llms_for(user).direct(model) as client:` and
+      `client.stream(prompt, params=request_params(...))`
+    - both `with` blocks sit inside the generator, so Django's `close()` on an aborted response
+      cancels the provider call
   - `generate_article(req) -> str` for the inline popup (`lexical_article=0`): same
     routing via `ask`
   - Finished-article cache: key = (user id, article type, prompt text, model, effort,
     tier, word, sentence, languages), a bounded dict; a hit replays as one `delta`. Only
     complete answers are cached
-- [ ] Delete: `mark_term_and_sentence`, `_extract_sentence`, `_remove_word_marks`,
+- [x] Delete: `mark_term_and_sentence`, `_extract_sentence`, `_remove_word_marks`,
   `_remove_sentence_marks`, `TextOutputParser`, `find_nth_occurrence`, `detect_term_words`,
   `_get_or_create_model`, `AI_MODEL_API_KEY_ENV_VAR`, `AIModelSettings`, `safe_float`,
   `lexiflux/language/sentence_extractor_llm.py`, `lexiflux/resources/chat_models.yaml`,
   `tests/profile_llm.py`, `llm_benchmark.json`, `tests/test_sentence_extractor_llm.py`
-- [ ] Errors: `llmbroker` exceptions → `ArticleError(kind, html)` rendered from one
-  template `lexiflux/templates/llm-error.html`:
+- [x] Errors: llmbroker exceptions → `ArticleError(kind, html)` rendered from one
+  template `lexiflux/templates/llm-error.html`. No message links to a settings page:
   - `NoLLMAvailableError(reason="no_keys")` → "The free pool needs at least one key" +
-    each pool key's llmbroker `help` (Markdown link rendered) + link to its AI Settings tab
-  - `MissingKeyError` → the provider's `key_help` + tab link
-  - `AuthError` → "key rejected by <provider label>" + tab link
-  - `RateLimitError`, `NoLLMAvailableError(reason="timeout")` → "busy, retry in N s" from
-    `retry_after`/`retry_at` when present
-  - `StreamInterruptedError` → "answer cut off, retry"
+    each pool key's llmbroker `help` (Markdown link rendered) + where the key goes: its env
+    var name, in `.env` locally and in Docker, in the server environment on Koyeb
+  - `NoLLMAvailableError` with another reason → "busy, retry" (in N s from `retry_at` when
+    present)
+  - `MissingKeyError` → the provider's `key_help` + the env var name and where it goes
+  - `AuthError` → "key rejected by <provider label>"
+  - `RateLimitError` → "busy, retry in N s" from `retry_after` when present
+  - `StreamInterruptedError`, `LLMTimeoutError` or `httpx.TransportError` after text → keep the
+    text, add "answer cut off, retry"; `LLMTimeoutError` before any text → "busy, retry";
+    `httpx.TransportError` before any text → the generic message
   - unknown model (dropped alias or dropped option) → current retired-model message
   - anything else → generic message with the exception text
-  - When `LLM_KEYS_FROM_ENV` is true the key hints also name the env var and `.env`
-- [ ] Delete `lexiflux/templates/llm-error/` and `lexiflux/templates/llm-error-env/`,
+- [x] Delete `lexiflux/templates/llm-error/` and `lexiflux/templates/llm-error-env/`,
   `get_llm_errors_folder`, `AIModelError`
 
-## Phase 4 — Data model and the one-time reset migration
+## Phase 4 — Data model and the schema migration
 
-- [ ] `LexicalArticleType`: add `IN_DEPTH = "In depth"`; `LEXICAL_ARTICLE_PARAMETERS`: AI
+- [x] `LexicalArticleType`: add `IN_DEPTH = "In depth"`; `LEXICAL_ARTICLE_PARAMETERS`: AI
   types take `model`, `effort`, `tier` (`AI` also `prompt`)
-- [ ] `LexicalArticle.clean()`: `model` must be an offered option; `effort`/`tier` must be
+- [x] `LexicalArticle.clean()`: `model` must be an offered option; `effort`/`tier` must be
   in the model provider's vocabulary or absent; `pool` takes neither
-- [ ] New model `ProviderKey(user FK, api_key_ref, value)`, `unique_together (user, api_key_ref)`;
-  delete `AIModelConfig` and `SUPPORTED_CHAT_MODELS`
-- [ ] `DEFAULT_LEXICAL_ARTICLES` = the default-articles table above
-- [ ] Migration `0023_...`:
-  - schema: create `ProviderKey`, delete `AIModelConfig`, alter `LexicalArticle.type` and
-    `LanguagePreferences.inline_translation_type` choices
-  - `RunPython`: delete every `LexicalArticle`; for every `LanguagePreferences` create the
-    default articles and set inline translation to `Dictionary`/`GoogleTranslator`. The
-    defaults are **copied into the migration file**, not imported, so a later change
-    to `DEFAULT_LEXICAL_ARTICLES` cannot change what this migration did
-  - reverse: no-op (documented as irreversible for data)
-- [ ] Comment at the top of the `RunPython` function: this reset is the only migration
-  allowed to delete user-defined articles
+- [x] Delete `AIModelConfig` and `SUPPORTED_CHAT_MODELS`. No key model replaces them
+- [x] `DEFAULT_LEXICAL_ARTICLES` = the default-articles table above
+- [x] Migration `0023_llmbroker.py`, schema-only, generated by `makemigrations`: delete
+  `AIModelConfig`, alter `LexicalArticle.type` and `LanguagePreferences.inline_translation_type`
+  choices. No `RunPython`: no data migration, the single user starts from a fresh DB
 
 ## Phase 5 — Views and UI
 
-AI Settings:
-- [ ] `ai_settings_api` GET returns one entry per distinct `api_key_ref`, in this order:
-  pool keys from `curated_pool().keys` (sorted by their `value` extra, high first), then the
-  providers of the offered direct models from `curated_providers()`. Each entry has the
-  title (provider `label`, or the ref without `_API_KEY` for pool keys), help HTML, which
-  models it pays for ("Free pool", "GPT-5.6 Sol", …) and status `yours` / `env` (only when
-  `LLM_KEYS_FROM_ENV`) / `missing`. The key value is never returned
-- [ ] POST saves `{api_key_ref: value}`, where an empty value deletes, then calls
-  `forget_user_keys(user)`
-- [ ] Rewrite `ai-settings.html` / `ai-settings-vue.js`: tabs from the GET list, one
-  password field per tab, status badge, no temperature, no hard-coded provider text.
-  `?tab=` takes an `api_key_ref` (error-message links use it)
+AI Settings removal:
+- [x] Delete `ai_settings_views.py`, `ai-settings.html`, `ai-settings-vue.js`, their routes and
+  the hamburger-menu link, and every other reference (grep `ai-settings`, `ai_settings`)
 
 Article editor:
-- [ ] `language_preferences_views.py`: `ai_models` = offered models with title, provider,
+- [x] `language_preferences_views.py`: `ai_models` = offered models with title, provider,
   knob vocabulary and default knobs (from `ai_models.py`)
-- [ ] `lexical_artical_modal.html` + `language-preferences-vue.js`: after the model
+- [x] `lexical_artical_modal.html` + `language-preferences-vue.js`: after the model
   select, show "Reasoning effort" and "Processing tier" selects only when the provider
   has them; changing the model resets knobs to its defaults; tier `priority` shows the
   note "about 2× the price, about 3× faster (measured on Sol)"; article cards show model
   + knobs
 
 Streaming:
-- [ ] New view `translate_stream` at `/translate/stream`, same GET params as `/translate`,
+- [x] New view `translate_stream` at `/translate/stream`, same GET params as `/translate`,
   for sidebar articles of **every** type: `StreamingHttpResponse(content_type="application/x-ndjson")`
   with headers `Cache-Control: no-cache`, `X-Accel-Buffering: no`. Events, one JSON
   object per line:
   `{"event":"delta","text":…}`, `{"event":"replace","text":…}`,
   `{"event":"error","html":…}`, `{"event":"site","url":…,"window":…}`, `{"event":"done"}`.
   Site and Dictionary articles emit one event and `done`
-- [ ] `/translate` keeps serving the inline popup (`lexical_article=0`) as JSON, through
+- [x] The stream response bypasses `GZipMiddleware`: Django's `compress_sequence` does not
+  flush per chunk, so gzip would hold the NDJSON lines back until the answer ends. A test
+  requests with `Accept-Encoding: gzip` and checks the response is not gzip-encoded
+- [x] `/translate` keeps serving the inline popup (`lexical_article=0`) as JSON, through
   `generate_article`
-- [ ] `translate.ts`: sidebar panels call `/translate/stream`, read `response.body.getReader()`
+- [x] `translate.ts`: sidebar panels call `/translate/stream`, read `response.body.getReader()`
   with `TextDecoder`, split on newlines; spinner until the first event; `delta` appends
   to a buffer and sets `innerHTML`; `replace` resets the buffer; `error` renders the HTML;
   `site` goes through the existing Site handling; `done` marks the panel updated. An
   `AbortController` per panel aborts when the selection changes or the panel is re-requested
-- [ ] `npm run build` / `invoke buildjs`
+- [x] Before `innerHTML`, the whole buffer goes through one Markdown-emphasis conversion
+  (`**x**` → `<b>x</b>`, `*x*` → `<i>x</i>`); the inline popup uses the same function
+- [x] AI article panels keep line breaks (`white-space: pre-line`) for every article type
+  whose prompt forbids block tags (AI dictionary, In depth, and any other prompt rewritten to
+  the same format rules); panels whose answers are HTML blocks are left as they are
+- [x] `npm run build` / `invoke buildjs`
 
-## Phase 6 — Keys from `.env`, Docker, Ollama removal
+## Phase 6 — Keys in env, Docker, Ollama removal
 
-- [ ] `tasks.py` `rundocker`: add `--env-file .env` when `.env` exists
-- [ ] `.dockerignore`: add `.env`, as a guard in case a future `COPY . .` is added
-- [ ] `docker/Dockerfile`: remove `OLLAMA_LOAD_MODEL`, the Ollama binary copy and
+- [x] `tasks.py` `rundocker`: add `--env-file .env` when `.env` exists
+- [x] `.dockerignore`: add `.env`, as a guard in case a future `COPY . .` is added
+- [x] `docker/Dockerfile`: remove `OLLAMA_LOAD_MODEL`, the Ollama binary copy and
   `start_ollama.sh`; `docker/start.sh`: remove the Ollama start line; delete
   `docker/start_ollama.sh`
-- [ ] Docs: `docs/src/en/docker.md` (`--env-file .env`, Ollama section removed),
+- [x] Docs: `docs/src/en/docker.md` (`--env-file .env`, Ollama section removed),
   `docs/src/en/aimodels.md` rewritten: free pool, the three direct models with their
-  measured trade-offs, knobs, where keys go (AI Settings; `.env` locally and in Docker;
-  `llmbroker env freetier` prints the pool key names and links). Other `docs/src/*`
-  languages if they have these pages
-- [ ] `README.md`: key setup line
+  measured trade-offs, knobs, where keys go (`.env` locally and in Docker, Koyeb secrets as
+  env vars on Koyeb; `llmbroker env freetier` prints the pool key names and links), and that
+  users do not enter keys. Other `docs/src/*` languages if they have these pages
+- [x] `README.md`: key setup line
 
 ## Phase 7 — Tests, spec, verification
 
-- [ ] `tests/test_term_context.py`: single word, multi-word, selection across a sentence
-  boundary, first/last word of page; translation-history context format unchanged
-- [ ] `tests/test_ai_models.py`: `request_params` for every provider/knob combination;
+- [x] `tests/test_term_context.py`: single word, multi-word, selection across a sentence
+  boundary, first/last word of page, a sentence under 6 words extended with its neighbours
+  (and at the page edges); translation-history context format unchanged
+- [x] `tests/test_ai_models.py`: `request_params` for every provider/knob combination;
   defaults per model; invalid knob rejected by `LexicalArticle.clean()`
-- [ ] `tests/test_secrets.py`: scoped key found; bare ref from env/`.env` only when
-  `LLM_KEYS_FROM_ENV`; Koyeb settings never read env; `refs(prefix)`; runs under the
-  async ORM
-- [ ] `tests/test_llm.py` rewritten over a fake llmbroker (`deltas`, `StreamReplacementError`,
-  `StreamInterruptedError` after text, each error kind → message); cache hit replays one
-  `delta`; the prompt contains the language names and word + sentence
-- [ ] `tests/test_view_translate.py`: `/translate/stream` event sequences for AI, Site and
-  Dictionary types; inline `/translate` unchanged
-- [ ] `tests/test_view_ai_settings.py`: tab list follows a stubbed catalog (adding a pool
-  key adds a tab); save / delete; `forget_user_keys` called on save; values never returned
-- [ ] `tests/test_llmbroker_contract.py` (modelled on echo-words' file of the same name):
+- [x] `tests/test_broker.py`: `get_broker` builds one broker per process; the datasource
+  follows the environment settings (`DATABASE_URL` on Koyeb, default storage locally);
+  keys come from `llmbroker.Secrets` over the repo's `.env`
+- [x] `tests/test_llm.py` rewritten over a fake llmbroker (`deltas`, `StreamReplacementError`,
+  `StreamInterruptedError` / `LLMTimeoutError` / `httpx.TransportError` after text and before
+  text, each error kind → message); cache hit replays one `delta`; the prompt contains the
+  language names and word + sentence; closing the generator early closes the pool stream and
+  the direct client
+- [x] `tests/test_view_translate.py`: `/translate/stream` event sequences for AI, Site and
+  Dictionary types; no gzip on the stream with `Accept-Encoding: gzip`; inline `/translate`
+  unchanged
+- [x] AI Settings: its URL answers 404 and the menu link is gone
+- [x] `tests/test_llmbroker_contract.py` (modelled on echo-words' file of the same name):
   the installed catalog carries `gpt`, `gpt-fast` and `opus` with providers `openai`,
-  `openai` and `anthropic`; every pool key has a non-empty `help`; sync `stream()` and
-  per-scope key refresh exist
-- [ ] Migration test: users with custom articles and an LLM inline translation end up
-  with exactly the defaults
-- [ ] `tests/test_default_languages_preferences.py`, `tests/test_view_language_preferences.py`:
+  `openai` and `anthropic`; every pool key has a non-empty `help`; sync `stream()` exists on
+  the scoped `LLMs` and on `DirectClient`
+- [x] `tests/test_default_languages_preferences.py`, `tests/test_view_language_preferences.py`:
   new defaults, knobs in parameters
-- [ ] Jest: NDJSON reader: split lines across chunks, `replace`, `error`, abort on a new selection
-- [ ] Selenium (`tests/test_e2e_reader_page.py` and page models): new default tabs
-- [ ] `specs/ai-articles.md` (new; decisions and business rules only, per the global spec
-  rules): pool for the default article, Sol none+priority for the others and why (echo-words
-  numbers), the offered model set and what was left out and why, keys per user in cloud
-  and env fallback locally, streaming, word + sentence context with the Phase 1 result,
-  "migrations never delete user-defined articles"
-- [ ] `CLAUDE.md`: replace "LangChain-based chat models" and `chat_models.yaml` mentions
+- [x] Jest: NDJSON reader (split lines across chunks, `replace`, `error`, abort on a new
+  selection); Markdown-emphasis conversion
+- [x] Selenium (`tests/test_e2e_reader_page.py` and page models): new default tabs; no AI
+  Settings menu item
+- [x] `specs/ai-articles.md` (new; decisions and business rules only, per the global spec
+  rules): pool for the default article and its persistent state on Koyeb, Sol none+priority
+  for the others and why (echo-words numbers), the offered model set and what was left out
+  and why, operator keys from the environment and no keys in lexiflux, streaming, word +
+  sentence context with the Phase 1 result
+- [x] `CLAUDE.md`: replace "LangChain-based chat models" and `chat_models.yaml` mentions
 
 Verification:
 ```
@@ -385,16 +387,50 @@ source ./activate.sh && invoke selenium
 ```
 
 Manual:
-- `invoke run` with `.env` holding a pool key and `OPENAI_API_KEY`: Article streams from
-  the pool, In depth streams from Sol, and text appears in about a second
-- Remove the pool key from `.env`, restart: Article shows the no-key message with the
-  four pool-key links; the link opens the right tab
-- Save a pool key in AI Settings without restarting: the next click works
+- `invoke run` with `.env` holding the pool keys and `OPENAI_API_KEY`: Article streams from
+  the pool, In depth streams from Sol, and text appears in about a second; line breaks show
+- Remove the pool keys from `.env`, restart: Article shows the no-key message with the pool
+  key links and the env var names
 - Switch selection while In depth streams: the request is aborted (server log shows the
   stream closed)
+- `curl -N -H 'Accept-Encoding: gzip' '<stream url>'`: lines arrive one by one, uncompressed
 - `invoke docker && invoke rundocker`: same as the first check, keys from `--env-file`
-- Koyeb staging (`LEXIFLUX_ENV=koyeb`): no key read from env; streaming is not buffered by
+- Koyeb staging (`LEXIFLUX_ENV=koyeb`, keys as Koyeb secrets): articles work; after a
+  redeploy the pool still answers fast (state in Postgres); streaming is not buffered by
   Koyeb's proxy (text arrives progressively)
+
+## Phase 8 — Playwright e2e tests for the reader's AI panels
+
+Selenium stays for the existing page tests. The streaming behaviour a browser alone can show
+(text arriving progressively, abort on a new selection, rendering) gets Playwright tests.
+
+- [x] `pytest-playwright` in `requirements.dev.in` (compile without `--upgrade`, so other pins
+  stay), Chromium only; `playwright install chromium` in the dev setup (`activate.sh` or the
+  documented setup step); CI installs it too if CI runs the e2e tests
+- [x] Marker `playwright` in `pytest.ini`; tests in `tests/e2e_playwright/` (or next to the
+  Selenium page models if that reads better), against pytest-django's `live_server`, headless by
+  default, `--headed` for a visible run
+- [x] A fake article stream for the tests: `stream_article` replaced by a generator that yields
+  deltas with small delays and records when it was closed. The autouse guard against real LLM
+  calls stays in force
+- [x] Scenarios:
+  - Article text appears progressively: the spinner goes at the first delta, and the panel shows
+    partial text before `done`
+  - a new selection while a panel streams aborts it: the old generator is closed server-side,
+    late text never shows, the new article shows
+  - `replace` resets the text; a `cut_off` error is appended after the text; another error
+    replaces the panel; a stream ending without `done` gets the cut-off notice
+  - Markdown `**x**`/`*x*` renders as bold/italic; the answer's line breaks show; an error alert
+    has no blank gaps (computed style / element geometry)
+  - the stream response has no `Content-Encoding`
+  - the inline popup shows the translation, and an AI error as a formatted alert
+  - the article editor: changing the model resets the knobs; the priority note shows for
+    `priority`
+- [x] One opt-in real smoke, `-m real_llm`, skipped unless `LEXIFLUX_REAL_LLM=1`: a real
+  free-pool Article through the real broker in the browser, asserting first text under 3 s. Free
+  pool only
+- [x] `CLAUDE.md` and the testing docs: how to run the Playwright tests (headless, headed, the
+  real smoke)
 
 ## Risks and open checks
 
@@ -402,9 +438,26 @@ Manual:
   try a padding first chunk, then SSE framing over the same `fetch` reader.
 - **`runserver` threads.** Each streaming request holds a thread for 3–10 s (up to about
   30 s on `opus`). Fine for current load; gunicorn with threads is the fallback.
+- **The operator pays for every user's paid-model clicks** (In depth about $0.035). There is
+  no per-user limit; if sign-ups are open, add a daily per-user limit as a follow-up.
+- **Groq gpt-oss-120b in the pool** scored 2.2–2.5/5 with about two serious errors per
+  article; it answers mostly while the pool is cold or Gemini stalls. Watch its share in the
+  journal; if it is noticeable, move Article to Gemini Flash Lite on a paid key or disable
+  Groq with `disable_llm`.
+- **OpenRouter models in the pool** (`openrouter-nemotron-3-ultra`, `openrouter-laguna-s-2.1`):
+  as the `fastest_of=2` second lane they turned Gemini 3.5 Flash Lite stalls into "busy"
+  (7–13% of calls in bad windows). Nemotron holds the lane without text past 25 s; Laguna is
+  mostly 429 on the shared free key. Resolved: `broker.get_broker()` disables them with
+  `disable_llm` (`EXCLUDED_POOL_LLMS`), the no-key message lists only keys that serve a
+  remaining pool model (`pool_keys()`), and `all_disabled` maps to the no-key message. A catalog
+  rename shows as a warning in `test_the_excluded_pool_models_are_still_in_the_catalog`.
+- **The stall rescue now rests on Groq alone.** `zai-glm-4.7-flash` behaves like Nemotron
+  (200 at once, 13 of 16 answered calls had no text, 6 of them held the lane 20 s or more) and
+  stays in the pool, as in echo-words. Under a simulated Gemini stall with Groq rate-limited,
+  GLM was the second lane and every stalled call ended "busy" with or without the fix. Watch
+  the journal's busy rate; if it stays above a few percent, disable GLM the same way.
+- **llmbroker schema upgrades** drop the `llmbroker_*` tables on Koyeb: the learned model
+  ordering and the journal are lost and the pool re-learns. No keys live there.
 - **Catalog alias moves** (e.g. `gpt` → a new version). The knob defaults and measurements
   then describe an older model. llmbroker logs the move; re-measure with echo-words'
   `experiments/tier_screen.py`.
-- **Pool latency without echo-words' prompt size.** The pool numbers come from
-  echo-words' short article plus card JSON. The Phase 1 production-shaped smoke confirms
-  them for lexiflux's prompt.

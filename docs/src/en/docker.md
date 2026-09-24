@@ -22,13 +22,22 @@ If first part of the command fails, the second part of the command
 downloads the image `andgineer/lexiflux` from the Docker Hub,
 creates a new container with the name `lexiflux` and exposes port `6100` on your host machine.
 
-### Local Ollama AI
-If you want to use free local AI, and have enough RAM, you can preload [Ollama](aimodels.md#ollama)
-model in the docker.
+### AI keys
+AI articles need API keys, which you give to the container as environment variables
+(see [Keys](aimodels.md#keys) for which keys there are).
+Put them in a file, one `NAME=value` per line, for example `lexiflux.env`:
 
-Add `OLLAMA_LOAD_MODEL=llama3.2` or whatever model you want to the `docker run` command.
+    GEMINI_API_KEY=...
+    GROQ_API_KEY=...
+    OPENAI_API_KEY=...
 
-Please note it will download about 2Gb Ollama AI model and require about 4G RAM for the Docker container to run.
+and add `--env-file lexiflux.env` to the command that creates the container:
+
+    docker run -d -p 6100:8000 --env-file lexiflux.env --name lexiflux andgineer/lexiflux
+
+Keys are set when the container is created. The container also holds your books, so to
+change the keys of an existing container make a [backup](docker.md#backup) and
+[restore](docker.md#restore) it with `--env-file lexiflux.env` added to the `docker run` command.
 
 ### Configuration
 
@@ -58,6 +67,8 @@ So it is better to make a [backup](docker.md#backup) before updating.
 
 ## Backup
 To create archive with full backup of your Lexiflux Docker container.
+
+The archive also contains the API keys passed to the container with `--env-file`, so do not share it.
 
 === "Linux/macOS"
     Enter in the terminal:

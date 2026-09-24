@@ -12,7 +12,6 @@ FROM python:3.12
 
 ENV LEXIFLUX_UI_SETTINGS_ONLY=true
 ENV LEXIFLUX_SKIP_AUTH=true
-ENV OLLAMA_LOAD_MODEL=false
 ENV LEXIFLUX_ENV=docker
 
 ENV PYTHONDONTWRITEBYTECODE=1
@@ -31,13 +30,10 @@ COPY manage .
 
 COPY --from=node-builder /lexiflux/lexiflux/static/lexiflux/bundle.js /lexiflux/lexiflux/static/lexiflux/bundle.js
 
-COPY --from=ollama/ollama:latest /usr/bin/ollama /usr/local/bin/ollama
-
 RUN pip install --no-cache-dir -r requirements.txt gunicorn
 RUN ./manage migrate
 RUN ./manage default-user
 
 COPY docker/start.sh /start.sh
-COPY docker/start_ollama.sh /start_ollama.sh
 
 CMD ["/start.sh"]

@@ -35,8 +35,7 @@ def break_into_sentences(
     Args:
     plain_text: The input text without HTML tags.
     word_slices: List of word start and end indices.
-    term_word_ids: list of the highlighted word IDs, expected to be contiguous
-        just for signature compatibility with the LLM version.
+    term_word_ids: unused.
     tokenizer: Enum to select the tokenizer.
     lang_code: Language code for the text (e.g., 'en' for English, 'fr' for French).
 
