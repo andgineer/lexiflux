@@ -24,12 +24,20 @@ _default_allowed_hosts = [
     "localhost",
     "127.0.0.1",
     "host.docker.internal",
+    ".ts.net",
 ]
 
 if lexiflux_allowed_hosts := os.getenv("LEXIFLUX_ALLOWED_HOSTS"):
     ALLOWED_HOSTS = [host.strip() for host in lexiflux_allowed_hosts.split(",") if host.strip()]
 else:
     ALLOWED_HOSTS = _default_allowed_hosts
+
+CSRF_TRUSTED_ORIGINS = ["https://*.ts.net"]
+
+# `tailscale serve` terminates TLS and keeps the Host header, so only the scheme needs
+# the forwarded header; LoopbackProxyHeadersMiddleware drops it from non-loopback peers.
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+MIDDLEWARE = ["lexiflux.middleware.LoopbackProxyHeadersMiddleware", *MIDDLEWARE]  # noqa: F405
 
 # Its own llmbroker home: the pool exclusions are persistent and would otherwise
 # apply to every other llmbroker user on the machine.

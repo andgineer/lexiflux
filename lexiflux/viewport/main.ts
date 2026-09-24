@@ -69,6 +69,11 @@ function handleMouseUpEvent(event: MouseEvent): void {
   const translationSpan = clickedElement.closest('.translation-span');
 
   if (translationSpan) {
+    // A link in the popup's own text (e.g. a translator error) must survive until its click fires;
+    // a book link wrapping the popup must not block hiding it.
+    if (clickedElement.closest('.translation-text a')) {
+      return;
+    }
     // If clicked on a translation span, remove it
     hideTranslation(translationSpan as HTMLElement);
     return; // Exit the function early
@@ -245,6 +250,8 @@ function reInitDom(): void {
     });
     initializeReaderEventListeners();
 }
+
+export { handleMouseUpEvent };
 
 document.addEventListener('DOMContentLoaded', () => {
     const topWord = parseInt(document.body.getAttribute('data-top-word') || '0');

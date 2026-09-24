@@ -8,7 +8,19 @@ from collections.abc import Iterator
 from typing import Any
 
 import django.utils.timezone
+import requests
+from deep_translator.exceptions import (
+    ElementNotFoundInGetRequest,
+    InvalidSourceOrTargetLanguage,
+    LanguageNotSupportedException,
+    NotValidLength,
+    NotValidPayload,
+    RequestError,
+    TooManyRequests,
+    TranslationNotFound,
+)
 from django.http import HttpRequest, HttpResponse, JsonResponse, StreamingHttpResponse
+from django.template.loader import render_to_string
 from pydantic import Field
 
 from lexiflux.api import ViewGetParamsModel, get_params
@@ -21,7 +33,7 @@ from lexiflux.language.term_context import (
     term_context,
     words_span,
 )
-from lexiflux.language.translation import get_translator
+from lexiflux.language.translation import AVAILABLE_TRANSLATORS, get_translator
 from lexiflux.models import Book, BookPage, CustomUser, LanguagePreferences, TranslationHistory
 
 logger = logging.getLogger(__name__)
@@ -85,7 +97,52 @@ def _dictionary_article(
         book_page.book.language.name.lower(),
         language_preferences.user_language.name.lower(),
     )
-    return translator.translate(context.word)
+    result = translator.translate(context.word)
+    if not isinstance(result, str) or not result.strip():
+        raise TranslationNotFound(context.word)
+    return result
+
+
+def _dictionary_error(exc: Exception, translator_name: str) -> tuple[str, str]:
+    if isinstance(exc, TooManyRequests):
+        kind = "rate_limit"
+    elif isinstance(exc, RequestError | requests.RequestException):
+        kind = "network"
+    elif isinstance(exc, TranslationNotFound | ElementNotFoundInGetRequest):
+        kind = "not_found"
+    elif isinstance(exc, LanguageNotSupportedException | InvalidSourceOrTargetLanguage):
+        kind = "unsupported"
+    elif isinstance(exc, NotValidLength | NotValidPayload):
+        kind = "too_long"
+    else:
+        kind = ArticleError.GENERIC
+    label = AVAILABLE_TRANSLATORS.get(translator_name, (None, translator_name or "Translator"))[1]
+    html_text = render_to_string(
+        "translator-error.html",
+        {"kind": kind, "label": label, "error_type": type(exc).__name__},
+    ).strip()
+    return kind, html_text
+
+
+def _safe_dictionary_article(
+    article_params: dict[str, Any],
+    context: TermContext,
+    book_page: BookPage,
+    language_preferences: LanguagePreferences,
+) -> dict[str, Any]:
+    try:
+        return {
+            "article": _dictionary_article(
+                article_params,
+                context,
+                book_page,
+                language_preferences,
+            ),
+        }
+    except Exception as e:  # noqa: BLE001
+        logger.exception("Dictionary article failed")
+        kind, html_text = _dictionary_error(e, article_params.get("dictionary", ""))
+        return {"article": html_text, "error": True, "kind": kind}
 
 
 def get_lexical_article(  # noqa: PLR0913
@@ -107,14 +164,7 @@ def get_lexical_article(  # noqa: PLR0913
         return _site_link(article_params, context, book_page, language_preferences)
 
     if article_name == "Dictionary":
-        return {
-            "article": _dictionary_article(
-                article_params,
-                context,
-                book_page,
-                language_preferences,
-            ),
-        }
+        return _safe_dictionary_article(article_params, context, book_page, language_preferences)
 
     try:
         article = generate_article(
@@ -242,12 +292,11 @@ def _article_events(  # noqa: PLR0913
             **_site_link(article_params, context, book_page, language_preferences),
         }
     elif article_type == "Dictionary":
-        try:
-            text = _dictionary_article(article_params, context, book_page, language_preferences)
-            yield {"event": "delta", "text": text}
-        except Exception as e:  # noqa: BLE001
-            logger.exception("Dictionary article failed")
-            yield _error_event(_generic_error_text(e))
+        result = _safe_dictionary_article(article_params, context, book_page, language_preferences)
+        if result.get("error"):
+            yield {"event": "error", "kind": result["kind"], "html": result["article"]}
+        else:
+            yield {"event": "delta", "text": result["article"]}
     else:
         req = article_request(
             article_type,

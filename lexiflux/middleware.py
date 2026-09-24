@@ -29,6 +29,20 @@ class AutoLoginMiddleware:  # pylint: disable=too-few-public-methods
         return self.get_response(request)
 
 
+class LoopbackProxyHeadersMiddleware:  # pylint: disable=too-few-public-methods
+    """Trust X-Forwarded-Proto only from a local reverse proxy such as `tailscale serve`."""
+
+    LOOPBACK_ADDRESSES = frozenset({"127.0.0.1", "::1"})
+
+    def __init__(self, get_response: Any) -> None:
+        self.get_response = get_response
+
+    def __call__(self, request: Any) -> Any:
+        if request.META.get("REMOTE_ADDR") not in self.LOOPBACK_ADDRESSES:
+            request.META.pop("HTTP_X_FORWARDED_PROTO", None)
+        return self.get_response(request)
+
+
 class ExceptionJSONResponseMiddleware:
     """Middleware to format responses in case of PermissionDenied exceptions."""
 

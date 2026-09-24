@@ -1,0 +1,25 @@
+{% if kind == "rate_limit" %}
+<div class="alert alert-warning" role="alert">
+    <p class="mb-0">{{ label }} is refusing requests right now (rate limit). Try again later, or pick another translator in <a href="/language-preferences/" class="alert-link">Language Preferences</a>.</p>
+</div>
+{% elif kind == "network" %}
+<div class="alert alert-warning" role="alert">
+    <p class="mb-0">Could not reach {{ label }}.</p>
+</div>
+{% elif kind == "not_found" %}
+<div class="alert alert-info" role="alert">
+    <p class="mb-0">{{ label }} found no translation.</p>
+</div>
+{% elif kind == "unsupported" %}
+<div class="alert alert-warning" role="alert">
+    <p class="mb-0">{{ label }} does not support this language pair. Pick another translator in <a href="/language-preferences/" class="alert-link">Language Preferences</a>.</p>
+</div>
+{% elif kind == "too_long" %}
+<div class="alert alert-warning" role="alert">
+    <p class="mb-0">{{ label }} cannot translate a selection this long.</p>
+</div>
+{% else %}
+<div class="alert alert-danger" role="alert">
+    <p class="mb-0">{{ label }} failed ({{ error_type }}). Please retry later.</p>
+</div>
+{% endif %}

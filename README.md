@@ -60,7 +60,7 @@ inv init-db
 inv run
 ```
 
-Open [localhost:8000](http://localhost:8000). `inv init-db` initializes the
+Open [127.0.0.1:8001](http://127.0.0.1:8001). `inv init-db` initializes the
 database with sample data; `inv run` enables local auto-login.
 For AI articles, put the API keys in `.env` in the repository root:
 `llmbroker env freetier >> .env` appends the free-pool key names with links to get them.
@@ -92,6 +92,14 @@ See [AGENTS.md](AGENTS.md) for repository conventions and `inv --list` for tasks
 For local HTTPS, run `inv keygen`, then `inv runssl`. To use a locally trusted
 certificate, create one with mkcert and configure the certificate paths in
 the `runssl` task.
+
+**Access from other devices (Tailscale).** `inv run` listens on 127.0.0.1 only.
+To open it from your other tailnet devices over HTTPS, publish it with
+`tailscale serve --bg --https=443 http://127.0.0.1:8001` and open
+`https://<machine>.<tailnet>.ts.net`. Undo with `tailscale serve --https=443 off`.
+The local settings accept any `*.ts.net` host and trust HTTPS from that proxy.
+`inv run` auto-logs-in everyone who can reach it, so expose it only with `tailscale serve`
+(tailnet only), never `tailscale funnel`.
 
 [Allure test report](https://andgineer.github.io/lexiflux/builds/tests/)
 

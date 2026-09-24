@@ -79,7 +79,7 @@ def docs_task_factory(language: str):
     def docs(c: Context):
         """Docs preview for the language specified."""
         with docs_rendered(language) as config_copy_path:
-            port = 8001
+            port = 8002
             c.run(f"open -a 'Google Chrome' http://127.0.0.1:{port}")
             c.run(f"zensical serve --config-file {config_copy_path} --dev-addr localhost:{port}")
 
@@ -168,14 +168,14 @@ def init_db(c: Context):
 @task
 def run(c: Context):
     """Run local server"""
-    c.run("LEXIFLUX_ENV=local LEXIFLUX_SKIP_AUTH=true ./manage runserver 0.0.0.0:8000")
+    c.run("LEXIFLUX_ENV=local LEXIFLUX_SKIP_AUTH=true ./manage runserver 127.0.0.1:8001")
 
 
 @task
 def runssl(c: Context):
     """Run local SSL server in auto-login mode"""
     c.run(
-        "LEXIFLUX_ENV=local LEXIFLUX_SKIP_AUTH=true ./manage runserver_plus 0.0.0.0:8000 "
+        "LEXIFLUX_ENV=local LEXIFLUX_SKIP_AUTH=true ./manage runserver_plus 127.0.0.1:8001 "
         "--cert-file ssl_certs/localhost.crt --key-file ssl_certs/localhost.key",
     )
 
@@ -184,7 +184,7 @@ def runssl(c: Context):
 def runcloud(c: Context):
     """Run local SSL server in multi-user mode"""
     c.run(
-        "LEXIFLUX_ENV=local LEXIFLUX_SKIP_AUTH=false ./manage runserver_plus 0.0.0.0:8000 "
+        "LEXIFLUX_ENV=local LEXIFLUX_SKIP_AUTH=false ./manage runserver_plus 127.0.0.1:8001 "
         "--cert-file ssl_certs/localhost.crt --key-file ssl_certs/localhost.key",
     )
 

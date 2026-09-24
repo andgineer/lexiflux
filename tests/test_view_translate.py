@@ -647,3 +647,156 @@ def test_translate_success_creates_then_updates_history(client, user, book):
     second = TranslationHistory.objects.get(user=user, term="page")
     assert (second.translation, second.lookup_count) == ("лист", 2)
     assert second.book == book
+
+
+TRANSLATOR_FAILURES = [
+    pytest.param(
+        "TooManyRequests",
+        "Google Translator is refusing requests right now (rate limit)",
+        id="rate-limit",
+    ),
+    pytest.param("ConnectionError", "Could not reach Google Translator.", id="connection"),
+    pytest.param("RequestError", "Could not reach Google Translator.", id="request-error"),
+    pytest.param("TranslationNotFound", "Google Translator found no translation.", id="not-found"),
+    pytest.param(
+        "LanguageNotSupportedException",
+        "Google Translator does not support this language pair. Pick another translator",
+        id="unsupported-language",
+    ),
+    pytest.param(
+        "InvalidSourceOrTargetLanguage",
+        "Google Translator does not support this language pair. Pick another translator",
+        id="invalid-language",
+    ),
+    pytest.param(
+        "NotValidLength",
+        "Google Translator cannot translate a selection this long.",
+        id="too-long-length",
+    ),
+    pytest.param(
+        "NotValidPayload",
+        "Google Translator cannot translate a selection this long.",
+        id="too-long-payload",
+    ),
+    pytest.param("EmptyResult", "Google Translator found no translation.", id="empty-result"),
+    pytest.param("NoneResult", "Google Translator found no translation.", id="none-result"),
+    pytest.param("KeyError", "Google Translator failed (KeyError)", id="other"),
+]
+RAW_EXCEPTION_TEXT = "raw-secret-detail <b>"
+PERMANENT_FAILURES = {
+    "LanguageNotSupportedException",
+    "InvalidSourceOrTargetLanguage",
+    "NotValidLength",
+    "NotValidPayload",
+}
+
+
+def _translator_failure(name):
+    import requests
+    from deep_translator import exceptions
+
+    return {
+        "TooManyRequests": exceptions.TooManyRequests(RAW_EXCEPTION_TEXT),
+        "ConnectionError": requests.exceptions.ConnectionError(RAW_EXCEPTION_TEXT),
+        "RequestError": exceptions.RequestError(RAW_EXCEPTION_TEXT),
+        "TranslationNotFound": exceptions.TranslationNotFound(RAW_EXCEPTION_TEXT),
+        "LanguageNotSupportedException": exceptions.LanguageNotSupportedException(
+            RAW_EXCEPTION_TEXT
+        ),
+        "InvalidSourceOrTargetLanguage": exceptions.InvalidSourceOrTargetLanguage(
+            RAW_EXCEPTION_TEXT
+        ),
+        "NotValidLength": exceptions.NotValidLength(RAW_EXCEPTION_TEXT, 1, 5000),
+        "NotValidPayload": exceptions.NotValidPayload(RAW_EXCEPTION_TEXT),
+        "EmptyResult": ["  "],
+        "NoneResult": [None],
+        "KeyError": KeyError(RAW_EXCEPTION_TEXT),
+    }[name]
+
+
+@allure.epic("Pages endpoints")
+@allure.feature("Reader")
+@pytest.mark.django_db
+@pytest.mark.parametrize("failure, message", TRANSLATOR_FAILURES)
+@patch("lexiflux.views.lexical_views.get_translator")
+def test_translate_inline_translator_failure_is_an_alert(
+    mock_get_translator, failure, message, client, user, book, caplog
+):
+    from lexiflux.models import TranslationHistory
+
+    client.force_login(user)
+    LanguagePreferences.get_or_create_language_preferences(user=user, language=book.language)
+    mock_get_translator.return_value.translate.side_effect = _translator_failure(failure)
+
+    response = client.get(
+        reverse("translate"),
+        {
+            "lexical-article": "0",
+            "book-code": book.code,
+            "book-page-number": "1",
+            "word-ids": "2",
+        },
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["error"] is True
+    assert 'class="alert' in data["article"]
+    assert message in data["article"]
+    assert "raw-secret-detail" not in data["article"]
+    assert "<b>" not in data["article"]
+    if failure in PERMANENT_FAILURES:
+        assert "later" not in data["article"]
+    assert not TranslationHistory.objects.filter(user=user).exists()
+    assert "Dictionary article failed" in caplog.text
+
+
+@allure.epic("Pages endpoints")
+@allure.feature("Reader")
+@pytest.mark.django_db
+@pytest.mark.parametrize("failure, message", TRANSLATOR_FAILURES)
+@patch("lexiflux.views.lexical_views.get_translator")
+def test_translate_stream_translator_failure_is_an_alert(
+    mock_get_translator, failure, message, client, user, book
+):
+    from lexiflux.models import LexicalArticle, TranslationHistory
+
+    client.force_login(user)
+    language_preferences = LanguagePreferences.get_or_create_language_preferences(
+        user=user, language=book.language
+    )
+    LexicalArticle.objects.create(
+        language_preferences=language_preferences,
+        type="Dictionary",
+        title="Google",
+        parameters={"dictionary": "GoogleTranslator"},
+        order=10,
+    )
+    mock_get_translator.return_value.translate.side_effect = _translator_failure(failure)
+
+    response = client.get(reverse("translate_stream"), _stream_params(book, 5))
+    events = _stream_events(response)
+
+    assert response.status_code == 200
+    assert [e["event"] for e in events] == ["error", "done"]
+    assert 'class="alert' in events[0]["html"]
+    assert message in events[0]["html"]
+    assert "raw-secret-detail" not in events[0]["html"]
+    if failure in PERMANENT_FAILURES:
+        assert "later" not in events[0]["html"]
+    assert not TranslationHistory.objects.filter(user=user).exists()
+
+
+@allure.epic("Pages endpoints")
+@allure.feature("Reader")
+def test_translator_failure_is_not_cached():
+    from deep_translator.exceptions import TooManyRequests
+
+    translator = Translator("GoogleTranslator", "english", "french")
+    translator._translator = MagicMock()
+    translator._translator.translate.side_effect = [TooManyRequests(), "bonjour"]
+
+    with pytest.raises(TooManyRequests):
+        translator.translate("hello")
+    assert translator.translate("hello") == "bonjour"
+    assert translator._translator.translate.call_count == 2

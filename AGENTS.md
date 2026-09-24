@@ -8,7 +8,7 @@
 
 ## Build, Test, and Development Commands
 - Setup env: `pipx install invoke` then `. ./activate.sh` (uses uv; creates `.venv`).
-- Run server: `inv run` (auto-login) or `inv runssl` (HTTPS). Open http://localhost:8000.
+- Run server: `inv run` (auto-login) or `inv runssl` (HTTPS). Open http://127.0.0.1:8001 (`runssl`: https://127.0.0.1:8001).
 - Initialize DB: `inv init-db` (migrate, superuser, default user, sample data).
 - JS bundle: `inv buildjs` (runs `npm run build`).
 - Python tests: `inv test` or `python -m pytest tests -q`.
