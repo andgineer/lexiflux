@@ -4,7 +4,14 @@ from django.contrib.auth import get_user_model
 from django.urls import reverse
 from unittest.mock import patch, MagicMock
 
-from lexiflux.language.translation import get_translator, Translator, AVAILABLE_TRANSLATORS
+from lexiflux.language.translation import (
+    AVAILABLE_TRANSLATORS,
+    Term,
+    Translator,
+    TranslatorError,
+    get_translator,
+)
+from lexiflux.language_preferences_default import LINGEA_ARTICLE
 from lexiflux.models import LanguagePreferences
 from tests.conftest import USER_PASSWORD
 
@@ -37,11 +44,13 @@ def test_translate_view_success(mock_get_translator, client, user, book):
     assert response.status_code == 200
     assert response.json() == {"article": "Hola"}
     mock_get_translator.assert_called_once_with(
-        "GoogleTranslator",
-        book.language.name.lower(),
-        language_preferences.user_language.name.lower(),
+        "LLMTranslation",
+        book.language.name,
+        language_preferences.user_language.name,
     )
-    mock_translator.translate.assert_called_once_with("of page 1")
+    (term,) = mock_translator.translate.call_args.args
+    assert term == Term("of page 1", "Content ⟦of page 1⟧")
+    assert term.user == user
 
 
 @allure.epic("Pages endpoints")
@@ -53,12 +62,12 @@ def test_get_translator(mock_translator, book, user):
     )
 
     result = get_translator(
-        "GoogleTranslator",
+        "Google",
         book.language.name.lower(),
         language_preferences.user_language.name.lower(),
     )
     mock_translator.assert_called_once_with(
-        "GoogleTranslator",
+        "Google",
         book.language.name.lower(),
         language_preferences.user_language.name.lower(),
     )
@@ -93,25 +102,22 @@ def test_translate_view_approved_users_only(client, user, book):
 def test_translator_translate(book, user):
     mock_translation = "This is a test translation."
 
-    # Mock the specific translator class (GoogleTranslator in this case)
-    with patch.dict(
-        AVAILABLE_TRANSLATORS, {"GoogleTranslator": (MagicMock(), "Google Translator")}
-    ) as mock_translators:
-        mock_google_translator = mock_translators["GoogleTranslator"][0].return_value
+    with patch.dict(AVAILABLE_TRANSLATORS, {"Google": (MagicMock(), "Google")}) as mock_translators:
+        mock_google_translator = mock_translators["Google"][0].return_value
         mock_google_translator.translate.return_value = mock_translation
 
         language_preferences = LanguagePreferences.get_or_create_language_preferences(
             user=user, language=book.language
         )
         translator = Translator(
-            "GoogleTranslator",
+            "Google",
             book.language.google_code,
             language_preferences.user_language.google_code,
         )
-        result = translator.translate("This is a test.")
+        result = translator.translate(Term("This is a test."))
 
         assert result == mock_translation
-        mock_google_translator.translate.assert_called_once_with("This is a test.")
+        mock_google_translator.translate.assert_called_once_with(Term("This is a test."))
 
 
 @allure.epic("Pages endpoints")
@@ -252,7 +258,7 @@ READERS = [("owner", 200), ("other-private", 403), ("other-public", 200)]
 def test_translate_checks_the_book_can_be_read(
     mock_get_translator, reader, status, client, user, book
 ):
-    mock_get_translator.return_value.translate.side_effect = lambda text: f"ECHO:{text}"
+    mock_get_translator.return_value.translate.side_effect = lambda term: f"ECHO:{term.word}"
     client.force_login(_reader(reader, book, user))
 
     response = client.get(
@@ -283,7 +289,7 @@ def test_translate_stream_checks_the_book_can_be_read(
 ):
     from lexiflux.models import LexicalArticle
 
-    mock_get_translator.return_value.translate.side_effect = lambda text: f"ECHO:{text}"
+    mock_get_translator.return_value.translate.side_effect = lambda term: f"ECHO:{term.word}"
     reading_user = _reader(reader, book, user)
     client.force_login(reading_user)
     language_preferences = LanguagePreferences.get_or_create_language_preferences(
@@ -293,7 +299,7 @@ def test_translate_stream_checks_the_book_can_be_read(
         language_preferences=language_preferences,
         type="Dictionary",
         title="Google",
-        parameters={"dictionary": "GoogleTranslator"},
+        parameters={"dictionary": "Google"},
         order=10,
     )
     article_number = language_preferences.get_lexical_articles().count()
@@ -421,6 +427,82 @@ def test_translate_stream_site_article_events(client, user, book):
     ]
 
 
+def _lingea_stream(client, user, book, user_language, content="Љубав и кућа", word_ids="0"):
+    from lexiflux.models import Language
+
+    serbian = Language.objects.get(google_code="sr")
+    book.language = serbian
+    book.save()
+    page = book.pages.get(number=1)
+    page.content = content
+    page.save()
+    client.force_login(user)
+    language_preferences = LanguagePreferences.get_or_create_language_preferences(
+        user=user, language=serbian
+    )
+    language_preferences.user_language = Language.objects.get(google_code=user_language)
+    language_preferences.save()
+    language_preferences.lexical_articles.create(
+        type="Site", title="lingea", parameters=dict(LINGEA_ARTICLE["parameters"]), order=10
+    )
+    titles = [article.title for article in language_preferences.get_lexical_articles()]
+    return _stream_events(
+        client.get(
+            reverse("translate_stream"),
+            _stream_params(book, titles.index("lingea") + 1, word_ids=word_ids),
+        )
+    )
+
+
+@allure.epic("Pages endpoints")
+@allure.feature("Reader")
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "content, word_ids, term",
+    [
+        ("Љубав и кућа", "0", "Ljubav"),
+        ("Љубав и кућа", "2", "ku%C4%87a"),
+        ("Ljubav i kuća", "2", "ku%C4%87a"),
+    ],
+)
+def test_translate_stream_lingea_link_has_the_term_in_latin(
+    client, user, book, content, word_ids, term
+):
+    assert _lingea_stream(client, user, book, "ru", content, word_ids) == [
+        {
+            "event": "site",
+            "url": f"https://recnici.lingea.rs/rusko-srpski/{term}",
+            "window": True,
+        },
+        {"event": "done"},
+    ]
+
+
+@allure.epic("Pages endpoints")
+@allure.feature("Reader")
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "user_language, dictionary",
+    [("ru", "rusko-srpski"), ("en", "englesko-srpski"), ("de", "nemacko-srpski")],
+)
+def test_translate_stream_lingea_link_names_the_user_language(
+    client, user, book, user_language, dictionary
+):
+    assert _lingea_stream(client, user, book, user_language)[0]["url"] == (
+        f"https://recnici.lingea.rs/{dictionary}/Ljubav"
+    )
+
+
+@allure.epic("Pages endpoints")
+@allure.feature("Reader")
+@pytest.mark.django_db
+def test_translate_stream_lingea_without_the_user_language_is_an_alert(client, user, book):
+    events = _lingea_stream(client, user, book, "ka")
+
+    assert [event["event"] for event in events] == ["error", "done"]
+    assert "Lingea has no Georgian–Serbian dictionary" in events[0]["html"]
+
+
 @allure.epic("Pages endpoints")
 @allure.feature("Reader")
 @pytest.mark.django_db
@@ -436,7 +518,7 @@ def test_translate_stream_dictionary_article_events(mock_get_translator, client,
         language_preferences=language_preferences,
         type="Dictionary",
         title="Google",
-        parameters={"dictionary": "GoogleTranslator"},
+        parameters={"dictionary": "Google"},
         order=10,
     )
     mock_get_translator.return_value.translate.return_value = "stranica"
@@ -447,7 +529,8 @@ def test_translate_stream_dictionary_article_events(mock_get_translator, client,
         {"event": "delta", "text": "stranica"},
         {"event": "done"},
     ]
-    mock_get_translator.return_value.translate.assert_called_once_with("page")
+    (term,) = mock_get_translator.return_value.translate.call_args.args
+    assert term == Term("page", "Content of ⟦page⟧ 1")
 
 
 @allure.epic("Pages endpoints")
@@ -467,7 +550,7 @@ def test_translate_stream_dictionary_failure_is_an_error_event(
         language_preferences=language_preferences,
         type="Dictionary",
         title="Google",
-        parameters={"dictionary": "GoogleTranslator"},
+        parameters={"dictionary": "Google"},
         order=10,
     )
     mock_get_translator.return_value.translate.side_effect = RuntimeError("down <now>")
@@ -651,63 +734,33 @@ def test_translate_success_creates_then_updates_history(client, user, book):
 
 TRANSLATOR_FAILURES = [
     pytest.param(
-        "TooManyRequests",
-        "Google Translator is refusing requests right now (rate limit)",
+        "RateLimit",
+        "Google is refusing requests right now (rate limit)",
         id="rate-limit",
     ),
-    pytest.param("ConnectionError", "Could not reach Google Translator.", id="connection"),
-    pytest.param("RequestError", "Could not reach Google Translator.", id="request-error"),
-    pytest.param("TranslationNotFound", "Google Translator found no translation.", id="not-found"),
+    pytest.param("Network", "Could not reach Google.", id="network"),
+    pytest.param("NotFound", "Google found no translation.", id="not-found"),
     pytest.param(
-        "LanguageNotSupportedException",
-        "Google Translator does not support this language pair. Pick another translator",
+        "Unsupported",
+        "Google does not support this language pair. Pick another translator",
         id="unsupported-language",
     ),
-    pytest.param(
-        "InvalidSourceOrTargetLanguage",
-        "Google Translator does not support this language pair. Pick another translator",
-        id="invalid-language",
-    ),
-    pytest.param(
-        "NotValidLength",
-        "Google Translator cannot translate a selection this long.",
-        id="too-long-length",
-    ),
-    pytest.param(
-        "NotValidPayload",
-        "Google Translator cannot translate a selection this long.",
-        id="too-long-payload",
-    ),
-    pytest.param("EmptyResult", "Google Translator found no translation.", id="empty-result"),
-    pytest.param("NoneResult", "Google Translator found no translation.", id="none-result"),
-    pytest.param("KeyError", "Google Translator failed (KeyError)", id="other"),
+    pytest.param("TooLong", "Google cannot translate a selection this long.", id="too-long"),
+    pytest.param("EmptyResult", "Google found no translation.", id="empty-result"),
+    pytest.param("NoneResult", "Google found no translation.", id="none-result"),
+    pytest.param("KeyError", "Google failed (KeyError)", id="other"),
 ]
 RAW_EXCEPTION_TEXT = "raw-secret-detail <b>"
-PERMANENT_FAILURES = {
-    "LanguageNotSupportedException",
-    "InvalidSourceOrTargetLanguage",
-    "NotValidLength",
-    "NotValidPayload",
-}
+PERMANENT_FAILURES = {"Unsupported", "TooLong"}
 
 
 def _translator_failure(name):
-    import requests
-    from deep_translator import exceptions
-
     return {
-        "TooManyRequests": exceptions.TooManyRequests(RAW_EXCEPTION_TEXT),
-        "ConnectionError": requests.exceptions.ConnectionError(RAW_EXCEPTION_TEXT),
-        "RequestError": exceptions.RequestError(RAW_EXCEPTION_TEXT),
-        "TranslationNotFound": exceptions.TranslationNotFound(RAW_EXCEPTION_TEXT),
-        "LanguageNotSupportedException": exceptions.LanguageNotSupportedException(
-            RAW_EXCEPTION_TEXT
-        ),
-        "InvalidSourceOrTargetLanguage": exceptions.InvalidSourceOrTargetLanguage(
-            RAW_EXCEPTION_TEXT
-        ),
-        "NotValidLength": exceptions.NotValidLength(RAW_EXCEPTION_TEXT, 1, 5000),
-        "NotValidPayload": exceptions.NotValidPayload(RAW_EXCEPTION_TEXT),
+        "RateLimit": TranslatorError(TranslatorError.RATE_LIMIT, RAW_EXCEPTION_TEXT),
+        "Network": TranslatorError(TranslatorError.NETWORK, RAW_EXCEPTION_TEXT),
+        "NotFound": TranslatorError(TranslatorError.NOT_FOUND, RAW_EXCEPTION_TEXT),
+        "Unsupported": TranslatorError(TranslatorError.UNSUPPORTED, RAW_EXCEPTION_TEXT),
+        "TooLong": TranslatorError(TranslatorError.TOO_LONG, RAW_EXCEPTION_TEXT),
         "EmptyResult": ["  "],
         "NoneResult": [None],
         "KeyError": KeyError(RAW_EXCEPTION_TEXT),
@@ -725,7 +778,11 @@ def test_translate_inline_translator_failure_is_an_alert(
     from lexiflux.models import TranslationHistory
 
     client.force_login(user)
-    LanguagePreferences.get_or_create_language_preferences(user=user, language=book.language)
+    language_preferences = LanguagePreferences.get_or_create_language_preferences(
+        user=user, language=book.language
+    )
+    language_preferences.inline_translation_parameters = {"dictionary": "Google"}
+    language_preferences.save()
     mock_get_translator.return_value.translate.side_effect = _translator_failure(failure)
 
     response = client.get(
@@ -749,6 +806,7 @@ def test_translate_inline_translator_failure_is_an_alert(
         assert "later" not in data["article"]
     assert not TranslationHistory.objects.filter(user=user).exists()
     assert "Dictionary article failed" in caplog.text
+    assert ("Traceback" in caplog.text) == (failure == "KeyError")
 
 
 @allure.epic("Pages endpoints")
@@ -769,7 +827,7 @@ def test_translate_stream_translator_failure_is_an_alert(
         language_preferences=language_preferences,
         type="Dictionary",
         title="Google",
-        parameters={"dictionary": "GoogleTranslator"},
+        parameters={"dictionary": "Google"},
         order=10,
     )
     mock_get_translator.return_value.translate.side_effect = _translator_failure(failure)
@@ -785,18 +843,3 @@ def test_translate_stream_translator_failure_is_an_alert(
     if failure in PERMANENT_FAILURES:
         assert "later" not in events[0]["html"]
     assert not TranslationHistory.objects.filter(user=user).exists()
-
-
-@allure.epic("Pages endpoints")
-@allure.feature("Reader")
-def test_translator_failure_is_not_cached():
-    from deep_translator.exceptions import TooManyRequests
-
-    translator = Translator("GoogleTranslator", "english", "french")
-    translator._translator = MagicMock()
-    translator._translator.translate.side_effect = [TooManyRequests(), "bonjour"]
-
-    with pytest.raises(TooManyRequests):
-        translator.translate("hello")
-    assert translator.translate("hello") == "bonjour"
-    assert translator._translator.translate.call_count == 2

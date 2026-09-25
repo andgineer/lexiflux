@@ -7,6 +7,7 @@ import { ArticleStreamEvent, CUT_OFF_ERROR, escapeHtml, markdownEmphasis, readNd
 interface TranslationResponse {
   article?: string;
   error?: boolean;
+  html?: boolean;
   url?: string | null;
   window?: boolean | null;
 }
@@ -389,8 +390,11 @@ function updateTranslationSpan(data: TranslationResponse, translationSpan: HTMLS
   const originalTextDiv = translationSpan.querySelector('.original-text') as HTMLElement;
 
   if (data.article) {
-    // Error HTML comes from the server's autoescaped template; article text is model output.
-    translationTextDiv.innerHTML = data.error ? data.article : markdownEmphasis(escapeHtml(data.article));
+    // Error HTML comes from the server's autoescaped template and dictionary HTML is escaped
+    // as the server builds it; other article text is plain translator output.
+    translationTextDiv.innerHTML = data.error || data.html
+      ? data.article
+      : markdownEmphasis(escapeHtml(data.article.trim())).replace(/\n/g, '<br>');
 
     // Adjust width and wrapping
     adjustTranslationWidth(translationSpan, translationTextDiv, originalTextDiv);

@@ -39,6 +39,15 @@ Keys are set when the container is created. The container also holds your books,
 change the keys of an existing container make a [backup](docker.md#backup) and
 [restore](docker.md#restore) it with `--env-file lexiflux.env` added to the `docker run` command.
 
+### Wiktionary
+The offline Wiktionary translator needs its data, which is not in the image. Import it into
+the container (about 3.2 GB to download, a few minutes, about 230 MB kept):
+
+    docker exec -it lexiflux ./manage import-wiktionary
+
+See [Wiktionary data](aimodels.md#wiktionary-data). The dictionary lives in the container,
+so a [backup](docker.md#backup) includes it.
+
 ### Configuration
 
 #### Allowed Hosts

@@ -24,7 +24,8 @@ numpy==1.26.4
 llmbroker[postgres]>=1.11.0
 
 # Text processing and translation
-deep-translator
+httpx
+requests
 transliterate
 trafilatura
 beautifulsoup4

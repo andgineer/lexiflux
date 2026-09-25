@@ -8,17 +8,6 @@ from collections.abc import Iterator
 from typing import Any
 
 import django.utils.timezone
-import requests
-from deep_translator.exceptions import (
-    ElementNotFoundInGetRequest,
-    InvalidSourceOrTargetLanguage,
-    LanguageNotSupportedException,
-    NotValidLength,
-    NotValidPayload,
-    RequestError,
-    TooManyRequests,
-    TranslationNotFound,
-)
 from django.http import HttpRequest, HttpResponse, JsonResponse, StreamingHttpResponse
 from django.template.loader import render_to_string
 from pydantic import Field
@@ -33,7 +22,15 @@ from lexiflux.language.term_context import (
     term_context,
     words_span,
 )
-from lexiflux.language.translation import AVAILABLE_TRANSLATORS, get_translator
+from lexiflux.language.translation import (
+    AVAILABLE_TRANSLATORS,
+    HtmlTranslation,
+    Term,
+    TranslatorError,
+    get_translator,
+)
+from lexiflux.language.wiktionary import serbian_latin
+from lexiflux.language_preferences_default import LINGEA_LANGUAGES
 from lexiflux.models import Book, BookPage, CustomUser, LanguagePreferences, TranslationHistory
 
 logger = logging.getLogger(__name__)
@@ -74,13 +71,20 @@ def _site_link(
     book_page: BookPage,
     language_preferences: LanguagePreferences,
 ) -> dict[str, Any]:
+    url = article_params.get("url", "")
+    user_language = language_preferences.user_language
+    lingea_language = LINGEA_LANGUAGES.get(user_language.google_code)
+    if lingea_language is None and "{toLangLingea}" in url:
+        return {"article": f"Lingea has no {user_language.name}–Serbian dictionary", "error": True}
     return {
-        "url": article_params.get("url", "").format(
+        "url": url.format(
             term=urllib.parse.quote(context.word),
+            termLatin=urllib.parse.quote(serbian_latin(context.word)),
             lang=book_page.book.language.name.lower(),
             langCode=book_page.book.language.google_code,
-            toLang=language_preferences.user_language.name.lower(),
-            toLangCode=language_preferences.user_language.google_code,
+            toLang=user_language.name.lower(),
+            toLangCode=user_language.google_code,
+            toLangLingea=lingea_language,
         ),
         "window": article_params.get("window", True),
     }
@@ -91,31 +95,25 @@ def _dictionary_article(
     context: TermContext,
     book_page: BookPage,
     language_preferences: LanguagePreferences,
-) -> str:
+    user: CustomUser,
+) -> str | HtmlTranslation:
     translator = get_translator(
         article_params["dictionary"],
-        book_page.book.language.name.lower(),
-        language_preferences.user_language.name.lower(),
+        book_page.book.language.name,
+        language_preferences.user_language.name,
     )
-    result = translator.translate(context.word)
+    result = translator.translate(Term(context.word, context.passage, user))
+    if isinstance(result, HtmlTranslation):
+        return result
     if not isinstance(result, str) or not result.strip():
-        raise TranslationNotFound(context.word)
+        raise TranslatorError(TranslatorError.NOT_FOUND)
     return result
 
 
 def _dictionary_error(exc: Exception, translator_name: str) -> tuple[str, str]:
-    if isinstance(exc, TooManyRequests):
-        kind = "rate_limit"
-    elif isinstance(exc, RequestError | requests.RequestException):
-        kind = "network"
-    elif isinstance(exc, TranslationNotFound | ElementNotFoundInGetRequest):
-        kind = "not_found"
-    elif isinstance(exc, LanguageNotSupportedException | InvalidSourceOrTargetLanguage):
-        kind = "unsupported"
-    elif isinstance(exc, NotValidLength | NotValidPayload):
-        kind = "too_long"
-    else:
-        kind = ArticleError.GENERIC
+    if isinstance(exc, ArticleError):
+        return exc.kind, exc.html
+    kind = exc.kind if isinstance(exc, TranslatorError) else ArticleError.GENERIC
     label = AVAILABLE_TRANSLATORS.get(translator_name, (None, translator_name or "Translator"))[1]
     html_text = render_to_string(
         "translator-error.html",
@@ -129,20 +127,27 @@ def _safe_dictionary_article(
     context: TermContext,
     book_page: BookPage,
     language_preferences: LanguagePreferences,
+    user: CustomUser,
 ) -> dict[str, Any]:
     try:
-        return {
-            "article": _dictionary_article(
-                article_params,
-                context,
-                book_page,
-                language_preferences,
-            ),
-        }
+        article = _dictionary_article(
+            article_params,
+            context,
+            book_page,
+            language_preferences,
+            user,
+        )
     except Exception as e:  # noqa: BLE001
-        logger.exception("Dictionary article failed")
+        if isinstance(e, TranslatorError):
+            logger.warning("Dictionary article failed: %s", e)
+        elif not isinstance(e, ArticleError):  # llm_error has logged an ArticleError
+            logger.exception("Dictionary article failed")
         kind, html_text = _dictionary_error(e, article_params.get("dictionary", ""))
         return {"article": html_text, "error": True, "kind": kind}
+    if isinstance(article, HtmlTranslation):
+        return {"article": str(article.html), "html": True, "translation": article.translation}
+    # Lines below the first are dictionary alternatives, not the translation to remember.
+    return {"article": article, "translation": article.strip().split("\n", 1)[0]}
 
 
 def get_lexical_article(  # noqa: PLR0913
@@ -164,7 +169,13 @@ def get_lexical_article(  # noqa: PLR0913
         return _site_link(article_params, context, book_page, language_preferences)
 
     if article_name == "Dictionary":
-        return _safe_dictionary_article(article_params, context, book_page, language_preferences)
+        return _safe_dictionary_article(
+            article_params,
+            context,
+            book_page,
+            language_preferences,
+            user,
+        )
 
     try:
         article = generate_article(
@@ -245,13 +256,14 @@ def translate(request: HttpRequest, params: TranslateGetParams) -> HttpResponse:
         return JsonResponse(result)
 
     result["article"] = result["article"].split("<hr>")[0]
+    translation = result.pop("translation", result["article"])
     history_context = get_context_for_translation_history(book_page, term_word_ids)
     translation_history, created = TranslationHistory.objects.update_or_create(
         term=term_text,
         source_language=book.language,
         user=user,
         defaults={
-            "translation": result["article"],
+            "translation": translation,
             "target_language": language_preferences.user_language,
             "context": history_context,
             "book": book,
@@ -287,16 +299,22 @@ def _article_events(  # noqa: PLR0913
     if error := _languages_error(book_page, language_preferences):
         yield _error_event(error)
     elif article_type == "Site":
-        yield {
-            "event": "site",
-            **_site_link(article_params, context, book_page, language_preferences),
-        }
+        link = _site_link(article_params, context, book_page, language_preferences)
+        yield _error_event(link["article"]) if link.get("error") else {"event": "site", **link}
     elif article_type == "Dictionary":
-        result = _safe_dictionary_article(article_params, context, book_page, language_preferences)
+        result = _safe_dictionary_article(
+            article_params,
+            context,
+            book_page,
+            language_preferences,
+            user,
+        )
         if result.get("error"):
             yield {"event": "error", "kind": result["kind"], "html": result["article"]}
-        else:
+        elif result.get("html"):
             yield {"event": "delta", "text": result["article"]}
+        else:
+            yield {"event": "delta", "text": html.escape(result["article"]).replace("\n", "<br>")}
     else:
         req = article_request(
             article_type,

@@ -154,5 +154,6 @@ New users get:
 | Sentence | Sentence | Sol, none, priority |
 | glosbe | Site | — |
 
-The inline translation is the Google Translate dictionary. A new AI article a user adds
-defaults to Sol, none, priority.
+Serbian preferences also get a lingea Site article after glosbe when Lingea has a dictionary
+from the user language. The inline translation is the LLM translation on the free pool
+(`inline-translation.md`). A new AI article a user adds defaults to Sol, none, priority.

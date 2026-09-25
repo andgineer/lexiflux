@@ -34,6 +34,7 @@ new Vue({
                 'https://dictionary.reverso.net/{lang}-{toLang}/{word}',
                 'https://en.pons.com/translate?q={term}&l={langCode}{toLangCode}&in=&lf=en&qnac=',
                 'https://www.multitran.com/m.exe?ll1=114&ll2=2&s={term}',
+                'https://recnici.lingea.rs/{toLangLingea}-srpski/{termLatin}',
             ],
             form: {
                 id: null,
@@ -267,6 +268,10 @@ Add to each its translation to {user_language}.
                 return url;  // Return the original string if it's not a valid URL
             }
         },
+        getDictionaryLabel(dictionaryKey) {
+            const dictionary = this.availableDictionaries.find(d => d.value === dictionaryKey);
+            return dictionary ? dictionary.label : dictionaryKey;
+        },
         getModelTitle(modelKey) {
             const model = this.aiModels.find(m => m.key === modelKey);
             return model ? model.title : modelKey;
@@ -355,7 +360,7 @@ Add to each its translation to {user_language}.
                     title = this.formatUrl(url);
                 }
             } else if (type === 'Dictionary') {
-                title = this.form.parameters.dictionary || title;
+                title = this.getDictionaryLabel(this.form.parameters.dictionary) || title;
             } else if (this.form.parameters && this.form.parameters.model) {
                 const model = this.aiModels.find(m => m.key === this.form.parameters.model);
                 if (model && model.suffix) {

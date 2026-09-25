@@ -47,7 +47,7 @@ def fake_stream() -> Iterator[FakeArticleStream]:
 @pytest.fixture(autouse=True)
 def fake_translator() -> Iterator[MagicMock]:
     translator = MagicMock()
-    translator.translate.side_effect = lambda text: f"Translation of {text}"
+    translator.translate.side_effect = lambda term: f"Translation of {term.word}"
     with patch("lexiflux.views.lexical_views.get_translator", return_value=translator):
         yield translator
 

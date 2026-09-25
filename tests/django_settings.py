@@ -13,6 +13,9 @@ LLMBROKER_HOME = Path(tempfile.mkdtemp(prefix="lexiflux-llmbroker-"))
 # Also for llmbroker calls made without home=, which fall back to $LLMBROKER_HOME.
 os.environ["LLMBROKER_HOME"] = str(LLMBROKER_HOME)
 
+# Never the repo's Wiktionary file; tests that need one build it from fixtures.
+WIKTIONARY_DATABASE = Path(tempfile.mkdtemp(prefix="lexiflux-wiktionary-")) / "wiktionary.sqlite3"
+
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,

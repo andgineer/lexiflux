@@ -14,6 +14,11 @@
 <div class="alert alert-warning" role="alert">
     <p class="mb-0">{{ label }} does not support this language pair. Pick another translator in <a href="/language-preferences/" class="alert-link">Language Preferences</a>.</p>
 </div>
+{% elif kind == "not_installed" %}
+<div class="alert alert-warning" role="alert">
+    <p>Wiktionary data is not installed.</p>
+    <p class="mb-0">Import it with <code>./manage import-wiktionary</code> in the lexiflux folder (in Docker: <code>docker exec -it lexiflux ./manage import-wiktionary</code>). The import downloads about 3 GB from kaikki.org and takes a few minutes.</p>
+</div>
 {% elif kind == "too_long" %}
 <div class="alert alert-warning" role="alert">
     <p class="mb-0">{{ label }} cannot translate a selection this long.</p>

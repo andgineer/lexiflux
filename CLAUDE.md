@@ -23,7 +23,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ### Testing and Quality
 - `source ./activate.sh && invoke test` - Run Python tests with pytest and generate Allure report
 - `source ./activate.sh && invoke selenium` - Run Selenium end-to-end tests
-- `source ./activate.sh && python -m pytest -m playwright tests` - Run Playwright tests of the reader's AI panels (headless; add `--headed` to watch). Needs `invoke buildjs` and `playwright install chromium`
+- `source ./activate.sh && python -m pytest -m playwright tests` - Run Playwright tests of the reader's AI panels and inline popup (headless; add `--headed` to watch). Needs `invoke buildjs` and `playwright install chromium`
 - `source ./activate.sh && LEXIFLUX_REAL_LLM=1 python -m pytest -m real_llm tests` - Opt-in smoke of a real free-pool Article in the browser (free pool only, pool keys in `.env`)
 - `source ./activate.sh && invoke pre` - Run pre-commit hooks (formatting, linting)
 - `npm test` - Run JavaScript/TypeScript tests with Jest
@@ -45,6 +45,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
   - `--language <lang>` - Force language detection
   - Automatically downloads and stores images from the web page
   - Updates image URLs to use Django's serve_book_image view
+- `source ./activate.sh && ./manage import-wiktionary` - Build the offline Wiktionary file (`WIKTIONARY_DATABASE`, default `wiktionary.sqlite3` next to `db.sqlite3`) from kaikki.org: about 3.2 GB download, about 3 minutes, about 230 MB result
 
 ## Architecture Overview
 
@@ -55,6 +56,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Language Processing**: `lexiflux/language/` - Text processing, translation, and NLP features
 - **Book Import**: `lexiflux/ebook/` - Support for EPUB, HTML, plain text, and URL imports
 - **AI Integration**: llmbroker (`lexiflux/language/broker.py`): the free-tier pool plus direct paid models (`gpt`, `gpt-fast`, `opus`); sidebar articles stream as NDJSON from `/translate/stream`. Rules in `specs/ai-articles.md`
+- **Inline translation**: three translators in `lexiflux/language/translation.py` (`AVAILABLE_TRANSLATORS`): `LLMTranslation` (default, free pool, 3 s limit), `Wiktionary` (offline, `lexiflux/language/wiktionary.py`), `Google` (JSON endpoint over httpx). No fallback between them. Rules in `specs/inline-translation.md`
 
 ### Frontend Architecture
 - **TypeScript**: Main entry point is `lexiflux/viewport/main.ts`
@@ -85,7 +87,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ### Testing Strategy
 - **Python Tests**: pytest with Django integration, coverage reporting
 - **JavaScript Tests**: Jest with DOM testing utilities
-- **E2E Tests**: Selenium with page object pattern; Playwright (`tests/e2e_playwright/`) for the streaming AI panels, with `stream_article` replaced by a scripted fake
+- **E2E Tests**: Selenium with page object pattern; Playwright (`tests/e2e_playwright/`) for the streaming AI panels and the inline popup, with `stream_article` and the pool replaced by scripted fakes; tests never read the repo's `wiktionary.sqlite3` (they build one from `tests/resources/wiktionary/`)
 - **Test Data**: Sample books and fixtures in `tests/resources/`
 - **CI/CD**: GitHub Actions with Allure reporting
 
@@ -104,7 +106,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
   - `docker` - Local Docker with SQLite and simplified static serving
   - `koyeb` - Production deployment with PostgreSQL
 - Offered AI models and their knobs in `lexiflux/language/ai_models.py`; API keys only from the environment or `.env` (read by llmbroker), never stored in lexiflux
-- Translation prompts in `lexiflux/resources/prompts/`
+- Translation prompts in `lexiflux/resources/prompts/` (the popup's LLM translation uses `Inline translation.txt`)
 - Docker support with compose file for services (docker-compose.yaml for Selenium tests only)
 - Separate docker-compose.postgres.yaml for PostgreSQL debugging (not for regular tests)
 

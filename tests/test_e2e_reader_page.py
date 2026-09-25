@@ -36,8 +36,8 @@ def test_e2e_reader_page_upapproved_user_cannot_access(browser, user):
     )
 
 
-def mock_translate(text):
-    return "Mocked translation of: " + text
+def mock_translate(term):
+    return "Mocked translation of: " + term.word
 
 
 def mock_generate_article(*args, **kwargs):

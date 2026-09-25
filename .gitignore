@@ -5,6 +5,8 @@ dist/
 build/
 .venv*/
 db.sqlite3*
+wiktionary.sqlite3*
+wiktionary-downloads/
 ssl_certs/
 bundle.js
 .DS_Store

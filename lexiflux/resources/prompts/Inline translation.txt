@@ -1,0 +1,3 @@
+Translate the {text_language} word or phrase marked with ⟦ ⟧ into {user_language}, in the sense it has in this sentence. If it is part of a separable verb or a fixed expression, translate the whole unit. Reply with only the {user_language} translation in dictionary form, nothing else.
+
+Text: {passage}

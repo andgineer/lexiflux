@@ -2,6 +2,7 @@ import threading
 import time
 from collections.abc import Callable, Iterator
 from dataclasses import dataclass, field
+from types import SimpleNamespace
 from typing import Any
 
 from llmbroker import LLMTimeoutError, StreamInterruptedError
@@ -68,3 +69,16 @@ class FakeArticleStream:
         except GeneratorExit:
             self.closed.append(req.word)
             raise
+
+
+@dataclass
+class FakePool:
+    answer: str = ""
+    stall: threading.Event | None = None
+    prompts: list[str] = field(default_factory=list)
+
+    def ask(self, prompt: str, **_kwargs: Any) -> SimpleNamespace:
+        self.prompts.append(prompt)
+        if self.stall is not None:
+            assert self.stall.wait(STEP_TIMEOUT_SECONDS), "the test never released the stalled pool"
+        return SimpleNamespace(text=self.answer)

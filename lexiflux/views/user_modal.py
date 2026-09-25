@@ -8,6 +8,7 @@ from django.views.decorators.http import require_http_methods
 
 from lexiflux.auth import smart_login_required
 from lexiflux.custom_user import get_custom_user
+from lexiflux.language_preferences_default import add_language_pair_articles
 from lexiflux.models import Language, LanguagePreferences
 
 logger = logging.getLogger()
@@ -44,6 +45,10 @@ def user_modal(request: HttpRequest) -> HttpResponse:
                 )
                 if not user.default_language_preferences:
                     logger.warning("User has no default_language_preferences!")
+            if old_language is None:
+                # The preferences were created before the user had a language.
+                for preferences in LanguagePreferences.objects.filter(user=user):
+                    add_language_pair_articles(preferences)
             return HttpResponse(headers={"HX-Refresh": "true"})
         return HttpResponse(status=400)
 

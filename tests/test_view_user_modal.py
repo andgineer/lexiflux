@@ -1,7 +1,7 @@
 import allure
 import pytest
 from django.urls import reverse
-from lexiflux.models import LanguagePreferences
+from lexiflux.models import Language, LanguagePreferences
 
 
 @allure.epic("User")
@@ -65,7 +65,7 @@ def test_user_modal_update_language_preferences(client, approved_user, language)
         user=approved_user,
         language=non_english,  # Content language
         user_language=language,  # User language
-        inline_translation_parameters={"dictionary": "GoogleTranslator"},
+        inline_translation_parameters={"dictionary": "Google"},
     )
 
     # Update language with update_all_preferences checked
@@ -97,7 +97,7 @@ def test_user_modal_update_without_affecting_preferences(client, approved_user, 
         user=approved_user,
         language=non_english,  # Content language
         user_language=language,  # User language
-        inline_translation_parameters={"dictionary": "GoogleTranslator"},
+        inline_translation_parameters={"dictionary": "Google"},
     )
 
     # Update language without update_all_preferences
@@ -148,6 +148,43 @@ def test_first_time_user_language_selection(client, approved_user, language):
     language_prefs = LanguagePreferences.objects.filter(user=approved_user)
     for pref in language_prefs:
         assert pref.user_language == english
+
+
+def _serbian_titles(user):
+    serbian = LanguagePreferences.objects.get(user=user, language__google_code="sr")
+    return [article.title for article in serbian.get_lexical_articles()]
+
+
+@allure.epic("User")
+@allure.feature("User Modal")
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "language, lingea",
+    [("ru", ["lingea"]), ("en", ["lingea"]), ("ka", [])],
+)
+def test_first_language_choice_of_a_lingea_language_adds_lingea_to_serbian(
+    client, user, language, lingea
+):
+    client.force_login(user)
+    assert user.language is None
+
+    response = client.post(reverse("user-modal"), {"language": language})
+
+    assert response.status_code == 200
+    assert _serbian_titles(user) == ["Article", "In depth", "Sentence", "glosbe", *lingea]
+
+
+@allure.epic("User")
+@allure.feature("User Modal")
+@pytest.mark.django_db
+def test_later_language_change_adds_no_articles(client, approved_user):
+    approved_user.language = Language.objects.get(google_code="ka")
+    approved_user.save()
+    client.force_login(approved_user)
+
+    client.post(reverse("user-modal"), {"language": "ru", "update_all_preferences": "on"})
+
+    assert _serbian_titles(approved_user) == ["Article", "In depth", "Sentence", "glosbe"]
 
 
 @allure.epic("User")

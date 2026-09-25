@@ -20,8 +20,13 @@ from unidecode import unidecode
 
 from lexiflux.language.ai_models import validate_knobs
 from lexiflux.language.sentence_extractor import break_into_sentences
+from lexiflux.language.translation import AVAILABLE_TRANSLATORS
 from lexiflux.language.word_extractor import parse_words
-from lexiflux.language_preferences_default import create_default_language_preferences
+from lexiflux.language_preferences_default import (
+    add_language_pair_articles,
+    create_default_language_preferences,
+    is_language_pair_article,
+)
 
 BOOK_CODE_LENGTH = 100
 
@@ -74,6 +79,16 @@ LEXICAL_ARTICLE_PARAMETERS = {
     "Origin": AI_ARTICLE_KNOBS,
     "AI": [*AI_ARTICLE_KNOBS, "prompt"],
 }
+
+
+def validate_dictionary(parameters: dict[str, Any]) -> None:
+    if "dictionary" not in parameters:
+        raise ValidationError("Dictionary article must have 'dictionary' parameter.")
+    if parameters["dictionary"] not in AVAILABLE_TRANSLATORS:
+        raise ValidationError(
+            f"Unknown dictionary '{parameters['dictionary']}'. "
+            f"Available: {', '.join(AVAILABLE_TRANSLATORS)}.",
+        )
 
 
 class CustomUser(AbstractUser):  # type: ignore
@@ -600,8 +615,7 @@ class LexicalArticle(models.Model):  # type: ignore
             if "url" not in self.parameters or "window" not in self.parameters:
                 raise ValidationError("Site article must have 'url' and 'window' parameters.")
         elif self.type == "Dictionary":
-            if "dictionary" not in self.parameters:
-                raise ValidationError("Dictionary article must have 'dictionary' parameter.")
+            validate_dictionary(self.parameters)
         else:
             if self.type == "AI" and "prompt" not in self.parameters:
                 raise ValidationError("AI article must have 'prompt' parameter.")
@@ -675,6 +689,11 @@ class LanguagePreferences(models.Model):  # type: ignore
                     },
                 },
             )
+        if self.inline_translation_type == LexicalArticleType.DICTIONARY:
+            try:
+                validate_dictionary(self.inline_translation_parameters)
+            except ValidationError as exc:
+                raise ValidationError({"inline_translation_parameters": exc.messages}) from exc
 
     def save(self, *args: Any, **kwargs: Any) -> None:
         self.full_clean()
@@ -709,6 +728,8 @@ class LanguagePreferences(models.Model):  # type: ignore
         if created:
             # Copy lexical articles from the default language preferences
             for article in default.lexical_articles.all():  # type: ignore[attr-defined]
+                if is_language_pair_article(article.parameters):
+                    continue
                 LexicalArticle.objects.create(
                     language_preferences=preferences,
                     type=article.type,
@@ -716,6 +737,7 @@ class LanguagePreferences(models.Model):  # type: ignore
                     parameters=article.parameters,
                     order=article.order,
                 )
+            add_language_pair_articles(preferences)
 
         return preferences  # type: ignore
 

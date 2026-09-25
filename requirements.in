@@ -4,7 +4,8 @@
 numpy
 django
 django-allauth
-deep-translator
+httpx
+requests
 django-widget-tweaks
 django-extensions
 Werkzeug

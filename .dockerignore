@@ -16,4 +16,6 @@ coverage.xml
 .env
 .env.*
 db.sqlite3
+wiktionary.sqlite3*
+wiktionary-downloads
 .llmbroker

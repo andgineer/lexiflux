@@ -65,14 +65,14 @@ def test_e2e_language_preferences_page_inline_translation(browser, user_preferen
     with allure.step("Open and configure Dictionary in inline translation"):
         page.open_inline_translation_editor()
         assert page.select_inline_translation_type("Dictionary") == "Dictionary"
-        assert page.select_dictionary("Google Translator")
+        assert page.select_dictionary("Google")
 
         browser.take_screenshot("Before Inline Translation type Dictionary Save")
         page.save_changes()
 
         inline_translation_info = page.get_inline_translation_info()
         assert "Type:" in inline_translation_info
-        assert "GoogleTranslator" in inline_translation_info
+        assert "Dictionary: Google" in inline_translation_info
         assert "Dictionary:" in inline_translation_info
 
     browser.take_screenshot("Final")

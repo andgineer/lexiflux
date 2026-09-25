@@ -73,6 +73,7 @@ let streams: ControlledStream[] = [];
 let streamSignals: AbortSignal[] = [];
 let inlineArticle = 'inline';
 let inlineError = false;
+let inlineHtml = false;
 
 const flush = () => new Promise(resolve => setTimeout(resolve, 0));
 const line = (event: object) => JSON.stringify(event) + '\n';
@@ -101,6 +102,7 @@ beforeEach(() => {
   streamSignals = [];
   inlineArticle = 'inline';
   inlineError = false;
+  inlineHtml = false;
   jest.spyOn(console, 'log').mockImplementation();
   jest.spyOn(console, 'error').mockImplementation();
 
@@ -146,7 +148,7 @@ beforeEach(() => {
       streamSignals.push(init!.signal as AbortSignal);
       return Promise.resolve({ ok: true, status: 200, body: { getReader: () => stream.reader } });
     }
-    return Promise.resolve({ ok: true, status: 200, json: () => Promise.resolve({ article: inlineArticle, error: inlineError }) });
+    return Promise.resolve({ ok: true, status: 200, json: () => Promise.resolve({ article: inlineArticle, error: inlineError, html: inlineHtml }) });
   }) as any);
 });
 
@@ -334,6 +336,29 @@ describe('inline popup', () => {
 
     const text = document.querySelector('.translation-text') as HTMLElement;
     expect(text.innerHTML).toBe('<b>word</b> &lt;x&gt;');
+  });
+
+  test('shows each line of the article on its own line', async () => {
+    inlineArticle = 'spring\n*noun:* весна, пружина <x>\n';
+    const translate = loadTranslate();
+    selectWords(translate);
+    await flush();
+    await flush();
+
+    const text = document.querySelector('.translation-text') as HTMLElement;
+    expect(text.innerHTML).toBe('spring<br><i>noun:</i> весна, пружина &lt;x&gt;');
+  });
+
+  test('renders a dictionary sense list the server built as HTML', async () => {
+    inlineArticle = '<div class="wiktionary"><ol class="wiktionary-senses"><li>весна &lt;x&gt;</li></ol></div>';
+    inlineHtml = true;
+    const translate = loadTranslate();
+    selectWords(translate);
+    await flush();
+    await flush();
+
+    const text = document.querySelector('.translation-text') as HTMLElement;
+    expect(text.querySelector('.wiktionary-senses li')?.textContent).toBe('весна <x>');
   });
 
   test('renders a server error as HTML', async () => {

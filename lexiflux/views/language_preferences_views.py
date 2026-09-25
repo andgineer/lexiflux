@@ -4,7 +4,6 @@ import json
 import logging
 from typing import Any
 
-from deep_translator.exceptions import LanguageNotSupportedException
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError
@@ -16,7 +15,12 @@ from django.views.decorators.http import require_http_methods
 from lexiflux.auth import smart_login_required
 from lexiflux.custom_user import get_custom_user
 from lexiflux.language.ai_models import DEFAULT_AI_MODEL, editor_models, validate_knobs
-from lexiflux.language.translation import Translator, get_translator
+from lexiflux.language.translation import (
+    AVAILABLE_TRANSLATORS,
+    Translator,
+    TranslatorError,
+    get_translator,
+)
 from lexiflux.language_preferences_default import create_default_language_preferences
 from lexiflux.models import (
     LEXICAL_ARTICLE_PARAMETERS,
@@ -202,28 +206,26 @@ def check_article_params(
                 {"status": "error", "message": "Please set your user language"},
                 status=400,
             )
-        source_language = language_preferences.language.name.lower()
-        target_language = language_preferences.user_language.name.lower()
+        if dictionary_name not in AVAILABLE_TRANSLATORS:
+            return JsonResponse(
+                {"status": "error", "message": f"Unknown dictionary {dictionary_name}"},
+                status=400,
+            )
+        language = language_preferences.language.name
+        user_language = language_preferences.user_language.name
         try:
-            get_translator(
-                dictionary_name,
-                source_language,
-                target_language,
-            ).translate("test")
-        except LanguageNotSupportedException:
+            # Constructing checks the language pair; a test translation would spend a pool call.
+            get_translator(dictionary_name, language, user_language)
+        except TranslatorError as e:
+            if e.kind != TranslatorError.UNSUPPORTED:
+                raise
+            label = AVAILABLE_TRANSLATORS[dictionary_name][1]
             return JsonResponse(
                 {
                     "status": "error",
-                    "message": f"{parameters.get('dictionary')} cannot translate "
-                    f"from {language_preferences.language.name} "
-                    f"to {language_preferences.user_language.name}",
+                    "message": f"{label} cannot translate from {language} to {user_language}",
                 },
                 status=400,
-            )
-        except Exception as e:  # noqa: BLE001
-            logger.info(
-                f"Error checking translation from {source_language} to {target_language} "
-                f"with {dictionary_name}: {str(e)}",
             )
     elif article_type != "Site":
         try:
@@ -248,6 +250,11 @@ def save_inline_translation(request: HttpRequest) -> JsonResponse:
     parameters = data.get("parameters", {})
 
     language_preferences = user.language_preferences.get(language__google_code=language_id)  # type: ignore[attr-defined]
+    if translation_type == "Site":
+        return JsonResponse(
+            {"status": "error", "message": "A Site cannot be the inline translation"},
+            status=400,
+        )
     if error_response := check_article_params(translation_type, parameters, language_preferences):
         return error_response
 

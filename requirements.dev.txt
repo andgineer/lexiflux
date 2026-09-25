@@ -50,7 +50,6 @@ babel==2.18.0
 beautifulsoup4==4.14.3
     # via
     #   -r requirements.txt
-    #   deep-translator
     #   nbconvert
 bleach==6.3.0
     # via nbconvert
@@ -146,8 +145,6 @@ debugpy==1.8.20
     # via ipykernel
 decorator==5.2.1
     # via ipython
-deep-translator==1.11.4
-    # via -r requirements.txt
 deepmerge==2.0
     # via zensical
 defusedxml==0.7.1
@@ -620,7 +617,6 @@ requests==2.34.2
     # via
     #   -r requirements.txt
     #   coveralls
-    #   deep-translator
     #   pytest-base-url
     #   requests-mock
     #   spacy

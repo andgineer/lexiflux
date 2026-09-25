@@ -209,3 +209,45 @@ def test_translation_history_context_format_unchanged(page, word_ids, expected):
     assert get_context_for_translation_history(page, word_ids) == expected.replace(
         "{M}", TranslationHistory.CONTEXT_MARK
     )
+
+
+@allure.epic("Translators")
+@allure.feature("LLM translation")
+@pytest.mark.parametrize(
+    "word_ids, passage",
+    [
+        (
+            [16],
+            "Lambda mu. Nu xi omicron pi ⟦rho⟧ sigma tau upsilon. Phi chi psi omega.",
+        ),
+        (
+            [5, 6],
+            "Alpha beta gamma. Delta epsilon ⟦zeta eta⟧ theta iota kappa. Lambda mu.",
+        ),
+        (
+            [9, 10],
+            "Alpha beta gamma. Delta epsilon zeta eta theta iota ⟦kappa. Lambda⟧ mu. "
+            "Nu xi omicron pi rho sigma tau upsilon.",
+        ),
+        ([0], "⟦Alpha⟧ beta gamma. Delta epsilon zeta eta theta iota kappa."),
+        ([30], "Phi chi psi omega. One two three four five six ⟦seven⟧."),
+    ],
+    ids=["middle", "multi-word", "across sentences", "first word of page", "last word of page"],
+)
+def test_passage_marks_the_term_between_neighbour_sentences(page, word_ids, passage):
+    assert term_context(page, word_ids).passage == passage
+
+
+@allure.epic("Translators")
+@allure.feature("LLM translation")
+def test_passage_marks_the_term_inside_html(book):
+    sentences = ["<p>Hello <b>big</b> world.</p>", "<p>Next one &amp; more.</p>"]
+    with fake_page(book, sentences, separator="") as page:
+        assert term_context(page, [1]).passage == "Hello ⟦big⟧ world. Next one & more."
+
+
+@allure.epic("Translators")
+@allure.feature("LLM translation")
+def test_passage_of_a_single_sentence_page(book):
+    with fake_page(book, ["Hi there."]) as page:
+        assert term_context(page, [1]).passage == "Hi ⟦there⟧."

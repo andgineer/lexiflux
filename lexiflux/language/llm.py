@@ -5,6 +5,7 @@ import re
 import threading
 from collections import OrderedDict
 from collections.abc import Iterator
+from concurrent.futures import Future
 from contextlib import closing
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
@@ -44,6 +45,10 @@ POOL_FASTEST_OF = 2
 POOL_WAIT_SECONDS = 25
 CACHE_SIZE = 1000
 
+INLINE_TRANSLATION = "Inline translation"
+# Bounds the whole answer: the queue for a pool slot, the race, and any second pool pass.
+INLINE_TRANSLATION_SECONDS = 3.0
+
 
 @dataclass(frozen=True)
 class ArticleRequest:
@@ -57,6 +62,19 @@ class ArticleRequest:
     text_language: str
     user_language: str
     user: Any = field(compare=False, hash=False)
+
+
+@dataclass(frozen=True)
+class InlineTranslationRequest:
+    word: str
+    passage: str
+    text_language: str
+    user_language: str
+    user: Any = field(compare=False, hash=False)
+
+    def cache_key(self) -> tuple[str, ...]:
+        # The answer depends on the passage and the languages only, so users share it.
+        return (INLINE_TRANSLATION, self.word, self.passage, self.text_language, self.user_language)
 
 
 @dataclass(frozen=True)
@@ -118,8 +136,7 @@ def _cache_key(req: ArticleRequest) -> tuple[Any, ...]:
     )
 
 
-def _cache_get(req: ArticleRequest) -> str | None:
-    key = _cache_key(req)
+def _cache_get(key: tuple[Any, ...]) -> str | None:
     with _cache_lock:
         if key in _cache:
             _cache.move_to_end(key)
@@ -127,10 +144,10 @@ def _cache_get(req: ArticleRequest) -> str | None:
     return None
 
 
-def _cache_put(req: ArticleRequest, text: str) -> None:
+def _cache_put(key: tuple[Any, ...], text: str) -> None:
     with _cache_lock:
-        _cache[_cache_key(req)] = text
-        _cache.move_to_end(_cache_key(req))
+        _cache[key] = text
+        _cache.move_to_end(key)
         while len(_cache) > CACHE_SIZE:
             _cache.popitem(last=False)
 
@@ -148,16 +165,21 @@ def _template(article_type: str) -> str:
     return path.read_text(encoding="utf-8").strip()
 
 
-def _fill(template: str, req: ArticleRequest) -> str:
+def _substitute(template: str, **values: str) -> str:
     # Plain replacement: a literal brace in a prompt must not break formatting.
-    for name, value in (
-        ("text_language", req.text_language),
-        ("user_language", req.user_language),
-        ("word", req.word),
-        ("sentence", req.sentence),
-    ):
+    for name, value in values.items():
         template = template.replace(f"{{{name}}}", value)
     return template
+
+
+def _fill(template: str, req: ArticleRequest) -> str:
+    return _substitute(
+        template,
+        text_language=req.text_language,
+        user_language=req.user_language,
+        word=req.word,
+        sentence=req.sentence,
+    )
 
 
 def _custom_input(req: ArticleRequest) -> str:
@@ -197,7 +219,7 @@ def _check_model(req: ArticleRequest) -> None:
 
 def stream_article(req: ArticleRequest) -> Iterator[ArticleEvent]:
     # Closing the generator early must close the provider call, hence the context managers.
-    cached = _cache_get(req)
+    cached = _cache_get(_cache_key(req))
     if cached is not None:
         yield ArticleEvent.delta(cached)
         return
@@ -233,11 +255,11 @@ def stream_article(req: ArticleRequest) -> Iterator[ArticleEvent]:
     except Exception as exc:  # noqa: BLE001
         yield ArticleEvent.error(article_error(exc, req, had_text=bool(parts)))
         return
-    _cache_put(req, "".join(parts))
+    _cache_put(_cache_key(req), "".join(parts))
 
 
 def generate_article(req: ArticleRequest) -> str:
-    cached = _cache_get(req)
+    cached = _cache_get(_cache_key(req))
     if cached is not None:
         return cached
     _check_model(req)
@@ -259,7 +281,59 @@ def generate_article(req: ArticleRequest) -> str:
     except Exception as exc:
         raise article_error(exc, req, had_text=False) from exc
     text = text or ""
-    _cache_put(req, text)
+    _cache_put(_cache_key(req), text)
+    return text
+
+
+def inline_translation_prompt(req: InlineTranslationRequest) -> str:
+    return _substitute(
+        _template(INLINE_TRANSLATION),
+        text_language=req.text_language,
+        user_language=req.user_language,
+        passage=req.passage,
+    )
+
+
+def _ask_pool(req: InlineTranslationRequest) -> str:
+    answer = llms_for(req.user).ask(
+        inline_translation_prompt(req),
+        operation=INLINE_TRANSLATION,
+        fastest_of=POOL_FASTEST_OF,
+        wait=INLINE_TRANSLATION_SECONDS,
+    )
+    return (answer.text or "").strip()
+
+
+def _answer_pool(req: InlineTranslationRequest, call: Future[str]) -> None:
+    try:
+        call.set_result(_ask_pool(req))
+    except Exception as exc:  # noqa: BLE001
+        call.set_exception(exc)
+
+
+def translate_inline(req: InlineTranslationRequest) -> str:
+    key = req.cache_key()
+    cached = _cache_get(key)
+    if cached is not None:
+        return cached
+    # `wait` does not bound the broker's second pool pass, so the call runs where it can be
+    # abandoned at the limit; a daemon thread so a hung call does not hold up process exit.
+    call: Future[str] = Future()
+    threading.Thread(
+        target=_answer_pool,
+        args=(req, call),
+        name="inline-translation",
+        daemon=True,
+    ).start()
+    try:
+        text = call.result(timeout=INLINE_TRANSLATION_SECONDS)
+    except TimeoutError:
+        timeout = LLMTimeoutError(f"no answer in {INLINE_TRANSLATION_SECONDS} s")
+        raise llm_error(timeout, POOL, INLINE_TRANSLATION, had_text=False) from None
+    except Exception as exc:
+        raise llm_error(exc, POOL, INLINE_TRANSLATION, had_text=False) from exc
+    if text:
+        _cache_put(key, text)
     return text
 
 
@@ -290,8 +364,8 @@ def _seconds_until(moment: datetime | None) -> int | None:
     return seconds if seconds > 0 else None
 
 
-def _provider(req: ArticleRequest) -> Any:
-    offered = OFFERED_MODELS.get(req.model)
+def _provider(model: str) -> Any:
+    offered = OFFERED_MODELS.get(model)
     provider_id = offered.provider if offered else None
     return next(
         (p for p in curated_providers(home=settings.LLMBROKER_HOME) if p.id == provider_id),
@@ -303,18 +377,18 @@ def _busy(retry_in: int | None) -> ArticleError:
     return _render(ArticleError.BUSY, retry_in=retry_in)
 
 
-def article_error(  # noqa: PLR0911
+def article_error(exc: BaseException, req: ArticleRequest, *, had_text: bool) -> ArticleError:
+    return llm_error(exc, req.model, req.article_type, had_text=had_text)
+
+
+def llm_error(  # noqa: PLR0911
     exc: BaseException,
-    req: ArticleRequest,
+    model: str,
+    operation: str,
     *,
     had_text: bool,
 ) -> ArticleError:
-    logger.warning(
-        "AI article failed: %s model=%s type=%s",
-        repr(exc),
-        req.model,
-        req.article_type,
-    )
+    logger.warning("AI article failed: %s model=%s type=%s", repr(exc), model, operation)
     if isinstance(exc, ArticleError):
         return exc
     if had_text and isinstance(
@@ -332,23 +406,23 @@ def article_error(  # noqa: PLR0911
             return _render(ArticleError.NO_KEYS, keys=keys, on_server=keys_on_server())
         return _busy(_seconds_until(exc.retry_at))
     if isinstance(exc, MissingKeyError):
-        provider = _provider(req)
+        provider = _provider(model)
         return _render(
             ArticleError.MISSING_KEY,
-            provider_label=provider.label if provider else req.model,
+            provider_label=provider.label if provider else model,
             key_help_html=markdown_links(provider.key_help) if provider else "",
             env_var=provider.api_key_ref if provider else "",
             on_server=keys_on_server(),
         )
     if isinstance(exc, AuthError):
-        provider = _provider(req)
-        return _render(ArticleError.AUTH, provider_label=provider.label if provider else req.model)
+        provider = _provider(model)
+        return _render(ArticleError.AUTH, provider_label=provider.label if provider else model)
     if isinstance(exc, RateLimitError):
         return _busy(exc.retry_after if exc.retry_after and exc.retry_after > 0 else None)
     if isinstance(exc, LLMTimeoutError):
         return _busy(None)
     if isinstance(exc, UnknownModelError):
-        return _render(ArticleError.RETIRED, model_name=req.model)
+        return _render(ArticleError.RETIRED, model_name=model)
     # The exception text may carry secrets (a datasource URL), so users see only its type.
     logger.error("AI article failed with an unexpected error", exc_info=exc)
-    return _render(ArticleError.GENERIC, model_name=req.model, error_type=type(exc).__name__)
+    return _render(ArticleError.GENERIC, model_name=model, error_type=type(exc).__name__)

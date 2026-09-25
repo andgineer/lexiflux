@@ -70,7 +70,7 @@
                                     <div><strong>in separate window:</strong> [[ inlineTranslation.parameters.window ]]</div>
                                 </div>
                                 <div v-else-if="inlineTranslation.type === 'Dictionary'">
-                                    <div><strong>Dictionary:</strong> [[ inlineTranslation.parameters.dictionary ]]</div>
+                                    <div><strong>Dictionary:</strong> [[ getDictionaryLabel(inlineTranslation.parameters.dictionary) ]]</div>
                                 </div>
                                 <div v-else-if="isAiType(inlineTranslation.type)">
                                     <div><strong>model:</strong> [[ getModelTitle(inlineTranslation.parameters.model) ]]</div>
@@ -100,7 +100,7 @@
                                     <div><strong>in separate window:</strong> [[ article.parameters.window ]]</div>
                                 </div>
                                 <div v-else-if="article.type === 'Dictionary'">
-                                    <div><strong>Dictionary:</strong> [[ article.parameters.dictionary ]]</div>
+                                    <div><strong>Dictionary:</strong> [[ getDictionaryLabel(article.parameters.dictionary) ]]</div>
                                 </div>
                                 <div v-else-if="isAiType(article.type)">
                                     <div><strong>model:</strong> [[ getModelTitle(article.parameters.model) ]]</div>

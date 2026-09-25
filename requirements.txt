@@ -13,9 +13,7 @@ asgiref==3.11.1
 babel==2.18.0
     # via courlan
 beautifulsoup4==4.14.3
-    # via
-    #   -r requirements.in
-    #   deep-translator
+    # via -r requirements.in
 blis==1.3.3
     # via thinc
 cached-property==2.0.1
@@ -64,8 +62,6 @@ cymem==2.0.13
     #   thinc
 dateparser==1.4.0
     # via htmldate
-deep-translator==1.11.4
-    # via -r requirements.in
 django==6.0.5
     # via
     #   -r requirements.in
@@ -100,6 +96,7 @@ httpcore==1.0.9
     # via httpx
 httpx==0.28.1
     # via
+    #   -r requirements.in
     #   googletrans
     #   llmbroker
     #   weasel
@@ -200,7 +197,7 @@ regex==2026.5.9
     #   nltk
 requests==2.34.2
     # via
-    #   deep-translator
+    #   -r requirements.in
     #   spacy
 rich==15.0.0
     # via typer

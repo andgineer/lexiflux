@@ -11,6 +11,21 @@
   overflow-wrap: break-word;
 }
 
+.wiktionary-senses {
+  padding-left: 1.25rem;
+}
+
+/* The popup centres its text, which would detach the sense numbers from their senses. */
+.translation-text .wiktionary {
+  text-align: left;
+}
+
+/* Only the senses scroll: the licence attribution stays in view. */
+.translation-text .wiktionary-entries {
+  max-height: 14em;
+  overflow-y: auto;
+}
+
 .original-text {
   background-color: #E6F3FF; /* Light blue */
   border: 1px solid #B8E2FF; /* Slightly darker blue for border */

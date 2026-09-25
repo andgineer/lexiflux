@@ -1,6 +1,9 @@
 import allure
 import pytest
 from django.contrib.auth import get_user_model
+from django.core.exceptions import ValidationError
+from lexiflux.language.translation import AVAILABLE_TRANSLATORS
+from lexiflux.language_preferences_default import add_language_pair_articles
 from lexiflux.models import LanguagePreferences, Language, LexicalArticle
 from django.db.models.signals import post_save
 from django.db.models import QuerySet
@@ -135,7 +138,8 @@ def test_new_user_gets_the_default_articles_and_inline_translation(db_init):
         ),
     ]
     assert preferences.inline_translation_type == "Dictionary"
-    assert preferences.inline_translation_parameters == {"dictionary": "GoogleTranslator"}
+    assert preferences.inline_translation_parameters == {"dictionary": "LLMTranslation"}
+    assert next(iter(AVAILABLE_TRANSLATORS)) == "LLMTranslation"
 
 
 @allure.epic("User")
@@ -164,3 +168,155 @@ def test_preferences_for_another_language_copy_defaults_in_order(db_init):
         "Sentence",
         "glosbe",
     ]
+
+
+LINGEA = (
+    "lingea",
+    "Site",
+    {"url": "https://recnici.lingea.rs/{toLangLingea}-srpski/{termLatin}", "window": True},
+)
+
+
+def _articles(preferences):
+    return [
+        (article.title, article.type, article.parameters)
+        for article in preferences.get_lexical_articles()
+    ]
+
+
+@allure.epic("User")
+@allure.feature("Language Preferences")
+@pytest.mark.django_db
+@pytest.mark.parametrize("user_language", ["ru", "en", "de"])
+def test_serbian_for_a_reader_of_a_lingea_language_gets_lingea_after_glosbe(db_init, user_language):
+    user = get_user_model().objects.create_user(
+        username="lingea",
+        email="lingea@example.com",
+        password="testpass123",
+        language=Language.objects.get(google_code=user_language),
+    )
+
+    articles = _articles(user.default_language_preferences)
+
+    assert [title for title, *_ in articles] == [
+        "Article",
+        "In depth",
+        "Sentence",
+        "glosbe",
+        "lingea",
+    ]
+    assert articles[-1] == LINGEA
+
+
+@allure.epic("User")
+@allure.feature("Language Preferences")
+@pytest.mark.django_db
+@pytest.mark.parametrize("user_language", [None, "ka"])
+def test_serbian_for_other_readers_has_no_lingea(db_init, user_language):
+    user = get_user_model().objects.create_user(
+        username="other",
+        email="other@example.com",
+        password="testpass123",
+        language=Language.objects.get(google_code=user_language) if user_language else None,
+    )
+
+    assert "lingea" not in [title for title, *_ in _articles(user.default_language_preferences)]
+
+
+@allure.epic("User")
+@allure.feature("Language Preferences")
+@pytest.mark.django_db
+def test_serbian_preferences_copied_for_a_russian_reader_get_lingea(db_init):
+    user = get_user_model().objects.create_user(
+        username="copy-ru", email="copy-ru@example.com", password="testpass123"
+    )
+    serbian = user.default_language_preferences
+    german = LanguagePreferences.get_or_create_language_preferences(
+        user, Language.objects.get(google_code="de")
+    )
+    german.user_language = Language.objects.get(google_code="ru")
+    german.save()
+    user.default_language_preferences = german
+    user.save()
+    serbian.delete()
+
+    copied = LanguagePreferences.get_or_create_language_preferences(
+        user, Language.objects.get(google_code="sr")
+    )
+
+    assert [title for title, *_ in _articles(copied)] == [
+        "Article",
+        "In depth",
+        "Sentence",
+        "glosbe",
+        "lingea",
+    ]
+    assert "lingea" not in [title for title, *_ in _articles(german)]
+
+
+@allure.epic("User")
+@allure.feature("Language Preferences")
+@pytest.mark.django_db
+def test_lingea_is_not_added_twice(db_init):
+    user = get_user_model().objects.create_user(
+        username="twice",
+        email="twice@example.com",
+        password="testpass123",
+        language=Language.objects.get(google_code="ru"),
+    )
+    preferences = user.default_language_preferences
+    preferences.lexical_articles.filter(title="lingea").update(title="my lingea")
+
+    add_language_pair_articles(preferences)
+
+    assert [title for title, *_ in _articles(preferences)][-1] == "my lingea"
+    assert len(_articles(preferences)) == 5
+
+
+@allure.epic("User")
+@allure.feature("Language Preferences")
+@pytest.mark.django_db
+def test_an_unknown_dictionary_does_not_validate(db_init):
+    user = get_user_model().objects.create_user(
+        username="unknown", email="unknown@example.com", password="testpass123"
+    )
+    preferences = user.default_language_preferences
+    article = LexicalArticle(
+        language_preferences=preferences,
+        type="Dictionary",
+        title="Old",
+        parameters={"dictionary": "MyMemoryTranslator"},
+    )
+
+    with pytest.raises(ValidationError, match="Unknown dictionary 'MyMemoryTranslator'"):
+        article.full_clean()
+    preferences.inline_translation_parameters = {"dictionary": "GoogleTranslator"}
+    with pytest.raises(ValidationError, match="Unknown dictionary 'GoogleTranslator'"):
+        preferences.save()
+    for dictionary in AVAILABLE_TRANSLATORS:
+        article.parameters = {"dictionary": dictionary}
+        article.full_clean()
+
+
+@allure.epic("User")
+@allure.feature("Language Preferences")
+@pytest.mark.django_db
+def test_other_languages_copied_from_serbian_for_a_russian_reader_have_no_lingea(db_init):
+    user = get_user_model().objects.create_user(
+        username="en-ru",
+        email="en-ru@example.com",
+        password="testpass123",
+        language=Language.objects.get(google_code="ru"),
+    )
+
+    english = LanguagePreferences.get_or_create_language_preferences(
+        user, Language.objects.get(google_code="en")
+    )
+
+    assert [title for title, *_ in _articles(english)] == [
+        "Article",
+        "In depth",
+        "Sentence",
+        "glosbe",
+    ]
+    assert _articles(user.default_language_preferences)[-1] == LINGEA

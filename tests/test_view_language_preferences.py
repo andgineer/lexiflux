@@ -3,11 +3,11 @@ from unittest.mock import patch
 
 import allure
 import pytest
-from deep_translator.exceptions import LanguageNotSupportedException
 from django.urls import reverse
 
+from lexiflux.language.translation import AVAILABLE_TRANSLATORS
 from lexiflux.language_preferences_default import DEFAULT_LEXICAL_ARTICLES
-from lexiflux.models import LanguagePreferences, LexicalArticle
+from lexiflux.models import Language, LanguagePreferences, LexicalArticle
 
 
 DEFAULT_ARTICLES_NUM = len(DEFAULT_LEXICAL_ARTICLES)  # created in migrations
@@ -366,31 +366,67 @@ def test_update_article_order_nonexistent_article(client, approved_user, languag
 @allure.story("Language Preferences")
 @pytest.mark.django_db
 def test_save_inline_translation_invalid_dictionary(client, approved_user, language):
-    """Test saving inline translation settings with an invalid dictionary."""
     client.force_login(approved_user)
-
-    # Create language preferences first
     LanguagePreferences.get_or_create_language_preferences(approved_user, language)
-
-    url = reverse("save_inline_translation")
     data = {
         "language_id": language.google_code,
         "type": "Dictionary",
         "parameters": {"dictionary": "invalid_dict"},
     }
 
-    # Mock the translator to raise LanguageNotSupportedException
-    with patch("lexiflux.views.language_preferences_views.get_translator") as mock_translator:
-        mock_translator.return_value.translate.side_effect = LanguageNotSupportedException(
-            "Language not supported"
-        )
-
-        response = client.post(url, json.dumps(data), content_type="application/json")
+    response = client.post(
+        reverse("save_inline_translation"), json.dumps(data), content_type="application/json"
+    )
 
     assert response.status_code == 400
-    response_data = json.loads(response.content)
-    assert response_data["status"] == "error"
-    assert "cannot translate" in response_data["message"]
+    assert response.json() == {"status": "error", "message": "Unknown dictionary invalid_dict"}
+
+
+@allure.epic("Pages endpoints")
+@allure.story("Language Preferences")
+@pytest.mark.django_db
+def test_save_inline_translation_rejects_an_unsupported_language_pair(client, approved_user):
+    client.force_login(approved_user)
+    french = Language.objects.get(google_code="fr")
+    preferences = LanguagePreferences.get_or_create_language_preferences(approved_user, french)
+    data = {"language_id": "fr", "type": "Dictionary", "parameters": {"dictionary": "Wiktionary"}}
+
+    response = client.post(
+        reverse("save_inline_translation"), json.dumps(data), content_type="application/json"
+    )
+
+    assert response.status_code == 400
+    assert response.json() == {
+        "status": "error",
+        "message": "Wiktionary cannot translate from French to English",
+    }
+    preferences.refresh_from_db()
+    assert preferences.inline_translation_parameters == {"dictionary": "LLMTranslation"}
+
+
+@allure.epic("Pages endpoints")
+@allure.story("Language Preferences")
+@pytest.mark.django_db
+def test_save_inline_translation_rejects_a_site(client, approved_user, language):
+    client.force_login(approved_user)
+    preferences = LanguagePreferences.get_or_create_language_preferences(approved_user, language)
+    data = {
+        "language_id": language.google_code,
+        "type": "Site",
+        "parameters": {"url": "https://glosbe.com/{langCode}/{toLangCode}/{term}", "window": True},
+    }
+
+    response = client.post(
+        reverse("save_inline_translation"), json.dumps(data), content_type="application/json"
+    )
+
+    assert response.status_code == 400
+    assert response.json() == {
+        "status": "error",
+        "message": "A Site cannot be the inline translation",
+    }
+    preferences.refresh_from_db()
+    assert preferences.inline_translation_type == "Dictionary"
 
 
 @allure.epic("Pages endpoints")
@@ -575,3 +611,50 @@ class TestArticleKnobs:
             "effort": "low",
             "tier": "priority",
         }
+
+
+@allure.epic("Pages endpoints")
+@allure.story("Language Preferences")
+@pytest.mark.django_db
+@pytest.mark.parametrize("dictionary", list(AVAILABLE_TRANSLATORS))
+def test_saving_a_dictionary_translates_nothing(client, approved_user, language, dictionary):
+    client.force_login(approved_user)
+    LanguagePreferences.get_or_create_language_preferences(approved_user, language)
+    data = {
+        "language_id": language.google_code,
+        "type": "Dictionary",
+        "parameters": {"dictionary": dictionary},
+    }
+
+    with (
+        patch("lexiflux.language.translation.translate_inline") as translate_inline,
+        patch("lexiflux.language.translation.wiktionary.lookup") as wiktionary_lookup,
+        patch("httpx.Client.send") as http_send,
+    ):
+        response = client.post(
+            reverse("save_inline_translation"), json.dumps(data), content_type="application/json"
+        )
+
+    assert response.status_code == 200
+    assert response.json()["inline_translation"]["parameters"] == {"dictionary": dictionary}
+    translate_inline.assert_not_called()
+    wiktionary_lookup.assert_not_called()
+    http_send.assert_not_called()
+
+
+@allure.epic("Pages endpoints")
+@allure.story("Language Preferences")
+@pytest.mark.django_db
+def test_editor_offers_the_three_translators_llm_first(client, approved_user):
+    client.force_login(approved_user)
+
+    response = client.get(reverse("language-preferences"))
+
+    assert json.loads(response.context["translators"]) == [
+        {"value": "LLMTranslation", "label": "LLM translation"},
+        {"value": "Wiktionary", "label": "Wiktionary"},
+        {"value": "Google", "label": "Google"},
+    ]
+    assert (
+        "https://recnici.lingea.rs/{toLangLingea}-srpski/{termLatin}" in response.content.decode()
+    )
