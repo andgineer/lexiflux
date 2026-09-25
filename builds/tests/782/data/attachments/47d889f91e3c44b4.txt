@@ -1,2 +1,0 @@
-INFO     lexiflux.anki.anki_connect:anki_connect.py:83 result {'result': [123]}
-ERROR    lexiflux.anki.anki_connect:anki_connect.py:106 Unexpected error when adding notes to Anki: Mismatch between number of notes and response

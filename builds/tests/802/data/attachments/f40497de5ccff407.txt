@@ -1,0 +1,8 @@
+2026-09-25 19:04:49,168 WARNING google_languages Warning: Egyptian Arabic not found in the database for group Arabic.
+2026-09-25 19:04:49,517 INFO signals Successfully created language preferences for user testuser (ID: 6)
+2026-09-25 19:04:49,552 INFO reader_views Opening book the-old-armchair at page 1 for user testuser
+2026-09-25 19:04:49,559 INFO models Reading location updated for the-old-armchair: 1(1):0/0.0
+[{'page_number': 1, 'word': 0}]/0
+2026-09-25 19:04:49,560 INFO reader_views Jump status: book the-old-armchair, is_first_jump True, is_last_jump True
+2026-09-25 19:04:50,074 INFO lexical_views Selected text: springs
+2026-09-25 19:04:50,077 INFO _client HTTP Request: GET https://translate.googleapis.com/translate_a/single?client=dict-chrome-ex&sl=en&tl=ru&dt=t&dt=bd&q=springs "HTTP/1.1 200 OK"

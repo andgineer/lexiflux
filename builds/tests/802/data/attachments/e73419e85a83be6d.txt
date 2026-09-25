@@ -1,0 +1,3 @@
+2026-09-25 19:03:48,670 INFO signals Successfully created language preferences for user testuser (ID: 1)
+2026-09-25 19:03:48,823 INFO lexical_views Selected text: page
+2026-09-25 19:03:48,824 WARNING llm AI article failed: RateLimitError('slow down') model=pool type=Inline translation

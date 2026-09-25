@@ -1,0 +1,4 @@
+INFO     httpx:_client.py:1025 HTTP Request: GET https://kaikki.org/ruwiktionary/raw-wiktextract-data.jsonl.gz "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET https://kaikki.org/dictionary/raw-wiktextract-data.jsonl.gz "HTTP/1.1 200 OK"
+INFO     lexiflux.signals:signals.py:55 Successfully created language preferences for user testuser (ID: 1)
+INFO     lexiflux.views.lexical_views:lexical_views.py:242 Selected text: springs
