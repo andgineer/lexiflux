@@ -1,0 +1,766 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+        <meta name="author" content="Andrey Sorokin">
+      
+      
+        <link rel="canonical" href="https://lexiflux.sorokin.engineer/aimodels/">
+      
+      
+        <link rel="prev" href="../docker/">
+      
+      
+      
+        
+          <link rel="alternate" href="/lexiflux/" hreflang="en">
+        
+          <link rel="alternate" href="/lexiflux/ru/" hreflang="ru">
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="zensical-0.0.41">
+    
+    
+      
+        <title>AI модели - lexiflux</title>
+      
+    
+    
+      
+        
+      
+      <link rel="stylesheet" href="../assets/stylesheets/modern/main.fba56155.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:300,300i,400,400i,500,500i,700,700i%7CJetBrains+Mono:400,400i,700,700i&amp;display=fallback">
+        <style>:root{--md-text-font:"Inter";--md-code-font:"JetBrains Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_scope.pathname.endsWith("/")||(__md_scope=new URL(__md_scope.pathname+"/",location)),__md_hash=e=>[...e].reduce(((e,t)=>(e<<5)-e+t.charCodeAt(0)),0),__md_get=(e,t=localStorage,_=__md_scope)=>JSON.parse(t.getItem(_.pathname+"."+e)),__md_set=(e,t,_=localStorage,a=__md_scope)=>{try{_.setItem(a.pathname+"."+e,JSON.stringify(t))}catch(e){}},document.documentElement.setAttribute("data-platform",navigator.platform)</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer" aria-label="Navigation"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#ai" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="./.." title="lexiflux" class="md-header__button md-logo" aria-label="lexiflux" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-book-open" viewBox="0 0 24 24"><path d="M12 7v14M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer" aria-label="Navigation">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-menu" viewBox="0 0 24 24"><path d="M4 5h16M4 12h16M4 19h16"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            lexiflux
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              AI модели
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+      <div class="md-header__option">
+  <div class="md-select">
+    
+    <button class="md-header__button md-icon" aria-label="Select language">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-languages" viewBox="0 0 24 24"><path d="m5 8 6 6M4 14l6-6 2-3M2 5h12M7 2h1M22 22l-5-10-5 10M14 18h6"/></svg>
+    </button>
+    <div class="md-select__inner">
+      <ul class="md-select__list">
+        
+          <li class="md-select__item">
+            <a href="/lexiflux/" hreflang="en" class="md-select__link">
+              English
+            </a>
+          </li>
+        
+          <li class="md-select__item">
+            <a href="/lexiflux/ru/" hreflang="ru" class="md-select__link">
+              Русский
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</div>
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search" aria-label="Search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-search" viewBox="0 0 24 24"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog" aria-label="Search">
+  <button type="button" class="md-search__button">
+    Search
+  </button>
+</div>
+      
+    
+    <div class="md-header__source">
+      
+        <a href="https://github.com/andgineer/lexiflux" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2026 Fonticons, Inc.--><path fill="currentColor" d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    lexiflux
+  </div>
+</a>
+      
+    </div>
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+  
+
+<nav class="md-nav md-nav--primary md-nav--integrated" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="./.." title="lexiflux" class="md-nav__button md-logo" aria-label="lexiflux" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-book-open" viewBox="0 0 24 24"><path d="M12 7v14M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"/></svg>
+
+    </a>
+    lexiflux
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/andgineer/lexiflux" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2026 Fonticons, Inc.--><path fill="currentColor" d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    lexiflux
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="./.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Lexiflux reader
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Быстрый старт
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../docker/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Lexiflux в Docker
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  AI модели
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="././" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  AI модели
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Типы лексических статей
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Типы лексических статей">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#ai_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Работающие на AI
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Работающие на AI">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#ai_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Пользовательский AI
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Словарь
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Сайт
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#inline-translation" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Встроенный перевод
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Встроенный перевод">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#wiktionary-data" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Данные Wiktionary
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#models" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Модели
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Модели">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#reasoning-effort-processing-tier" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Reasoning effort и processing tier
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#keys" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Ключи
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+  
+  
+
+
+<h1 id="ai">AI модели</h1>
+<p>Lexiflux использует AI модели для создания <code>Лексических статей</code> в <code>Боковой панели</code>
+(вы можете открыть её с помощью синей иконки бинокля).</p>
+<p>Встроенный перевод (всплывающий перевод в тексте, который открывается по клику на слово) по
+умолчанию тоже работает на AI, смотрите <a href="#inline-translation">Встроенный перевод</a>.</p>
+<p>Чтобы настроить Боковую панель и встроенный перевод, смотрите <a href="http://localhost:6100/language-preferences/">Языковые настройки</a>.
+Для каждого языка есть отдельные настройки, поэтому вы можете настроить
+разные параметры для разных языков.</p>
+<h2 id="_1">Типы лексических статей</h2>
+<h3 id="ai_1">Работающие на AI</h3>
+<ul>
+<li><strong>AI dictionary</strong> (вкладка <code>Article</code> по умолчанию): короткая словарная статья о выделенном
+  слове или фразе, которая начинается со значения, в котором слово стоит в читаемом предложении.</li>
+<li><strong>In depth</strong>: более подробная статья обо всей единице, к которой относится выделение
+  (фразовый глагол, глагол с отделяемой приставкой, идиома), с примерами.</li>
+<li><strong>Sentence</strong>: перевод всего предложения.</li>
+<li><strong>Translate</strong>: перевод выделения в том значении, которое оно имеет в предложении.</li>
+<li><strong>Explain</strong>: объяснение выделения на вашем языке, без перевода.</li>
+<li><strong>Lexical</strong>: полная лексическая статья со значениями, грамматикой и таблицами форм.</li>
+<li><strong>Origin</strong>: происхождение слова, только там, где модель его знает.</li>
+</ul>
+<p>AI получает две вещи: выделенное слово или фразу и предложение, в котором оно стоит.
+Если предложение совсем короткое (меньше шести слов), к нему добавляются соседние предложения.</p>
+<p>Статьи в боковой панели появляются, пока AI ещё пишет их.</p>
+<h4 id="ai_2">Пользовательский AI</h4>
+<p>С типом "AI" вы можете написать свой собственный промпт. В нём можно использовать
+подстановки <code>{word}</code>, <code>{sentence}</code>, <code>{text_language}</code> и <code>{user_language}</code>.</p>
+<h3 id="_2">Словарь</h3>
+<p>Один из трёх переводчиков, описанных в разделе <a href="#inline-translation">Встроенный перевод</a>:
+<code>LLM translation</code>, <code>Wiktionary</code> или <code>Google</code>. В боковой панели статья Wiktionary показывает
+весь список значений.</p>
+<h3 id="_3">Сайт</h3>
+<p>Вы определяете URL для открытия и с какими параметрами.
+Это полезно для хороших переводчиков, у которых нет API. Например, glosbe.com.</p>
+<p>В URL можно использовать подстановки:</p>
+<ul>
+<li><code>{term}</code>: выделенное слово или фраза</li>
+<li><code>{termLatin}</code>: то же самое, но сербская кириллица записана латиницей (для сайтов, которые
+  понимают только латиницу)</li>
+<li><code>{lang}</code>, <code>{langCode}</code>: название и код языка книги</li>
+<li><code>{toLang}</code>, <code>{toLangCode}</code>: название и код вашего языка</li>
+<li><code>{toLangLingea}</code>: ваш язык так, как его называют сербские словари recnici.lingea.rs
+  (<code>englesko</code>, <code>rusko</code>, ...). Если у Lingea нет словаря с вашего языка, статья сообщит об этом
+  вместо ссылки</li>
+</ul>
+<p>Большинство из них должны открываться во внешнем окне, но некоторые могут даже открываться внутри боковой панели.</p>
+<p>Это контролируется параметром <code>open in new window</code>.</p>
+<p>Для каждого языка создаётся статья-сайт <code>glosbe</code>. Для сербских книг добавляется ещё <code>lingea</code>
+(словари Lingea на сербский язык, recnici.lingea.rs), если у Lingea есть словарь с вашего
+языка: их 36, среди них английский, немецкий и русский. Lingea находит словарную форму
+сербского слова в любой форме и различает слова, которые пишутся одинаково.</p>
+<h2 id="inline-translation">Встроенный перевод</h2>
+<p>Кликните по слову, и его перевод откроется прямо в тексте. В
+<a href="http://localhost:6100/language-preferences/">Языковых настройках</a> для каждого языка книги
+выбирается переводчик:</p>
+<table>
+<thead>
+<tr>
+<th>Переводчик</th>
+<th>Что показывает</th>
+<th>Скорость</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>LLM translation (по умолчанию)</td>
+<td>Один перевод, в том значении, в котором слово стоит в читаемом предложении. Для глагола с отделяемой приставкой или устойчивого выражения — перевод всей единицы</td>
+<td>Около 0,6 с, не больше 3 с</td>
+</tr>
+<tr>
+<td>Wiktionary</td>
+<td>Словарную статью: часть речи и список значений. Для английских слов — переводы на ваш язык, для немецких и сербских часто только английские определения</td>
+<td>Мгновенно, без интернета</td>
+</tr>
+<tr>
+<td>Google</td>
+<td>Перевод Google Translate и, для английского и немецкого, варианты по частям речи</td>
+<td>Около 0,3 с, иногда до секунды</td>
+</tr>
+</tbody>
+</table>
+<p>На 24 тестовых словах на английском, немецком и сербском с переводом на русский LLM
+translation выбрал верное значение для 23. Wiktionary привёл его в списке для 20, Google для
+15 (и как основной перевод для 6).</p>
+<ul>
+<li><strong>LLM translation</strong> работает через Free pool (смотрите <a href="#models">Модели</a> и <a href="#keys">Ключи</a>) и
+  делит бесплатную дневную квоту со статьями боковой панели. Если ответа нет за 3 секунды,
+  перевод сообщит, что модели заняты; кликните ещё раз, чтобы повторить.</li>
+<li><strong>Wiktionary</strong> требует один раз импортировать данные, смотрите ниже. Работает для книг на
+  английском, немецком и сербском (а также хорватском и боснийском). Находит словарную форму
+  слова в любой форме, сербские слова — в обоих алфавитах. Каждый ответ ссылается на страницу
+  Викисловаря и на его лицензию CC BY-SA 4.0.</li>
+<li><strong>Google</strong> переводит слово без предложения, поэтому у многозначного слова может выбрать не то
+  значение. Google может перестать отвечать без предупреждения.</li>
+</ul>
+<p>Если выбранный переводчик не справился, перевод покажет, что пошло не так. На другой переводчик
+Lexiflux сам не переключается.</p>
+<h3 id="wiktionary-data">Данные Wiktionary</h3>
+<p>Данные Викисловаря не входят в Lexiflux. Импортируйте их один раз командой
+<code>import-wiktionary</code>, а потом время от времени (например, раз в месяц) запускайте её снова,
+чтобы обновить данные.</p>
+<ul>
+<li><strong>Запуск из исходников</strong>: <code>./manage import-wiktionary</code> в папке Lexiflux.</li>
+<li><strong>Docker</strong>: <code>docker exec -it lexiflux ./manage import-wiktionary</code>.</li>
+</ul>
+<p>Команда скачивает около 3,2 ГБ с <a href="https://kaikki.org/">kaikki.org</a> (английский и русский
+Викисловарь), строит рядом с базой данных файл словаря размером около 230 МБ и удаляет
+скачанное. На быстром соединении это занимает около трёх минут; пока команда работает, нужно
+около 3,5 ГБ свободного места на диске. Прерванная загрузка продолжается с того места, где
+остановилась. Пока новый словарь не готов, работает старый.</p>
+<ul>
+<li><code>--keep-downloads</code> сохраняет скачанные файлы, и следующий импорт не скачивает их заново, если
+  на kaikki.org нет более новых.</li>
+<li><code>--translations ru,de</code>: для каких языков сохранять переводы английских слов. По умолчанию
+  русский и все «ваши языки» из Языковых настроек.</li>
+</ul>
+<h2 id="models">Модели</h2>
+<p>Каждая AI-статья использует одну из этих моделей:</p>
+<table>
+<thead>
+<tr>
+<th>Модель</th>
+<th>Стоимость</th>
+<th>Чего ожидать</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Free pool</td>
+<td>бесплатно</td>
+<td>Несколько бесплатных моделей; Lexiflux спрашивает две сразу и показывает более быстрый ответ. Текст обычно появляется примерно через секунду. Используется в <code>Article</code> по умолчанию</td>
+</tr>
+<tr>
+<td>GPT-5.6 Sol</td>
+<td>около $0.035 за статью In depth</td>
+<td>Лучшее качество за свою цену и быстро: текст появляется меньше чем через секунду. По умолчанию для всех остальных AI-статей</td>
+</tr>
+<tr>
+<td>GPT-5.6 Luna</td>
+<td>около $0.003 за статью In depth</td>
+<td>В десять раз дешевле Sol, но медленнее начинает и ошибается чаще</td>
+</tr>
+<tr>
+<td>Claude Opus</td>
+<td>около $0.06 за статью In depth</td>
+<td>Самая точная, но текст появляется только через 15–30 секунд</td>
+</tr>
+</tbody>
+</table>
+<p>Цифры измерены на 24 словах на английском, немецком и сербском.</p>
+<h3 id="reasoning-effort-processing-tier">Reasoning effort и processing tier</h3>
+<p>Для платных моделей редактор статьи показывает ещё две настройки:</p>
+<ul>
+<li><strong>Reasoning effort</strong>: сколько модель думает, прежде чем писать. По умолчанию стоят
+  настройки, которые лучше всего показали себя на словарных статьях: <code>none</code> для Sol,
+  <code>low</code> для Luna и Opus.</li>
+<li><strong>Processing tier</strong> (только OpenAI): <code>priority</code> стоит примерно вдвое дороже и отвечает
+  примерно втрое быстрее. Sol и Luna по умолчанию используют его.</li>
+</ul>
+<p><code>Model default</code> ничего не передаёт, и настройку выбирает провайдер.</p>
+<h2 id="keys">Ключи</h2>
+<p>API-ключи в Lexiflux не вводятся. Тот, кто запускает Lexiflux, задаёт ключи в его окружении,
+и все пользователи этого Lexiflux работают через них.</p>
+<ul>
+<li><strong>Free pool</strong>: нужен хотя бы один из <code>GROQ_API_KEY</code>, <code>GEMINI_API_KEY</code>, <code>ZAI_API_KEY</code>.
+  Все они бесплатные; чем больше ключей, тем быстрее и надёжнее работает пул.
+  <code>OPENROUTER_API_KEY</code> Lexiflux не использует: модели OpenRouter исключены из пула, потому
+  что с ними больше статей заканчивались ответом «busy». <code>llmbroker env freetier</code> выводит ключи со ссылкой, где
+  получить каждый (в нём есть и OpenRouter).</li>
+<li><strong>GPT-5.6 Sol и Luna</strong>: <code>OPENAI_API_KEY</code> (платный).</li>
+<li><strong>Claude Opus</strong>: <code>ANTHROPIC_API_KEY</code> (платный).</li>
+</ul>
+<p>Куда класть ключи:</p>
+<ul>
+<li><strong>Запуск из исходников</strong>: в файл <code>.env</code> в папке Lexiflux или в переменные окружения.</li>
+<li><strong>Docker</strong>: передайте их в <code>docker run</code>, смотрите <a href="../docker/#ai-keys">Docker</a>.</li>
+<li><strong>Сервер</strong>: в переменные окружения (секреты) сервера.</li>
+</ul>
+<p>Если ключа не хватает, статья скажет, какой ключ нужен и где его получить.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://zensical.org/" target="_blank" rel="noopener">
+      Zensical
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate":null,"base":"..","features":["toc.integrate","navigation.tracking","content.code.copy"],"search":"../assets/javascripts/workers/search.e2d2d235.min.js","tags":null,"translations":{"clipboard.copied":"Copied to clipboard","clipboard.copy":"Copy to clipboard","search.result.more.one":"1 more on this page","search.result.more.other":"# more on this page","search.result.none":"No matching documents","search.result.one":"1 matching document","search.result.other":"# matching documents","search.result.placeholder":"Type to start searching","search.result.term.missing":"Missing","select.version":"Select version"},"version":null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.dbc0afdc.min.js"></script>
+      
+    
+  </body>
+</html>
