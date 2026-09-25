@@ -1,0 +1,4 @@
+2026-09-25 18:53:21,665 INFO signals Successfully created language preferences for user testuser (ID: 1)
+2026-09-25 18:53:21,764 INFO lexical_views Selected text: page
+2026-09-25 18:53:21,764 WARNING llm AI article failed: AuthError('rejected') model=pool type=Inline translation
+2026-09-25 18:53:21,765 WARNING presets preset paid-catalog: nothing cached and nothing is fetched automatically — falling back to the bundled copy, frozen at this llmbroker release

@@ -1,0 +1,9 @@
+2026-05-15 09:10:40,164 INFO signals Successfully created language preferences for user testuser (ID: 1)
+2026-05-15 09:10:40,172 ERROR import_views Error importing book
+Traceback (most recent call last):
+  File "/home/runner/work/lexiflux/lexiflux/lexiflux/views/import_views.py", line 46, in import_book
+    book = import_file(request)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/work/lexiflux/lexiflux/lexiflux/views/import_views.py", line 110, in import_file
+    raise ValueError(f"Unsupported file format for {file.name}")
+ValueError: Unsupported file format for test.pdf

@@ -1,0 +1,1 @@
+ERROR    lexiflux.language.llm:llm.py:81 API error, model: gpt-5, class: ChatOpenAI, show_api_key_info: True

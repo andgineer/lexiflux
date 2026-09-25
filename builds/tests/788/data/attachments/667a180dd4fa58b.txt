@@ -1,0 +1,19 @@
+2026-01-02 15:08:38,415 ERROR webdriver_augmented Failed to enable CDP logging: Message: HTTP method not allowed
+
+2026-01-02 15:08:38,598 WARNING google_languages Warning: Egyptian Arabic not found in the database for group Arabic.
+2026-01-02 15:08:39,058 INFO signals Successfully created language preferences for user testuser (ID: 8)
+2026-01-02 15:08:41,452 INFO import_views Pasted content (txt): # Test Book
+
+This is a test book created via paste.
+
+## Chapter 1
+
+Once upon a time, there was a test that needed to be run.
+
+The end....
+2026-01-02 15:08:41,458 INFO timing Iterate over pages and save them completed in 0.001 seconds
+2026-01-02 15:08:42,059 INFO reader_views Opening book pastedtext-author at page 1 for user testuser
+2026-01-02 15:08:42,071 INFO models Reading location updated for pastedtext-author: 1(1):0/0.0
+[{'page_number': 1, 'word': 0}]/0
+2026-01-02 15:08:42,072 INFO reader_views Jump status: book pastedtext-author, is_first_jump True, is_last_jump True
+2026-01-02 15:08:42,227 INFO test_e2e_import_book Redirected to reader page

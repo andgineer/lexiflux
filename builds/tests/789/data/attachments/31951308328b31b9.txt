@@ -1,0 +1,22 @@
+INFO     root:timing.py:14 Loading from https://example.com/error-test completed in 0.000 seconds
+INFO     root:timing.py:14 Extract metadata completed in 0.001 seconds
+INFO     root:timing.py:14 Extracting IDs with internal links completed in 0.000 seconds
+DEBUG    trafilatura.main_extractor:main_extractor.py:515 Recovering wild text elements
+DEBUG    trafilatura.readability_lxml:readability_lxml.py:217 Top 5: body 2.4
+DEBUG    trafilatura.readability_lxml:readability_lxml.py:217 Top 5: html 1.2
+DEBUG    trafilatura.readability_lxml:readability_lxml.py:217 Top 5: div 6.2
+DEBUG    trafilatura.readability_lxml:readability_lxml.py:217 Top 5: body 2.4
+DEBUG    trafilatura.external:external.py:64 extracted length: 60 (algorithm) 40 (extraction)
+DEBUG    trafilatura.external:external.py:84 extraction values: 40 60 for None
+DEBUG    trafilatura.external:external.py:92 using custom extraction: None
+DEBUG    trafilatura.external:external.py:96 unclean document triggering justext examination: None
+DEBUG    trafilatura.core:core.py:125 non-clean extracted length: 60 (extraction)
+DEBUG    trafilatura.core:core.py:316 not enough comments: None
+INFO     root:timing.py:14 Extracting readable HTML completed in 0.007 seconds
+INFO     root:timing.py:14 Parse extracted HTML completed in 0.000 seconds
+INFO     root:timing.py:14 Adding source info completed in 0.000 seconds
+INFO     root:timing.py:14 Cleared HTML completed in 0.000 seconds
+INFO     root:book_loader_url.py:221 No images found in the content
+INFO     root:timing.py:14 Iterate over pages and save them completed in 0.001 seconds
+INFO     root:book_loader_url.py:257 No images to download
+ERROR    root:book_loader_url.py:116 Error fetching URL https://example.com/error-test: Network error

@@ -1,0 +1,1 @@
+Marked text with context_words=5: Word1 word2. Word3 word4. [FRAGMENT]Word5 word6 word7[/FRAGMENT]. Word8 word9. Word10 word11 word12

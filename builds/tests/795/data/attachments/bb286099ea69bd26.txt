@@ -1,0 +1,5 @@
+2026-05-15 08:52:56,029 INFO signals Successfully created language preferences for user testuser (ID: 1)
+2026-05-15 08:52:56,042 INFO user_modal   - Serbian -> English (ID: 1)
+2026-05-15 08:52:56,067 INFO user_modal   - Serbian -> English (ID: 1)
+2026-05-15 08:52:56,068 INFO user_modal New language: English (en)
+2026-05-15 08:52:56,069 INFO user_modal Old user language: None

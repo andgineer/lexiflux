@@ -1,0 +1,1 @@
+2026-01-19 14:40:16,491 INFO signals Successfully created language preferences for user testuser (ID: 1)

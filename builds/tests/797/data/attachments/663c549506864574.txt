@@ -1,0 +1,3 @@
+INFO     lexiflux.signals:signals.py:55 Successfully created language preferences for user testuser (ID: 1)
+INFO     lexiflux.language.llm:lexical_views.py:159 Selected text: of page
+WARNING  lexiflux.language.llm:llm.py:95 User attempted to use retired model: claude-sonnet-4-0

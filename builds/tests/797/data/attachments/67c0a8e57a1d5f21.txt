@@ -1,0 +1,2 @@
+2026-05-15 09:17:27,568 INFO signals Successfully created language preferences for user testuser (ID: 1)
+2026-05-15 09:17:27,578 WARNING llm User attempted to use retired model: invalid_model

@@ -1,0 +1,2 @@
+INFO     lexiflux.signals:signals.py:55 Successfully created language preferences for user testuser (ID: 1)
+ERROR    lexiflux.language.llm:llm.py:81 Test error, model: gpt-5.1, class: ChatOpenAI, show_api_key_info: True

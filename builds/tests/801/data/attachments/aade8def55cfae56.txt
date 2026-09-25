@@ -1,0 +1,6 @@
+INFO     httpx:_client.py:1025 HTTP Request: GET https://translate.googleapis.com/translate_a/single?client=dict-chrome-ex&sl=en&tl=ru&dt=t&dt=bd&q=spring "HTTP/1.1 429 Too Many Requests"
+WARNING  root:translation.py:164 Google client dict-chrome-ex refused: HTTP 429
+INFO     httpx:_client.py:1025 HTTP Request: GET https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=ru&dt=t&dt=bd&q=spring "HTTP/1.1 200 OK"
+WARNING  root:translation.py:171 Google client gtx answered with non-JSON
+INFO     httpx:_client.py:1025 HTTP Request: GET https://translate.googleapis.com/translate_a/single?client=at&sl=en&tl=ru&dt=t&dt=bd&q=spring "HTTP/1.1 403 Forbidden"
+WARNING  root:translation.py:164 Google client at refused: HTTP 403

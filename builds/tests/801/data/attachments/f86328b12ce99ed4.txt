@@ -1,0 +1,2 @@
+2026-09-25 18:53:39,269 INFO signals Successfully created language preferences for user testuser (ID: 1)
+2026-09-25 18:53:39,278 WARNING book_loader_base Anchor 'non-existent' not found in page 11 content

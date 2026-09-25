@@ -1,0 +1,2 @@
+INFO     lexiflux.language.detect_language_fasttext:detect_language_fasttext.py:48 Downloading fastText language identification model from https://dl.fbaipublicfiles.com/fasttext/supervised-models/lid.176.bin
+INFO     lexiflux.language.detect_language_fasttext:detect_language_fasttext.py:61 /home/runner/work/lexiflux/lexiflux/fasttext_data/lid.176.bin: 131,266,198 bytes, md5: 0181 0bc5 9c6a 3d2b 79c7 9e63 3661 2f65

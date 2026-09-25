@@ -1,0 +1,3 @@
+2026-09-25 18:54:04,376 INFO signals Successfully created language preferences for user testuser (ID: 1)
+2026-09-25 18:54:04,400 INFO _client HTTP Request: GET https://kaikki.org/ruwiktionary/raw-wiktextract-data.jsonl.gz "HTTP/1.1 200 OK"
+2026-09-25 18:54:04,401 INFO _client HTTP Request: GET https://kaikki.org/dictionary/raw-wiktextract-data.jsonl.gz "HTTP/1.1 200 OK"

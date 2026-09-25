@@ -1,0 +1,8 @@
+Page content: This is a test page. It contains some words and punctuation!
+Initial word_indices: None
+Words after first access: [(0, 4), (5, 7), (8, 9), (10, 14), (15, 19), (21, 23), (24, 32), (33, 37), (38, 43), (44, 47), (48, 59)]
+word_indices after first access: [(0, 4), (5, 7), (8, 9), (10, 14), (15, 19), (21, 23), (24, 32), (33, 37), (38, 43), (44, 47), (48, 59)]
+Extracted text: is a test
+Extracted indices: [(0, 2), (3, 4), (5, 9)]
+Full extracted text: This is a test page. It contains some words and punctuation
+Full extracted indices: [(0, 4), (5, 7), (8, 9), (10, 14), (15, 19), (21, 23), (24, 32), (33, 37), (38, 43), (44, 47), (48, 59)]

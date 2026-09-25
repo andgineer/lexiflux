@@ -1,0 +1,1 @@
+INFO     httpx:_client.py:1025 HTTP Request: GET https://translate.googleapis.com/translate_a/single?client=dict-chrome-ex&sl=en&tl=ru&dt=t&dt=bd&q=spring "HTTP/1.1 500 Internal Server Error"

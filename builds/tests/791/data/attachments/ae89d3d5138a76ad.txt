@@ -1,0 +1,1 @@
+2026-01-19 14:42:37,667 WARNING book_loader_url No tree_root available for image processing

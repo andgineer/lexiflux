@@ -1,0 +1,2 @@
+2026-09-24 10:12:13,930 WARNING llm AI article failed: MissingKeyError('no key') model=gpt type=In depth
+2026-09-24 10:12:13,931 WARNING presets preset paid-catalog: nothing cached and nothing is fetched automatically — falling back to the bundled copy, frozen at this llmbroker release

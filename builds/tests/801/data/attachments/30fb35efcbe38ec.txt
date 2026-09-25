@@ -1,0 +1,1 @@
+WARNING  lexiflux.language.llm:llm.py:391 AI article failed: RateLimitError('slow down') model=pool type=Inline translation
