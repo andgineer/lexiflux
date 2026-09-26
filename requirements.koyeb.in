@@ -38,6 +38,7 @@ unidecode
 spacy
 googletrans
 pagesmith
+simplemma>=2.0
 
 # Book processing
 EbookLib

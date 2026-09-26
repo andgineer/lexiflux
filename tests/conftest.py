@@ -20,6 +20,7 @@ from datetime import timedelta
 import itertools
 import socket
 
+import httpx
 import pytest
 from unittest.mock import mock_open, patch, MagicMock
 
@@ -404,6 +405,16 @@ def no_real_llm_calls():
     ):
         yield
     clear_cache()
+
+
+@pytest.fixture(autouse=True)
+def no_real_kaikki_calls():
+    def refuse(request: httpx.Request) -> httpx.Response:
+        raise RuntimeError(f"a test reached kaikki.org ({request.url}); use tests.kaikki.Kaikki")
+
+    client = httpx.Client(transport=httpx.MockTransport(refuse))
+    with patch("lexiflux.language.wiktionary.http_client", return_value=client):
+        yield
 
 
 @pytest.fixture(autouse=True)

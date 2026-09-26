@@ -738,7 +738,7 @@ TRANSLATOR_FAILURES = [
         "Google is refusing requests right now (rate limit)",
         id="rate-limit",
     ),
-    pytest.param("Network", "Could not reach Google.", id="network"),
+    pytest.param("Network", "Google is not reachable.", id="network"),
     pytest.param("NotFound", "Google found no translation.", id="not-found"),
     pytest.param(
         "Unsupported",

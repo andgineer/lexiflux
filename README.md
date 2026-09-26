@@ -14,7 +14,7 @@ a web page, or send books from Calibre.
 ![Inline translation and AI explanations in the Lexiflux reader](docs/common/images/ponedeljak.png)
 
 * **Stay with the text.** Select a word or phrase for an inline translation in the sense
-  it has in the sentence, or its entry in an offline Wiktionary; open the sidebar for usage,
+  it has in the sentence, or its Wiktionary entry; open the sidebar for usage,
   origins, or an explanation of the surrounding sentence.
 * **Choose your reading tools.** Configure dictionaries, AI models, and custom
   prompts separately for each language. The default AI article runs on a pool of free-tier
@@ -43,7 +43,7 @@ behaviour alongside the Python suite.
 **Several tools, one reading workflow.** Django manages the library, language
 preferences, and lookup history. Dictionaries, external reference sites, and
 AI prompts are configurable parts of the same sidebar; the inline translation
-defaults to a free-pool LLM, and the offline Wiktionary or Google translate without one
+defaults to a free-pool LLM, and Wiktionary (looked up on kaikki.org) or Google translate without one
 (see the [inline translation spec](specs/inline-translation.md)).
 AI calls go through [llmbroker](https://github.com/andgineer/llmbroker), and the
 [AI models guide](docs/src/en/aimodels.md) explains the models, the translators, their costs
@@ -69,8 +69,6 @@ For AI articles, put the API keys in `.env` in the repository root:
 `llmbroker env freetier >> .env` appends the free-pool key names with links to get them.
 Fill in at least one of `GROQ_API_KEY`, `GEMINI_API_KEY`, `ZAI_API_KEY` and skip
 `OPENROUTER_API_KEY`: Lexiflux leaves the OpenRouter models out of the pool.
-For the Wiktionary translator, `./manage import-wiktionary` downloads about 3.2 GB from
-kaikki.org and builds `wiktionary.sqlite3` (about 230 MB) next to the database in a few minutes.
 
 Run checks from the activated environment:
 

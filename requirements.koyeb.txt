@@ -215,6 +215,8 @@ setuptools==82.0.1
     #   thinc
 shellingham==1.5.4
     # via typer
+simplemma==2.0.0
+    # via -r requirements.koyeb.in
 six==1.17.0
     # via
     #   ebooklib

@@ -28,3 +28,4 @@ unidecode
 genanki
 spacy
 googletrans
+simplemma>=2.0

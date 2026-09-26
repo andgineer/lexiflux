@@ -1,27 +1,24 @@
-import gzip
 import threading
 import time
 from collections.abc import Iterator
 from functools import partial
-from pathlib import Path
 from unittest.mock import patch
 
 import httpx
 import pytest
-from django.conf import settings
 from playwright.sync_api import expect
 
+from lexiflux.language import wiktionary
 from lexiflux.language.llm import INLINE_TRANSLATION_SECONDS
 from lexiflux.language.translation import AVAILABLE_TRANSLATORS, GoogleTranslator, get_translator
 from lexiflux.language.wiktionary import LICENSE_URL
-from lexiflux.language.wiktionary_import import SOURCES, ImportReport, build
 from lexiflux.models import Book, BookPage, Language, LanguagePreferences
 from tests.e2e_playwright.fakes import FakePool
 from tests.e2e_playwright.pages import ReaderPage
+from tests.kaikki import Kaikki
 
 pytestmark = pytest.mark.django_db(transaction=True)
 
-WIKTIONARY_FIXTURES = Path(__file__).parent.parent / "resources" / "wiktionary"
 TEXT = (
     "The old armchair had seen better days. When Tom sat down, two springs creaked deep "
     "inside the seat. He jumped up at once."
@@ -128,22 +125,14 @@ def test_popup_shows_the_busy_alert_when_the_pool_stalls(
 
 
 @pytest.fixture
-def wiktionary_data(tmp_path) -> Iterator[Path]:
-    downloads = []
-    for source in SOURCES:
-        path = tmp_path / source.file_name
-        path.write_bytes(
-            gzip.compress((WIKTIONARY_FIXTURES / source.file_name.removesuffix(".gz")).read_bytes())
-        )
-        downloads.append((source, path))
-    target = tmp_path / "wiktionary.sqlite3"
-    build(target, downloads, frozenset({"ru"}), ImportReport(), progress=lambda _message: None)
-    with patch.object(settings, "WIKTIONARY_DATABASE", target):
-        yield target
+def kaikki() -> Iterator[Kaikki]:
+    fake = Kaikki()
+    with patch.object(wiktionary, "http_client", fake.client):
+        yield fake
 
 
 def test_popup_shows_the_wiktionary_senses_with_attribution(
-    logged_in_page, server_url, book, russian_reader, wiktionary_data
+    logged_in_page, server_url, book, russian_reader, kaikki
 ):
     _use(russian_reader, "Wiktionary")
     reader = _open(logged_in_page, server_url, book)
@@ -154,7 +143,9 @@ def test_popup_shows_the_wiktionary_senses_with_attribution(
     entry = popup.locator(".wiktionary-entry").first
     expect(entry.locator(".wiktionary-word")).to_have_text("spring")
     expect(entry.locator(".wiktionary-pos")).to_have_text("noun")
-    expect(entry.locator(".wiktionary-senses li")).to_have_text(["весна", "пружина, рессора"])
+    expect(entry.locator(".wiktionary-senses li")).to_have_text(
+        ["весна", "источник, ключ, родник", "пружина, рессора"]
+    )
     attribution = popup.locator(".wiktionary-attribution")
     expect(attribution).to_have_text("from Wiktionary, CC BY-SA 4.0")
     expect(attribution.get_by_role("link", name="Wiktionary")).to_have_attribute(
@@ -167,7 +158,7 @@ def test_popup_shows_the_wiktionary_senses_with_attribution(
 
 
 def test_wiktionary_attribution_stays_in_view_below_a_long_sense_list(
-    logged_in_page, server_url, book, russian_reader, wiktionary_data
+    logged_in_page, server_url, book, russian_reader, kaikki
 ):
     _use(russian_reader, "Wiktionary")
     reader = _open(logged_in_page, server_url, book)
@@ -181,6 +172,20 @@ def test_wiktionary_attribution_stays_in_view_below_a_long_sense_list(
 
     expect(popup.locator(".wiktionary-senses li").last).not_to_be_in_viewport()
     expect(popup.locator(".wiktionary-attribution")).to_be_in_viewport()
+
+
+def test_popup_says_when_kaikki_is_unreachable(
+    logged_in_page, server_url, book, russian_reader, kaikki
+):
+    kaikki.fail("kaikki.org", 503)
+    _use(russian_reader, "Wiktionary")
+    reader = _open(logged_in_page, server_url, book)
+
+    reader.click_word("springs")
+
+    expect(reader.inline_translation().locator(".alert.alert-warning")).to_have_text(
+        "Wiktionary (kaikki.org) is not reachable."
+    )
 
 
 class GoogleEndpoint:

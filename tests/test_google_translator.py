@@ -375,7 +375,7 @@ def test_google_popup_shows_alternatives_and_remembers_the_translation(client, u
         ),
         pytest.param(
             [httpx.ConnectTimeout("slow")],
-            "Could not reach Google.",
+            "Google is not reachable.",
             id="network",
         ),
         pytest.param(

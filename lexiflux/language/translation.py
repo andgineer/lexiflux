@@ -40,17 +40,18 @@ class TranslatorError(Exception):
     NOT_FOUND = "not_found"
     UNSUPPORTED = "unsupported"
     TOO_LONG = "too_long"
-    NOT_INSTALLED = "not_installed"
 
-    def __init__(self, kind: str, detail: str = "") -> None:
+    def __init__(self, kind: str, detail: str = "", service: str = "") -> None:
         super().__init__(f"{kind}: {detail}" if detail else kind)
         self.kind = kind
+        # The service the alert names when it is not the translator itself.
+        self.service = service
 
 
 @dataclass(frozen=True)
 class Term:
     word: str
-    # The word marked in its sentence and the neighbouring ones; only the LLM reads it.
+    # The word marked in its sentence and the neighbouring ones.
     passage: str = ""
     user: Any = field(default=None, compare=False, hash=False)
 
@@ -174,6 +175,9 @@ class GoogleTranslator:
         raise TranslatorError(TranslatorError.RATE_LIMIT, "every identifier tried refused")
 
 
+WIKTIONARY_SERVICE = "Wiktionary (kaikki.org)"
+
+
 class WiktionaryTranslator:
     def __init__(self, source: str, target: str) -> None:
         self.source = google_code(source)
@@ -183,9 +187,9 @@ class WiktionaryTranslator:
 
     def translate(self, term: Term) -> HtmlTranslation:
         try:
-            entries = wiktionary.lookup(term.word, self.source, self.target)
-        except wiktionary.WiktionaryNotInstalledError as e:
-            raise TranslatorError(TranslatorError.NOT_INSTALLED, str(e)) from e
+            entries = wiktionary.lookup(term.word, self.source, self.target, term.passage)
+        except wiktionary.WiktionaryUnreachableError as e:
+            raise TranslatorError(TranslatorError.NETWORK, str(e), WIKTIONARY_SERVICE) from e
         if not entries:
             raise TranslatorError(TranslatorError.NOT_FOUND)
         return HtmlTranslation(wiktionary.render(entries), wiktionary.summary(entries))

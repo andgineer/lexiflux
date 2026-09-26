@@ -115,6 +115,8 @@ def _dictionary_error(exc: Exception, translator_name: str) -> tuple[str, str]:
         return exc.kind, exc.html
     kind = exc.kind if isinstance(exc, TranslatorError) else ArticleError.GENERIC
     label = AVAILABLE_TRANSLATORS.get(translator_name, (None, translator_name or "Translator"))[1]
+    if isinstance(exc, TranslatorError) and exc.service:
+        label = exc.service
     html_text = render_to_string(
         "translator-error.html",
         {"kind": kind, "label": label, "error_type": type(exc).__name__},

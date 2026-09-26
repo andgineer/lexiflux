@@ -656,6 +656,8 @@ shellingham==1.5.4
     # via
     #   -r requirements.txt
     #   typer
+simplemma==2.0.0
+    # via -r requirements.txt
 six==1.17.0
     # via
     #   -r requirements.txt

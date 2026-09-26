@@ -1,4 +1,4 @@
-# Inline popup: LLM translation by default, offline Wiktionary, Google via its JSON endpoint
+# Inline popup: LLM translation by default, online Wiktionary, Google via its JSON endpoint
 
 ## Overview
 
@@ -10,19 +10,26 @@ translators:
 - **LLM translation (default):** the free llmbroker pool translates the selected word in its
   passage and returns only the Russian (user-language) equivalent. 23 of 24 bench senses right,
   answer in about 0.6 s p50, 0.8 s p90
-- **Wiktionary:** an offline dictionary built from the kaikki.org Wiktionary extracts: senses with
-  user-language equivalents (English words) or English glosses (German, Serbian), lemma lookup for
-  inflected forms, both Serbian scripts. 20 of 24 bench senses listed, lookup in microseconds, no
-  network, no keys
+- **Wiktionary:** a local lemmatiser plus the kaikki.org per-word Wiktionary pages, fetched online:
+  senses with user-language equivalents (English words, and every word in the Russian edition) or
+  English glosses, lemma lookup for inflected forms, both Serbian scripts. 21 of 24 bench senses
+  listed, about 0.13 s p50, nothing installed, no keys. (Phase 2 built it offline first; Phase 6
+  replaces that with the online lookup, because users must never run a data import)
 - **Google:** the same Google engine through its JSON endpoint `translate.googleapis.com`, with
   dictionary alternatives for English and German. Fast (0.07 s) but context-blind and fragile
   (Google blocks client identifiers without notice)
 
-MyMemory, Linguee, PONS and the `deep-translator` package go. For Serbian books read by a Russian
-speaker, the sidebar gains a Lingea Site article next to Glosbe.
+MyMemory, Linguee, PONS and the `deep-translator` package go. For Serbian books, the sidebar gains a
+Lingea Site article next to Glosbe for every reader language Lingea covers.
 
 Evidence: the translator study (`scratchpad/translator/`, summarised below) and the dictionary
-study (`scratchpad/dictionary/`), both 2026-09-24, on the 24 items of `experiments/context_bench.py`.
+study (`scratchpad/dictionary/`), both 2026-09-24, on the 24 items of `experiments/context_bench.py`;
+the online-Wiktionary study (`scratchpad/hybrid/`, 2026-09-25/26: bench, 45 inflected forms, Alice's
+200 most frequent words, 20 contractions and archaic forms, latency, 1,309 real requests).
+
+Research directories (read-only):
+`/private/tmp/claude-501/-Users-andrei-sorokin2-projects-lexiflux/c28e1697-199b-43f9-8f46-671dd8a20d4d/scratchpad/{translator,dictionary}`,
+`/private/tmp/claude-501/-Users-andrei-sorokin2-projects-lexiflux/03fa7c10-fa32-4e88-b4f5-b1eaea141c0d/scratchpad/hybrid`.
 
 ## Decisions
 
@@ -31,20 +38,21 @@ study (`scratchpad/dictionary/`), both 2026-09-24, on the 24 items of `experimen
 | Popup options | Three: LLM translation (default), Wiktionary, Google. The user picks one in Language Preferences; the choice is per language as today |
 | No fallback | A popup translator never falls back to another one. If the LLM translation fails or has no answer after **3 s**, the popup shows an error alert (the existing alert style); same for Google and a missing Wiktionary entry |
 | LLM translation | Free pool only (`fastest_of=2`), context = the selected word marked inside a short passage (its sentence plus the neighbouring sentences), reply = only the user-language equivalent in dictionary form; the whole unit for separable verbs and fixed expressions. Non-streaming (the popup shows the finished answer). Cached per (word, passage, languages) like the article cache. Failures are not cached |
-| Wiktionary data | kaikki.org JSONL extracts, English edition (English, German, Serbo-Croatian) and Russian edition (English, German, Serbian), pruned by a management command into a separate SQLite file next to the app database (not in `db.sqlite3`), rebuilt on demand (about monthly). Licence CC BY-SA 4.0 + GFDL: every Wiktionary result shows "from Wiktionary, CC BY-SA 4.0" with a link |
-| Wiktionary output | A compact list of senses: part of speech, user-language equivalents where the data has them, otherwise English glosses; the entry for the lemma of the clicked form. Russian-edition data first where an entry exists there |
-| Missing Wiktionary data | The option stays selectable; the popup shows "Wiktionary data is not installed" with the import command |
+| Wiktionary data | Online, nothing installed: the clicked word is lemmatised locally (simplemma, a pip dependency; English, German, Serbian in both scripts), then the kaikki.org per-word pages of the word and its lemma are fetched from the Russian and the English Wiktionary editions in parallel. No local dictionary file, no import command. Licence CC BY-SA 4.0 + GFDL: every Wiktionary result shows "from Wiktionary, CC BY-SA 4.0" with a link |
+| Wiktionary output | A compact list of senses: part of speech, user-language equivalents where the data has them, otherwise English glosses; the clicked word's own entry and the entry of its lemma. For a Russian reader, Russian-edition data first. A form, contraction or archaic word the lemmatiser leaves unchanged follows its own "form of" link to the lemma |
+| Wiktionary unreachable | kaikki.org down, slow or refusing: the popup shows the translator network-error alert ("Wiktionary (kaikki.org) is not reachable"); no page for the word: the "no translation" alert. Failures are never cached |
 | Google client | Direct HTTP to the JSON endpoint with client identifiers tried in order `dict-chrome-ex`, `gtx`, `at`; `dt=bd` alternatives shown when present (English, German); a short timeout; the existing translator error alerts on failure |
 | Removed | `deep-translator` (MyMemory, Linguee, PONS, its Google scraper) |
 | Defaults | Inline translation = LLM translation for new users. Single user, no existing data to migrate: the author recreates his DB (`invoke init-db`) |
-| Serbian Site link | Glosbe stays the default Site article for every language (its real-world example sentences are the point). When language preferences are created for Serbian with Russian as the user language, a second Site article, Lingea (`https://recnici.lingea.rs/rusko-srpski/{term}`, Latin script: Cyrillic terms are transliterated), is added after Glosbe: it resolves inflected Serbian forms and separates homonyms, which Glosbe's page does not |
+| No manual steps | A lexiflux user never runs a command to install or refresh data. Everything a translator needs is fetched automatically or ships with the app's dependencies |
+| Serbian Site link | Glosbe stays the default Site article for every language (its real-world example sentences are the point). A Serbian book whose reader's language Lingea covers (36 `<language>-srpski` dictionaries) gets a second Site article, Lingea (`https://recnici.lingea.rs/{toLangLingea}-srpski/{termLatin}`: the user language in Lingea's naming, Cyrillic terms transliterated to Latin), after Glosbe: it resolves inflected Serbian forms and separates homonyms, which Glosbe's page does not |
 
 ### Measurements behind the decisions (2026-09-24, 24 items, en/de/sr → ru)
 
 | Option | Right sense | Latency | Notes |
 |---|---|---|---|
 | LLM pool, word in its passage | 23 / 24 (sense chosen) | 0.63 / 0.81 s (p50 / p90) | quota: Groq about 1,000 requests a day, Gemini about 500, shared with the sidebar articles |
-| Wiktionary (both editions) | 20 / 24 listed | offline | Russian for English words; English glosses for many German and Serbian senses |
+| Wiktionary online (lemmatiser + kaikki.org pages, measured 2026-09-25/26) | 21 / 24 listed (dictionary form), 19 / 24 from the clicked text | 0.13 / 0.26 s (p50 / p90) | inflected forms 42 / 45; the right first entry for all of Alice's 200 most frequent words; contractions and archaic forms 20 / 20 |
 | Google `dt=bd` | 15 / 24 listed, 6 / 24 as the single answer | 0.07 s | no Serbian dictionary data |
 | MyMemory | 3 / 24 | 0.42 s | dropped |
 
@@ -245,11 +253,201 @@ Done notes (2026-09-25):
   German did not), and `Кључ` opened `https://recnici.lingea.rs/rusko-srpski/Klju%C4%8D`
   (HTTP 200, "ключ"). The 3 s stall was checked by the Playwright test, not the real pool
 
+## Phase 6 — Online Wiktionary (replaces the offline data)
+
+The offline file, its importer and every manual step go. The lookup code of Phase 2 (pruning of a
+kaikki record, entry building, ranking, HTML rendering, attribution, history summary) stays and is fed
+by per-word pages instead of SQLite rows. The research prototype is `scratchpad/hybrid/hybrid.py` and
+`kaikki.py` (URL building, fetching); its recorded pages are in `scratchpad/hybrid/cache/`.
+
+- [x] **Remove the offline path:** the `import-wiktionary` command, the download/build/atomic-swap
+  code, the `WIKTIONARY_DATABASE` setting (base and test settings), the `.gitignore`/`.dockerignore`
+  entries, the "not installed" error kind and its alert text, the import docs (`docs/src/{en,ru}`
+  aimodels/docker, README, CLAUDE.md), the import tests, and the local `wiktionary.sqlite3` (a
+  generated 227 MB file, gitignored; delete it at the end). Keep the pruning function that turns a
+  kaikki JSON record into entry/senses/links, moved next to the lookup
+- [x] **Lemma:** `simplemma` in `requirements.in` and `requirements.koyeb.in` (recompile without
+  `--upgrade`, as Phase 4). Languages `en`, `de`, `hbs`; loaded lazily per language. Serbian: lemmatise
+  the Latin transliteration (simplemma knows more Latin forms: `protiče` → `proticati`, `протиче`
+  unchanged), with Wiktionary's pitch accents stripped first (`kȍsu` → `kosu`, also for the page
+  URLs). German keeps its case; English and Serbian clicks are lowercased before lemmatising. A
+  lowercase click whose lemma differs from it only in case looks up the lowercase word (`robin`,
+  not simplemma's `Robin`); a capitalised click keeps simplemma's spelling (`I`, `I'm`). The
+  click's place in its sentence comes from `Term.passage` (the word marked ⟦ ⟧), which
+  `WiktionaryTranslator` passes to `lookup(..., passage)`: `sentence_start()` is True when the
+  text before ⟦ is empty or ends in `.`, `!`, `?`, `…` or `:` plus optional quotes/dashes
+  (`SENTENCE_START`), False otherwise, None without a mark (then English/Serbian behave as at a
+  sentence start, German as mid-sentence). Both the popup and the sidebar pass the passage. Only the
+  book languages that have kaikki data (en, de, sr/hr/bs via Serbo-Croatian); other book languages
+  raise the unsupported-language translator error as today
+- [x] **URLs:** English edition `https://kaikki.org/dictionary/<Language>/meaning/<c1>/<c1c2>/<word>.jsonl`
+  (`English`, `German`, `Serbo-Croatian`); Russian edition
+  `https://kaikki.org/ruwiktionary/<Language>/meaning/<c1>/<c1c2>/<word>.jsonl` (`Английский`,
+  `Немецкий`, `Сербский`, percent-encoded). `<c1>`/`<c1c2>` are the first one/two characters after
+  escaping; a one-letter word repeats itself (`a/a/a.jsonl`, `I/I/I.jsonl`); escaping `.` → `_dot_`,
+  `/` → `_slash_`; spaces, apostrophes and non-ASCII letters are only percent-encoded. Page names are
+  case-sensitive. Serbian: the Latin page in the English edition, the Cyrillic page in the Russian
+  edition (the Russian edition's Cyrillic pages are fuller). A Croatian book (`hr`) uses the
+  Russian edition's `Хорватский` section with the Latin page (`CROATIAN` section key in
+  `EDITION_LANGUAGE_NAMES`, `page_word`; `_Pages.section`); Bosnian stays on `Сербский`. The
+  prototype's `kaikki.py` has the verified builder
+- [x] **First round:** the clicked form and its lemma (deduplicated), each from both editions, in
+  parallel (at most 4 requests). The Russian edition only for a Russian reader (as the offline code);
+  for a Russian reader its entries come first. English-edition translations are filtered by the user
+  language at lookup (any user language; Serbian/Croatian/Bosnian users → `sh`, as Phase 2's fix)
+- [x] **Follow-up round:** only when the lemmatiser returns the word unchanged and the word's own
+  English-edition page links to a lemma: follow `form_of` links under any tag except `dialectal`,
+  `initialism`, `acronym`, `misspelling`; follow `alt_of` links only for contractions. At most 3
+  targets, both editions, in parallel (4 % of real clicks). Show the word's own senses, then its
+  "form of" line, then the lemma's entries. Checks: I'm, you're, 'tis (selected across the
+  apostrophe; a single click sends one side of it), liveth, wouldst, Curiouser reach an entry; "she" and "be" lead with their own entries; a sentence-initial "Still" leads with
+  the adverb, not a surname
+- [x] **HTTP:** one `httpx.Client` per process, HTTP/1.1 keep-alive kept 60 s
+  (`httpx.Limits(keepalive_expiry=60)`; httpx's default 5 s closed it between clicks);
+  requests of a round in
+  parallel; about 2 s per request and the whole click within the popup's 3 s limit; a User-Agent
+  naming lexiflux and its repository URL
+- [x] **Cache:** the pruned record per page URL, 404s included (18 % of requests, repeated for
+  inflected forms), kept 30 days, in the existing database-backed cache (as the LLM translation's
+  answers). Never cache timeouts, connection errors, 5xx or 429
+- [x] **Popup outcomes:** entries → the sense list with attribution; every page 404 → the "no
+  translation" alert; kaikki.org unreachable (timeout, connection error, 5xx, 429) and no entries →
+  the translator network-error alert worded "Wiktionary (kaikki.org) is not reachable"; one edition
+  failing while the other has entries → show those entries, cache nothing for the failed page
+- [x] **Tests:** `httpx.MockTransport` serving recorded pages (copy the needed ones from
+  `scratchpad/hybrid/cache/` into `tests/resources/wiktionary/`, replacing the dump fixtures):
+  lemma from inflected forms (en, de, sr both scripts), URL escaping cases, both editions and their
+  order, the follow-up round cases above, 404 caching, no caching of failures, one edition failing,
+  all failing, attribution present, history summary. An opt-in real-network smoke test (marker like
+  `real_llm`, e.g. `real_net`) fetching "be" from both editions, because a changed layout would
+  otherwise look like "no entry" everywhere. Playwright: the Wiktionary popup over the mocked pages
+- [x] **Spec and docs:** `specs/inline-translation.md` (Wiktionary is online: lemmatiser + kaikki.org,
+  nothing installed, Russian edition first for a Russian reader, outcomes, the measurements of the
+  online study), `docs/src/{en,ru}`, README, CLAUDE.md: no import command anywhere
+- [x] **Verification:** the Phase 5 gate (`invoke pre`, `python -m pytest tests`, Playwright,
+  `npm test`, `invoke buildjs`); the process's memory with the German lemmatiser loaded, reported
+  (Koyeb free instance is 512 MB); a headless-browser check on a scratch server with the real
+  network: English, German, Serbian (both scripts) words through the Wiktionary popup and the
+  sidebar Dictionary article, timings reported
+
+Done notes (2026-09-26):
+
+- The cache is a new table (`WiktionaryPage`, migration 0024), keyed by page URL and the
+  Wiktionary code of the user language: lexiflux had no database-backed cache (the LLM
+  translation's answers live in an in-process LRU, `CACHES` is LocMem), and English-edition pages
+  are pruned to the user language's translations. Rows older than 30 days are ignored on read and
+  deleted on the next write. A 200 answer without JSON lines counts as a failure, not a missing
+  word, and is not cached
+- simplemma runs with `low_memory=True`: identical lemmas on 140,000 dictionary words (plus
+  20,000 unknown and 20,000 capitalised) per language, 12–15 µs a word instead of 1.4–2.0 µs.
+  App process (all modules imported) 148 MiB; + English 3, + German 26, + Serbo-Croatian 8 →
+  186 MiB (without it +30 / +141 / +37 → 357 MiB). Load 0.11 / 0.53 / 0.26 s at the first word
+- The follow-up rule is the prototype's: `form_of` links skipped under `dialectal`, `initialism`,
+  `acronym` and the pruning's noise tags (`misspelling`, `pronunciation-spelling`,
+  `eye-dialect`); an `abbreviation` sense is followed only when it is a contraction
+- Added: a name round. When every first-round page is missing or empty and the lookup
+  lowercased the clicked text (English, Serbian), the page of the text as written is fetched
+  ("London" → Лондон). It runs only when the lowercase lookup found nothing, so no measured
+  result changes
+- Names: a name reached through the lemma or a link (mostly a surname, "august" → "August")
+  is shown only when nothing else is found. When ranking leaves nothing, the same first-round
+  pages are ranked again with those names allowed, before the name round: "Beogradu" →
+  Beograd "Belgrade", "Evrope" → Evropa "Europe", "Deutschlands" → Deutschland "Germany"
+- German capitals: in mid-sentence (and without a passage) a capitalised German click that finds
+  no entries, or only names, looks up the lowercase spelling (and its lemma) in one more round
+  and those entries come first ("Schön" → schön); capitalised nouns ("Schloss", "Bank", "Gut")
+  find their own entries and make no extra request. At a sentence start: when the lemmatiser's
+  words include a lowercase one, `wanted` is the lowercase spelling and it leads, ranking only
+  ("Ich" → ich, "Aber", "Nichts", "Es", "Wenn"); when every entry is capitalised, the lowercase
+  round runs (words already fetched are skipped) and leads ("Gut, dass …" → gut), unless no
+  lowercase entry is the lowercase word itself, i.e. it is only a form of another lemma: then
+  the lowercase entries follow ("Schloss" at a sentence start → Schloss, then schließen)
+- English and Serbian capitals in mid-sentence: the typed spelling joins the first round as its
+  own candidate (`written`; its names are kept like candidate 0's), unless the lemmatiser's
+  words already have that page. It leads (`wanted = typed`) for Serbian always, and for English
+  when its English-edition entries have translations into the user language (`_translated`):
+  "China" → Китай, "May" → май, "March" → март, "Turkey" → Турция. Otherwise it follows the
+  lowercase entries: "the King" → король, then King (a surname), and likewise Queen, Rabbit,
+  Hatter, Duchess, Cat, Mouse in Alice, whose as-written pages are surnames, places or the
+  Chinese zodiac. The name round is skipped when the typed spelling was already fetched
+- Link following compares spellings the way the first round deduplicates them: exactly for
+  German (so "Tanzen" follows its link to "tanzen"), case- and accent-insensitively otherwise
+- Regression checks (recorded pages in the fixture, and on the real network): robin (the bird;
+  Robin the name), august (the adjective), Beogradu, Evrope, Deutschlands, Tanzen, Gehen, kȍsu,
+  Schön; unchanged: Schloss, Bank, Gut. A kaikki record of an unexpected shape fails only its
+  page (not cached; the round's good pages are kept and cached); futures still queued at the
+  deadline are cancelled. Re-measured after these fixes on the real network (644 requests,
+  555 × 200, 89 × 404): bench 21 / 24 and 19 / 24, inflected 42 / 45, Alice 200 / 200,
+  contractions 20 / 20; the only changed output is "Haken", which now also follows its
+  gerund link to "haken" after its noun entries. Gate: `python -m pytest tests` 903 passed /
+  20 skipped, Playwright 20 passed / 1 skipped, `-m real_net` 1 passed
+- User languages whose Google code differs from Wiktionary's: a Norwegian reader (`no`) gets the
+  `no`, `nb` and `nn` translations, a Filipino reader (`fil`) the `fil` and `tl` ones, a Chinese
+  reader (`zh-CN`, `zh-TW` → `zh`) the `zh` and `cmn` ones (most Mandarin translations are filed
+  as `cmn`: 215 of 314 entries with Chinese in the recorded pages had only `cmn`), a Kurdish
+  reader (`ku`, Kurmanji) the `ku` and `kmr` ones (`TRANSLATION_CODES`, applied where
+  English-edition translations are filtered; the cache key stays the reader's code)
+- The deadline (2.8 s, the rest of the popup's 3 s) starts before lemmatisation; each request
+  gets `min(2 s, time left)`; futures not done at the deadline count as failed and their late
+  answers are dropped. The network alert reads "{label} is not reachable." for every translator
+  (Google's says "Google is not reachable." now); `TranslatorError.service` names kaikki.org
+- Tests: `tests/kaikki.py` serves 122 recorded pages (`tests/resources/wiktionary/
+  kaikki_pages.jsonl`, trimmed to word, pos, senses' glosses/tags/links and ru/de/sh
+  translations, plus nb/nn/tl/kmr on `spring` and cmn on `king`; 160 KB); `springs`, `London`,
+  the regression checks' pages and the sentence-position and Croatian pages were recorded
+  fresh. An autouse fixture
+  refuses real kaikki.org requests; `tests/test_wiktionary_real_net.py` (`-m real_net`,
+  `LEXIFLUX_REAL_NET=1`) fetches "be" from both editions
+- Reproduction of the study through the real code (2026-09-26): on the recorded pages, output
+  identical to the prototype for all 293 inputs and 20 contractions; on the real network, again
+  identical (642 requests, 553 × 200, 89 × 404, no failure): bench 21 / 24 (dictionary form),
+  19 / 24 (clicked text), inflected 42 / 45 listed, Alice 200 / 200 right first entry,
+  contractions 20 / 20. Latency, 109 clicks with nothing cached, one kept-alive client: p50
+  0.130 s, p90 0.212 s, max 0.726 s (prototype 0.128 / 0.259 / 0.986)
+- Headless Chromium on a scratch server, real kaikki.org, Russian reader, 26 words in four
+  books (English, German, Serbian Latin and Cyrillic): every word got entries. Click to popup:
+  first word of a language 0.78 s (English), 0.83 s (German), 0.52 s (Serbian), others 0.19–0.38
+  s, cached 0.19 s (0.15 s of it is the view itself). Sidebar Wiktionary article in all four books
+  0.83 s. Server RSS 150 MiB at start, 204 MiB with all three lemmatisers loaded
+- Gate: `invoke pre` clean (pyrefly 0 errors), `python -m pytest tests` 887 passed / 20 skipped,
+  Playwright 20 passed / 1 skipped, `npm test` 107 passed, `-m real_net` 1 passed. The repo's
+  `wiktionary.sqlite3` is deleted
+- Review round 3 (2026-09-26): Chinese and Kurdish translation codes, keep-alive 60 s, sentence
+  position, the Russian edition's Croatian section (all above); the timeout test now checks the
+  timeout each request carries (≤ 2 s; the client has no default of its own). Checks on the
+  recorded pages (tests) and the real network: "China", "May", "March", "Turkey" in
+  mid-sentence lead with Китай, май, март, Турция; at a sentence start (and without a passage)
+  they stay china, may, march; "the King" → король, then King. German at a sentence start:
+  "Ich" → я, "Aber" → но, "Nichts" → ничего, "Es" → оно, "Wenn" → когда (no extra request),
+  "Gut, dass" → хороший (one more round), "Schloss" at a sentence start → замок, then
+  schließen; in mid-sentence "das Ich", "das Gut", "das Schloss" are unchanged and make no
+  extra request. Croatian "mlijeko" → молоко (`Хорватский`); 13 of 16 common Croatian words
+  have a `Хорватский` page, 7 a `Сербский` one. Harness rerun on the real network with the
+  new code (no passage, as before; 644 requests, 555 × 200, 89 × 404, no failure): output
+  identical to the previous real run, bench 21 / 24 and 19 / 24, inflected 42 / 45, Alice
+  200 / 200, contractions 20 / 20. With realistic passages (bench passages, the inflected forms
+  in their source sentences, Alice's words at their first occurrence): the same counts, and
+  the only changed output is Kafka's sentence-initial "Seine", which now leads with sein
+  (right first entry 42 / 45 instead of 41). Alice's 40 most frequent mid-sentence capitals
+  (1,158 occurrences): letting every as-written page lead would have put a surname, a place or
+  a letter-case variant first for 19 of them (542 occurrences, e.g. Queen, King, Turtle, Mock,
+  Hatter, Rabbit, Duchess) and a surname into the vocabulary summary for 232; with the
+  translation rule only translated names lead (March, English, Bill, William, Dinah,
+  Cheshire, Majesty). Latency (real network, nothing cached, lexiflux's client): back to back
+  0.08 s p50 / 0.21 s p90, 20 s apart 0.13 / 0.22 s (15 clicks each; with the old 5 s expiry a
+  click after 10 s idle took 0.27 s); first word of a language in a fresh process 0.40 s
+  (English), 0.49 s (Serbian), 0.76 s (German)
+
 ## Risks
 
 - **Pool quota** is shared with the sidebar articles; heavy reading days could exhaust Gemini's
   about 500 requests. Then the popup shows errors until the next day (no fallback, by decision)
 - **Google blocks identifiers** without notice; the option then shows errors
-- **Wiktionary size**: the English-edition extract is 3 GB to download; the pruned file size is
-  measured in Phase 2. Docker: the data is not in the image; the command runs inside the container
+- **kaikki.org** is one volunteer-run host with no API contract; an outage or a layout change breaks the
+  Wiktionary option (error alerts; cached words keep working). An unknown path answers 404 like a missing
+  word, so a layout change looks like "no entry": an opt-in real-network smoke test guards it
+- **Lemmatiser memory**: simplemma's low-memory mode adds about 3 MB (English), 26 MB (German), 8 MB
+  (Serbian) per loaded language (its default mode 30 / 141 / 37 MB); loaded lazily per language. The app
+  process measured 186 MiB with all three, Koyeb's free instance has 512 MB
+- **Privacy**: every uncached Wiktionary click sends the word to kaikki.org
 - **Serbian in Wiktionary** is mostly English glosses; Lingea (sidebar) covers Russian equivalents

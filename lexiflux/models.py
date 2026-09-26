@@ -1059,3 +1059,24 @@ class APIToken(models.Model):
 
     def __str__(self):
         return f"{self.name} - {self.user.email}"
+
+
+class WiktionaryPage(models.Model):  # type: ignore
+    """A kaikki.org Wiktionary page pruned for one user language; no content: no such page."""
+
+    url = models.TextField()
+    user_language = models.CharField(max_length=16)
+    content = models.JSONField(null=True, blank=True)
+    fetched = models.DateTimeField(db_index=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["url", "user_language"],
+                name="wiktionary_page_url_user_language",
+            ),
+        ]
+
+    def __str__(self) -> str:
+        """Return the page URL."""
+        return self.url  # type: ignore
