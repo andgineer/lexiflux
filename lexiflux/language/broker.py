@@ -1,12 +1,18 @@
+import asyncio
 import atexit
 import logging
+import os
 import threading
+from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
 import llmbroker
 from django.conf import settings
+from django.db import connections
+from llmbroker.standalone.secrets import parse_env_file
 
+from lexiflux.language import key_store
 from lexiflux.language.ai_models import OFFERED_MODELS
 
 logger = logging.getLogger(__name__)
@@ -16,12 +22,65 @@ logger = logging.getLogger(__name__)
 EXCLUDED_POOL_LLMS = ("openrouter-nemotron-3-ultra", "openrouter-laguna-s-2.1")
 
 _lock = threading.Lock()
-_broker: llmbroker.Broker | None = None
+_broker: "RebuildableBroker | None" = None
 _exclusions_applied = False
 
 
 def env_file() -> Path:
     return Path(settings.BASE_DIR) / ".env"
+
+
+def server_refs() -> frozenset[str]:
+    # What llmbroker.Secrets resolves: the environment, then .env, a blank value counting as unset.
+    names = {name for name, value in os.environ.items() if value.strip()}
+    try:
+        values = parse_env_file(env_file().read_text(encoding="utf-8"))
+    except OSError:
+        values = {}
+    names |= {name for name, value in values.items() if value.strip()}
+    return frozenset(names)
+
+
+def _outside_requests(call: Callable[..., Any], *args: Any) -> Any:
+    try:
+        return call(*args)
+    finally:
+        # The broker's worker threads never finish a request, where Django closes connections.
+        connections.close_all()
+
+
+class KeySecrets:
+    """A user's own keys from lexiflux's database; the server's from the environment and .env."""
+
+    def __init__(self, env: Path) -> None:
+        self._server = llmbroker.Secrets(env)
+
+    async def resolve(self, ref: str) -> str:
+        scope, _, shared_ref = ref.rpartition("/")
+        if not scope:
+            return await self._server.resolve(ref)
+        user_id = key_store.user_of(scope)
+        value = None
+        if user_id is not None:
+            value = await asyncio.to_thread(
+                _outside_requests,
+                key_store.own_key,
+                user_id,
+                shared_ref,
+            )
+        if value is None:
+            raise KeyError(f"no readable key for {ref!r}")
+        return value
+
+    async def refs(self, prefix: str = "") -> frozenset[str]:
+        own = await asyncio.to_thread(_outside_requests, key_store.scoped_refs)
+        return frozenset(ref for ref in own | server_refs() if ref.startswith(prefix))
+
+
+class RebuildableBroker(llmbroker.Broker):
+    def rebuild(self) -> None:
+        # AsyncBroker.rebuild is public; the synchronous façade does not pass it through.
+        self._run(self._async.rebuild())
 
 
 def direct_aliases() -> list[str]:
@@ -48,9 +107,9 @@ def get_broker() -> llmbroker.Broker:
     global _broker, _exclusions_applied  # noqa: PLW0603
     with _lock:
         if _broker is None:
-            _broker = llmbroker.Broker(
+            _broker = RebuildableBroker(
                 settings.LLMBROKER_DATASOURCE,
-                secrets=llmbroker.Secrets(env_file()),
+                secrets=KeySecrets(env_file()),
                 direct=direct_aliases(),
                 home=settings.LLMBROKER_HOME,
             )
@@ -62,5 +121,16 @@ def get_broker() -> llmbroker.Broker:
         return _broker
 
 
+def refresh_keys() -> None:
+    # A caller holds its keys until the broker rebuilds; a broker not built yet holds none.
+    current = _broker
+    if current is None:
+        return
+    try:
+        current.rebuild()
+    except Exception:
+        logger.exception("Could not re-read the AI keys; the change applies at the next rebuild")
+
+
 def llms_for(user: Any) -> llmbroker.LLMs:
-    return get_broker().for_scope(f"u-{user.id}")
+    return get_broker().for_scope(key_store.scope_of(user.id))

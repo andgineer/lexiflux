@@ -23,8 +23,14 @@ downloads the image `andgineer/lexiflux` from the Docker Hub,
 creates a new container with the name `lexiflux` and exposes port `6100` on your host machine.
 
 ### AI keys
-AI articles need API keys, which you give to the container as environment variables
-(see [Keys](aimodels.md#keys) for which keys there are).
+Enter your API keys on the AI Keys page in Lexiflux (see [Keys](aimodels.md#keys)). They are
+kept in the container, with your books, and encrypted with a secret that the container generates
+on its first start and keeps there too. To use a secret of your own, add
+`-e DJANGO_SECRET_KEY=...` to the command that creates the container; if you change it later,
+enter your keys again.
+
+You can also give the container keys of its own. Each of them is used for whoever has not entered
+that key: with only your own OpenAI key, you still use the container's Groq key.
 Put them in a file, one `NAME=value` per line, for example `lexiflux.env`:
 
     GEMINI_API_KEY=...
@@ -35,8 +41,8 @@ and add `--env-file lexiflux.env` to the command that creates the container:
 
     docker run -d -p 6100:8000 --env-file lexiflux.env --name lexiflux andgineer/lexiflux
 
-Keys are set when the container is created. The container also holds your books, so to
-change the keys of an existing container make a [backup](docker.md#backup) and
+These keys are set when the container is created. The container also holds your books, so to
+change them for an existing container make a [backup](docker.md#backup) and
 [restore](docker.md#restore) it with `--env-file lexiflux.env` added to the `docker run` command.
 
 ### Configuration
@@ -68,7 +74,8 @@ So it is better to make a [backup](docker.md#backup) before updating.
 ## Backup
 To create archive with full backup of your Lexiflux Docker container.
 
-The archive also contains the API keys passed to the container with `--env-file`, so do not share it.
+The archive also contains your API keys, those entered on the AI Keys page and those passed to the
+container with `--env-file`, so do not share it.
 
 === "Linux/macOS"
     Enter in the terminal:

@@ -25,6 +25,7 @@ EMAIL_USE_TLS=True
 DEFAULT_FROM_EMAIL=your-email@gmail.com
 
 # AI keys (set as Koyeb secrets). See docs/src/en/aimodels.md#keys
+# Optional: they serve every user who has not entered their own keys on the AI Keys page.
 # Free pool: at least one of these; more keys make it faster and more reliable.
 # OPENROUTER_API_KEY is not used by Lexiflux.
 # GROQ_API_KEY=your-groq-api-key

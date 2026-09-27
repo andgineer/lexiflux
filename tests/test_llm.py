@@ -6,6 +6,8 @@ from unittest.mock import patch
 import allure
 import httpx
 import pytest
+from django.contrib.auth import get_user_model
+from django.urls import reverse
 from llmbroker import (
     AuthError,
     LLMTimeoutError,
@@ -18,7 +20,7 @@ from llmbroker import (
     UnknownModelError,
 )
 
-from lexiflux.language import llm
+from lexiflux.language import key_store, llm
 from lexiflux.language.llm import (
     ArticleError,
     ArticleEvent,
@@ -124,6 +126,13 @@ def clean_cache():
     llm.clear_cache()
     yield
     llm.clear_cache()
+
+
+@pytest.fixture
+def key_user(db):
+    return get_user_model().objects.create_user(
+        username="key-user", email="key-user@example.com", password="x"
+    )
 
 
 @pytest.fixture
@@ -266,6 +275,8 @@ class TestStreamArticle:
             (NoLLMAvailableError("none", reason="timeout"), ArticleError.BUSY),
         ],
     )
+    @pytest.mark.django_db
+    @pytest.mark.usefixtures("server_keys")
     def test_error_before_text(self, fake, error, kind):
         fake["llms"] = FakeLLMs(script=[error])
         result = events(make_request())
@@ -273,11 +284,13 @@ class TestStreamArticle:
         assert result[0].event == "error"
         assert result[0].kind == kind
 
+    @pytest.mark.django_db
+    @pytest.mark.usefixtures("server_keys")
     def test_direct_errors_at_direct(self, fake):
         fake["llms"] = FakeLLMs(direct_error=MissingKeyError("no key"))
         result = events(direct_request())
         assert result[0].kind == ArticleError.MISSING_KEY
-        assert "OPENAI_API_KEY" in result[0].html
+        assert "OpenAI needs an API key" in result[0].html
 
     def test_cache_hit_replays_one_delta(self, fake):
         fake["llms"] = FakeLLMs(script=["one ", "two ", "three"])
@@ -359,6 +372,8 @@ class TestGenerateArticle:
         fake["llms"] = FakeLLMs(answer="other")
         assert generate_article(make_request()) == "whole answer"
 
+    @pytest.mark.django_db
+    @pytest.mark.usefixtures("server_keys")
     def test_error_raises_article_error(self, fake):
         fake["llms"] = FakeLLMs(answer=AuthError("rejected", status=401))
         with pytest.raises(ArticleError) as exc_info:
@@ -369,23 +384,20 @@ class TestGenerateArticle:
 
 @allure.epic("AI articles")
 @allure.feature("Errors")
+@pytest.mark.django_db
+@pytest.mark.usefixtures("server_keys")
 class TestErrorMessages:
     def error_for(self, exc, req=None, had_text=False):
         return llm.article_error(exc, req or make_request(), had_text=had_text)
 
-    def test_no_keys_lists_pool_keys_with_links_and_env_vars(self):
+    def test_no_keys_lists_pool_keys_with_their_llmbroker_help(self):
         error = self.error_for(NoLLMAvailableError("none", reason="no_keys"))
         assert error.kind == ArticleError.NO_KEYS
         assert "The free pool needs at least one key" in error.html
-        assert "GROQ_API_KEY" in error.html
-        assert '<a href="https://console.groq.com/keys"' in error.html
-        assert ".env" in error.html
-        assert "ai-settings" not in error.html
-
-    def test_no_keys_on_koyeb_points_to_server_environment(self):
-        with patch("lexiflux.language.llm.keys_on_server", return_value=True):
-            error = self.error_for(NoLLMAvailableError("none", reason="no_keys"))
-        assert "environment variable of the server" in error.html
+        assert "You have no free pool key of your own, and the server has none." in error.html
+        assert "<strong>Groq</strong>" in error.html
+        assert '<a href="https://console.groq.com/keys" target="_blank"' in error.html
+        assert f'<a href="{reverse("ai-keys")}" class="alert-link">AI keys page</a>' in error.html
         assert ".env" not in error.html
 
     def test_busy_with_retry_at(self):
@@ -396,15 +408,32 @@ class TestErrorMessages:
 
     def test_no_keys_omits_keys_that_serve_only_excluded_pool_models(self):
         error = self.error_for(NoLLMAvailableError("none", reason="no_keys"))
-        assert "OPENROUTER_API_KEY" not in error.html
-        for ref in ("GROQ_API_KEY", "GEMINI_API_KEY", "ZAI_API_KEY"):
-            assert ref in error.html
+        assert "openrouter.ai" not in error.html
+        for name in ("Groq", "Google (Gemini)", "Z.ai"):
+            assert f"<strong>{name}</strong>" in error.html
 
     def test_only_excluded_pool_models_payable_shows_the_no_keys_message(self):
         error = self.error_for(NoLLMAvailableError("none", reason="all_disabled"))
         assert error.kind == ArticleError.NO_KEYS
-        assert "GROQ_API_KEY" in error.html
-        assert "OPENROUTER_API_KEY" not in error.html
+        assert "<strong>Groq</strong>" in error.html
+        assert "openrouter.ai" not in error.html
+
+    def test_no_keys_names_the_users_own_refused_key(self, key_user):
+        key_store.save_own_key(key_user, "GROQ_API_KEY", "gsk-own")
+        error = self.error_for(
+            NoLLMAvailableError("none", reason="no_keys"),
+            make_request(user=key_user),
+        )
+        assert "Your Groq key was refused by Groq." in error.html
+        assert "The server's" not in error.html
+        assert "You have no free pool key" not in error.html
+
+    def test_no_keys_names_the_servers_refused_key(self, server_keys):
+        server_keys("GROQ_API_KEY", "gsk-server")
+        error = self.error_for(NoLLMAvailableError("none", reason="no_keys"))
+        assert "The server's Groq key was refused by Groq." in error.html
+        assert "Your Groq key" not in error.html
+        assert "gsk-server" not in error.html
 
     def test_busy_without_retry_at(self):
         error = self.error_for(NoLLMAvailableError("none", reason="timeout"))
@@ -414,14 +443,32 @@ class TestErrorMessages:
     def test_missing_key(self):
         error = self.error_for(MissingKeyError("no key"), direct_request())
         assert error.kind == ArticleError.MISSING_KEY
-        assert "OpenAI" in error.html
-        assert "OPENAI_API_KEY" in error.html
-        assert "platform.openai.com" in error.html
+        assert "OpenAI needs an API key" in error.html
+        assert "You have no OpenAI key of your own, and the server has none." in error.html
+        assert '<a href="https://platform.openai.com/api-keys" target="_blank"' in error.html
+        assert f'<a href="{reverse("ai-keys")}" class="alert-link">' in error.html
 
-    def test_auth(self):
-        error = self.error_for(AuthError("rejected", status=401), direct_request())
+    def test_auth_names_the_users_own_key(self, key_user):
+        key_store.save_own_key(key_user, "OPENAI_API_KEY", "sk-own")
+        error = self.error_for(
+            AuthError("rejected", status=401),
+            direct_request(user=key_user),
+        )
         assert error.kind == ArticleError.AUTH
         assert "Key rejected by OpenAI" in error.html
+        assert "Your OpenAI key was sent and OpenAI refused it." in error.html
+        assert f'<a href="{reverse("ai-keys")}" class="alert-link">' in error.html
+
+    def test_auth_names_the_servers_key(self, server_keys, key_user):
+        server_keys("OPENAI_API_KEY", "sk-server")
+        key_store.save_own_key(key_user, "ANTHROPIC_API_KEY", "sk-ant-own")
+        error = self.error_for(
+            AuthError("rejected", status=401),
+            direct_request(user=key_user),
+        )
+        assert "The server's OpenAI key was sent and OpenAI refused it." in error.html
+        assert f'<a href="{reverse("ai-keys")}" class="alert-link">' in error.html
+        assert "sk-server" not in error.html
 
     def test_rate_limit_with_retry_after(self):
         error = self.error_for(
@@ -464,9 +511,3 @@ class TestErrorMessages:
         error = self.error_for(StreamInterruptedError("died", llm_name="x"), had_text=True)
         assert error.kind == ArticleError.CUT_OFF
         assert error.html == error.html.strip()
-
-    def test_markdown_links_escape_quotes(self):
-        text = llm.markdown_links('[key](https://x.io/a"onmouseover="alert(1)) and "q"')
-        assert '"onmouseover="' not in text
-        assert "&quot;" in text
-        assert text.startswith('<a href="https://x.io/a&quot;onmouseover=&quot;alert(1"')

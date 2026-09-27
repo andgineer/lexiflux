@@ -5,7 +5,8 @@ These settings are for running Lexiflux in a local Docker container:
 - SQLite database (stored in container/volume)
 - Debug mode disabled for production-like behavior
 - Auto-login enabled for convenience
-- AI keys from the container environment (docker run --env-file)
+- SECRET_KEY from DJANGO_SECRET_KEY, else the one generated on the first start next to the database
+- The server's AI keys from the container environment (docker run --env-file)
 - llmbroker state in .llmbroker/ next to the database
 """
 
@@ -16,7 +17,18 @@ from .base import *  # noqa: F401,F403
 # Debug mode for simple static file serving
 DEBUG = True
 
-SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "defaultsecretkey")
+
+def _secret_key() -> str:
+    if secret := os.environ.get("DJANGO_SECRET_KEY"):
+        return secret
+    try:
+        return (BASE_DIR / ".secret_key").read_text(encoding="utf-8").strip()  # noqa: F405
+    except FileNotFoundError:
+        # The image build: docker/start.sh creates the file on the container's first start.
+        return ""
+
+
+SECRET_KEY = _secret_key()
 
 # Default to allow all hosts, but replace if LEXIFLUX_ALLOWED_HOSTS is set (comma-separated)
 if lexiflux_allowed_hosts := os.environ.get("LEXIFLUX_ALLOWED_HOSTS"):

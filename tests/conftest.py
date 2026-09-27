@@ -407,6 +407,16 @@ def no_real_llm_calls():
     clear_cache()
 
 
+@pytest.fixture
+def server_keys(tmp_path, monkeypatch):
+    """The server's AI keys: none until the test sets one, never the developer's own."""
+    monkeypatch.setattr("lexiflux.language.broker.env_file", lambda: tmp_path / ".env")
+    for name in list(os.environ):
+        if name.endswith("_API_KEY"):
+            monkeypatch.delenv(name)
+    return lambda ref, value: monkeypatch.setenv(ref, value)
+
+
 @pytest.fixture(autouse=True)
 def no_real_kaikki_calls():
     def refuse(request: httpx.Request) -> httpx.Response:

@@ -252,6 +252,11 @@ sense, translated into Russian (2026-09-24 to 2026-09-26).
   a book language it has no data for), cannot be saved.
 - A Site cannot be saved as the inline translation.
 - The check spends no pool call and makes no network request.
+- Every translator can be chosen for the popup and for a sidebar Dictionary article; the choice
+  is not narrowed. Instead the editor describes the selected translator in one line: what it
+  returns and where it fits best (LLM translation for the popup, Wiktionary's long sense list for
+  the sidebar, Google fast but blind to the sentence). The default popup translator is LLM
+  translation.
 
 ## Serbian: Lingea next to Glosbe
 

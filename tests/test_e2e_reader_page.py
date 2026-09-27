@@ -159,11 +159,11 @@ def test_e2e_reader_page_default_sidebar_articles(
 
 @allure.epic("End-to-end (selenium)")
 @allure.feature("Reader page")
-@allure.story("The menu has no AI Settings item")
+@allure.story("The menu links to the AI keys page")
 @pytest.mark.docker
 @pytest.mark.selenium
 @pytest.mark.django_db
-def test_e2e_reader_page_menu_has_no_ai_settings(browser, approved_user, book):
+def test_e2e_reader_page_menu_links_to_ai_keys(browser, approved_user, book):
     browser.login(approved_user, USER_PASSWORD)
     browser.goto(reverse("reader") + f"?book-code={book.code}")
     reader_page = ReaderPage(browser)
@@ -172,4 +172,4 @@ def test_e2e_reader_page_menu_has_no_ai_settings(browser, approved_user, book):
     titles = reader_page.menu_item_titles()
 
     assert "Dictionary & AI Insights Settings" in titles
-    assert not [title for title in titles if "AI Connections" in title or "AI Settings" in title]
+    assert "AI Keys" in titles

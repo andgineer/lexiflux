@@ -150,6 +150,8 @@ class TestTranslateInline:
         ],
         ids=["no keys", "pool timeout", "rate limit", "llm timeout", "auth", "other"],
     )
+    @pytest.mark.django_db
+    @pytest.mark.usefixtures("server_keys")
     def test_llmbroker_errors_become_article_errors(self, pool, error, kind):
         pool["pool"] = FakePool(error)
 
@@ -184,9 +186,9 @@ def test_llm_translation_is_a_registered_translator(pool):
     user = SimpleNamespace(id=7)
 
     assert isinstance(translator._translator, LLMTranslator)
-    assert {"value": "LLMTranslation", "label": "LLM translation"} in (
-        Translator.available_translators()
-    )
+    assert ("LLMTranslation", "LLM translation") in [
+        (t["value"], t["label"]) for t in Translator.available_translators()
+    ]
     assert translator.translate(Term("spring", PASSAGE, user)) == "пружина"
     prompt = pool["pool"].calls[0][0]
     assert "Translate the English word" in prompt

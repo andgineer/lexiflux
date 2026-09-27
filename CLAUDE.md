@@ -105,7 +105,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
   - `local` - Local development with SQLite and auto-login
   - `docker` - Local Docker with SQLite and simplified static serving
   - `koyeb` - Production deployment with PostgreSQL
-- Offered AI models and their knobs in `lexiflux/language/ai_models.py`; API keys only from the environment or `.env` (read by llmbroker), never stored in lexiflux
+- Offered AI models and their knobs in `lexiflux/language/ai_models.py`; users' own API keys are entered on the AI Keys page and stored encrypted in lexiflux's database (`lexiflux/language/key_store.py`); the server's keys come from the environment or `.env` and are the fallback for users without their own (rules in `specs/ai-articles.md`)
 - Translation prompts in `lexiflux/resources/prompts/` (the popup's LLM translation uses `Inline translation.txt`)
 - Docker support with compose file for services (docker-compose.yaml for Selenium tests only)
 - Separate docker-compose.postgres.yaml for PostgreSQL debugging (not for regular tests)

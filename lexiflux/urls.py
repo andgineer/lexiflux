@@ -5,6 +5,7 @@ from django.contrib import admin
 from django.contrib.auth.views import LogoutView
 from django.urls import include, path
 
+import lexiflux.views.ai_keys_views
 import lexiflux.views.calibre_views
 import lexiflux.views.import_views
 import lexiflux.views.language_preferences_views
@@ -89,6 +90,9 @@ urlpatterns = [
         lexiflux.views.language_preferences_views.set_global_preferences,
         name="set-global-language-preferences",
     ),
+    # AI keys
+    path("ai-keys/", lexiflux.views.ai_keys_views.ai_keys_page, name="ai-keys"),
+    path("api/ai-keys/<str:ref>/", lexiflux.views.ai_keys_views.ai_key_api, name="ai_key_api"),
     # words export
     path("words-export/", lexiflux.views.words_export.words_export_page, name="words-export"),
     path(

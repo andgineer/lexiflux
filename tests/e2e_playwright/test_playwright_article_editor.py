@@ -46,3 +46,23 @@ def test_changing_the_model_resets_the_knobs(
     model.select_option("gpt")
     expect(effort).to_have_value("none")
     expect(tier).to_have_value("priority")
+
+
+def test_dictionary_hint_follows_the_selected_translator(
+    logged_in_page: Page, server_url, language_preferences
+):
+    page = logged_in_page
+    page.goto(f"{server_url}{reverse('language-preferences')}")
+    page.locator("#inline-translation-edit").click()
+
+    modal = page.locator("#articleModal")
+    expect(modal).to_be_visible()
+    dictionary, hint = modal.locator("#dictionary-select"), modal.locator("#dictionary-hint")
+    expect(dictionary).to_have_value("LLMTranslation")
+    expect(hint).to_contain_text("Best for the inline popup")
+
+    dictionary.select_option("Wiktionary")
+    expect(hint).to_contain_text("Best as a sidebar article")
+
+    dictionary.select_option("Google")
+    expect(hint).to_contain_text("without its sentence")

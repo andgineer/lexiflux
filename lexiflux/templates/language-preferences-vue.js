@@ -91,6 +91,10 @@ Add to each its translation to {user_language}.
         selectedModel() {
             return this.aiModels.find(m => m.key === this.form.parameters.model) || null;
         },
+        selectedDictionaryHint() {
+            const dictionary = this.availableDictionaries.find(d => d.value === this.form.parameters.dictionary);
+            return dictionary ? dictionary.hint : '';
+        },
         groupedLanguages() {
             return [
                 { label: 'Languages with Preferences', options: this.allLanguages.withPreferences },

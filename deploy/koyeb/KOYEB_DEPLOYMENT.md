@@ -83,7 +83,7 @@ DEFAULT_FROM_EMAIL=your-email@gmail.com
 ```
 
 #### AI keys (secrets):
-Set at least one free pool key (`GROQ_API_KEY`, `GEMINI_API_KEY`, `ZAI_API_KEY`), plus `OPENAI_API_KEY` and `ANTHROPIC_API_KEY` for the paid articles; see [AI models: Keys](../../docs/src/en/aimodels.md#keys).
+Optional: users enter their own keys on the AI Keys page, and these server keys serve every user without one. Set at least one free pool key (`GROQ_API_KEY`, `GEMINI_API_KEY`, `ZAI_API_KEY`), plus `OPENAI_API_KEY` and `ANTHROPIC_API_KEY` for the paid articles; see [AI models: Keys](../../docs/src/en/aimodels.md#keys). The users' keys are encrypted with `SECRET_KEY`: changing it makes users enter their keys again.
 
 ### 4. Database Setup
 1. In Koyeb Dashboard create PostgreSQL service

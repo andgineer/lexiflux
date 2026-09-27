@@ -1,32 +1,36 @@
 {% if kind == "no_keys" %}
 <div class="alert alert-warning" role="alert">
     <h4 class="alert-heading mb-3">The free pool needs at least one key</h4>
+    {% for key in refused %}
+    <p>{% if key.source == "own" %}Your {{ key.name }} key{% else %}The server's {{ key.name }} key{% endif %} was refused by {{ key.name }}.</p>
+    {% empty %}
+    <p>You have no free pool key of your own, and the server has none.</p>
+    {% endfor %}
     <p>Any one of these free keys is enough; more keys make the pool faster and steadier:</p>
     <ul>
         {% for key in keys %}
-        <li class="mb-2"><code>{{ key.env_var }}</code>: {{ key.help_html|safe }}</li>
+        <li class="mb-2"><strong>{{ key.name }}</strong>: {{ key.hint_html|safe }}</li>
         {% endfor %}
     </ul>
-    {% if on_server %}
-    <p class="mb-0">Set the key as an environment variable of the server (on Koyeb, a secret exposed as an env var), then redeploy.</p>
-    {% else %}
-    <p class="mb-0">Put the key into the <code>.env</code> file in the lexiflux folder as <code>NAME=value</code> (in Docker, pass it to <code>docker run</code> with <code>-e</code> or <code>--env-file</code>), or export it as an environment variable.</p>
-    {% endif %}
+    <p class="mb-0">Add your key on the <a href="{% url 'ai-keys' %}" class="alert-link">AI keys page</a>.</p>
 </div>
 {% elif kind == "missing_key" %}
 <div class="alert alert-warning" role="alert">
-    <h4 class="alert-heading mb-3">{{ provider_label }} needs an API key</h4>
-    {% if key_help_html %}<p>{{ key_help_html|safe }}</p>{% endif %}
-    {% if on_server %}
-    <p class="mb-0">Set <code>{{ env_var }}</code> as an environment variable of the server (on Koyeb, a secret exposed as an env var), then redeploy.</p>
-    {% else %}
-    <p class="mb-0">Put <code>{{ env_var }}=...</code> into the <code>.env</code> file in the lexiflux folder (in Docker, pass it to <code>docker run</code> with <code>-e</code> or <code>--env-file</code>), or export it as an environment variable.</p>
-    {% endif %}
+    <h4 class="alert-heading mb-3">{{ key.name }} needs an API key</h4>
+    {% if key.source == "none" %}<p>You have no {{ key.name }} key of your own, and the server has none.</p>{% endif %}
+    {% if key.hint_html %}<p>{{ key.hint_html|safe }}</p>{% endif %}
+    <p class="mb-0">Add your key on the <a href="{% url 'ai-keys' %}" class="alert-link">AI keys page</a>.</p>
 </div>
 {% elif kind == "auth" %}
 <div class="alert alert-danger" role="alert">
-    <h4 class="alert-heading mb-3">Key rejected by {{ provider_label }}</h4>
-    <p class="mb-0">The API key was sent and {{ provider_label }} refused it. Check that it is valid and has credit.</p>
+    <h4 class="alert-heading mb-3">Key rejected by {{ key.name }}</h4>
+    {% if key.source == "own" %}
+    <p class="mb-0">Your {{ key.name }} key was sent and {{ key.name }} refused it. Check that it is valid and has credit, or replace it on the <a href="{% url 'ai-keys' %}" class="alert-link">AI keys page</a>.</p>
+    {% elif key.source == "server" %}
+    <p class="mb-0">The server's {{ key.name }} key was sent and {{ key.name }} refused it. Add a key of your own on the <a href="{% url 'ai-keys' %}" class="alert-link">AI keys page</a>.</p>
+    {% else %}
+    <p class="mb-0">The API key was sent and {{ key.name }} refused it. Check your keys on the <a href="{% url 'ai-keys' %}" class="alert-link">AI keys page</a>.</p>
+    {% endif %}
 </div>
 {% elif kind == "busy" %}
 <div class="alert alert-info" role="alert">

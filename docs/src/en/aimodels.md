@@ -136,21 +136,29 @@ For the paid models the article editor shows two more settings:
 
 ## Keys
 
-You do not enter API keys in Lexiflux. Whoever runs Lexiflux puts the keys in its
-environment, and every user of that Lexiflux uses them.
+Enter your API keys on the [AI Keys](http://localhost:6100/ai-keys/) page (in the menu). Next to
+each key the page says where to get it. A key you enter pays for your own articles only and
+works from your next article on.
 
-- **Free pool**: needs at least one of `GROQ_API_KEY`, `GEMINI_API_KEY`, `ZAI_API_KEY`.
-  Each is a free key; more keys make the pool faster and more reliable. Lexiflux does not use
-  `OPENROUTER_API_KEY`: the pool leaves out the OpenRouter models because with them more
-  Articles ended in "busy". `llmbroker env freetier` prints the keys with a link to get each one (it
-  also lists OpenRouter).
-- **GPT-5.6 Sol and Luna**: `OPENAI_API_KEY` (paid).
-- **Claude Opus**: `ANTHROPIC_API_KEY` (paid).
+- **Free pool**: any one of the free keys on the page is enough (Groq, Google Gemini, Z.ai); more
+  keys make the pool faster and more reliable. Lexiflux does not use an OpenRouter key: the pool
+  leaves out the OpenRouter models because with them more Articles ended in "busy".
+- **GPT-5.6 Sol and Luna**: an OpenAI key (paid).
+- **Claude Opus**: an Anthropic key (paid).
 
-Where the keys go:
+For each key the page shows whose key your articles use: yours, the server's, or none. A saved
+key is never shown again, only its last 4 characters; you can replace or clear it. Lexiflux keeps
+the keys in its database, encrypted with the server's secret key (`SECRET_KEY`); if that key
+changes, enter yours again.
+
+Whoever runs Lexiflux can also give the server keys, which every user without a key of their own
+uses (`GROQ_API_KEY`, `GEMINI_API_KEY`, `ZAI_API_KEY`, `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`):
 
 - **Running from source**: in a `.env` file in the Lexiflux folder, or in the environment.
+  `llmbroker env freetier` prints the free keys with a link to get each one (it also lists
+  OpenRouter).
 - **Docker**: pass them to `docker run`, see [Docker](docker.md#ai-keys).
 - **A hosted server**: in the server's environment variables (secrets).
 
-If a key is missing, the article says which key it needs and where to get it.
+If a key is missing or refused, the article says whose key it was, yours or the server's, and
+links to the AI Keys page.

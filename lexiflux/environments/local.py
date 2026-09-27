@@ -5,7 +5,7 @@ These settings replicate the current local development environment:
 - SQLite database
 - Debug mode enabled
 - Auto-login enabled
-- AI keys from the environment or .env in the repo root
+- The server's AI keys from the environment or .env in the repo root
 - llmbroker state in .llmbroker/ next to the database
 """
 

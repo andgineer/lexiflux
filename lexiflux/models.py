@@ -1065,6 +1065,23 @@ class APIToken(models.Model):
         return f"{self.name} - {self.user.email}"
 
 
+class AIKey(models.Model):  # type: ignore
+    """A user's own key for one llmbroker key ref, encrypted with a key derived from SECRET_KEY."""
+
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name="ai_keys")
+    ref = models.CharField(max_length=100)
+    encrypted = models.TextField()
+    updated = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=["user", "ref"], name="ai_key_user_ref"),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.user.username} - {self.ref}"
+
+
 class WiktionaryPage(models.Model):  # type: ignore
     """A kaikki.org Wiktionary page pruned for one user language; no content: no such page."""
 

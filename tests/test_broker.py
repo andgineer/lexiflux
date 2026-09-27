@@ -1,7 +1,9 @@
+import asyncio
 import importlib
 import os
 import sys
 import tempfile
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch
@@ -11,8 +13,10 @@ import llmbroker
 import llmbroker.home
 import pytest
 from django.conf import settings
+from django.contrib.auth import get_user_model
+from llmbroker.protocols.secrets import EnumerableSecretsProtocol, MutableSecretsProtocol
 
-from lexiflux.language import broker
+from lexiflux.language import broker, key_store
 
 
 # Taken at import, before the suite-wide guard replaces it for each test.
@@ -29,7 +33,7 @@ def real_get_broker():
 def fresh_broker():
     broker._broker = None
     with (
-        patch("lexiflux.language.broker.llmbroker.Broker") as broker_cls,
+        patch("lexiflux.language.broker.RebuildableBroker") as broker_cls,
         patch("lexiflux.language.broker.atexit.register") as register,
     ):
         yield SimpleNamespace(cls=broker_cls, register=register)
@@ -54,8 +58,8 @@ def test_local_uses_its_home_and_env_file_secrets(fresh_broker):
     assert args == (None,)
     assert settings.LLMBROKER_DATASOURCE is None
     assert kwargs["home"] == settings.LLMBROKER_HOME
-    assert isinstance(kwargs["secrets"], llmbroker.Secrets)
-    assert kwargs["secrets"]._env_file == Path(settings.BASE_DIR) / ".env"
+    assert isinstance(kwargs["secrets"], broker.KeySecrets)
+    assert kwargs["secrets"]._server._env_file == Path(settings.BASE_DIR) / ".env"
     assert kwargs["direct"] == ["gpt", "gpt-fast", "opus"]
 
 
@@ -183,3 +187,107 @@ def test_tests_never_use_a_real_llmbroker_home():
     resolved = llmbroker.home.home_dir_for_read().resolve()
     assert resolved == home
     assert resolved != (Path.home() / "Library" / "Caches" / "llmbroker").resolve()
+
+
+@pytest.fixture
+def server_env(tmp_path, monkeypatch):
+    env = tmp_path / ".env"
+    env.write_text("GROQ_API_KEY=gsk-from-env-file\nZAI_API_KEY=\n# OPENAI_API_KEY=commented\n")
+    monkeypatch.setattr(broker, "env_file", lambda: env)
+    for name in ("GROQ_API_KEY", "ZAI_API_KEY", "OPENAI_API_KEY", "GEMINI_API_KEY"):
+        monkeypatch.delenv(name, raising=False)
+    monkeypatch.setenv("GEMINI_API_KEY", "gemini-from-environment")
+    return env
+
+
+@pytest.fixture
+def key_owner(db):
+    return get_user_model().objects.create_user(
+        username="key-owner", email="key-owner@example.com", password="x"
+    )
+
+
+def run_async(coro):
+    # Playwright tests earlier in the session leave an event loop running in this thread.
+    with ThreadPoolExecutor(1) as pool:
+        return pool.submit(asyncio.run, coro).result()
+
+
+def resolve(secrets: broker.KeySecrets, ref: str) -> str | None:
+    try:
+        return run_async(secrets.resolve(ref))
+    except KeyError:
+        return None
+
+
+@allure.epic("AI keys")
+@allure.feature("Broker secrets")
+def test_server_refs_are_the_environment_then_env_file_without_blank_values(server_env):
+    refs = broker.server_refs()
+    assert {"GROQ_API_KEY", "GEMINI_API_KEY"} <= refs
+    assert "ZAI_API_KEY" not in refs
+    assert "OPENAI_API_KEY" not in refs
+
+
+@allure.epic("AI keys")
+@allure.feature("Broker secrets")
+@pytest.mark.django_db(transaction=True)
+def test_shared_refs_resolve_from_the_server_and_scoped_refs_from_the_database(
+    server_env, key_owner
+):
+    key_store.save_own_key(key_owner, "GROQ_API_KEY", "gsk-own")
+    secrets = broker.KeySecrets(server_env)
+
+    assert resolve(secrets, "GROQ_API_KEY") == "gsk-from-env-file"
+    assert resolve(secrets, "GEMINI_API_KEY") == "gemini-from-environment"
+    assert resolve(secrets, f"u-{key_owner.id}/GROQ_API_KEY") == "gsk-own"
+    # The broker falls back to the shared ref itself; the backend never does.
+    assert resolve(secrets, f"u-{key_owner.id}/GEMINI_API_KEY") is None
+    assert resolve(secrets, "u-99999/GROQ_API_KEY") is None
+    assert resolve(secrets, "team-1/GROQ_API_KEY") is None
+
+
+@allure.epic("AI keys")
+@allure.feature("Broker secrets")
+@pytest.mark.django_db(transaction=True)
+def test_the_listing_names_the_server_keys_and_every_saved_key(server_env, key_owner):
+    key_store.save_own_key(key_owner, "OPENAI_API_KEY", "sk-own")
+    secrets = broker.KeySecrets(server_env)
+
+    refs = run_async(secrets.refs())
+    assert {"GROQ_API_KEY", "GEMINI_API_KEY", f"u-{key_owner.id}/OPENAI_API_KEY"} <= refs
+    assert run_async(secrets.refs(f"u-{key_owner.id}/")) == {f"u-{key_owner.id}/OPENAI_API_KEY"}
+
+
+@allure.epic("AI keys")
+@allure.feature("Broker secrets")
+def test_the_backend_is_enumerable_and_read_only():
+    secrets = broker.KeySecrets(Path("/nonexistent/.env"))
+    assert isinstance(secrets, EnumerableSecretsProtocol)
+    # A settable backend would get the server's keys copied into it by llmbroker.
+    assert not isinstance(secrets, MutableSecretsProtocol)
+
+
+@allure.epic("AI keys")
+@allure.feature("Broker secrets")
+def test_refresh_keys_without_a_broker_does_nothing():
+    broker._broker = None
+    broker.refresh_keys()
+    assert broker._broker is None
+
+
+@allure.epic("AI keys")
+@allure.feature("Broker secrets")
+def test_refresh_keys_rebuilds_the_running_broker(fresh_broker):
+    running = broker.get_broker()
+    broker.refresh_keys()
+    running.rebuild.assert_called_once_with()
+
+
+@allure.epic("AI keys")
+@allure.feature("Broker secrets")
+def test_a_failed_refresh_is_logged_not_raised(fresh_broker, caplog):
+    running = broker.get_broker()
+    running.rebuild.side_effect = RuntimeError("registry unreachable")
+    broker.refresh_keys()
+    assert "Could not re-read the AI keys" in caplog.text

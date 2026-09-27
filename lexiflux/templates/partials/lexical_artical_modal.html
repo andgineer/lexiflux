@@ -78,6 +78,9 @@
                             <select id="dictionary-select" v-if="form.type === 'Dictionary'" v-model="form.parameters.dictionary" class="form-select" required>
                                 <option v-for="dict in availableDictionaries" :key="dict.value" :value="dict.value">[[ dict.label ]]</option>
                             </select>
+                            <small id="dictionary-hint" class="form-text text-muted" v-if="selectedDictionaryHint">
+                                [[ selectedDictionaryHint ]]
+                            </small>
                         </div>
                     </div>
                    <div v-if="form.type === 'AI'">

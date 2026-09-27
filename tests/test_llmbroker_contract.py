@@ -3,7 +3,9 @@
 
 import io
 import json
+import logging
 import os
+import re
 import urllib.error
 import urllib.request
 import warnings
@@ -18,10 +20,17 @@ import allure
 import httpx
 import llmbroker
 import pytest
+from django.contrib.auth import get_user_model
+from django.test import Client
+from django.urls import reverse
 
 from lexiflux.language import broker as lexiflux_broker
 from lexiflux.language.ai_models import OFFERED_MODELS, POOL, default_knobs
 from lexiflux.language.llm import ArticleError, ArticleRequest, stream_article
+from lexiflux.models import AIKey
+
+# llmbroker reads a user's own keys from lexiflux's database in its own threads.
+pytestmark = pytest.mark.django_db(transaction=True)
 
 # Taken at import, before the suite-wide guard replaces it for each test.
 REAL_GET_BROKER = lexiflux_broker.get_broker
@@ -55,6 +64,10 @@ class Wire:
     def __init__(self) -> None:
         self.replies: dict[str, tuple[str, ...]] = {}
         self.sent: list[Sent] = []
+        self.refused: set[str] = set()
+
+    def authorizations(self) -> list[str]:
+        return [sent.authorization for sent in self.sent]
 
     def handle(self, request: httpx.Request) -> httpx.Response:
         assert request.url.path.endswith("/chat/completions"), request.url
@@ -69,6 +82,8 @@ class Wire:
                 body,
             ),
         )
+        if request.headers.get("authorization", "").removeprefix("Bearer ") in self.refused:
+            return httpx.Response(401, json={"error": {"message": "Incorrect API key provided"}})
         deltas = self.replies.get(body["model"], (f"{body['model']} ", "answers"))
         if stream:
             return httpx.Response(
@@ -154,7 +169,12 @@ def lone_pool_entry() -> llmbroker.LLMConfig:
     return next(entry for entry in configs if per_ref[entry.api_key_ref] == 1)
 
 
-def article(model: str, article_type: str = "AI dictionary") -> ArticleRequest:
+def article(
+    model: str,
+    article_type: str = "AI dictionary",
+    user: object = None,
+    word: str = "made out",
+) -> ArticleRequest:
     knobs = default_knobs(model) if model != POOL else {}
     return ArticleRequest(
         article_type=article_type,
@@ -162,11 +182,11 @@ def article(model: str, article_type: str = "AI dictionary") -> ArticleRequest:
         effort=knobs.get("effort"),
         tier=knobs.get("tier"),
         prompt=None,
-        word="made out",
-        sentence="She made out the shape of a ship through the fog.",
+        word=word,
+        sentence=f"She {word} the shape of a ship through the fog.",
         text_language="English",
         user_language="Serbian",
-        user=SimpleNamespace(id=7),
+        user=user or SimpleNamespace(id=7),
     )
 
 
@@ -267,9 +287,11 @@ def test_a_pool_without_keys_shows_the_no_key_message_and_sends_nothing(wire):
     (event,) = [event.to_dict() for event in stream_article(article(POOL))]
 
     assert (event["event"], event["kind"]) == ("error", ArticleError.NO_KEYS)
+    assert "You have no free pool key of your own, and the server has none." in event["html"]
     assert lexiflux_broker.pool_keys()
-    for ref in llmbroker.curated_pool().keys:
-        assert (ref in event["html"]) == (ref in lexiflux_broker.pool_keys())
+    for ref, info in llmbroker.curated_pool().keys.items():
+        (link,) = re.findall(r"\]\((https?://[^)]+)\)", info.help)
+        assert (link in event["html"]) == (ref in lexiflux_broker.pool_keys())
     assert wire.sent == []
 
 
@@ -316,8 +338,8 @@ def test_a_key_that_serves_only_excluded_models_shows_the_no_key_message(wire, p
     (event,) = [event.to_dict() for event in stream_article(article(POOL))]
 
     assert (event["event"], event["kind"]) == ("error", ArticleError.NO_KEYS)
-    assert "OPENROUTER_API_KEY" not in event["html"]
-    assert "GROQ_API_KEY" in event["html"]
+    assert "openrouter.ai" not in event["html"]
+    assert "<strong>Groq</strong>" in event["html"]
     assert wire.sent == []
 
 
@@ -340,5 +362,164 @@ def test_a_paid_model_without_its_key_names_the_key_and_sends_nothing(wire):
     (event,) = [event.to_dict() for event in stream_article(article("gpt"))]
 
     assert (event["event"], event["kind"]) == ("error", ArticleError.MISSING_KEY)
-    assert paid("gpt").provider.api_key_ref in event["html"]
+    assert f"{paid('gpt').provider.label} needs an API key" in event["html"]
+    assert reverse("ai-keys") in event["html"]
     assert wire.sent == []
+
+
+@pytest.fixture
+def people():
+    make = get_user_model().objects.create_user
+    return SimpleNamespace(
+        alice=make(username="alice", email="alice@example.com", password="x"),
+        bob=make(username="bob", email="bob@example.com", password="x"),
+    )
+
+
+class KeysPage:
+    def __init__(self, user) -> None:
+        self.client = Client()
+        self.client.force_login(user)
+
+    def save(self, ref: str, value: str) -> None:
+        response = self.client.post(
+            reverse("ai_key_api", args=[ref]),
+            data=json.dumps({"key": value}),
+            content_type="application/json",
+        )
+        assert response.status_code == 200, response.content
+
+    def clear(self, ref: str) -> None:
+        assert self.client.delete(reverse("ai_key_api", args=[ref])).status_code == 200
+
+
+def run(request: ArticleRequest) -> list[dict]:
+    return [event.to_dict() for event in stream_article(request)]
+
+
+@allure.epic("AI keys")
+@allure.feature("llmbroker contract")
+def test_a_users_own_pool_key_pays_for_their_call_and_others_use_the_servers(
+    wire, pay, lone_pool_entry, people
+):
+    ref = lone_pool_entry.api_key_ref
+    pay(ref)
+    KeysPage(people.alice).save(ref, "alice-own-pool-key")
+
+    assert run(article(POOL, user=people.alice))[0]["event"] == "delta"
+    assert run(article(POOL, user=people.bob))[0]["event"] == "delta"
+
+    assert wire.authorizations() == ["Bearer alice-own-pool-key", f"Bearer {fake_key(ref)}"]
+
+
+@allure.epic("AI keys")
+@allure.feature("llmbroker contract")
+def test_a_saved_or_cleared_key_takes_effect_on_the_next_call(wire, pay, people):
+    ref = paid("gpt").provider.api_key_ref
+    pay(ref)
+    page = KeysPage(people.alice)
+
+    run(article("gpt", user=people.alice, word="made out"))
+    page.save(ref, "alice-own-openai-key")
+    run(article("gpt", user=people.alice, word="made up"))
+    run(article("gpt", user=people.bob, word="made up"))
+    page.clear(ref)
+    run(article("gpt", user=people.alice, word="made off"))
+
+    assert wire.authorizations() == [
+        f"Bearer {fake_key(ref)}",
+        "Bearer alice-own-openai-key",
+        f"Bearer {fake_key(ref)}",
+        f"Bearer {fake_key(ref)}",
+    ]
+
+
+@allure.epic("AI keys")
+@allure.feature("llmbroker contract")
+def test_a_refused_own_pool_key_is_named_and_a_replacement_is_used(wire, lone_pool_entry, people):
+    ref = lone_pool_entry.api_key_ref
+    page = KeysPage(people.alice)
+    page.save(ref, "alice-dead-key")
+    wire.refused.add("alice-dead-key")
+
+    # The call that meets the refusal only learns that no pool model answered; the key is
+    # withdrawn then, so the next call says whose it was.
+    (busy,) = run(article(POOL, user=people.alice))
+    (error,) = run(article(POOL, user=people.alice, word="made off"))
+    page.save(ref, "alice-fresh-key")
+    answer = run(article(POOL, user=people.alice, word="made up"))
+
+    assert busy["kind"] == ArticleError.BUSY
+    assert error["kind"] == ArticleError.NO_KEYS
+    assert "was refused by" in error["html"]
+    assert "Your " in error["html"]
+    assert reverse("ai-keys") in error["html"]
+    assert answer[0]["event"] == "delta"
+    assert wire.authorizations()[-1] == "Bearer alice-fresh-key"
+
+
+@allure.epic("AI keys")
+@allure.feature("llmbroker contract")
+def test_a_refused_key_on_a_paid_model_names_whose_key_it_was(wire, pay, people):
+    sol = paid("gpt")
+    ref = sol.provider.api_key_ref
+    pay(ref)
+    wire.refused.add(fake_key(ref))
+    page = KeysPage(people.alice)
+    page.save(ref, "alice-dead-key")
+    wire.refused.add("alice-dead-key")
+
+    (own,) = run(article("gpt", user=people.alice))
+    (server,) = run(article("gpt", user=people.bob))
+    page.save(ref, "alice-fresh-key")
+    fresh = run(article("gpt", user=people.alice, word="made up"))
+
+    label = sol.provider.label
+    assert own["kind"] == server["kind"] == ArticleError.AUTH
+    assert f"Your {label} key was sent and {label} refused it." in own["html"]
+    assert f"The server's {label} key was sent and {label} refused it." in server["html"]
+    assert reverse("ai-keys") in own["html"]
+    assert reverse("ai-keys") in server["html"]
+    assert [event["event"] for event in fresh] == ["delta", "delta"]
+    assert wire.authorizations()[-1] == "Bearer alice-fresh-key"
+
+
+@allure.epic("AI keys")
+@allure.feature("llmbroker contract")
+def test_an_undecryptable_own_key_counts_as_not_set(wire, pay, people, settings):
+    ref = paid("gpt").provider.api_key_ref
+    pay(ref)
+    KeysPage(people.alice).save(ref, "alice-own-openai-key")
+    settings.SECRET_KEY = "rotated-secret-key"
+
+    run(article("gpt", user=people.alice))
+
+    assert wire.authorizations() == [f"Bearer {fake_key(ref)}"]
+
+
+@allure.epic("AI keys")
+@allure.feature("llmbroker contract")
+def test_keys_never_appear_in_logs_or_pages(wire, pay, lone_pool_entry, people, caplog):
+    caplog.set_level(logging.DEBUG)
+    pool_ref = lone_pool_entry.api_key_ref
+    paid_ref = paid("gpt").provider.api_key_ref
+    pay(pool_ref)
+    secrets = ["alice-pool-key-0001", "alice-dead-key-0002", fake_key(pool_ref)]
+    page = KeysPage(people.alice)
+    page.save(pool_ref, secrets[0])
+    page.save(paid_ref, secrets[1])
+    wire.refused.add(secrets[1])
+
+    events = run(article(POOL, user=people.alice))
+    events += run(article("gpt", user=people.alice))
+    events += run(article(POOL, user=people.bob, word="made up"))
+    html = page.client.get(reverse("ai-keys")).content.decode()
+
+    assert [event["event"] for event in events] == ["delta", "delta", "error", "delta", "delta"]
+    assert "0001" in html
+    assert "0002" in html
+    assert AIKey.objects.count() == 2
+    for secret in secrets:
+        assert secret not in caplog.text
+        assert secret not in html
+        assert secret not in json.dumps(events)

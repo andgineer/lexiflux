@@ -47,5 +47,6 @@ EbookLib
 genanki
 
 # Security and utilities
+cryptography
 PyJWT
 psutil

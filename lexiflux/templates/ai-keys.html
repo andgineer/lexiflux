@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div id="ai-keys" class="d-flex flex-column vh-100">
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <div class="container-fluid">
+            {% include 'hamburger.html' with current_page='ai-keys' %}
+            <div class="mx-3 text-truncate container-fluid">
+                AI Keys
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4 mb-4">
+        <p class="text-muted">
+            Your own key pays for your AI articles. Without one, Lexiflux uses the server's key
+            if the server has one. A saved key is never shown again, only its last 4 characters.
+        </p>
+
+        <div v-if="errorMessage" class="alert alert-danger alert-dismissible fade show" role="alert">
+            [[ errorMessage ]]
+            <button type="button" class="btn-close" @click="errorMessage = ''" aria-label="Close"></button>
+        </div>
+
+        <div v-for="section in sections" :key="section.title" class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">[[ section.title ]]</h5>
+                <small class="text-muted">[[ section.note ]]</small>
+            </div>
+            <ul class="list-group list-group-flush">
+                <li v-for="key in section.keys" :key="key.ref" class="list-group-item ai-key" :data-ref="key.ref">
+                    <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+                        <h6 class="mb-1">[[ key.name ]] <small class="text-muted"><code>[[ key.ref ]]</code></small></h6>
+                        <span class="badge key-source" :class="sourceClass(key)">[[ sourceText(key) ]]</span>
+                    </div>
+                    <p class="mb-1 small key-hint" v-html="key.hint_html"></p>
+                    <p v-if="key.effort" class="mb-2 small text-muted key-effort">[[ key.effort ]]</p>
+                    <form class="input-group" @submit.prevent="save(key)">
+                        <input
+                            type="password"
+                            class="form-control key-input"
+                            autocomplete="new-password"
+                            :aria-label="key.name + ' key'"
+                            :placeholder="key.source === 'own' ? 'Replace your key' : 'Paste your key'"
+                            v-model="inputs[key.ref]"
+                        >
+                        <button type="submit" class="btn btn-primary key-save" :disabled="busy[key.ref] || !(inputs[key.ref] || '').trim()">Save</button>
+                        <button type="button" class="btn btn-outline-danger key-clear" :disabled="busy[key.ref] || key.source !== 'own'" @click="clear(key)">Clear</button>
+                    </form>
+                </li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+{{ keys|json_script:"ai-keys-data" }}
+<script> {% include 'ai-keys-vue.js' %} </script>
+
+{% include 'partials/about_modal.html' %}
+{% endblock %}

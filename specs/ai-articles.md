@@ -49,8 +49,8 @@ The numbers come from echo-words' measurements of its "Подробнее" artic
 - The exclusion is kept in the broker's own state (llmbroker's disable), so it holds locally, in
   Docker and on Koyeb, and survives model-list refreshes. A name the catalog no longer carries
   is skipped with a log line.
-- The OpenRouter key is then unused, so the no-key message does not list it, and a server with
-  only that key gets the no-key message instead of "busy".
+- The OpenRouter key is then unused, so neither the AI keys page nor the no-key message lists
+  it, and a server with only that key gets the no-key message instead of "busy".
 
 ### Reasoning effort and processing tier
 
@@ -75,16 +75,42 @@ Each AI article on a paid model has two knobs, with per-model defaults:
 
 ## Keys
 
-- lexiflux stores, reads and shows no API keys. There is no settings page for them, and users
-  never enter keys.
-- llmbroker reads the operator's keys from the environment and from `.env` in the repository
-  root. In Docker they are passed to the container as environment variables; on Koyeb they are
-  Koyeb secrets exposed as environment variables.
-- Every user spends the operator's keys, paid models included. There is no per-user limit; if
-  sign-ups are open, a daily per-user limit is the follow-up.
-- A missing key is explained in the article itself: for the pool, the help and link of every
-  key that serves a pool model, the environment variable name and where it goes; for a paid model, its provider's key
-  help and variable name. No message points to a settings page.
+- Every user has an "AI keys" page, linked from the navbar, in single-user and multi-user mode
+  alike. Entering a key there is optional, key by key: for every key the user has not entered,
+  the server's key is used. The operator sets the server's keys in its environment; users cannot
+  change that environment, so the page is how a user brings a key of their own.
+- The page lists every key lexiflux can spend: the keys that serve the free pool (not the
+  OpenRouter key, see above) and the keys of the paid models' providers. The list comes from
+  llmbroker, and so does each key's hint: how to get the key, with its link, and the sign-up
+  effort in plain words (such as "Free signup"). llmbroker's other notes, such as its own rating
+  of the provider, are not shown. lexiflux writes no provider instructions of its own.
+- A user's key pays for that user's calls only. For a key the user has not entered, a call
+  spends the server's key: the environment first, then `.env` in the repository root; in Docker
+  the container's environment variables, on Koyeb secrets exposed as environment variables. The
+  server's keys are never shown to users.
+- For each key the page says where a call's key comes from: the user's own, the server's, or
+  none. It reports what is stored and configured: the user's own key if they saved one, else the
+  server's key if the server has one. The error alerts report the same and, in addition, a key
+  llmbroker has withdrawn after its provider refused it: only llmbroker knows which keys it has
+  withdrawn, and it tells that only through a failed call.
+- Keys live in lexiflux's database, encrypted at rest with a key derived from Django's
+  `SECRET_KEY`. A saved key never goes back to the browser: the page shows only that it is set
+  and its last 4 characters; for a key of 8 characters or fewer, only that it is set. The user
+  can replace or clear it. A key that can no longer be decrypted (a changed `SECRET_KEY`) counts
+  as not set, and the user enters it again.
+- The Docker image carries no `SECRET_KEY`: a container generates its own on the first start and
+  keeps it with its database, so every later start decrypts the saved keys. A secret the
+  operator sets for the container takes precedence.
+- Saving or clearing a key takes effect on that user's next call, without a restart.
+- Every user may spend the server's keys, paid models included. There is no per-user limit; if
+  sign-ups are open, a daily per-user limit is the follow-up. An operator who does not want
+  users on the server's keys leaves them unset.
+- A missing or refused key is explained in the article itself, links to the AI keys page and
+  says whose key it was, the user's or the server's: for the pool, with the hint of every key
+  that serves a pool model; for a paid model, with its provider's hint.
+- A pool key refused by its provider is withdrawn until it is replaced. The call that meets the
+  refusal learns from llmbroker only that no pool model answered and says "busy"; from the
+  next call on, the no-key message names the refused key.
 
 ## Broker state
 

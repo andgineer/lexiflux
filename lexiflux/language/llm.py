@@ -1,7 +1,5 @@
-import html
 import logging
 import math
-import re
 import threading
 from collections import OrderedDict
 from collections.abc import Iterator
@@ -28,6 +26,7 @@ from llmbroker import (
     curated_providers,
 )
 
+from lexiflux.language.ai_keys import NONE, hint_html, key_rows
 from lexiflux.language.ai_models import (
     OFFERED_MODELS,
     POOL,
@@ -38,6 +37,7 @@ from lexiflux.language.broker import llms_for, pool_keys
 
 logger = logging.getLogger(__name__)
 
+ALERT_LINK = "alert-link"
 PROMPTS_DIR = Path(__file__).resolve().parent.parent / "resources" / "prompts"
 
 CUSTOM_AI_TYPE = "AI"
@@ -339,25 +339,11 @@ def translate_inline(req: InlineTranslationRequest) -> str:
     try:
         return ask_inline_translation(req)
     except Exception as exc:
-        raise llm_error(exc, POOL, INLINE_TRANSLATION, had_text=False) from exc
+        raise llm_error(exc, POOL, INLINE_TRANSLATION, req.user, had_text=False) from exc
 
 
 def _render(kind: str, **context: Any) -> ArticleError:
     return ArticleError(kind, render_to_string("llm-error.html", {"kind": kind, **context}).strip())
-
-
-_MARKDOWN_LINK = re.compile(r"\[([^\]]+)\]\((https?://[^)\s]+)\)")
-
-
-def markdown_links(text: str) -> str:
-    return _MARKDOWN_LINK.sub(
-        r'<a href="\2" target="_blank" rel="noopener" class="alert-link">\1</a>',
-        html.escape(text),
-    )
-
-
-def keys_on_server() -> bool:
-    return getattr(settings, "LEXIFLUX_ENVIRONMENT", "") == "koyeb"
 
 
 def _seconds_until(moment: datetime | None) -> int | None:
@@ -378,18 +364,37 @@ def _provider(model: str) -> Any:
     )
 
 
+def _alert_keys(user: Any, refs: set[str]) -> list[dict[str, Any]]:
+    return key_rows(user.id, refs, link_class=ALERT_LINK)
+
+
+def _provider_key(model: str, user: Any) -> dict[str, Any]:
+    provider = _provider(model)
+    if provider is None:
+        return {"name": model, "hint_html": "", "source": NONE}
+    rows = _alert_keys(user, {provider.api_key_ref})
+    if rows:
+        return rows[0]
+    return {
+        "name": provider.label or provider.id,
+        "hint_html": hint_html(provider.key_help, ALERT_LINK),
+        "source": NONE,
+    }
+
+
 def _busy(retry_in: int | None) -> ArticleError:
     return _render(ArticleError.BUSY, retry_in=retry_in)
 
 
 def article_error(exc: BaseException, req: ArticleRequest, *, had_text: bool) -> ArticleError:
-    return llm_error(exc, req.model, req.article_type, had_text=had_text)
+    return llm_error(exc, req.model, req.article_type, req.user, had_text=had_text)
 
 
 def llm_error(  # noqa: PLR0911
     exc: BaseException,
     model: str,
     operation: str,
+    user: Any,
     *,
     had_text: bool,
 ) -> ArticleError:
@@ -404,24 +409,14 @@ def llm_error(  # noqa: PLR0911
     if isinstance(exc, NoLLMAvailableError):
         # "all_disabled" here means only keys of excluded pool models are set.
         if exc.reason in ("no_keys", "all_disabled"):
-            keys = [
-                {"env_var": ref, "help_html": markdown_links(info.help)}
-                for ref, info in pool_keys().items()
-            ]
-            return _render(ArticleError.NO_KEYS, keys=keys, on_server=keys_on_server())
+            keys = _alert_keys(user, set(pool_keys()))
+            refused = [key for key in keys if key["source"] != NONE]
+            return _render(ArticleError.NO_KEYS, keys=keys, refused=refused)
         return _busy(_seconds_until(exc.retry_at))
     if isinstance(exc, MissingKeyError):
-        provider = _provider(model)
-        return _render(
-            ArticleError.MISSING_KEY,
-            provider_label=provider.label if provider else model,
-            key_help_html=markdown_links(provider.key_help) if provider else "",
-            env_var=provider.api_key_ref if provider else "",
-            on_server=keys_on_server(),
-        )
+        return _render(ArticleError.MISSING_KEY, key=_provider_key(model, user))
     if isinstance(exc, AuthError):
-        provider = _provider(model)
-        return _render(ArticleError.AUTH, provider_label=provider.label if provider else model)
+        return _render(ArticleError.AUTH, key=_provider_key(model, user))
     if isinstance(exc, RateLimitError):
         return _busy(exc.retry_after if exc.retry_after and exc.retry_after > 0 else None)
     if isinstance(exc, LLMTimeoutError):

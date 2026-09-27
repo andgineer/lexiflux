@@ -650,11 +650,16 @@ def test_editor_offers_the_three_translators_llm_first(client, approved_user):
 
     response = client.get(reverse("language-preferences"))
 
-    assert json.loads(response.context["translators"]) == [
-        {"value": "LLMTranslation", "label": "LLM translation"},
-        {"value": "Wiktionary", "label": "Wiktionary"},
-        {"value": "Google", "label": "Google"},
+    translators = json.loads(response.context["translators"])
+    assert [(t["value"], t["label"]) for t in translators] == [
+        ("LLMTranslation", "LLM translation"),
+        ("Wiktionary", "Wiktionary"),
+        ("Google", "Google"),
     ]
+    hints = {t["value"]: t["hint"] for t in translators}
+    assert "Best for the inline popup" in hints["LLMTranslation"]
+    assert "Best as a sidebar article" in hints["Wiktionary"]
+    assert "without its sentence" in hints["Google"]
     assert (
         "https://recnici.lingea.rs/{toLangLingea}-srpski/{termLatin}" in response.content.decode()
     )

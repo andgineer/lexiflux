@@ -5,7 +5,7 @@ These settings are for deploying Lexiflux on Koyeb cloud platform:
 - PostgreSQL database via DATABASE_URL
 - Production security settings
 - Social authentication required (no auto-login)
-- AI keys from Koyeb secrets exposed as env vars
+- The server's AI keys from Koyeb secrets exposed as env vars
 - llmbroker state in the same PostgreSQL
 - Proper static file configuration
 """

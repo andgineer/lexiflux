@@ -219,6 +219,18 @@ AVAILABLE_TRANSLATORS: dict[str, tuple[Callable[..., Any], str]] = {
     "Google": (GoogleTranslator, "Google"),
 }
 
+TRANSLATOR_HINTS: dict[str, str] = {
+    LLM_TRANSLATOR: (
+        "The word as used in its sentence, in a word or two. Best for the inline popup."
+    ),
+    "Wiktionary": (
+        "Every sense Wiktionary lists, by part of speech: a long list. Best as a sidebar article."
+    ),
+    "Google": (
+        "Fast, but translates the word without its sentence; English and German get alternatives."
+    ),
+}
+
 
 class Translator:
     """Translator."""
@@ -247,9 +259,10 @@ class Translator:
 
     @classmethod
     def available_translators(cls) -> list[dict[str, str]]:
-        """Return list of available translator names and labels."""
+        """Return list of available translator names, labels and hints."""
         return [
-            {"value": name, "label": label} for name, (_, label) in AVAILABLE_TRANSLATORS.items()
+            {"value": name, "label": label, "hint": TRANSLATOR_HINTS[name]}
+            for name, (_, label) in AVAILABLE_TRANSLATORS.items()
         ]
 
 
