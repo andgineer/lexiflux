@@ -166,12 +166,18 @@ def init_db(c: Context):
 
 
 @task
+def apply_migrations(c: Context):
+    """Apply pending DB migrations"""
+    c.run("LEXIFLUX_ENV=local LEXIFLUX_SKIP_AUTH=true ./manage migrate --noinput")
+
+
+@task(apply_migrations)
 def run(c: Context):
     """Run local server"""
     c.run("LEXIFLUX_ENV=local LEXIFLUX_SKIP_AUTH=true ./manage runserver 127.0.0.1:8001")
 
 
-@task
+@task(apply_migrations)
 def runssl(c: Context):
     """Run local SSL server in auto-login mode"""
     c.run(
@@ -180,7 +186,7 @@ def runssl(c: Context):
     )
 
 
-@task
+@task(apply_migrations)
 def runcloud(c: Context):
     """Run local SSL server in multi-user mode"""
     c.run(

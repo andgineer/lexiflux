@@ -14,7 +14,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `source ./activate.sh && invoke reqs` - Update requirements and install dependencies
 
 ### Running the Application
-- `source ./activate.sh && invoke run` - Run development server with auto-login (127.0.0.1:8001)
+- `source ./activate.sh && invoke run` - Run development server with auto-login (127.0.0.1:8001); `run`, `runssl`, `runcloud` and the Docker image's start apply pending migrations first
 - `source ./activate.sh && invoke runssl` - Run with SSL for local development
 - `source ./activate.sh && invoke runcloud` - Run in multi-user mode
 - `source ./activate.sh && invoke shell` - Django shell
