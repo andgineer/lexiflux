@@ -70,6 +70,9 @@ REQUEST_SECONDS = 2.0
 LOOKUP_SECONDS = 2.8
 # Readers click words more than httpx's default 5 s apart; below nginx's default 75 s.
 KEEPALIVE_SECONDS = 60
+# httpx's defaults, which a Limits without them would turn into "unlimited".
+MAX_CONNECTIONS = 100
+MAX_KEEPALIVE_CONNECTIONS = 20
 CACHE_DAYS = 30
 MAX_FOLLOWED = 3
 FETCH_THREADS = 8
@@ -107,8 +110,13 @@ ACUTE = "́"
 GRAVE = "̀"
 STRESS_MARKS = str.maketrans("", "", ACUTE + GRAVE)
 EDGE_PUNCTUATION = ' \t\r\n.,;:!?"()[]{}«»„“”‚…—–'
-# What precedes the first word of a sentence: nothing, or an end mark and quotes or dashes.
-SENTENCE_START = re.compile(r"(?:^|[.!?…:])[\s\"'«»„“”‚‘’—–-]*$")
+# Before a sentence's first word: nothing, a line break (a heading or paragraph ended) or an end
+# mark, then quotes or dashes; or `, “` (He asked, “Will …”), the quote touching the word.
+SENTENCE_START = re.compile(
+    r"(?:^|\n|[.!?…:])[\s\"'«»„“”‚‘’‹›—–-]*$|[,;]\s*[\"'«»„“‚‘‹›]+$",
+)
+# Abbreviations whose period does not end the sentence.
+ABBREVIATION = re.compile(r"(?:^|[^\w.])(?:Mr|Mrs|Ms|Dr|St|Hr|Fr|z\.\s?B|d\.\s?h)\.[^\S\n]*\Z")
 SERBIAN_CYRILLIC = {
     "а": "a",
     "б": "b",
@@ -168,6 +176,8 @@ RUSSIAN_LABEL = r"[а-яё]+(?:\.-[а-яё]+)*\.(?:\s[а-яё]\.(?!-))*"
 RUSSIAN_USAGE_LABELS = re.compile(
     rf"^(?:{RUSSIAN_LABEL}(?:\s+(?:и|или)\s+{RUSSIAN_LABEL})*(?:,\s*|\s+)(?![а-яё]\.(?!-)))+(?!от\s)",
 )
+# A Russian-edition sense that only names another word spelled alike ("hear": "вариант hair").
+RUSSIAN_VARIANT_OF = re.compile(r"^вариант\s+\S+$")
 
 _fetchers = ThreadPoolExecutor(max_workers=FETCH_THREADS, thread_name_prefix="kaikki")
 
@@ -277,6 +287,10 @@ def _translations(
     return tuple((sense, tuple(dict.fromkeys(words))) for sense, words in by_sense.items())
 
 
+def _variant_of(gloss: str) -> bool:
+    return bool(RUSSIAN_VARIANT_OF.match(RUSSIAN_USAGE_LABELS.sub("", gloss)))
+
+
 def prune(record: dict[str, Any], edition: str, user_language: str) -> PageEntry | None:
     word, pos = record.get("word"), record.get("pos")
     if not word or not pos or pos in SKIPPED_POS:
@@ -286,9 +300,12 @@ def prune(record: dict[str, Any], edition: str, user_language: str) -> PageEntry
         if NOISE_TAGS.intersection(sense.get("tags", [])):
             continue
         links = sense.get("form_of", []) + sense.get("alt_of", [])
-        if not any(link.get("word") for link in links) and sense.get("glosses"):
-            # English-edition sub-senses repeat their parents' glosses first.
-            glosses.append(sense["glosses"][-1])
+        if any(link.get("word") for link in links) or not sense.get("glosses"):
+            continue
+        # English-edition sub-senses repeat their parents' glosses first.
+        gloss = sense["glosses"][-1]
+        if edition != RUSSIAN_EDITION or not _variant_of(gloss):
+            glosses.append(gloss)
     translations = _translations(record, user_language) if edition == ENGLISH_EDITION else ()
     if not glosses and not translations:
         return None
@@ -350,7 +367,11 @@ def _load_page(data: dict[str, Any]) -> Page:
 def http_client() -> httpx.Client:
     return httpx.Client(
         headers={"User-Agent": USER_AGENT},
-        limits=httpx.Limits(keepalive_expiry=KEEPALIVE_SECONDS),
+        limits=httpx.Limits(
+            max_connections=MAX_CONNECTIONS,
+            max_keepalive_connections=MAX_KEEPALIVE_CONNECTIONS,
+            keepalive_expiry=KEEPALIVE_SECONDS,
+        ),
     )
 
 
@@ -591,7 +612,8 @@ def _with_links(
 def sentence_start(passage: str) -> bool | None:
     if TERM_OPEN not in passage:
         return None
-    return bool(SENTENCE_START.search(passage.split(TERM_OPEN, 1)[0]))
+    before = passage.split(TERM_OPEN, 1)[0]
+    return bool(SENTENCE_START.search(before)) and not ABBREVIATION.search(before)
 
 
 def _translated(found: list[tuple[int, str, Page]], candidate: int) -> bool:
@@ -604,6 +626,8 @@ def _translated(found: list[tuple[int, str, Page]], candidate: int) -> bool:
 
 
 def _typed(text: str, language: str) -> str:
+    # Page names are NFC; a book may spell "ü" or "č" as a letter plus a combining mark.
+    text = unicodedata.normalize("NFC", text)
     typed = " ".join(text.strip(EDGE_PUNCTUATION).replace("’", "'").split())
     # Accented text ("kȍsu") has no page of its own; Wiktionary's page names are unaccented.
     return _strip_accents(typed) if language == SERBO_CROATIAN else typed

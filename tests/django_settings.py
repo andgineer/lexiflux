@@ -48,3 +48,6 @@ LOGGING = {
 }
 
 SESSION_ENGINE = "django.contrib.sessions.backends.cache"
+
+# A thread writing the history would race the test's transaction.
+HISTORY_TRANSLATION_IN_BACKGROUND = False

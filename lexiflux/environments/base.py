@@ -12,6 +12,8 @@ from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 LLMBROKER_HOME: Path | None = None
+# The vocabulary history's LLM translation runs after the popup has answered; tests run it inline.
+HISTORY_TRANSLATION_IN_BACKGROUND = True
 
 # CSRF_TRUSTED_ORIGINS = ['https://127.0.0.1:8000']
 # CSRF_USE_SESSIONS = False

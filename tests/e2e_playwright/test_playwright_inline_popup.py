@@ -12,7 +12,7 @@ from lexiflux.language import wiktionary
 from lexiflux.language.llm import INLINE_TRANSLATION_SECONDS
 from lexiflux.language.translation import AVAILABLE_TRANSLATORS, GoogleTranslator, get_translator
 from lexiflux.language.wiktionary import LICENSE_URL
-from lexiflux.models import Book, BookPage, Language, LanguagePreferences
+from lexiflux.models import Book, BookPage, Language, LanguagePreferences, TranslationHistory
 from tests.e2e_playwright.fakes import FakePool
 from tests.e2e_playwright.pages import ReaderPage
 from tests.kaikki import Kaikki
@@ -132,7 +132,7 @@ def kaikki() -> Iterator[Kaikki]:
 
 
 def test_popup_shows_the_wiktionary_senses_with_attribution(
-    logged_in_page, server_url, book, russian_reader, kaikki
+    logged_in_page, server_url, book, russian_reader, kaikki, fake_pool
 ):
     _use(russian_reader, "Wiktionary")
     reader = _open(logged_in_page, server_url, book)
@@ -157,8 +157,24 @@ def test_popup_shows_the_wiktionary_senses_with_attribution(
     expect(popup.locator(".wiktionary")).to_have_css("text-align", "left")
 
 
+def test_wiktionary_popup_leaves_the_history_the_llm_translation(
+    logged_in_page, server_url, book, russian_reader, kaikki, fake_pool
+):
+    _use(russian_reader, "Wiktionary")
+    reader = _open(logged_in_page, server_url, book)
+
+    reader.click_word("springs")
+
+    senses = reader.inline_translation().locator(".wiktionary-senses li")
+    expect(senses.first).to_have_text("весна")
+    entry = TranslationHistory.objects.get(term="springs")
+    assert (entry.translation, entry.translation_from_llm) == ("пружина", True)
+    (prompt,) = fake_pool.prompts
+    assert "two ⟦springs⟧ creaked" in prompt
+
+
 def test_wiktionary_attribution_stays_in_view_below_a_long_sense_list(
-    logged_in_page, server_url, book, russian_reader, kaikki
+    logged_in_page, server_url, book, russian_reader, kaikki, fake_pool
 ):
     _use(russian_reader, "Wiktionary")
     reader = _open(logged_in_page, server_url, book)
@@ -197,7 +213,9 @@ class GoogleEndpoint:
         return httpx.Response(200, json=SPRING_ALTERNATIVES)
 
 
-def test_popup_shows_google_alternatives(logged_in_page, server_url, book, russian_reader):
+def test_popup_shows_google_alternatives(
+    logged_in_page, server_url, book, russian_reader, fake_pool
+):
     endpoint = GoogleEndpoint()
     google = partial(GoogleTranslator, transport=httpx.MockTransport(endpoint.handle))
     _use(russian_reader, "Google")

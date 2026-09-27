@@ -243,7 +243,63 @@ def test_passage_marks_the_term_between_neighbour_sentences(page, word_ids, pass
 def test_passage_marks_the_term_inside_html(book):
     sentences = ["<p>Hello <b>big</b> world.</p>", "<p>Next one &amp; more.</p>"]
     with fake_page(book, sentences, separator="") as page:
-        assert term_context(page, [1]).passage == "Hello ⟦big⟧ world. Next one & more."
+        assert term_context(page, [1]).passage == "Hello ⟦big⟧ world.\nNext one & more."
+
+
+@allure.epic("Translators")
+@allure.feature("LLM translation")
+@pytest.mark.parametrize(
+    "sentences, separator, word_id, passage",
+    [
+        pytest.param(
+            ["<h2>Chapter One</h2>", "<p>Alpha beta gamma delta epsilon zeta.</p>"],
+            "",
+            2,
+            "Chapter One\n⟦Alpha⟧ beta gamma delta epsilon zeta.",
+            id="heading",
+        ),
+        pytest.param(
+            ["<li>First item here</li>", "<li>Second item there now.</li>"],
+            "",
+            3,
+            "First item here\n⟦Second⟧ item there now.",
+            id="list items",
+        ),
+        pytest.param(
+            ["<td>Name</td>", "<td>Alpha beta gamma delta epsilon.</td>"],
+            "",
+            1,
+            "Name\n⟦Alpha⟧ beta gamma delta epsilon.",
+            id="table cells",
+        ),
+        pytest.param(
+            ["CHAPTER VIII.", "The Queen’s Croquet-Ground", "A large rose-tree stood near it."],
+            " <br/> <br/> <br/> ",
+            7,
+            "The Queen’s Croquet-Ground\n⟦A⟧ large rose-tree stood near it.",
+            id="blank lines of a plain-text book",
+        ),
+        pytest.param(
+            ["Alpha beta gamma delta epsilon zeta", "eta theta iota kappa lambda mu."],
+            " <br/> ",
+            6,
+            "Alpha beta gamma delta epsilon zeta ⟦eta⟧ theta iota kappa lambda mu.",
+            id="wrapped line of a plain-text book",
+        ),
+        pytest.param(
+            ["<p>Alpha beta\ngamma delta.</p>", "<p>Epsilon\n  zeta eta theta iota.</p>"],
+            "\n",
+            4,
+            "Alpha beta gamma delta.\n⟦Epsilon⟧ zeta eta theta iota.",
+            id="source line breaks",
+        ),
+    ],
+)
+def test_passage_keeps_a_line_break_where_a_block_ended(
+    book, sentences, separator, word_id, passage
+):
+    with fake_page(book, sentences, separator=separator) as page:
+        assert term_context(page, [word_id]).passage == passage
 
 
 @allure.epic("Translators")

@@ -24,10 +24,11 @@ sense, translated into Russian (2026-09-24 to 2026-09-26).
   translator). It is the only translator that picks the sense from the text, and it answers
   within a second. It needs the free-pool keys and shares their daily quota with the sidebar
   articles (Groq about 1,000 requests a day, Gemini about 500).
-- **Wiktionary** needs no keys and no quota and nothing installed, and it shows the whole
-  range of senses. It does not choose among them. English words get equivalents in the user
-  language, and the Russian Wiktionary has Russian senses for every word it has; many German
-  and Serbian senses have English definitions only. It needs kaikki.org to be reachable.
+- **Wiktionary** needs no keys and nothing installed, and it shows the whole range of senses.
+  It does not choose among them, so the vocabulary history takes the LLM translation instead
+  (see Vocabulary history), which uses the pool's quota. English words get equivalents in the
+  user language, and the Russian Wiktionary has Russian senses for every word it has; many
+  German and Serbian senses have English definitions only. It needs kaikki.org to be reachable.
 - **Google** is the fastest and covers every language pair Google supports, but it translates
   the bare word, so it guesses the sense. It has no dictionary data for Serbian, and it depends
   on an unofficial endpoint.
@@ -46,8 +47,10 @@ sense, translated into Russian (2026-09-24 to 2026-09-26).
 
 ## LLM translation
 
-- Free pool only: two free-tier models are asked at once and the first answer wins. A reader
-  who wants a paid model makes the popup a Translate AI article instead.
+- Free pool only: two free-tier models are asked at once and the first answer wins, so every
+  LLM translation, the popup's or the vocabulary history's, spends one request from the quota
+  of each of the two. A reader who wants a paid model makes the popup a Translate AI article
+  instead.
 - The model gets the selected word or phrase marked inside a short passage: its sentence plus
   the previous and the next sentence, whatever the sentence length.
 - It replies with the translation only, in dictionary form. For a separable verb or a fixed
@@ -84,7 +87,17 @@ sense, translated into Russian (2026-09-24 to 2026-09-26).
   none.
 - **Capitals.** What a capital means depends on where the word stands in its passage. It
   starts a sentence when nothing comes before it, or when the text before it ends in `.`, `!`,
-  `?`, `…` or `:`, optionally followed by quotes or dashes.
+  `?`, `…` or `:`, optionally followed by quotes or dashes. The book's structure counts too:
+  a heading, a paragraph, a list item or a table cell ends where the next one starts, so the
+  first word after a heading starts a sentence even though the heading has no full stop
+  ("CHAPTER VIII. The Queen's Croquet-Ground" / "A large rose-tree …"). In a plain-text book
+  only a blank line ends a block: its single line breaks mostly wrap a sentence (Alice in
+  Wonderland has 232 capitals in mid-sentence at the start of a wrapped line). Quoted speech
+  after a comma or a semicolon starts a sentence when the opening quote touches the word
+  (`He asked, “Will you come?”`, also with „ « » ‹ › ‘ ‚ and straight quotes); a straight quote
+  after a comma and a space closes the speech instead (`"Come," Tom said`). The full stop of
+  Mr., Mrs., Ms., Dr., St., Hr., Fr., z. B. and d. h. does not end a sentence ("said Mr.
+  Bennet").
   - English and Serbian, sentence start: the capital says nothing, so the word is looked up in
     lower case ("Still" is "still", not a surname). Only when nothing is written like it in
     lower case is it looked up as written, as a name ("London").
@@ -109,6 +122,11 @@ sense, translated into Russian (2026-09-24 to 2026-09-26).
   - A word clicked in lower case stays in lower case where the lemmatiser only capitalises it
     ("robin" is the bird, not the name "Robin"); a capitalised click keeps the lemmatiser's
     capital ("I").
+- **Scope of the position rules.** They cover the common shapes of a sentence start and are not
+  extended shape by shape: the remembered translation comes from the LLM, so a shape they miss
+  only reorders the popup's list. The bar is a whole book measured against hand-marked sentence
+  starts: in Alice in Wonderland the shapes not covered (a quote without a comma before it, a
+  bracket after a full stop) change the first entry of 1 of 54 distinct words.
 - **Forms the lemmatiser does not know.** A contraction, an archaic or a nonstandard form, or a
   German verbal noun, that the lemmatiser leaves as it is follows the "form of" link on its own
   page ("I'm" → "I", "liveth" → "live", "wouldst" → "will", "curiouser" → "curious", "Tanzen" →
@@ -119,6 +137,9 @@ sense, translated into Russian (2026-09-24 to 2026-09-26).
   "be") leads with them. About 4 % of real clicks need this second round of requests.
   The reader splits words at apostrophes, so a contraction is looked up when the reader selects
   it across the apostrophe; a single click sends one side of it ("don" of "don't").
+- **Russian pointers.** A Russian Wiktionary sense that only names another word spelled alike
+  ("вариант hair" under "hear", "устар. вариант tale" under "tell") is left out, like the English
+  Wiktionary's alternative spellings: it leads to an unrelated word.
 - **Order.** Within a word, entries with equivalents in the user language come before
   entries that have English definitions only. Of the words looked up for a click (the word, its
   lemma, the word as written), the ones written in the case the capital rules above put first
@@ -144,15 +165,17 @@ sense, translated into Russian (2026-09-24 to 2026-09-26).
   word from both editions, guards it.
 - **Measured** (2026-09-25/26, Russian reader): 21 of 24 bench senses listed from the
   dictionary form, 19 from the clicked text; the lemma listed for 42 of 45 inflected forms from
-  real books; the right first entry for all of Alice in Wonderland's 200 most frequent words;
-  20 of 20 contractions (selected whole) and archaic forms reach an entry. Per click with
-  nothing cached (2026-09-26, 30 clicks): 0.13 s p50 and 0.21 s p90. Clicks one after another
-  took 0.08 s p50 and 0.21 s p90, clicks 20 s apart 0.13 s p50 and 0.22 s p90; no click after
-  a pause paid for new connections. After more than a minute without a lookup the connections
-  are new: 0.3–0.45 s. The first word of a language after the server starts also loads its
-  lemmatiser: 0.4 s for English, 0.5 s for Serbian, 0.8 s for German. With the passages the
-  words stand in, the results are the same, except that "Seine" at the start of a sentence now
-  leads with "sein" (the right first entry for 42 of the 45 inflected forms).
+  real books; the first entry is the word or its lemma for all of Alice in Wonderland's 200
+  most frequent words (a check of the head word only, not of its part of speech or sense: "see"
+  leading with the noun "престол" passes it); 20 of 20 contractions (selected whole) and
+  archaic forms reach an entry. Per click with nothing cached (2026-09-26, 109 clicks): 0.13 s
+  p50 and 0.21 s p90. Clicks one after another (15 clicks) took 0.08 s p50 and 0.21 s p90,
+  clicks 20 s apart (15 clicks) 0.13 s p50 and 0.22 s p90; no click after a pause paid for new
+  connections. After more than a minute without a lookup the connections are new: 0.3–0.45 s.
+  The first word of a language after the server starts also loads its lemmatiser: 0.4 s for
+  English, 0.5 s for Serbian, 0.8 s for German. With the passages the
+  words stand in, the results are the same, and "Seine" at the start of a sentence leads with
+  "sein" (the lemma is the first entry for 42 of the 45 inflected forms).
 - **Memory.** Each language's lemmatiser data loads at its first word and stays. The lemmatiser
   runs in its low-memory mode: the same lemmas (checked on 140,000 words per language) for about
   a fifth of the memory: 3 MB for English, 26 MB for German, 8 MB for Serbo-Croatian, instead
@@ -176,13 +199,51 @@ sense, translated into Russian (2026-09-24 to 2026-09-26).
 
 ## Vocabulary history
 
-- Every successful popup lookup is remembered for the vocabulary export with a single
-  translation: the LLM's answer, Google's translation without the alternatives, or
-  Wiktionary's first sense in the user language (the Russian Wiktionary's usage labels such as
-  "экон." or "поэт., перен." and the stress marks dropped: "весна", not "весна́") or, when no
-  sense is in the user language, the first English definition. The Wiktionary sense list in
-  the popup keeps labels and stress marks.
+- Every successful popup lookup is remembered for the vocabulary export and Anki with a single
+  translation, and that translation is the LLM translation of the word in the passage it was
+  looked up in, whatever the popup's translator. A dictionary lists senses without knowing
+  which one the text means: its first sense made wrong cards for common words ("see" →
+  престол, "felt" → войлок, "might" → мощь, "even" → чётный).
+- The translation remembered is of the unit the popup's LLM translation translates: for a word
+  inside a fixed expression or a separable verb that is the whole unit, so a reverse Anki card
+  can read as a phrase ("встать → feet"). This is accepted: it is the sense the reader met.
+- With LLM translation as the popup, its answer is remembered.
+- With Wiktionary or Google as the popup, the popup shows its own answer at once. The LLM
+  translation of the same word and passage (free pool, 3 s limit, the popup's cache) starts
+  after the popup has its answer, and the popup never waits for it. When it answers, it
+  becomes the entry's translation.
+- Until then, or when the pool fails or has no answer in 3 s, a new entry holds the
+  translator's first line: Google's translation without the alternatives, or Wiktionary's first
+  sense in the user language (the Russian Wiktionary's usage labels such as "экон." or "поэт.,
+  перен." and the stress marks dropped: "весна", not "весна́") or, when no sense is in the user
+  language, the first English definition. The Wiktionary sense list in the popup keeps labels
+  and stress marks. The next lookup of the word asks the LLM again.
+- An entry that already has an LLM translation into the reader's language keeps it, with the
+  passage it translates, until the new LLM translation arrives; a failed one leaves both
+  unchanged.
+- An entry that has the LLM translation into the reader's language of the same passage is not
+  asked again, also after the server restarts.
+- An AI article as the popup remembers its answer, as the popup shows it.
+- Every other Wiktionary or Google lookup asks the LLM (unless the popup's cache has the
+  answer), and like every LLM translation it races two pool models: it spends one request from
+  the quota of each, the same free quota as the LLM popup and the sidebar articles.
 - Failed lookups are not remembered.
+- **Measured** (2026-09-26, Russian reader, real free pool): 50 of Alice in Wonderland's 200
+  most frequent words at their first occurrence in the book (12 whose Wiktionary first sense was
+  known to be wrong, and 38 others spread over the list), judged by hand for fitting the sense
+  the word has there. Wiktionary's first sense fit 24; the LLM translation in context fit 47, 11
+  of the 12 known wrong ones among them. 13 of the 47 translate a phrase the word belongs to, as
+  the prompt asks for fixed expressions: "feet" in "started to her feet" → встать, "at" in
+  "wondered at" → удивиться, "make" in "make out" → разглядеть. For about 10 of them the line
+  does not translate the word itself, and its reverse Anki card reads like "встать → feet".
+  Counting those as misses, the LLM translation fits about 37 of 50, against Wiktionary's first
+  sense at 24. Groq's GPT-OSS 120B answered 41 and fit 40; Gemini 3.5 Flash Lite answered 9 and
+  fit 7. Misses: "would" in "would be worth" → "быть стоющим" (Gemini), "the" in the chapter
+  title "Down the Rabbit-Hole" → "в" (Gemini), the "court" of the trial → "двор" (Groq). Asked
+  about 35 times a minute, 46 of the 50 were answered within 3 s; the other 4 hit the free
+  tiers' per-minute limits (Groq allows 30 requests a minute, Gemini's quota ran out for a
+  minute) and were answered when asked again a minute later, as the next lookup of the word
+  would.
 
 ## Language Preferences
 

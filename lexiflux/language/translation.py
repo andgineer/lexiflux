@@ -212,8 +212,9 @@ class LLMTranslator:
         )
 
 
+LLM_TRANSLATOR = "LLMTranslation"
 AVAILABLE_TRANSLATORS: dict[str, tuple[Callable[..., Any], str]] = {
-    "LLMTranslation": (LLMTranslator, "LLM translation"),
+    LLM_TRANSLATOR: (LLMTranslator, "LLM translation"),
     "Wiktionary": (WiktionaryTranslator, "Wiktionary"),
     "Google": (GoogleTranslator, "Google"),
 }

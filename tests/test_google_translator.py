@@ -6,6 +6,7 @@ import allure
 import httpx
 import pytest
 from django.urls import reverse
+from llmbroker import NoLLMAvailableError
 
 from lexiflux.language.translation import (
     GOOGLE_CLIENTS,
@@ -350,8 +351,12 @@ def _dictionary_popup(client, user, book, endpoint):
 @allure.epic("Translators")
 @allure.feature("Google")
 @pytest.mark.django_db
-def test_google_popup_shows_alternatives_and_remembers_the_translation(client, user, book):
-    response = _dictionary_popup(client, user, book, GoogleEndpoint(SPRING))
+def test_google_popup_shows_alternatives_and_the_history_holds_the_translation_while_the_llm_fails(
+    client, user, book
+):
+    no_keys = NoLLMAvailableError("No LLM available: no keys", reason="no_keys")
+    with patch("lexiflux.language.llm.llms_for", side_effect=no_keys):
+        response = _dictionary_popup(client, user, book, GoogleEndpoint(SPRING))
 
     assert response.status_code == 200
     assert response.json() == {
@@ -359,7 +364,8 @@ def test_google_popup_shows_alternatives_and_remembers_the_translation(client, u
         "*noun:* весна, пружина, рессора, источник, родник, ключ, упругость, прыжок\n"
         "*verb:* возникать, пружинить",
     }
-    assert TranslationHistory.objects.get(user=user).translation == "весна"
+    entry = TranslationHistory.objects.get(user=user)
+    assert (entry.translation, entry.translation_from_llm) == ("весна", False)
 
 
 @allure.epic("Translators")

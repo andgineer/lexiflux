@@ -78,9 +78,10 @@ translation picked the right sense for 23. Wiktionary listed it for 19 from the 
 (21 from the dictionary form: it cannot tell that "steht ... auf" means "aufstehen"), and Google
 for 15 (and gave it as the translation for 6).
 
-- **LLM translation** uses the free pool (see [Models](#models) and [Keys](#keys)). It shares
-  the free daily quota with the Sidebar articles. If no answer comes within 3 seconds, the popup
-  says the models are busy; click again to retry.
+- **LLM translation** uses the free pool (see [Models](#models) and [Keys](#keys)). Every
+  translation asks two of its models at once and takes the faster answer, so it uses one request
+  from the daily quota of each; the Sidebar articles share that quota. If no answer comes within
+  3 seconds, the popup says the models are busy; click again to retry.
 - **Wiktionary** looks the word up on [kaikki.org](https://kaikki.org/), which publishes the
   English and the Russian Wiktionary as data. There is nothing to install, but it needs the
   internet, and every word you look up for the first time is sent to kaikki.org. It works for
@@ -96,6 +97,18 @@ for 15 (and gave it as the translation for 6).
 
 If the chosen translator fails, the popup shows what went wrong. It never switches to another
 translator on its own.
+
+Every word you look up goes to your vocabulary (the words export and Anki) with one
+translation: the LLM translation of the word in the sentence you read it in, whatever
+translator the popup uses. A dictionary cannot tell which of its senses the text means, and
+its first sense is often not the one ("see" in "just in time to see it" is not "престол").
+With Wiktionary or Google, the popup shows their answer at once and the LLM translation is
+asked right after, without making the popup wait; until it arrives, or if the free pool is
+busy, the vocabulary keeps the dictionary's first line and asks again the next time you look
+the word up. Without free-pool keys (see [Keys](#keys)), the vocabulary keeps the dictionary's
+(or Google's) first line. Each such lookup of a word in a sentence the vocabulary has no LLM
+translation for yet asks two free-pool models at once, like the LLM translation popup, and uses
+one request from the daily quota of each.
 
 ## Models
 

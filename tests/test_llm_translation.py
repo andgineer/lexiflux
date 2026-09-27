@@ -204,7 +204,7 @@ def _preferences(user, book):
     return preferences
 
 
-def _popup(client, user, book):
+def _popup(client, user, book, word_id="2"):
     client.force_login(user)
     _preferences(user, book)
     return client.get(
@@ -213,7 +213,7 @@ def _popup(client, user, book):
             "lexical-article": "0",
             "book-code": book.code,
             "book-page-number": "1",
-            "word-ids": "2",
+            "word-ids": word_id,
         },
     )
 
@@ -244,6 +244,21 @@ def test_popup_shows_the_translation_and_remembers_it(pool, client, user, book):
     assert prompt.endswith("Text: Content of ⟦page⟧ 1")
     assert "Translate the English word" in prompt
     assert "into Russian" in prompt
+
+
+@allure.epic("Translators")
+@allure.feature("LLM translation")
+@pytest.mark.django_db
+def test_popup_prompt_keeps_the_line_break_after_a_heading(pool, client, user, book):
+    pool["pool"] = FakePool("большой")
+    page = book.pages.get(number=1)
+    page.content = "<h2>The Pool of Tears</h2><p>Large tears ran down her face.</p>"
+    page.save()
+
+    assert _popup(client, user, book, word_id="4").json() == {"article": "большой"}
+
+    prompt = pool["pool"].calls[0][0]
+    assert prompt.endswith("Text: The Pool of Tears\n⟦Large⟧ tears ran down her face.")
 
 
 @allure.epic("Translators")

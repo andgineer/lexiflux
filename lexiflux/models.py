@@ -890,6 +890,10 @@ class TranslationHistory(models.Model):  # type: ignore
 
     term = models.CharField(max_length=255, help_text="Term looked up for translation")
     translation = models.TextField(help_text="Translation of the term")
+    translation_from_llm = models.BooleanField(
+        default=False,
+        help_text="The translation is the LLM translation of the term in its passage",
+    )
     source_language = models.ForeignKey(
         "Language",
         on_delete=models.CASCADE,

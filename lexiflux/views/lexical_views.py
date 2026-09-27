@@ -3,11 +3,15 @@
 import html
 import json
 import logging
+import threading
 import urllib.parse
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
+from functools import partial
 from typing import Any
 
 import django.utils.timezone
+from django.conf import settings
+from django.db import connection
 from django.http import HttpRequest, HttpResponse, JsonResponse, StreamingHttpResponse
 from django.template.loader import render_to_string
 from pydantic import Field
@@ -15,7 +19,15 @@ from pydantic import Field
 from lexiflux.api import ViewGetParamsModel, get_params
 from lexiflux.auth import smart_login_required
 from lexiflux.custom_user import get_custom_user
-from lexiflux.language.llm import ArticleError, ArticleRequest, generate_article, stream_article
+from lexiflux.language.llm import (
+    POOL_UNAVAILABLE_ERRORS,
+    ArticleError,
+    ArticleRequest,
+    InlineTranslationRequest,
+    ask_inline_translation,
+    generate_article,
+    stream_article,
+)
 from lexiflux.language.term_context import (
     TermContext,
     sentences_word_ids,
@@ -24,6 +36,7 @@ from lexiflux.language.term_context import (
 )
 from lexiflux.language.translation import (
     AVAILABLE_TRANSLATORS,
+    LLM_TRANSLATOR,
     HtmlTranslation,
     Term,
     TranslatorError,
@@ -258,24 +271,138 @@ def translate(request: HttpRequest, params: TranslateGetParams) -> HttpResponse:
         return JsonResponse(result)
 
     result["article"] = result["article"].split("<hr>")[0]
-    translation = result.pop("translation", result["article"])
+    translator = _inline_translator(language_preferences)
     history_context = get_context_for_translation_history(book_page, term_word_ids)
-    translation_history, created = TranslationHistory.objects.update_or_create(
+    history = _remember(
+        term_text,
+        result.pop("translation", result["article"]),
+        translator,
+        history_context,
+        book,
+        language_preferences,
+        user,
+    )
+    if _is_dictionary(translator) and not _translated_in(history, history_context):
+        in_background(
+            partial(
+                _history_from_llm,
+                history.pk,
+                history.last_lookup,
+                InlineTranslationRequest(
+                    word=context.word,
+                    passage=context.passage,
+                    text_language=book.language.name,
+                    user_language=language_preferences.user_language.name,
+                    user=user,
+                ),
+                history_context,
+                book.pk,
+            ),
+        )
+    return JsonResponse(result)
+
+
+def _inline_translator(language_preferences: LanguagePreferences) -> str | None:
+    if language_preferences.inline_translation_type != "Dictionary":
+        return None
+    return language_preferences.inline_translation_parameters.get("dictionary")
+
+
+def _is_dictionary(translator: str | None) -> bool:
+    return translator in AVAILABLE_TRANSLATORS and translator != LLM_TRANSLATOR
+
+
+def _translated_in(history: TranslationHistory, history_context: str) -> bool:
+    return history.translation_from_llm and history.context == history_context
+
+
+def _remember(  # noqa: PLR0913
+    term_text: str,
+    translation: str,
+    translator: str | None,
+    history_context: str,
+    book: Book,
+    language_preferences: LanguagePreferences,
+    user: CustomUser,
+) -> TranslationHistory:
+    from_llm = translator == LLM_TRANSLATOR
+    history, created = TranslationHistory.objects.get_or_create(
         term=term_text,
         source_language=book.language,
         user=user,
         defaults={
             "translation": translation,
+            "translation_from_llm": from_llm,
             "target_language": language_preferences.user_language,
             "context": history_context,
             "book": book,
         },
     )
-    if not created:
-        translation_history.lookup_count += 1
-        translation_history.last_lookup = django.utils.timezone.now()
-        translation_history.save()
-    return JsonResponse(result)
+    if created:
+        return history
+    keeps_llm_translation = (
+        _is_dictionary(translator)
+        and history.translation_from_llm
+        and history.target_language_id == language_preferences.user_language_id
+    )
+    # A kept LLM translation stays with its passage; the new passage comes with the new answer.
+    if not keeps_llm_translation:
+        history.translation = translation
+        history.translation_from_llm = from_llm
+        history.target_language = language_preferences.user_language
+        history.context = history_context
+        history.book = book
+    history.lookup_count += 1
+    history.last_lookup = django.utils.timezone.now()
+    history.save()
+    return history
+
+
+def _history_from_llm(
+    history_id: int,
+    last_lookup: Any,
+    request: InlineTranslationRequest,
+    history_context: str,
+    book_id: int,
+) -> None:
+    try:
+        answer = ask_inline_translation(request)
+    except POOL_UNAVAILABLE_ERRORS as e:
+        logger.warning("History translation of %r failed: %r", request.word, e)
+        return  # the next lookup of the word asks again
+    except Exception:
+        logger.exception("History translation of %r failed", request.word)
+        return
+    if answer:
+        # A later lookup of the word, in another passage, has its own translation coming.
+        TranslationHistory.objects.filter(pk=history_id, last_lookup=last_lookup).update(
+            translation=answer.split("\n", 1)[0],
+            translation_from_llm=True,
+            context=history_context,
+            book_id=book_id,
+        )
+
+
+def _closing_connection(work: Callable[[], None]) -> None:
+    try:
+        work()
+    except Exception:
+        logger.exception("Background work failed")
+    finally:
+        # A thread's database connection is its own and would otherwise stay open.
+        connection.close()
+
+
+def in_background(work: Callable[[], None]) -> None:
+    if not settings.HISTORY_TRANSLATION_IN_BACKGROUND:
+        work()
+        return
+    threading.Thread(
+        target=_closing_connection,
+        args=(work,),
+        name="history-translation",
+        daemon=True,
+    ).start()
 
 
 def _ndjson_line(event: dict[str, Any]) -> bytes:

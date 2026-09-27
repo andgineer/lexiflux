@@ -10,8 +10,10 @@ import httpx
 import pytest
 from django.urls import reverse
 from django.utils import timezone
+from llmbroker import NoLLMAvailableError
 
 from lexiflux.language import wiktionary
+from lexiflux.language.term_context import term_context
 from lexiflux.language.translation import (
     HtmlTranslation,
     Term,
@@ -409,6 +411,27 @@ def test_a_word_with_its_own_entries_leads_with_them(kaikki, word):
         ("We flew to ⟦China⟧ last year.", False),
         ("said the ⟦King⟧, “and", False),
         ("1914 ⟦March⟧", False),
+        ("The Queen’s Croquet-Ground\n⟦A⟧ large rose-tree", True),
+        ("Zweites Kapitel\n⟦Ich⟧ bin müde.", True),
+        ("He asked, “⟦Will⟧ you come?”", True),
+        ('He asked, "⟦Will⟧ you come?"', True),
+        ("Sie sagte, „⟦Ich⟧ komme.“", True),
+        ("sagte er, »⟦Ich⟧ komme.«", True),
+        ("Er sagte, ›⟦Ich⟧ komme morgen‹, und ging.", True),
+        ("so; «⟦Oui⟧", True),
+        ('"Come," ⟦Tom⟧ said.', False),
+        ("“Come,” ⟦Tom⟧ said.", False),
+        ("the word “⟦China⟧”", False),
+        ("said Mr. ⟦Bennet⟧", False),
+        ("Is Mrs. ⟦May⟧ at home?", False),
+        ("Ms. ⟦Smith⟧ came", False),
+        ("with Dr. ⟦Watson⟧", False),
+        ("He left for St. ⟦Paul⟧", False),
+        ("Obst, z. B. ⟦Äpfel⟧", False),
+        ("Obst, z.B. ⟦Äpfel⟧", False),
+        ("Wasser, d. h. ⟦Eis⟧", False),
+        ("Hr. ⟦Müller⟧ und Fr. Schmidt", False),
+        ("He met Dr.\n⟦Next⟧ chapter", True),
         ("", None),
         ("a passage without a mark", None),
     ],
@@ -469,6 +492,130 @@ def test_an_english_name_without_translations_follows_the_lowercase_word(kaikki)
     assert _heads(entries)[0] == ("king", "noun", "ru")
     assert ("King", "name", "en") in _heads(entries)
     assert summary(entries).startswith("король")
+
+
+ALICE_CHAPTER_VIII = "The Queen’s Croquet-Ground", "A large rose-tree stood near the entrance."
+
+
+def _passage(book, language, content, word):
+    book.language = Language.objects.get(name=language)
+    book.save()
+    page = book.pages.get(number=1)
+    page.content, page.word_slices, page.word_to_sentence_map = content, None, None
+    page.save()
+    word_id = next(i for i, (start, end) in enumerate(page.words) if content[start:end] == word)
+    return term_context(page, [word_id]).passage
+
+
+@allure.epic("Translators")
+@allure.feature("Wiktionary")
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "language, content, word, start, head",
+    [
+        pytest.param(
+            "English",
+            "He asked, “Will you come?”",
+            "Will",
+            True,
+            ("will", "verb", "ru"),
+            id="dialogue after a comma: Will",
+        ),
+        pytest.param(
+            "English",
+            "She said, “May I come in?”",
+            "May",
+            True,
+            ("may", "verb", "ru"),
+            id="dialogue after a comma: May",
+        ),
+        pytest.param(
+            "English",
+            "CHAPTER VIII. <br/> {} <br/> <br/> <br/> {}".format(*ALICE_CHAPTER_VIII),
+            "A",
+            True,
+            ("a", "article", "ru"),
+            id="after an English heading, plain text",
+        ),
+        pytest.param(
+            "English",
+            "<h1>CHAPTER VIII.</h1><h2>{}</h2><p>{}</p>".format(*ALICE_CHAPTER_VIII),
+            "A",
+            True,
+            ("a", "article", "ru"),
+            id="after an English heading, HTML",
+        ),
+        pytest.param(
+            "German",
+            "<h2>Zweites Kapitel</h2><p>Ich bin müde und gehe schlafen.</p>",
+            "Ich",
+            True,
+            ("ich", "pron", "ru"),
+            id="after a German heading: Ich",
+        ),
+        pytest.param(
+            "German",
+            "<h2>Erstes Kapitel</h2><p>Es war einmal ein König.</p>",
+            "Es",
+            True,
+            ("es", "pron", "ru"),
+            id="after a German heading: Es",
+        ),
+        pytest.param(
+            "English",
+            "“Good morning,” said Mr. Bennet to his wife.",
+            "Bennet",
+            False,
+            ("bennet", "noun", "en"),
+            id="Mr. Bennet",
+        ),
+        pytest.param(
+            "English",
+            "“Is Mrs. May at home?” asked the girl.",
+            "May",
+            False,
+            ("May", "noun", "ru"),
+            id="Mrs. May",
+        ),
+        pytest.param(
+            "English",
+            "We flew to China last year.",
+            "China",
+            False,
+            ("China", "noun", "ru"),
+            id="mid-sentence China",
+        ),
+        pytest.param(
+            "German",
+            "Gut, dass du da bist.",
+            "Gut",
+            True,
+            ("gut", "adj", "ru"),
+            id="sentence-start Gut, dass",
+        ),
+        pytest.param(
+            "German",
+            "»Er sagte, ›Ich komme morgen‹, und ging.«",
+            "Ich",
+            True,
+            ("ich", "pron", "ru"),
+            id="nested German quotes",
+        ),
+    ],
+)
+def test_the_words_place_in_the_book_decides_what_leads(
+    kaikki, book, language, content, word, start, head
+):
+    passage = _passage(book, language, content, word)
+
+    entries = lookup(word, book.language.google_code, "ru", passage)
+
+    assert sentence_start(passage) is start
+    assert _heads(entries)[0] == head
+    if language == "English":
+        as_written = [path for path in kaikki.requested() if path.endswith(f"/{word}")]
+        assert bool(as_written) is not start
+        assert (word in {entry.word for entry in entries}) is not start
 
 
 @allure.epic("Translators")
@@ -941,6 +1088,55 @@ def test_kaikki_requests_name_lexiflux_and_give_up_after_two_seconds(kaikki):
 
 @allure.epic("Translators")
 @allure.feature("Wiktionary")
+def test_kaikki_connections_stay_open_a_minute_within_httpx_default_caps():
+    with patch.object(wiktionary.httpx, "Client") as client_class:
+        http_client.__wrapped__()
+
+    assert client_class.call_args.kwargs["limits"] == httpx.Limits(
+        max_connections=100,
+        max_keepalive_connections=20,
+        keepalive_expiry=60,
+    )
+
+
+@allure.epic("Translators")
+@allure.feature("Wiktionary")
+def test_a_decomposed_spelling_finds_the_page(kaikki):
+    entries = lookup("Tra\u0308umen", "de", "ru")
+
+    assert "dictionary/German/Träumen" in kaikki.requested()
+    assert entries[0].word == "Traum"
+
+
+@allure.epic("Translators")
+@allure.feature("Wiktionary")
+def test_russian_senses_that_only_name_a_word_spelled_alike_are_dropped(kaikki):
+    records = [
+        {"word": "hear", "pos": "noun", "senses": [{"glosses": ["вариант hair"]}]},
+        {
+            "word": "hear",
+            "pos": "verb",
+            "senses": [{"glosses": ["устар. вариант here"]}, {"glosses": ["слышать"]}],
+        },
+        {
+            "word": "hear",
+            "pos": "article",
+            "senses": [{"glosses": ["вариант артикля a перед гласными"]}],
+        },
+    ]
+    kaikki.pages[kaikki_url("ru", "en", "hear")] = "\n".join(map(json.dumps, records))
+
+    entries = lookup("hear", "en", "ru")
+
+    assert _words(entries) == [
+        ("hear", "ru", ["слышать"]),
+        ("hear", "ru", ["вариант артикля a перед гласными"]),
+    ]
+    assert summary(entries) == "слышать"
+
+
+@allure.epic("Translators")
+@allure.feature("Wiktionary")
 def test_render_escapes_dictionary_text_and_credits_wiktionary():
     entries = [Entry("free", "adj", "en", "en", (Sense("Not imprisoned <or> *enslaved*."),), True)]
 
@@ -1068,6 +1264,9 @@ def _page(book, content):
     page.save()
 
 
+NO_POOL_KEYS = NoLLMAvailableError("No LLM available: no keys", reason="no_keys")
+
+
 def _popup(client, user, book, word_id="1"):
     client.force_login(user)
     _preferences(user, book)
@@ -1085,16 +1284,20 @@ def _popup(client, user, book, word_id="1"):
 @allure.epic("Translators")
 @allure.feature("Wiktionary")
 @pytest.mark.django_db
-def test_popup_shows_the_sense_list_and_remembers_the_first_sense(kaikki, client, user, book):
+def test_popup_shows_the_sense_list_and_the_history_holds_the_first_sense_while_the_llm_fails(
+    kaikki, client, user, book
+):
     _page(book, "Early springs came.")
 
-    data = _popup(client, user, book).json()
+    with patch("lexiflux.language.llm.llms_for", side_effect=NO_POOL_KEYS):
+        data = _popup(client, user, book).json()
 
     assert data["html"] is True
     assert "error" not in data
     assert data["article"].startswith('<div class="wiktionary">')
     assert "CC BY-SA 4.0" in data["article"]
-    assert TranslationHistory.objects.get(user=user).translation == "весна"
+    entry = TranslationHistory.objects.get(user=user)
+    assert (entry.translation, entry.translation_from_llm) == ("весна", False)
 
 
 @allure.epic("Translators")
@@ -1103,7 +1306,8 @@ def test_popup_shows_the_sense_list_and_remembers_the_first_sense(kaikki, client
 def test_popup_reads_the_words_place_in_its_sentence(kaikki, client, user, book):
     _page(book, "We flew to China last year.")
 
-    data = _popup(client, user, book, word_id="3").json()
+    with patch("lexiflux.language.llm.llms_for", side_effect=NO_POOL_KEYS):
+        data = _popup(client, user, book, word_id="3").json()
 
     assert data["article"].index("Китай") < data["article"].index("фарфор")
     assert TranslationHistory.objects.get(user=user).translation == "Китай"
@@ -1160,3 +1364,27 @@ def test_sidebar_article_is_the_sense_list_unescaped(kaikki, client, user, book)
     assert [event["event"] for event in events] == ["delta", "done"]
     assert events[0]["text"].startswith('<div class="wiktionary">')
     assert "<li>весна</li>" in events[0]["text"]
+
+
+@allure.epic("Translators")
+@allure.feature("Wiktionary")
+@pytest.mark.django_db
+def test_sidebar_article_reads_the_words_place_in_its_sentence(kaikki, client, user, book):
+    _page(book, "We flew to China last year.")
+    client.force_login(user)
+    LexicalArticle.objects.create(
+        language_preferences=_preferences(user, book, "Google"),
+        type="Dictionary",
+        title="Wiktionary",
+        parameters={"dictionary": "Wiktionary"},
+        order=10,
+    )
+
+    response = client.get(
+        reverse("translate_stream"),
+        {"lexical-article": "5", "book-code": book.code, "book-page-number": "1", "word-ids": "3"},
+    )
+    text = json.loads(b"".join(response.streaming_content).splitlines()[0])["text"]
+
+    assert text.index("Китай") < text.index("фарфор")
+    assert not TranslationHistory.objects.filter(user=user).exists()

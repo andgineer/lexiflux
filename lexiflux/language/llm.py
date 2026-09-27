@@ -48,6 +48,7 @@ CACHE_SIZE = 1000
 INLINE_TRANSLATION = "Inline translation"
 # Bounds the whole answer: the queue for a pool slot, the race, and any second pool pass.
 INLINE_TRANSLATION_SECONDS = 3.0
+POOL_UNAVAILABLE_ERRORS = (NoLLMAvailableError, RateLimitError, LLMTimeoutError)
 
 
 @dataclass(frozen=True)
@@ -311,7 +312,7 @@ def _answer_pool(req: InlineTranslationRequest, call: Future[str]) -> None:
         call.set_exception(exc)
 
 
-def translate_inline(req: InlineTranslationRequest) -> str:
+def ask_inline_translation(req: InlineTranslationRequest) -> str:
     key = req.cache_key()
     cached = _cache_get(key)
     if cached is not None:
@@ -328,13 +329,17 @@ def translate_inline(req: InlineTranslationRequest) -> str:
     try:
         text = call.result(timeout=INLINE_TRANSLATION_SECONDS)
     except TimeoutError:
-        timeout = LLMTimeoutError(f"no answer in {INLINE_TRANSLATION_SECONDS} s")
-        raise llm_error(timeout, POOL, INLINE_TRANSLATION, had_text=False) from None
-    except Exception as exc:
-        raise llm_error(exc, POOL, INLINE_TRANSLATION, had_text=False) from exc
+        raise LLMTimeoutError(f"no answer in {INLINE_TRANSLATION_SECONDS} s") from None
     if text:
         _cache_put(key, text)
     return text
+
+
+def translate_inline(req: InlineTranslationRequest) -> str:
+    try:
+        return ask_inline_translation(req)
+    except Exception as exc:
+        raise llm_error(exc, POOL, INLINE_TRANSLATION, had_text=False) from exc
 
 
 def _render(kind: str, **context: Any) -> ArticleError:

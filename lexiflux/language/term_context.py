@@ -15,6 +15,13 @@ _BLOCK_TAG = re.compile(
     r"(</?(?:p|div|br|h[1-6]|li|ul|ol|tr|td|th|table|blockquote|section|article|pre|hr)\b[^>]*>)",
     re.IGNORECASE,
 )
+# A plain-text import turns every line of the file into a <br>, so only a blank line (two <br>
+# in a row) ends a block there; one <br> is mostly a wrapped line inside a sentence.
+_LINE_BREAK = re.compile(
+    r"(?:<br\b[^>]*>\s*){2,}"
+    r"|</?(?:p|div|h[1-6]|li|ul|ol|tr|td|th|table|blockquote|section|article|pre|hr)\b[^>]*>",
+    re.IGNORECASE,
+)
 
 
 @dataclass(frozen=True)
@@ -46,6 +53,15 @@ def plain_text(html: str) -> str:
     return " ".join(extract_content_from_html(_BLOCK_TAG.sub(r" \1", html)).split())
 
 
+def text_with_line_breaks(html: str) -> str:
+    # A heading or a paragraph must not run into the next sentence: the line break shows where
+    # a sentence starts.
+    blocks = _LINE_BREAK.sub("\n", " ".join(html.split()))
+    text = extract_content_from_html(_BLOCK_TAG.sub(r" \1", blocks))
+    lines = (" ".join(line.split()) for line in text.split("\n"))
+    return "\n".join(line for line in lines if line)
+
+
 def _extended_sentences(page: "BookPage", first: int, last: int) -> tuple[int, int]:
     sentence_ids = sorted(set(page.word_sentence_mapping.values()))
     previous = [sid for sid in sentence_ids if sid < first]
@@ -74,7 +90,7 @@ def _marked_passage(
     start, end = page.words[word_ids[0]][0], _end_through_punctuation(page, word_ids)
     term_start, term_end = term_span
     content = page.content
-    return plain_text(
+    return text_with_line_breaks(
         f"{content[start:term_start]}{TERM_OPEN}{content[term_start:term_end]}"
         f"{TERM_CLOSE}{content[term_end:end]}",
     )

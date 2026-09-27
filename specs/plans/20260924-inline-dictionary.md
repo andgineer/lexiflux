@@ -45,6 +45,7 @@ Research directories (read-only):
 | Removed | `deep-translator` (MyMemory, Linguee, PONS, its Google scraper) |
 | Defaults | Inline translation = LLM translation for new users. Single user, no existing data to migrate: the author recreates his DB (`invoke init-db`) |
 | No manual steps | A lexiflux user never runs a command to install or refresh data. Everything a translator needs is fetched automatically or ships with the app's dependencies |
+| Vocabulary history | The translation saved for a looked-up word (and exported to Anki) is always the LLM translation of the word in the passage it was looked up in, whatever the popup's translator. With LLM translation as the popup, its answer is saved. With Wiktionary or Google, the popup shows its own answer at once and the LLM translation fills the history in the background; a context-free dictionary never chooses the saved sense. Until the LLM answer arrives, or if the pool fails, a new entry holds the translator's first line and is retried on the word's next lookup; an entry that already has an LLM translation keeps it |
 | Serbian Site link | Glosbe stays the default Site article for every language (its real-world example sentences are the point). A Serbian book whose reader's language Lingea covers (36 `<language>-srpski` dictionaries) gets a second Site article, Lingea (`https://recnici.lingea.rs/{toLangLingea}-srpski/{termLatin}`: the user language in Lingea's naming, Cyrillic terms transliterated to Latin), after Glosbe: it resolves inflected Serbian forms and separates homonyms, which Glosbe's page does not |
 
 ### Measurements behind the decisions (2026-09-24, 24 items, en/de/sr → ru)
@@ -52,7 +53,7 @@ Research directories (read-only):
 | Option | Right sense | Latency | Notes |
 |---|---|---|---|
 | LLM pool, word in its passage | 23 / 24 (sense chosen) | 0.63 / 0.81 s (p50 / p90) | quota: Groq about 1,000 requests a day, Gemini about 500, shared with the sidebar articles |
-| Wiktionary online (lemmatiser + kaikki.org pages, measured 2026-09-25/26) | 21 / 24 listed (dictionary form), 19 / 24 from the clicked text | 0.13 / 0.26 s (p50 / p90) | inflected forms 42 / 45; the right first entry for all of Alice's 200 most frequent words; contractions and archaic forms 20 / 20 |
+| Wiktionary online (lemmatiser + kaikki.org pages, measured 2026-09-25/26) | 21 / 24 listed (dictionary form), 19 / 24 from the clicked text | 0.13 / 0.26 s (p50 / p90) | inflected forms 42 / 45; the first entry is the word or its lemma for all of Alice's 200 most frequent words (a head-word check, not a sense check); contractions and archaic forms 20 / 20. Saved history translation (hand-judged, 50 Alice words in their first passage): Wiktionary's first sense 24 / 50, the LLM translation in context 47 / 50 |
 | Google `dt=bd` | 15 / 24 listed, 6 / 24 as the single answer | 0.07 s | no Serbian dictionary data |
 | MyMemory | 3 / 24 | 0.42 s | dropped |
 
@@ -401,7 +402,7 @@ Done notes (2026-09-26):
 - Reproduction of the study through the real code (2026-09-26): on the recorded pages, output
   identical to the prototype for all 293 inputs and 20 contractions; on the real network, again
   identical (642 requests, 553 × 200, 89 × 404, no failure): bench 21 / 24 (dictionary form),
-  19 / 24 (clicked text), inflected 42 / 45 listed, Alice 200 / 200 right first entry,
+  19 / 24 (clicked text), inflected 42 / 45 listed, Alice 200 / 200 word or lemma first,
   contractions 20 / 20. Latency, 109 clicks with nothing cached, one kept-alive client: p50
   0.130 s, p90 0.212 s, max 0.726 s (prototype 0.128 / 0.259 / 0.986)
 - Headless Chromium on a scratch server, real kaikki.org, Russian reader, 26 words in four
@@ -428,7 +429,7 @@ Done notes (2026-09-26):
   200 / 200, contractions 20 / 20. With realistic passages (bench passages, the inflected forms
   in their source sentences, Alice's words at their first occurrence): the same counts, and
   the only changed output is Kafka's sentence-initial "Seine", which now leads with sein
-  (right first entry 42 / 45 instead of 41). Alice's 40 most frequent mid-sentence capitals
+  (lemma first 42 / 45 instead of 41). Alice's 40 most frequent mid-sentence capitals
   (1,158 occurrences): letting every as-written page lead would have put a surname, a place or
   a letter-case variant first for 19 of them (542 occurrences, e.g. Queen, King, Turtle, Mock,
   Hatter, Rabbit, Duchess) and a surname into the vocabulary summary for 232; with the
@@ -438,10 +439,150 @@ Done notes (2026-09-26):
   click after 10 s idle took 0.27 s); first word of a language in a fresh process 0.40 s
   (English), 0.49 s (Serbian), 0.76 s (German)
 
+## Phase 7 — Saved sense from context; sentence starts from the book's structure
+
+Why: four review rounds on Phase 6 each found another entry-order edge (case, names, sentence
+position), and each one mattered because the vocabulary history saved the first sense of a
+context-free dictionary. On Alice's 200 most frequent words at least 12 saved a wrong sense (see →
+престол, felt → войлок, might → мощь, even → чётный; about 635 occurrences). The acceptance measure
+("the first entry is the word or its lemma") could not see it. Review: `scratchpad/reviews/review-v2-4.md`.
+
+- [x] **History from LLM translation in context** (the Decisions row "Vocabulary history"): in the
+  `translate` view, when the popup's translator is Wiktionary or Google, start the LLM translation of
+  the same term and passage (the existing inline LLM path and its cache, free pool, the 3 s limit) in
+  the background after the popup's answer is ready; do not delay the popup response. When it succeeds,
+  write its answer into the history entry. Record whether an entry's translation came from the LLM
+  (an auto-generated schema migration is fine; single user, no data migration). A new entry gets the
+  translator's first line until then; an entry that already has an LLM translation keeps it while the
+  new one runs; a failed or timed-out LLM call changes nothing and is retried on the word's next
+  lookup. With LLM translation as the popup, behaviour is unchanged (its answer is saved and marked as
+  LLM). Background work closes its DB connection; tests run it synchronously (a setting or an
+  injectable runner), never with real threads racing the test DB
+- [x] **Sentence starts from the book's structure:** the marked passage keeps a line break where a
+  block element (heading, paragraph, list item, table cell, `<br>`) ended, so a heading never joins
+  the next sentence; `sentence_start` treats a line break as a sentence end; `,` or `;` followed by an
+  opening quote (`“ „ « ‹ › ‘ " '`) starts a sentence (dialogue: `He asked, “Will you come?”`); the
+  English abbreviations Mr., Mrs., Ms., Dr., St. and the German z. B., d. h., Hr., Fr., Dr. do not end
+  a sentence. The LLM prompt keeps working with the line breaks (check the passage it receives)
+- [x] **Positional regression set** in the fixture tests (recorded pages): dialogue after a comma
+  ("Will", "May"), the first word after an English heading ("A" in Alice ch. VIII) and after a German
+  heading ("Ich", "Es"), "Mr. Bennet", "Mrs. May", mid-sentence "China", sentence-start "Gut, dass",
+  nested German quotes ‹ ›; plus a test that the sidebar Dictionary article passes the passage
+- [x] **Cheap cleanups from the last review:** drop Russian-edition senses that are only "вариант X"
+  pointers (as the English edition's `alt_of` pruning); NFC-normalise the clicked text before building
+  page URLs; pin `keepalive_expiry` in a test and restore httpx's default connection caps if the
+  change dropped them; fix the spec's click-count sentence and the "now leads" wording
+- [x] **Measures renamed and a real one added:** the spec and plan call the Alice check what it is
+  ("the first entry is the word or its lemma", 200/200). New measure: the saved history translation
+  for 50 Alice words in their first occurrence's passage (the 12 known wrong ones plus 38 others from
+  the top 200), judged by hand for fitting the book's sense, before (first sense of Wiktionary) and
+  after (LLM in context, real free pool). Keep the judgments in `scratchpad/p7/` and report the counts
+  broken down by which pool model answered; state the result in the spec
+- [x] **Spec and docs:** `specs/inline-translation.md` (the vocabulary-history rule, sentence starts,
+  the renamed and the new measure), `docs/src/{en,ru}` where the history or Anki export is described
+- [x] **Verification:** the Phase 5 gate; rerun the `p6/` harness (no drops: bench 21/24 and 19/24,
+  inflected 42/45, lemma-first 200/200, contractions 20/20); a headless-browser check on a scratch
+  server: with Wiktionary as the popup, click a few words and confirm the history rows end up with the
+  LLM translation (and that the popup did not wait for it)
+
+Done notes (2026-09-26):
+
+- History: `TranslationHistory.translation_from_llm` (migration 0025). In `translate`,
+  `_remember` writes the entry (get_or_create, one save); `_is_dictionary` (Wiktionary, Google)
+  decides whether `_history_from_llm` runs through `in_background`: a daemon thread per lookup
+  that calls `ask_inline_translation` (the popup's LLM path without the alert mapping of
+  `translate_inline`: its cache and its 3 s limit), writes the first line of a non-empty answer
+  and closes its DB connection. A pool failure in `POOL_UNAVAILABLE_ERRORS` (no keys, busy, rate
+  limit, timeout) logs one warning line "History translation of 'word' failed: <error>"; any
+  other exception logs the same message with its traceback. The view skips the background call
+  when `_translated_in` holds: the entry's translation is from the LLM and its `context` equals
+  this lookup's history context (the user language was checked by `_remember`), so a re-lookup
+  in the same passage asks nothing after a restart. To keep that pairing true, a kept LLM
+  translation also keeps the entry's `context` and `book`; the background write sets them with
+  the new translation. Setting
+  `HISTORY_TRANSLATION_IN_BACKGROUND` (True in `environments/base.py`, False in
+  `tests/django_settings.py`, so tests and the Playwright live server run it inline). Two rules
+  beyond the item: an LLM translation is kept only while the entry's user language is unchanged
+  (after a user-language switch the dictionary line replaces it until the new LLM answer), and
+  the background write applies only while the entry's `last_lookup` is the one of its lookup,
+  so a late answer for an earlier passage never replaces a later lookup's. An AI article as the
+  popup saves its answer as before (not marked LLM, no background call)
+- Line breaks: `text_with_line_breaks` in `term_context.py` builds the marked passage. The
+  source's own whitespace is collapsed first, then block tags (p, div, h1–h6, li, ul, ol, tr, td,
+  th, table, blockquote, section, article, pre, hr) and runs of two or more `<br>` become a line
+  break. A single `<br>` stays a space: the plain-text importer turns every line of the file
+  into `<br/>`, so in Gutenberg texts it is a wrapped line (Alice: 232 capitals in mid-sentence
+  start a wrapped line and would have counted as sentence starts). `TermContext.sentence` (the
+  AI articles' context) and the history context are unchanged
+- `SENTENCE_START`: a line break is a sentence end; `‹ ›` added to the quote class; `, ` or `; `
+  plus an opening quote (`“ „ « » ‹ › ‘ ‚ " '`) that touches the word starts a sentence. The
+  quote must touch the word so that a straight closing quote is not read as opening
+  (`"Come," Tom said` stays mid-sentence). `»` and `‚` are added to the item's list (German
+  `sagte er, »Ich …`, nested `‚…‘`). `ABBREVIATION` (Mr, Mrs, Ms, Dr, St, Hr, Fr, z. B./z.B.,
+  d. h.) applies to every book language, and a line break after one still ends the sentence
+- Regression set (`test_the_words_place_in_the_book_decides_what_leads`, through a real
+  `BookPage` and `term_context`): Will → will, May → may (dialogue), A → a article (Alice
+  ch. VIII as plain text and as HTML), Ich → ich, Es → es (German headings), Mr. Bennet →
+  bennet then Bennet, Mrs. May → May (май, the mid-sentence name rule), China → Китай, Gut, dass
+  → gut, nested › Ich → ich; for English it also checks that the as-written page is fetched
+  exactly in mid-sentence. With the Phase 6 rules on the same pages, 8 of the 11 led with
+  another entry (Will: "английская фамилия", May: май, A: "Т" twice, Ich: "das Ich" twice, Es:
+  the note E-flat, Mrs. May: the modal verb) and Mr. Bennet lacked the surname. New recorded pages: a, A, Will, Bennet, bennet (both
+  editions, 404s not stored). `test_sidebar_article_reads_the_words_place_in_its_sentence`
+- Cleanups: `RUSSIAN_VARIANT_OF` drops Russian-edition senses "вариант X" (also after a usage
+  label: "устар. вариант tale"); "вариант артикля a перед гласными" and longer glosses stay.
+  `_typed` NFC-normalises. `http_client` passes `max_connections=100,
+  max_keepalive_connections=20` with the 60 s expiry (test on the `httpx.Limits` it builds).
+  Spec: 109 clicks, the two 15-click runs named, "now leads" gone
+- Measure (`scratchpad/p7/`: `measure.py`, `items.json`, `judgments.json`): Alice imported with
+  `import-text`, each word's first occurrence after the table of contents, the passage from
+  `term_context`. Before (Phase 6 code, Wiktionary summary) 24 / 50 fit the book's sense (0 of
+  the 12 known); after (LLM translation, real pool, lexiflux's `.llmbroker`, whose
+  `disabled.yml`, `model-list.toml` and presets equal echo-words') 47 / 50 (11 of 12). By model:
+  Groq GPT-OSS 120B 40 / 41, Gemini 3.5 Flash Lite 7 / 9. 13 of the 47 fitting answers translate
+  a phrase the word belongs to (feet → встать, at → удивиться, make → разглядеть, be → стоить,
+  down and went → спуститься, look → осмотреться, getting → вставать, looking → странно
+  выглядящий, out → необычно, go → пройти, even → даже если, found → оказаться); for about 10
+  (all but even, go and looking) the line does not translate the word itself, and its reverse
+  Anki card reads "встать → feet". Counting those as misses gives about 37 / 50, against
+  Wiktionary's first sense at 24 / 50 (for feet, down, went, look and be, Wiktionary's first
+  sense fit). Decision (review v3-1, P1 option 2): the behaviour stays, the spec's measure says
+  so. Misses: would → "быть стоющим"
+  (Gemini), the (chapter title) → "в" (Gemini), court (trial) → "двор" (Groq). At about 35
+  requests a minute 46 answered within 3 s; 4 failed on the free tiers' per-minute limits (Groq
+  30 RPM and tokens per minute, Gemini 429 with a 60 s cooldown) and all 4 answered on a retry
+  a minute later at one request per 6 s. The Phase 7 Wiktionary summary differs from Phase 6's
+  only for "heard" (слышать instead of "вариант hair")
+- Harness (`scratchpad/p7/harness/`): p6 harness, recorded pages and real kaikki.org (644
+  requests, 555 × 200, 89 × 404, no failure), identical output: bench 21 / 24 and 19 / 24,
+  inflected 42 / 45, word or lemma first 200 / 200, contractions 20 / 20; against round 4 the
+  only changes are dropped "вариант X" entries (see, bear, they, one, do, heard, …). The r4
+  passage harness: the same counts, no sentence-position change on its passages
+- Headless check (`scratchpad/p7/browser/`, the Phase 6 books, Russian reader, Wiktionary popup,
+  real kaikki.org and real pool, 26 words fresh then cached): click to popup, Phase 6 code vs
+  Phase 7, fresh p50 0.250 / 0.258 s, p90 0.373 / 0.367 s; cached p50 0.192 / 0.190 s. At popup
+  time every fresh row still held Wiktionary's line (the popup did not wait); 4 s after the
+  round all 26 rows held the LLM translation (saw → видел, bank → берег, make → разглядеть,
+  steht → вставать; eingeschenkt → "вылить чистую воду", a literal miss of "reinen Wein
+  einschenken")
+- Gate: `invoke pre` clean (pyrefly 0 errors), `python -m pytest tests` 1011 passed / 20 skipped,
+  Playwright 21 passed / 1 skipped (after `invoke buildjs`; TypeScript untouched, so no
+  `npm test`), `-m real_net` 1 passed
+- Review v3-1 fixes: the Wiktionary and Google popup tests that assert the dictionary line in the
+  history make the pool fail explicitly with no keys and say so in their names (the China test
+  also fails it explicitly); the Playwright
+  Wiktionary and Google popup tests take `fake_pool`, so no test reaches the autouse
+  `no_real_llm_calls` guard through the background call. Gate: `invoke pre` clean,
+  `python -m pytest tests` 1019 passed / 20 skipped, Playwright 21 passed / 1 skipped
+
 ## Risks
 
-- **Pool quota** is shared with the sidebar articles; heavy reading days could exhaust Gemini's
-  about 500 requests. Then the popup shows errors until the next day (no fallback, by decision)
+- **Pool quota** is shared with the sidebar articles and, when the popup uses Wiktionary or Google,
+  with the background history translation (a race of two pool models, so one request from each, per
+  looked-up word in a passage without its LLM translation and not in the cache); heavy
+  reading days could exhaust Gemini's about 500 requests. Then the LLM popup shows errors and new
+  history entries keep the dictionary's first line until a later lookup (no popup fallback, by
+  decision)
 - **Google blocks identifiers** without notice; the option then shows errors
 - **kaikki.org** is one volunteer-run host with no API contract; an outage or a layout change breaks the
   Wiktionary option (error alerts; cached words keep working). An unknown path answers 404 like a missing
