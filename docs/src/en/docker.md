@@ -4,7 +4,7 @@
 
 You always can use this magic command to start Lexiflux in Docker:
 
-    docker start lexiflux > null 2>&1 || docker run -d -p 6100:8000 --name lexiflux andgineer/lexiflux
+    docker start lexiflux || docker run -d -p 6100:8000 --name lexiflux andgineer/lexiflux
 
 If you want to know details, read below.
 But you don't have to - the magic command above is all you need.
@@ -31,19 +31,19 @@ enter your keys again.
 
 You can also give the container keys of its own. Each of them is used for whoever has not entered
 that key: with only your own OpenAI key, you still use the container's Groq key.
-Put them in a file, one `NAME=value` per line, for example `lexiflux.env`:
+Put them in a file, one `NAME=value` per line, for example `.env`:
 
     GEMINI_API_KEY=...
     GROQ_API_KEY=...
     OPENAI_API_KEY=...
 
-and add `--env-file lexiflux.env` to the command that creates the container:
+and add `--env-file .env` to the command that creates the container:
 
-    docker run -d -p 6100:8000 --env-file lexiflux.env --name lexiflux andgineer/lexiflux
+    docker run -d -p 6100:8000 --env-file .env --name lexiflux andgineer/lexiflux
 
 These keys are set when the container is created. The container also holds your books, so to
 change them for an existing container make a [backup](docker.md#backup) and
-[restore](docker.md#restore) it with `--env-file lexiflux.env` added to the `docker run` command.
+[restore](docker.md#restore) it with `--env-file .env` added to the `docker run` command.
 
 ### Configuration
 

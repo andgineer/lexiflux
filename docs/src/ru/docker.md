@@ -4,7 +4,7 @@
 
 Вы всегда можете использовать эту волшебную команду для запуска Lexiflux в Docker:
 
-    docker start lexiflux > null 2>&1 || docker run -d -p 6100:8000 --name lexiflux andgineer/lexiflux
+    docker start lexiflux || docker run -d -p 6100:8000 --name lexiflux andgineer/lexiflux
 
 Если вы хотите узнать подробности, читайте ниже.
 Но вам не обязательно - волшебная команда выше это всё, что вам нужно.
@@ -32,19 +32,19 @@
 Можно также задать контейнеру собственные ключи. Каждый из них используется у тех, кто не ввёл
 этот ключ сам: если вы ввели только свой ключ OpenAI, для Groq всё равно используется ключ
 контейнера.
-Запишите их в файл, по одному `ИМЯ=значение` в строке, например `lexiflux.env`:
+Запишите их в файл, по одному `ИМЯ=значение` в строке, например `.env`:
 
     GEMINI_API_KEY=...
     GROQ_API_KEY=...
     OPENAI_API_KEY=...
 
-и добавьте `--env-file lexiflux.env` к команде, которая создаёт контейнер:
+и добавьте `--env-file .env` к команде, которая создаёт контейнер:
 
-    docker run -d -p 6100:8000 --env-file lexiflux.env --name lexiflux andgineer/lexiflux
+    docker run -d -p 6100:8000 --env-file .env --name lexiflux andgineer/lexiflux
 
 Такие ключи задаются при создании контейнера. В контейнере хранятся и ваши книги, поэтому чтобы
 поменять их у существующего контейнера, сделайте [резервную копию](docker.md#backup) и
-[восстановите](docker.md#restore) её, добавив `--env-file lexiflux.env` к команде `docker run`.
+[восстановите](docker.md#restore) её, добавив `--env-file .env` к команде `docker run`.
 
 ### Конфигурация
 
