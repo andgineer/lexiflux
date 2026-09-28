@@ -8,12 +8,13 @@ from lxml import etree
 from pagesmith import etree_to_str, parse_partial_html
 from lexiflux.models import Author, Book, Language
 from django.core.management import CommandError
-from lexiflux.ebook.book_loader_url import BookLoaderURL, CleaningLevel
+from lexiflux.ebook.book_loader_url import BookLoaderURL, CleaningLevel, decode_html
 from lexiflux.ebook.book_loader_base import MetadataField
 
-from bs4 import BeautifulSoup
+from lxml import html as lxml_html
 
 from lexiflux.views.import_views import import_book
+from tests.conftest import html_response
 
 
 @pytest.fixture
@@ -292,21 +293,21 @@ def test_add_source_info_title_and_source():
         result = etree_to_str(loader.tree_root)
 
         # Parse the result for easier testing
-        soup = BeautifulSoup(result, "html.parser")
+        root = lxml_html.fragment_fromstring(result, create_parent="div")
 
         # Check if source-info div exists
-        source_div = soup.find("div", class_="source-info")
+        source_div = root.find(".//div[@class='source-info']")
         assert source_div is not None, "Source info div not found"
 
         # Check title
         title = source_div.find("h1")
         assert title is not None, "Title heading not found"
-        assert title.text == "Test Article Title", "Title text doesn't match"
+        assert title.text_content() == "Test Article Title", "Title text doesn't match"
 
         # Check source URL
-        source_p = source_div.find_all("p")[0]
+        source_p = source_div.findall("p")[0]
         assert source_p is not None, "Source paragraph not found"
-        assert "Source: " in source_p.text, "Source label not found in text"
+        assert "Source: " in source_p.text_content(), "Source label not found in text"
 
         # Check for clickable link
         source_link = source_p.find("a")
@@ -315,7 +316,9 @@ def test_add_source_info_title_and_source():
             "Link href doesn't match URL"
         )
         assert source_link.get("target") == "_blank", "Link should open in new tab"
-        assert source_link.text == "https://example.com/test-article", "Link text doesn't match URL"
+        assert source_link.text_content() == "https://example.com/test-article", (
+            "Link text doesn't match URL"
+        )
 
 
 @allure.epic("Book import")
@@ -350,12 +353,12 @@ def test_add_source_info_date_and_formatting():
             result = etree_to_str(loader.tree_root)
 
         # Parse the result for easier testing
-        soup = BeautifulSoup(result, "html.parser")
+        root = lxml_html.fragment_fromstring(result, create_parent="div")
 
         # Check date
-        date_p = soup.find_all("p")[1]
+        date_p = root.findall(".//p")[1]
         assert date_p is not None, "Date paragraph not found"
-        assert f"Imported on: {formatted_date}" in date_p.text, "Formatted date not found"
+        assert f"Imported on: {formatted_date}" in date_p.text_content(), "Formatted date not found"
 
 
 @allure.epic("Book import")
@@ -395,28 +398,22 @@ def test_add_source_info_body_placement():
         print(result)
 
         # Parse the result
-        soup = BeautifulSoup(result, "html.parser")
+        root = lxml_html.document_fromstring(result)
 
         # Check that source div is the first element in body
-        body = soup.find("body")
+        body = root.find("body")
         assert body is not None, "Body tag not found"
 
-        # Get the first actual element (skipping any whitespace text nodes)
-        first_element = None
-        for child in body.children:
-            if child.name is not None:  # Skip NavigableString objects
-                first_element = child
-                break
-
+        first_element = body[0] if len(body) else None
         assert first_element is not None, "No elements found in body"
-        assert first_element.name == "div", "First element is not a div"
-        assert first_element.get("class") == ["source-info"], (
+        assert first_element.tag == "div", "First element is not a div"
+        assert first_element.get("class") == "source-info", (
             "First element does not have source-info class"
         )
 
-        original_heading = soup.find("h1", string="Original Heading")
-        assert original_heading is not None, "Original heading not found"
-        assert original_heading.parent == body, "Original heading not in body"
+        original_heading = root.xpath("//h1[text()='Original Heading']")
+        assert original_heading, "Original heading not found"
+        assert original_heading[0].getparent() is body, "Original heading not in body"
 
 
 @allure.epic("Book import")
@@ -589,10 +586,7 @@ def test_load_text_request_and_processing():
         patch("lexiflux.ebook.book_loader_url.refine_html") as mock_clear,
         patch.object(BookLoaderURL, "_add_source_info"),
     ):
-        # Setup mock responses
-        mock_response = MagicMock()
-        mock_response.text = "<html><body><p>Test content</p></body></html>"
-        mock_get.return_value = mock_response
+        mock_get.return_value = html_response("<html><body><p>Test content</p></body></html>")
 
         mock_extract.return_value = "<p>Extracted content</p>"
 
@@ -621,6 +615,47 @@ def test_load_text_request_and_processing():
 
         # Verify the final text
         assert loader.text == "<p>Cleaned content</p>"
+
+
+SERBIAN = "Vozdviženje Časnog krsta"
+
+
+@allure.epic("Book import")
+@allure.feature("URL import: page encoding")
+@pytest.mark.parametrize(
+    ("body", "content_type"),
+    [
+        pytest.param(
+            f'<html><head><meta charset="UTF-8"></head><body><p>{SERBIAN}</p></body></html>'.encode(),
+            "text/html",
+            id="meta-charset-without-header-charset",
+        ),
+        pytest.param(
+            f"<html><body><p>{SERBIAN}</p></body></html>".encode("windows-1250"),
+            "text/html; charset=windows-1250",
+            id="header-charset",
+        ),
+        pytest.param(
+            f'<html><head><meta charset="UTF-8"></head><body><p>{SERBIAN}</p></body></html>'.encode(
+                "windows-1250"
+            ),
+            "text/html; charset=windows-1250",
+            id="header-charset-over-meta",
+        ),
+        pytest.param(
+            f"<html><body><p>{SERBIAN} {SERBIAN} {SERBIAN}</p></body></html>".encode(),
+            "text/html",
+            id="no-declared-charset",
+        ),
+        pytest.param(
+            f'<html><head><meta charset="x-unknown"></head><body><p>{SERBIAN}</p></body></html>'.encode(),
+            "text/html",
+            id="unknown-meta-charset",
+        ),
+    ],
+)
+def test_decode_html(body, content_type):
+    assert SERBIAN in decode_html(html_response(body, content_type))
 
 
 @allure.epic("Book import")

@@ -22,6 +22,7 @@ import socket
 
 import httpx
 import pytest
+import requests
 from unittest.mock import mock_open, patch, MagicMock
 
 from ebooklib import epub, ITEM_DOCUMENT
@@ -565,6 +566,16 @@ def user_with_translations(approved_user, book, language, translation_history):
 @pytest.fixture
 def book_epub_loader(db_init):
     return BookLoaderEpub("tests/resources/genius.epub")
+
+
+def html_response(html: str | bytes, content_type: str = "text/html") -> requests.Response:
+    """A fetched page as requests builds it: raw bytes plus the headers the server sent."""
+    response = requests.Response()
+    response.status_code = 200
+    response._content = html.encode() if isinstance(html, str) else html
+    response.headers["content-type"] = content_type
+    response.encoding = requests.utils.get_encoding_from_headers(response.headers)
+    return response
 
 
 def create_temp_file(content, encoding, tmpdir):

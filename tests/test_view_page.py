@@ -65,13 +65,13 @@ def test_page_view_respects_access_control(client, user, book):
     [
         (
             "Hello world <br/> New line",
-            '<span class="word" id="word-0">Hello</span> <span class="word" id="word-1">world</span> <br/> <span class="word" id="word-2">New</span> <span class="word" id="word-3">line</span>',
+            '<span id="word-0" class="word">Hello</span> <span id="word-1" class="word">world</span> <br> <span id="word-2" class="word">New</span> <span id="word-3" class="word">line</span>',
         ),
-        ("<br/>", "<br/>"),
-        ("SingleWord", '<span class="word" id="word-0">SingleWord</span>'),
+        ("<br/>", "<br>"),
+        ("SingleWord", '<span id="word-0" class="word">SingleWord</span>'),
         (
             'conserving O<sub class="calibre9"><small class="calibre10"><span class="calibre10"><span class="calibre2">2</span></span></small></sub>, has',
-            '<span class="word" id="word-0">conserving</span> <span class="word" id="word-1">O</span><sub class="calibre9"><small class="calibre10"><span class="calibre10"><span class="calibre2"><span class="word" id="word-2">2</span></span></span></small></sub>, <span class="word" id="word-3">has</span>',
+            '<span id="word-0" class="word">conserving</span> <span id="word-1" class="word">O</span><sub class="calibre9"><small class="calibre10"><span class="calibre10"><span class="calibre2"><span id="word-2" class="word">2</span></span></span></small></sub>, <span id="word-3" class="word">has</span>',
         ),
     ],
 )

@@ -1,4 +1,5 @@
 import allure
+import pytest
 from lexiflux.language.parse_html_text_content import parse_html_content, extract_content_from_html
 
 
@@ -277,3 +278,19 @@ def test_parse_html_text_content_with_escaped_chars():
 # '<span id="word-136" class="word">r/</span>',
 # '> <br/> So ',
 # '<span id="word-137" class="word">she</span>'
+
+
+@allure.epic("Book import")
+@allure.feature("Parse HTML text content")
+@pytest.mark.parametrize(
+    "html_str",
+    [
+        "<blockquote>majka je rekla</blockquote> <blockquote>da nemam</blockquote>",
+        "<dl><dt>term</dt><dd>definition</dd></dl>",
+        "<table><thead><tr><th>head</th></tr></thead><tbody><tr><td>cell</td></tr></tbody></table>",
+        "<main><figure><figcaption>caption</figcaption></figure></main>",
+    ],
+)
+def test_parse_html_text_content_html_tags_are_not_text(html_str):
+    plain_text, _, _ = parse_html_content(html_str)
+    assert "<" not in plain_text

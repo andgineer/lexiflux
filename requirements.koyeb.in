@@ -28,7 +28,6 @@ httpx
 requests
 transliterate
 trafilatura
-beautifulsoup4
 lxml
 lxml_html_clean
 chardet

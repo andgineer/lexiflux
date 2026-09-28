@@ -3,13 +3,14 @@
 import logging
 import os
 
-from bs4 import BeautifulSoup, Tag
 from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.views.decorators.http import require_POST
+from lxml import etree
+from pagesmith import etree_to_str, parse_partial_html
 
 from lexiflux.auth import smart_login_required
 from lexiflux.custom_user import get_custom_user
@@ -31,26 +32,25 @@ log = logging.getLogger()
 
 def rewire_epub_references(content: str, book: Book) -> str:
     """Replace image sources / link targets with the Django view URL."""
-    soup = BeautifulSoup(content, "html.parser")
+    root = parse_partial_html(content)
+    if root is None:
+        return content
 
-    rewire_epub_images(soup, book)
-    rewire_epub_links(soup)
+    rewire_epub_images(root, book)
+    rewire_epub_links(root)
 
-    return str(soup)
+    return etree_to_str(root)
 
 
-def rewire_epub_images(soup, book):
-    for img in soup.find_all("img"):
-        if not isinstance(img, Tag):
-            continue
-
+def rewire_epub_images(root: etree._Element, book: Book) -> None:
+    for img in root.iter("img"):
         original_src = img.get("src")
-        if not original_src or not isinstance(original_src, str):
+        if not original_src:
             continue
 
         new_src = lookup_image_in_database(original_src, book)
         if new_src:
-            img["src"] = new_src
+            img.set("src", new_src)
 
 
 def lookup_image_in_database(original_src, book):
@@ -76,21 +76,18 @@ def lookup_image_in_database(original_src, book):
     )
 
 
-def rewire_epub_links(soup):
-    for link in soup.find_all("a"):
-        if not isinstance(link, Tag):
-            continue
-
+def rewire_epub_links(root: etree._Element) -> None:
+    for link in root.iter("a"):
         href = link.get("href")
-        if not href or not isinstance(href, str):
+        if not href:
             continue
 
         if href.startswith(("http://", "https://", "ftp://", "mailto:")):
             continue  # Skip external links
 
         normalized_href = normalize_path(href)
-        link["href"] = "javascript:void(0);"
-        link["data-href"] = normalized_href
+        link.set("href", "javascript:void(0);")
+        link.set("data-href", normalized_href)
 
 
 def render_page(page_db: BookPage) -> str:

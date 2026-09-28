@@ -8,6 +8,7 @@ from django.test import TestCase
 from lexiflux.ebook.book_loader_url import BookLoaderURL
 from lexiflux.ebook.book_loader_base import MetadataField
 from lexiflux.models import Language, Author
+from tests.conftest import html_response
 
 
 @allure.epic("Book import")
@@ -28,10 +29,7 @@ class TestURLImportImages(TestCase):
         from pagesmith import parse_partial_html
 
         # Mock the main page request to avoid HTTP call
-        mock_response = MagicMock()
-        mock_response.text = "<html><body><h1>Test</h1></body></html>"
-        mock_response.raise_for_status.return_value = None
-        mock_requests.return_value = mock_response
+        mock_requests.return_value = html_response("<html><body><h1>Test</h1></body></html>")
 
         html_content = """
         <html>
@@ -93,10 +91,7 @@ class TestURLImportImages(TestCase):
     def test_create_with_images(self, mock_prepare, mock_download, mock_requests):
         """Test that create method calls image processing methods."""
         # Mock the main page request
-        mock_response = MagicMock()
-        mock_response.text = "<html><body><h1>Test</h1></body></html>"
-        mock_response.raise_for_status.return_value = None
-        mock_requests.return_value = mock_response
+        mock_requests.return_value = html_response("<html><body><h1>Test</h1></body></html>")
 
         loader = BookLoaderURL("https://example.com/test-page")
 

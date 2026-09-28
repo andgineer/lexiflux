@@ -1,6 +1,6 @@
 """Integration tests for URL import anchor map creation and internal link handling."""
 
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import allure
 import pytest
@@ -10,6 +10,7 @@ from django.test import Client
 
 from lexiflux.ebook.book_loader_url import BookLoaderURL
 from lexiflux.models import ReadingLoc
+from tests.conftest import html_response
 
 
 @allure.epic("Book import")
@@ -43,10 +44,7 @@ class TestUrlImportIntegration:
         """
 
         with patch("requests.get") as mock_get:
-            mock_response = MagicMock()
-            mock_response.text = html_content
-            mock_response.raise_for_status = MagicMock()
-            mock_get.return_value = mock_response
+            mock_get.return_value = html_response(html_content)
 
             loader = BookLoaderURL("https://example.com/test-article", cleaning_level="minimal")
             book = loader.create("")
@@ -100,10 +98,7 @@ class TestUrlImportIntegration:
         user.save()
 
         with patch("requests.get") as mock_get:
-            mock_response = MagicMock()
-            mock_response.text = html_content
-            mock_response.raise_for_status = MagicMock()
-            mock_get.return_value = mock_response
+            mock_get.return_value = html_response(html_content)
 
             loader = BookLoaderURL("https://example.com/nav-test")
             book = loader.create("")
@@ -163,10 +158,7 @@ class TestUrlImportIntegration:
 
         for cleaning_level in cleaning_levels:
             with patch("requests.get") as mock_get:
-                mock_response = MagicMock()
-                mock_response.text = html_content
-                mock_response.raise_for_status = MagicMock()
-                mock_get.return_value = mock_response
+                mock_get.return_value = html_response(html_content)
 
                 loader = BookLoaderURL(
                     "https://example.com/content-test", cleaning_level=cleaning_level
@@ -209,10 +201,7 @@ class TestUrlImportIntegration:
         """
 
         with patch("requests.get") as mock_get:
-            mock_response = MagicMock()
-            mock_response.text = html_content
-            mock_response.raise_for_status = MagicMock()
-            mock_get.return_value = mock_response
+            mock_get.return_value = html_response(html_content)
 
             loader = BookLoaderURL("https://example.com/metadata-test")
             book = loader.create("")
@@ -243,10 +232,7 @@ class TestUrlImportIntegration:
         """
 
         with patch("requests.get") as mock_get:
-            mock_response = MagicMock()
-            mock_response.text = html_content
-            mock_response.raise_for_status = MagicMock()
-            mock_get.return_value = mock_response
+            mock_get.return_value = html_response(html_content)
 
             loader = BookLoaderURL("https://example.com/error-test")
             book = loader.create("")
@@ -272,12 +258,9 @@ class TestUrlImportIntegration:
 
         for url, expected_filename in test_cases:
             with patch("requests.get") as mock_get:
-                mock_response = MagicMock()
-                mock_response.text = (
-                    "<html><head><title>Test</title></head><body><p>Content</p></body></html>"
+                mock_get.return_value = html_response(
+                    ("<html><head><title>Test</title></head><body><p>Content</p></body></html>")
                 )
-                mock_response.raise_for_status = MagicMock()
-                mock_get.return_value = mock_response
 
                 loader = BookLoaderURL(url)
                 filename = loader._get_filename_from_url()
@@ -306,10 +289,7 @@ class TestUrlImportIntegration:
         """
 
         with patch("requests.get") as mock_get:
-            mock_response = MagicMock()
-            mock_response.text = html_content
-            mock_response.raise_for_status = MagicMock()
-            mock_get.return_value = mock_response
+            mock_get.return_value = html_response(html_content)
 
             loader = BookLoaderURL("https://example.com/source-info-test")
             book = loader.create("")
@@ -392,10 +372,7 @@ class TestUrlImportIntegration:
         user.save()
 
         with patch("requests.get") as mock_get:
-            mock_response = MagicMock()
-            mock_response.text = html_content
-            mock_response.raise_for_status = MagicMock()
-            mock_get.return_value = mock_response
+            mock_get.return_value = html_response(html_content)
 
             # Use minimal cleaning to preserve internal links (crucial for this test)
             loader = BookLoaderURL(
@@ -564,10 +541,7 @@ class TestUrlImportIntegration:
         user.save()
 
         with patch("requests.get") as mock_get:
-            mock_response = MagicMock()
-            mock_response.text = html_content
-            mock_response.raise_for_status = MagicMock()
-            mock_get.return_value = mock_response
+            mock_get.return_value = html_response(html_content)
 
             loader = BookLoaderURL("https://example.com/content-nav-test", cleaning_level="minimal")
             book = loader.create("")

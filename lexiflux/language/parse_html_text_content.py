@@ -4,42 +4,19 @@ import logging
 from html import unescape
 from html.parser import HTMLParser
 
+from lxml.html import defs as html_defs
+
 TAGS_EXCLUDED_CONTENT = {"script", "style", "svg"}
-VALID_TAGS = set(HTMLParser.CDATA_CONTENT_ELEMENTS) | {
-    "html",
-    "head",
-    "body",
-    "div",
-    "p",
-    "span",
-    "a",
-    "img",
-    "br",
-    "hr",
-    "table",
-    "tr",
-    "td",
-    "th",
-    "ul",
-    "ol",
-    "li",
-    "h1",
-    "h2",
-    "h3",
-    "h4",
-    "h5",
-    "h6",
-    "strong",
-    "em",
-    "b",
-    "i",
-    "u",
-    "pre",
-    "code",
-    "title",
-    "sup",
-    "sub",
-    "small",
+# Tags lxml knows plus the HTML5 ones it lacks; any other tag stays in the text as is
+VALID_TAGS = html_defs.tags | {
+    "bdi",
+    "data",
+    "dialog",
+    "main",
+    "picture",
+    "search",
+    "slot",
+    "template",
 }
 
 

@@ -1,6 +1,6 @@
 import allure
 import pytest
-from bs4 import BeautifulSoup
+from lxml import html as lxml_html
 from django.urls import reverse
 from django.contrib.auth import get_user_model
 from lexiflux.models import ReadingLoc, ReaderSettings, BookImage
@@ -34,10 +34,9 @@ def test_reader_view_keeps_line_breaks_only_in_plain_text_article_panels(client,
     client.force_login(user)
     response = client.get(reverse("reader") + f"?book-code={book.code}")
 
-    soup = BeautifulSoup(response.content.decode(), "html.parser")
-    panels = soup.select(".lexical-content")
+    panels = lxml_html.document_fromstring(response.content.decode()).find_class("lexical-content")
     # Defaults: Article (AI dictionary), In depth, Sentence, glosbe (Site).
-    assert ["keep-line-breaks" in panel["class"] for panel in panels] == [True, True, True, False]
+    assert ["keep-line-breaks" in panel.classes for panel in panels] == [True, True, True, False]
 
 
 @allure.epic("Pages endpoints")
@@ -340,14 +339,14 @@ def test_set_sources_replaces_image_sources(book, client):
     test_html = '<img src="test.jpg"><img src="../images/test.jpg">'
     processed_html = rewire_epub_references(test_html, book)
 
-    soup = BeautifulSoup(processed_html, "html.parser")
-    images = soup.find_all("img")
+    images = lxml_html.fragment_fromstring(processed_html, create_parent="div").findall(".//img")
 
     expected_url = reverse(
         "serve_book_image", kwargs={"book_code": book.code, "image_filename": test_image.filename}
     )
 
-    assert all(img["src"] == expected_url for img in images)
+    assert len(images) == 2
+    assert all(img.get("src") == expected_url for img in images)
 
 
 @allure.epic("Pages endpoints")
@@ -364,9 +363,8 @@ def test_set_sources_handles_internal_links(book):
         <a href="https://another.com">Another External</a>
     """
     processed_html = rewire_epub_references(test_html, book)
-    soup = BeautifulSoup(processed_html, "html.parser")
-
-    links = soup.find_all("a")
+    root = lxml_html.fragment_fromstring(processed_html, create_parent="div")
+    links = {link.text_content(): link for link in root.findall(".//a")}
 
     # Internal links should be converted to javascript:void(0); with original href stored in data-href
     internal_links = [
@@ -375,9 +373,9 @@ def test_set_sources_handles_internal_links(book):
         ("Internal Path", "folder/page.html"),  # normalized path
     ]
     for text, original_href in internal_links:
-        link = soup.find("a", string=text)
-        assert link["href"] == "javascript:void(0);"
-        assert link["data-href"] == original_href
+        link = links[text]
+        assert link.get("href") == "javascript:void(0);"
+        assert link.get("data-href") == original_href
 
     # External links (with protocol) should remain unchanged
     external_links = [
@@ -385,9 +383,9 @@ def test_set_sources_handles_internal_links(book):
         ("Another External", "https://another.com"),
     ]
     for text, original_href in external_links:
-        link = soup.find("a", string=text)
-        assert link["href"] == original_href
-        assert "data-href" not in link.attrs
+        link = links[text]
+        assert link.get("href") == original_href
+        assert "data-href" not in link.attrib
 
 
 @allure.epic("Pages endpoints")

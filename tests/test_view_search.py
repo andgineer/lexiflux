@@ -2,6 +2,7 @@ import allure
 import pytest
 from django.urls import reverse
 
+from lexiflux.models import normalize_for_search
 from lexiflux.views.search_view import (
     find_word_boundary,
     get_context_boundaries,
@@ -330,3 +331,19 @@ def test_create_highlighted_context_at_boundaries():
     # Test at end - correct positions for " tes"
     highlighted = create_highlighted_context(text, 17, 4)
     assert 'Test string with <span class="bg-warning">test</span> at end' == highlighted
+
+
+@allure.epic("Pages endpoints")
+@allure.feature("Reader")
+@pytest.mark.parametrize(
+    ("text", "expected"),
+    [
+        ("<p>Vozdviženje <b>Časnog</b></p> krsta", "vozdvizenje casnog krsta"),
+        ("AT&amp;T and AT&T", "at&t and at&t"),
+        ("<script>var x = 1;</script><style>p {}</style>text", "text"),
+        ("Časnog", "casnog"),
+        ("", ""),
+    ],
+)
+def test_normalize_for_search(text, expected):
+    assert normalize_for_search(text) == expected

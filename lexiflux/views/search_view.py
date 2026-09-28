@@ -5,26 +5,19 @@ import re
 from dataclasses import dataclass
 from html import escape
 
-from bs4 import BeautifulSoup
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404
 from django.views.decorators.http import require_POST
 
 from lexiflux.auth import smart_login_required
 from lexiflux.custom_user import get_custom_user
-from lexiflux.models import Book, BookPage, normalize_for_search
+from lexiflux.models import Book, BookPage, html_to_text, normalize_for_search
 
 logger = logging.getLogger(__name__)
 
 MAX_SEARCH_RESULTS = 20
 CONTEXT_WORDS_AROUND_MATCH = 5
 MIN_CHARS_TO_SEARCH = 3
-
-
-def strip_html(text: str) -> str:
-    """Remove HTML tags from text."""
-    soup = BeautifulSoup(text, "html.parser")
-    return soup.get_text()  # type: ignore
 
 
 @dataclass
@@ -107,7 +100,7 @@ def find_matches_in_page(  # pylint: disable=too-many-locals
 ) -> list[SearchResult]:
     """Find all matches of search_term in the page."""
     results = []
-    content = strip_html(page.content)
+    content = html_to_text(page.content)
     search_term_norm = normalize_for_search(search_term)
 
     # Split into words on any non-word characters

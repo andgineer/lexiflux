@@ -7,7 +7,6 @@ from datetime import timedelta
 from html import unescape
 from typing import Any, Optional, TypeAlias
 
-from bs4 import BeautifulSoup
 from django.conf import settings
 from django.contrib.auth.models import AbstractUser
 from django.core.exceptions import ObjectDoesNotExist, PermissionDenied, ValidationError
@@ -15,6 +14,8 @@ from django.db import models
 from django.db.models import Manager, Q, QuerySet
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
+from lxml import etree
+from lxml import html as lxml_html
 from transliterate import get_available_language_codes, translit
 from unidecode import unidecode
 
@@ -37,12 +38,18 @@ Toc: TypeAlias = list[TocEntry]
 log = logging.getLogger()
 
 
+def html_to_text(html: str) -> str:
+    """Text content of an HTML fragment, without script and style code."""
+    if not html.strip():
+        return ""
+    root = lxml_html.fragment_fromstring(html, create_parent="div")
+    etree.strip_elements(root, "script", "style", with_tail=False)
+    return str(root.text_content())
+
+
 def normalize_for_search(text: str) -> str:
     """Remove diacritics, HTML tags and convert to lowercase."""
-    # First remove HTML tags
-    soup = BeautifulSoup(text, "html.parser")
-    text_only = soup.get_text()
-    return unidecode(text_only).lower()
+    return unidecode(html_to_text(text)).lower()
 
 
 class LexicalArticleType(models.TextChoices):  # type: ignore  # pylint: disable=too-many-ancestors

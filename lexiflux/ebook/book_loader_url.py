@@ -4,6 +4,7 @@ import datetime
 import enum
 import logging
 import os
+import re
 from pprint import pformat
 from typing import Any
 from urllib.parse import urljoin, urlparse
@@ -21,6 +22,25 @@ from lexiflux.models import BookImage
 from lexiflux.timing import timing
 
 log = logging.getLogger()
+
+
+META_CHARSET = re.compile(rb"""<meta[^>]+charset\s*=\s*["']?\s*([\w.:-]+)""", re.IGNORECASE)
+
+
+def decode_html(response: requests.Response) -> str:
+    """Decode a page as a browser does: header charset, then <meta charset>, then a guess."""
+    # requests assumes ISO-8859-1 for text/* without a charset, which garbles UTF-8 pages
+    if "charset=" in response.headers.get("content-type", "").lower():
+        return response.text
+    if declared := META_CHARSET.search(response.content):
+        try:
+            return response.content.decode(declared[1].decode(), errors="replace")
+        except LookupError:
+            pass
+    try:
+        return response.content.decode("utf-8-sig")
+    except UnicodeDecodeError:
+        return response.content.decode(response.apparent_encoding or "utf-8", errors="replace")
 
 
 class CleaningLevel(str, enum.Enum):
@@ -87,7 +107,7 @@ class BookLoaderURL(BookLoaderHtml):
             with timing(f"Loading from {self.url}"):
                 response = requests.get(self.url, headers=self.headers, timeout=30)
                 response.raise_for_status()
-                self.html_content = response.text
+                self.html_content = decode_html(response)
 
             with timing("Extract metadata"):
                 # Before extracting readable to not lose any metadata
