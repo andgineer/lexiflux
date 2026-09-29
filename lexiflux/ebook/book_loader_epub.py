@@ -4,9 +4,10 @@ import logging
 import os
 import random
 import re
+import unicodedata
 from collections import defaultdict
 from collections.abc import Iterable, Iterator
-from typing import Any
+from typing import IO, Any
 
 from ebooklib import ITEM_DOCUMENT, ITEM_IMAGE
 from ebooklib import epub as ebooklib
@@ -22,6 +23,48 @@ log = logging.getLogger()
 
 MAX_ITEM_SIZE = 6000
 PAGES_NUM_TO_DEBUG = 3
+
+
+def loose_file_name(name: str) -> str:
+    """Names differing only in letter case or in how non-ASCII letters were encoded match."""
+    return re.sub(r"[^\x00-\x7f]+", "?", unicodedata.normalize("NFC", name)).lower()
+
+
+class LenientEpubBook(ebooklib.EpubBook):
+    def get_metadata(self, namespace: str, name: str) -> list[tuple[str, dict[str, str]]]:
+        try:
+            return super().get_metadata(namespace, name)
+        except KeyError:  # the book has no metadata at all in this namespace, e.g. no Dublin Core
+            return []
+
+
+class LenientEpubReader(ebooklib.EpubReader):
+    """Read a book even if its manifest names files differently or lists missing ones."""
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+        self.book = LenientEpubBook()
+
+    def read_file(self, name: str) -> bytes:
+        try:
+            return super().read_file(name)
+        except KeyError:
+            if name in ("META-INF/container.xml", self.opf_file):
+                raise
+        loose_name = loose_file_name(name)
+        matches = [n for n in self.zf.namelist() if loose_file_name(n) == loose_name]
+        if len(matches) == 1:
+            log.warning("EPUB lists %s, reading archive file %s instead", name, matches[0])
+            return self.zf.read(matches[0])
+        log.warning("EPUB lists %s, but the archive has no such file; importing without it", name)
+        return b""
+
+
+def read_epub(file_path: str | IO[str]) -> ebooklib.EpubBook:
+    reader = LenientEpubReader(file_path)
+    book = reader.load()
+    reader.process()
+    return book
 
 
 class BookLoaderEpub(BookLoaderBase):
@@ -99,7 +142,7 @@ class BookLoaderEpub(BookLoaderBase):
         return page
 
     def load_text(self) -> None:
-        self.epub = ebooklib.read_epub(self.file_path)
+        self.epub = read_epub(self.file_path)
 
     def detect_meta(self) -> tuple[dict[str, Any], int, int]:
         """Read the book and extract meta if it is present.

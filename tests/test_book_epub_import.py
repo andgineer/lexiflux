@@ -1,3 +1,5 @@
+import re
+import zipfile
 from unittest.mock import patch, MagicMock
 
 import allure
@@ -8,6 +10,7 @@ from lexiflux.ebook.book_loader_epub import (
     flatten_list,
     extract_headings,
     BookLoaderEpub,
+    LenientEpubReader,
     href_hierarchy,
 )
 from pagesmith.html_page_splitter import PAGE_LENGTH_TARGET
@@ -477,7 +480,7 @@ def test_generate_toc_fallback_to_spine_item_name(book_epub_loader):
     mock_epub.get_item_with_id.return_value = mock_item
 
     # Patch the loader to use the mocked EPUB
-    with patch("lexiflux.ebook.book_loader_epub.ebooklib.read_epub", return_value=mock_epub):
+    with patch("lexiflux.ebook.book_loader_epub.read_epub", return_value=mock_epub):
         loader = book_epub_loader
         loader.epub = mock_epub  # Assign the mocked EPUB
 
@@ -517,7 +520,7 @@ def test_generate_toc_from_spine_when_toc_is_empty(book_epub_loader):
     mock_epub.get_item_with_id.side_effect = lambda x: mock_items[x]
 
     # Patch the BookLoaderEpub object to use the mocked EPUB
-    with patch("lexiflux.ebook.book_loader_epub.ebooklib.read_epub", return_value=mock_epub):
+    with patch("lexiflux.ebook.book_loader_epub.read_epub", return_value=mock_epub):
         loader = book_epub_loader
         loader.epub = mock_epub  # Simulate loading the mocked EPUB
 
@@ -531,3 +534,53 @@ def test_generate_toc_from_spine_when_toc_is_empty(book_epub_loader):
         }
 
         assert generated_toc == expected_toc, "TOC should be generated from spine when TOC is empty"
+
+
+@allure.epic("Book import")
+@allure.feature("EPUB import: damaged archive")
+def test_lenient_reader_reads_damaged_epub(tmp_path):
+    book = epub.EpubBook()
+    book.set_identifier("damaged")
+    book.set_title("Damaged")
+    book.set_language("sr")
+    contents = epub.EpubHtml(
+        title="Sadržaj", file_name="Text/Sadržaj.html", content="<h1>Sadržaj</h1>"
+    )
+    chapter = epub.EpubHtml(
+        title="Chapter", file_name="Text/Chapter.html", content="<p>Prvo poglavlje</p>"
+    )
+    image = epub.EpubImage(
+        uid="picture", file_name="Images/picture.jpg", media_type="image/jpeg", content=b"x" * 200
+    )
+    for item in (contents, chapter, image, epub.EpubNcx(), epub.EpubNav()):
+        book.add_item(item)
+    book.spine = [contents, chapter]
+    written = tmp_path / "written.epub"
+    epub.write_epub(str(written), book)
+
+    # As broken books come: a name re-encoded, a name in other case, a file lost, no Dublin Core
+    renames = {
+        "EPUB/Text/Sadržaj.html": "EPUB/Text/Sadr┼╛aj.html",
+        "EPUB/Text/Chapter.html": "EPUB/text/chapter.html",
+    }
+    damaged = tmp_path / "damaged.epub"
+    with zipfile.ZipFile(written) as source, zipfile.ZipFile(damaged, "w") as target:
+        assert set(renames) | {"EPUB/Images/picture.jpg", "EPUB/content.opf"} <= set(
+            source.namelist()
+        )
+        for info in source.infolist():
+            content = source.read(info)
+            if info.filename == "EPUB/Images/picture.jpg":
+                continue
+            if info.filename == "EPUB/content.opf":
+                content = re.sub(rb'<dc:\w+[^>]*>[^<]*</dc:\w+>| xmlns:dc="[^"]*"', b"", content)
+            target.writestr(renames.get(info.filename, info.filename), content)
+
+    reader = LenientEpubReader(str(damaged))
+    loaded = reader.load()
+    reader.process()
+
+    assert "Sadržaj" in loaded.get_item_with_href("Text/Sadržaj.html").get_content().decode()
+    assert b"Prvo poglavlje" in loaded.get_item_with_href("Text/Chapter.html").get_content()
+    assert loaded.get_item_with_href("Images/picture.jpg").get_content() == b""
+    assert loaded.get_metadata("DC", "title") == []

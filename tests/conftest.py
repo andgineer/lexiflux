@@ -382,8 +382,8 @@ def book_epub(db_init):
     # Mock other necessary attributes and methods
     mock_book.get_metadata.return_value = [("", "Sample Title")]
 
-    # Patch epub.read_epub to return our mock book
-    with patch("ebooklib.epub.read_epub", return_value=mock_book):
+    # Patch read_epub to return our mock book
+    with patch("lexiflux.ebook.book_loader_epub.read_epub", return_value=mock_book):
         loader = BookLoaderEpub("dummy_path")
         loader.detect_meta()  # This will set up the epub attribute
         return loader

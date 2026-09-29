@@ -97,7 +97,7 @@ class TestEpubTocIntegration:
             ("DC", "language"): [("en", {})],
         }.get((dc_type, field), [])
 
-        with patch("ebooklib.epub.read_epub", return_value=mock_book):
+        with patch("lexiflux.ebook.book_loader_epub.read_epub", return_value=mock_book):
             loader = BookLoaderEpub("dummy_path")
             book = loader.create("")
 
@@ -184,7 +184,7 @@ class TestEpubTocIntegration:
             ("DC", "language"): [("en", {})],
         }.get((dc_type, field), [])
 
-        with patch("ebooklib.epub.read_epub", return_value=mock_book):
+        with patch("lexiflux.ebook.book_loader_epub.read_epub", return_value=mock_book):
             loader = BookLoaderEpub("dummy_path")
             book = loader.create("")
 
