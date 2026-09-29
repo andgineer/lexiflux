@@ -23,11 +23,13 @@ import socket
 import httpx
 import pytest
 import requests
+import simplemma
 from unittest.mock import mock_open, patch, MagicMock
 
 from ebooklib import epub, ITEM_DOCUMENT
 from lexiflux.ebook.book_loader_base import BookLoaderBase, MetadataField
 from lexiflux.ebook.book_loader_plain_text import BookLoaderPlainText
+from lexiflux.language.wiktionary import LEMMATISER_LANGUAGES
 
 from lexiflux.ebook.book_loader_epub import BookLoaderEpub
 from lexiflux.language.google_languages import populate_languages
@@ -416,6 +418,13 @@ def server_keys(tmp_path, monkeypatch):
         if name.endswith("_API_KEY"):
             monkeypatch.delenv(name)
     return lambda ref, value: monkeypatch.setenv(ref, value)
+
+
+@pytest.fixture(scope="session")
+def loaded_lemmatisers() -> None:
+    """Load the lemmatiser data ahead: its first load is timed within a lookup's 2.8 s."""
+    for language in LEMMATISER_LANGUAGES.values():
+        simplemma.lemmatize("word", lang=language, low_memory=True)
 
 
 @pytest.fixture(autouse=True)

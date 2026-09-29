@@ -125,7 +125,7 @@ def test_popup_shows_the_busy_alert_when_the_pool_stalls(
 
 
 @pytest.fixture
-def kaikki() -> Iterator[Kaikki]:
+def kaikki(loaded_lemmatisers) -> Iterator[Kaikki]:
     fake = Kaikki()
     with patch.object(wiktionary, "http_client", fake.client):
         yield fake

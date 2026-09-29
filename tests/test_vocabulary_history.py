@@ -40,7 +40,7 @@ def pool():
 
 
 @pytest.fixture
-def kaikki(db):
+def kaikki(db, loaded_lemmatisers):
     fake = Kaikki()
     with patch.object(wiktionary, "http_client", fake.client):
         yield fake

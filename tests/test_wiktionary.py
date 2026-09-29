@@ -52,7 +52,7 @@ KING_IN_MANDARIN = ["國王 /国王, 王", "王, 國王 /国王", "K (kei, kǎi)
 
 
 @pytest.fixture
-def kaikki(db):
+def kaikki(db, loaded_lemmatisers):
     fake = Kaikki()
     with patch.object(wiktionary, "http_client", fake.client):
         yield fake
