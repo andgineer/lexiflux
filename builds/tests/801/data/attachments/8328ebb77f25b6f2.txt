@@ -1,0 +1,20 @@
+WARNING  lexiflux.language.llm:llm.py:391 AI article failed: ProviderError('raw-secret-detail') model=pool type=Inline translation
+ERROR    lexiflux.language.llm:llm.py:427 AI article failed with an unexpected error
+Traceback (most recent call last):
+  File "/home/runner/work/lexiflux/lexiflux/lexiflux/language/llm.py", line 329, in translate_inline
+    text = call.result(timeout=INLINE_TRANSLATION_SECONDS)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/concurrent/futures/_base.py", line 449, in result
+    return self.__get_result()
+           ^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/concurrent/futures/_base.py", line 401, in __get_result
+    raise self._exception
+  File "/home/runner/work/lexiflux/lexiflux/lexiflux/language/llm.py", line 309, in _answer_pool
+    call.set_result(_ask_pool(req))
+                    ^^^^^^^^^^^^^^
+  File "/home/runner/work/lexiflux/lexiflux/lexiflux/language/llm.py", line 298, in _ask_pool
+    answer = llms_for(req.user).ask(
+             ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/work/lexiflux/lexiflux/tests/test_llm_translation.py", line 53, in ask
+    raise answer
+llmbroker.exceptions.ProviderError: raw-secret-detail

@@ -1,0 +1,1 @@
+WARNING  lexiflux.language.llm:llm.py:391 AI article failed: LLMTimeoutError('wait ran out') model=pool type=AI dictionary

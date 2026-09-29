@@ -1,0 +1,6 @@
+2026-09-27 07:59:20,739 INFO signals Successfully created language preferences for user testuser (ID: 1)
+2026-09-27 07:59:20,889 INFO lexical_views Selected text: springs
+2026-09-27 07:59:20,892 INFO _client HTTP Request: GET https://kaikki.org/ruwiktionary/%D0%90%D0%BD%D0%B3%D0%BB%D0%B8%D0%B9%D1%81%D0%BA%D0%B8%D0%B9/meaning/s/sp/springs.jsonl "HTTP/1.1 404 Not Found"
+2026-09-27 07:59:20,892 INFO _client HTTP Request: GET https://kaikki.org/dictionary/English/meaning/s/sp/springs.jsonl "HTTP/1.1 200 OK"
+2026-09-27 07:59:20,893 INFO _client HTTP Request: GET https://kaikki.org/ruwiktionary/%D0%90%D0%BD%D0%B3%D0%BB%D0%B8%D0%B9%D1%81%D0%BA%D0%B8%D0%B9/meaning/s/sp/spring.jsonl "HTTP/1.1 200 OK"
+2026-09-27 07:59:20,893 INFO _client HTTP Request: GET https://kaikki.org/dictionary/English/meaning/s/sp/spring.jsonl "HTTP/1.1 200 OK"

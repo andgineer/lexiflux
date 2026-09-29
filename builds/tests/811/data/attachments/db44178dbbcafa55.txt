@@ -1,0 +1,4 @@
+2026-09-28 15:42:53,074 INFO signals Successfully created language preferences for user testuser (ID: 1)
+2026-09-28 15:42:53,084 INFO user_modal   - Serbian -> English (ID: 1)
+2026-09-28 15:42:53,085 INFO user_modal New language: Russian (ru)
+2026-09-28 15:42:53,086 INFO user_modal Old user language: Georgian

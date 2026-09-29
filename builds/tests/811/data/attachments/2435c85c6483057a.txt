@@ -1,0 +1,2 @@
+2026-09-28 15:42:46,721 INFO signals Successfully created language preferences for user testuser (ID: 1)
+2026-09-28 15:42:46,900 WARNING lexical_views Dictionary article failed: unsupported: raw-secret-detail <b>

@@ -1,0 +1,4 @@
+2026-09-29 07:12:32,006 INFO signals Successfully created language preferences for user testuser (ID: 1)
+2026-09-29 07:12:32,408 INFO lexical_views Selected text: page
+2026-09-29 07:12:32,412 INFO _client HTTP Request: GET https://translate.googleapis.com/translate_a/single?client=dict-chrome-ex&sl=en&tl=ru&dt=t&dt=bd&q=page "HTTP/1.1 200 OK"
+2026-09-29 07:12:32,415 WARNING lexical_views History translation of 'page' failed: NoLLMAvailableError('No LLM available: no keys')

@@ -1,0 +1,2 @@
+2026-09-28 15:43:32,039 INFO _client HTTP Request: GET https://kaikki.org/ruwiktionary/%D0%90%D0%BD%D0%B3%D0%BB%D0%B8%D0%B9%D1%81%D0%BA%D0%B8%D0%B9/meaning/n/no/nonexistent.jsonl "HTTP/1.1 404 Not Found"
+2026-09-28 15:43:32,040 INFO _client HTTP Request: GET https://kaikki.org/dictionary/English/meaning/n/no/nonexistent.jsonl "HTTP/1.1 404 Not Found"

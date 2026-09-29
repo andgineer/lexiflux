@@ -1,0 +1,4 @@
+INFO     lexiflux.signals:signals.py:55 Successfully created language preferences for user testuser (ID: 1)
+INFO     lexiflux.views.lexical_views:lexical_views.py:242 Selected text: page
+WARNING  lexiflux.language.llm:llm.py:391 AI article failed: NoLLMAvailableError('none') model=pool type=Inline translation
+WARNING  llmbroker.broker:presets.py:154 preset freetier: nothing cached and nothing is fetched automatically — falling back to the bundled copy, frozen at this llmbroker release

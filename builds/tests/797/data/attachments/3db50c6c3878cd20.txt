@@ -1,0 +1,26 @@
+INFO     root:timing.py:14 Loading from https://example.com/source-info-test completed in 0.000 seconds
+INFO     root:timing.py:14 Extract metadata completed in 0.001 seconds
+INFO     root:timing.py:14 Extracting IDs with internal links completed in 0.000 seconds
+DEBUG    trafilatura.main_extractor:main_extractor.py:515 Recovering wild text elements
+DEBUG    trafilatura.htmlprocessing:htmlprocessing.py:160 list link text/total: 12/30 – short elems/total: 0/1
+DEBUG    trafilatura.htmlprocessing:htmlprocessing.py:160 list link text/total: 12/30 – short elems/total: 0/1
+DEBUG    trafilatura.main_extractor:main_extractor.py:40 extra in p: p Original content.
+DEBUG    trafilatura.readability_lxml:readability_lxml.py:217 Top 5: body 1.6581395348837207
+DEBUG    trafilatura.readability_lxml:readability_lxml.py:217 Top 5: html 0.9199999999999999
+DEBUG    trafilatura.readability_lxml:readability_lxml.py:429 Removed  0.000 div with weight 0 cause it has too many links 0.279 for its weight 0.
+DEBUG    trafilatura.readability_lxml:readability_lxml.py:217 Top 5: div 4.433720930232558
+DEBUG    trafilatura.readability_lxml:readability_lxml.py:217 Top 5: body 1.6581395348837207
+DEBUG    trafilatura.readability_lxml:readability_lxml.py:429 Removed  0.000 div with weight 0 cause it has too many links 0.279 for its weight 0.
+DEBUG    trafilatura.readability_lxml:readability_lxml.py:429 Removed  0.000 div with weight 0 cause it has too short content length 0 without a single image.
+DEBUG    trafilatura.external:external.py:64 extracted length: 0 (algorithm) 31 (extraction)
+DEBUG    trafilatura.external:external.py:92 using custom extraction: None
+DEBUG    trafilatura.external:external.py:96 unclean document triggering justext examination: None
+DEBUG    trafilatura.core:core.py:125 non-clean extracted length: 43 (extraction)
+DEBUG    trafilatura.core:core.py:316 not enough comments: None
+INFO     root:timing.py:14 Extracting readable HTML completed in 0.006 seconds
+INFO     root:timing.py:14 Parse extracted HTML completed in 0.000 seconds
+INFO     root:timing.py:14 Adding source info completed in 0.000 seconds
+INFO     root:timing.py:14 Cleared HTML completed in 0.000 seconds
+INFO     root:book_loader_url.py:221 No images found in the content
+INFO     root:timing.py:14 Iterate over pages and save them completed in 0.001 seconds
+INFO     root:book_loader_url.py:257 No images to download

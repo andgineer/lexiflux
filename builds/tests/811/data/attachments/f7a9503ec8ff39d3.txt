@@ -1,0 +1,29 @@
+2026-09-28 15:43:00,441 INFO signals Successfully created language preferences for user testuser (ID: 1)
+2026-09-28 15:43:00,621 INFO lexical_views Selected text: springs
+2026-09-28 15:43:00,624 INFO _client HTTP Request: GET https://kaikki.org/ruwiktionary/%D0%90%D0%BD%D0%B3%D0%BB%D0%B8%D0%B9%D1%81%D0%BA%D0%B8%D0%B9/meaning/s/sp/springs.jsonl "HTTP/1.1 404 Not Found"
+2026-09-28 15:43:00,625 INFO _client HTTP Request: GET https://kaikki.org/dictionary/English/meaning/s/sp/springs.jsonl "HTTP/1.1 200 OK"
+2026-09-28 15:43:00,625 INFO _client HTTP Request: GET https://kaikki.org/ruwiktionary/%D0%90%D0%BD%D0%B3%D0%BB%D0%B8%D0%B9%D1%81%D0%BA%D0%B8%D0%B9/meaning/s/sp/spring.jsonl "HTTP/1.1 200 OK"
+2026-09-28 15:43:00,626 INFO _client HTTP Request: GET https://kaikki.org/dictionary/English/meaning/s/sp/spring.jsonl "HTTP/1.1 200 OK"
+2026-09-28 15:43:00,633 ERROR lexical_views History translation of 'springs' failed
+Traceback (most recent call last):
+  File "/home/runner/work/lexiflux/lexiflux/lexiflux/views/lexical_views.py", line 369, in _history_from_llm
+    answer = ask_inline_translation(request)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/work/lexiflux/lexiflux/lexiflux/language/llm.py", line 330, in ask_inline_translation
+    text = call.result(timeout=INLINE_TRANSLATION_SECONDS)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/concurrent/futures/_base.py", line 449, in result
+    return self.__get_result()
+           ^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/concurrent/futures/_base.py", line 401, in __get_result
+    raise self._exception
+  File "/home/runner/work/lexiflux/lexiflux/lexiflux/language/llm.py", line 310, in _answer_pool
+    call.set_result(_ask_pool(req))
+                    ^^^^^^^^^^^^^^
+  File "/home/runner/work/lexiflux/lexiflux/lexiflux/language/llm.py", line 299, in _ask_pool
+    answer = llms_for(req.user).ask(
+             ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/work/lexiflux/lexiflux/tests/test_vocabulary_history.py", line 31, in ask
+    raise answer
+ProcessLookupError: unexpected
+2026-09-28 15:43:00,802 INFO lexical_views Selected text: springs

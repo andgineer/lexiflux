@@ -1,0 +1,2 @@
+2026-09-29 06:23:33,413 INFO _client HTTP Request: GET https://kaikki.org/ruwiktionary/%D0%A1%D0%B5%D1%80%D0%B1%D1%81%D0%BA%D0%B8%D0%B9/meaning/%D0%BC/%D0%BC%D0%BB/%D0%BC%D0%BB%D0%B8%D1%98%D0%B5%D0%BA%D0%BE.jsonl "HTTP/1.1 404 Not Found"
+2026-09-29 06:23:33,413 INFO _client HTTP Request: GET https://kaikki.org/dictionary/Serbo-Croatian/meaning/m/ml/mlijeko.jsonl "HTTP/1.1 200 OK"

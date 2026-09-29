@@ -1,0 +1,5 @@
+INFO     lexiflux.signals:signals.py:55 Successfully created language preferences for user testuser (ID: 1)
+INFO     root:user_modal.py:23   - Serbian -> English (ID: 1)
+INFO     root:user_modal.py:23   - Serbian -> English (ID: 1)
+INFO     root:user_modal.py:33 New language: English (en)
+INFO     root:user_modal.py:36 Old user language: None

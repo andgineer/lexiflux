@@ -1,0 +1,5 @@
+2026-09-25 18:54:07,501 INFO _client HTTP Request: GET https://translate.googleapis.com/translate_a/single?client=dict-chrome-ex&sl=sr&tl=ru&dt=t&dt=bd&q=%D0%B3%D1%80%D0%B0%D0%B4 "HTTP/1.1 429 Too Many Requests"
+2026-09-25 18:54:07,502 WARNING translation Google client dict-chrome-ex refused: HTTP 429
+2026-09-25 18:54:07,502 INFO _client HTTP Request: GET https://translate.googleapis.com/translate_a/single?client=gtx&sl=sr&tl=ru&dt=t&dt=bd&q=%D0%B3%D1%80%D0%B0%D0%B4 "HTTP/1.1 403 Forbidden"
+2026-09-25 18:54:07,502 WARNING translation Google client gtx refused: HTTP 403
+2026-09-25 18:54:07,502 INFO _client HTTP Request: GET https://translate.googleapis.com/translate_a/single?client=at&sl=sr&tl=ru&dt=t&dt=bd&q=%D0%B3%D1%80%D0%B0%D0%B4 "HTTP/1.1 200 OK"

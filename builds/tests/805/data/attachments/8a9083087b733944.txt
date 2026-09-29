@@ -1,0 +1,11 @@
+2026-09-27 08:48:39,481 WARNING google_languages Warning: Egyptian Arabic not found in the database for group Arabic.
+2026-09-27 08:48:40,013 INFO signals Successfully created language preferences for user testuser (ID: 5)
+2026-09-27 08:48:40,070 INFO reader_views Opening book the-old-armchair at page 1 for user testuser
+2026-09-27 08:48:40,082 INFO models Reading location updated for the-old-armchair: 1(1):0/0.0
+[{'page_number': 1, 'word': 0}]/0
+2026-09-27 08:48:40,083 INFO reader_views Jump status: book the-old-armchair, is_first_jump True, is_last_jump True
+2026-09-27 08:48:40,686 INFO lexical_views Selected text: springs
+2026-09-27 08:48:40,689 INFO _client HTTP Request: GET https://kaikki.org/ruwiktionary/%D0%90%D0%BD%D0%B3%D0%BB%D0%B8%D0%B9%D1%81%D0%BA%D0%B8%D0%B9/meaning/s/sp/springs.jsonl "HTTP/1.1 404 Not Found"
+2026-09-27 08:48:40,689 INFO _client HTTP Request: GET https://kaikki.org/dictionary/English/meaning/s/sp/springs.jsonl "HTTP/1.1 200 OK"
+2026-09-27 08:48:40,690 INFO _client HTTP Request: GET https://kaikki.org/ruwiktionary/%D0%90%D0%BD%D0%B3%D0%BB%D0%B8%D0%B9%D1%81%D0%BA%D0%B8%D0%B9/meaning/s/sp/spring.jsonl "HTTP/1.1 200 OK"
+2026-09-27 08:48:40,691 INFO _client HTTP Request: GET https://kaikki.org/dictionary/English/meaning/s/sp/spring.jsonl "HTTP/1.1 200 OK"

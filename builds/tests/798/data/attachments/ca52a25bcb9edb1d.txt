@@ -1,0 +1,3 @@
+2026-09-22 11:58:10,084 WARNING google_languages Warning: Egyptian Arabic not found in the database for group Arabic.
+2026-09-22 11:58:10,363 INFO signals Successfully created language preferences for user testuser2 (ID: 10)
+2026-09-22 11:58:24,847 INFO language_preferences_views Error checking translation from serbian to english with GoogleTranslator: Server Error: You made too many requests to the server.According to google, you are allowed to make 5 requests per secondand up to 200k requests per day. You can wait and try again later oryou can try the translate_batch function

@@ -1,0 +1,1 @@
+ERROR    lexiflux.anki.anki_connect:anki_connect.py:108 Unexpected error when adding notes to Anki: 502 Bad Gateway

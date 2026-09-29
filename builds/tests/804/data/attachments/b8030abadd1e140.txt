@@ -1,0 +1,3 @@
+INFO     lexiflux.anki.anki_connect:anki_connect.py:85 result {'error': 'Critical Anki error'}
+ERROR    lexiflux.anki.anki_connect:anki_connect.py:99 Unexpected AnkiConnect errors
+ERROR    lexiflux.anki.anki_connect:anki_connect.py:108 Unexpected error when adding notes to Anki: AnkiConnect error: Critical Anki error

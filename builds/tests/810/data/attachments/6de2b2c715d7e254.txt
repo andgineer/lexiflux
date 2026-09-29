@@ -1,0 +1,5 @@
+2026-09-28 13:41:03,054 INFO signals Successfully created language preferences for user testuser (ID: 1)
+2026-09-28 13:41:03,162 INFO lexical_views Selected text: nonexistent
+2026-09-28 13:41:03,164 INFO _client HTTP Request: GET https://kaikki.org/ruwiktionary/%D0%90%D0%BD%D0%B3%D0%BB%D0%B8%D0%B9%D1%81%D0%BA%D0%B8%D0%B9/meaning/n/no/nonexistent.jsonl "HTTP/1.1 404 Not Found"
+2026-09-28 13:41:03,165 INFO _client HTTP Request: GET https://kaikki.org/dictionary/English/meaning/n/no/nonexistent.jsonl "HTTP/1.1 404 Not Found"
+2026-09-28 13:41:03,166 WARNING lexical_views Dictionary article failed: not_found

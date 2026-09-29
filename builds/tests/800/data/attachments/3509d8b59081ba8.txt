@@ -1,0 +1,1 @@
+2026-09-24 10:36:45,786 WARNING llm AI article failed: ReadError('connection reset') model=pool type=AI dictionary

@@ -1,0 +1,5 @@
+2026-09-28 12:48:57,293 WARNING google_languages Warning: Egyptian Arabic not found in the database for group Arabic.
+2026-09-28 12:48:57,299 INFO signals Successfully created language preferences for user key-owner (ID: 12)
+2026-09-28 12:48:57,308 INFO apps Lexiflux 2.9.4 is ready.
+2026-09-28 12:48:57,311 INFO apps Lexiflux 2.9.4 is ready.
+2026-09-28 12:48:57,315 INFO apps Lexiflux 2.9.4 is ready.

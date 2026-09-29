@@ -1,0 +1,1 @@
+2026-09-24 10:12:11,374 WARNING broker Pool model gone-llm to exclude is not in the llmbroker catalog

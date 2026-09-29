@@ -1,0 +1,5 @@
+2026-09-22 11:57:07,870 INFO signals Successfully created language preferences for user testuser (ID: 1)
+2026-09-22 11:57:07,880 INFO models Jumping to 2#30
+2026-09-22 11:57:07,881 INFO models Jumping to 4#50
+2026-09-22 11:57:07,883 INFO models Reading location updated for some-book-code: 5(5):10/100.0
+[{'page_number': 2, 'word': 30}, {'page_number': 5, 'word': 10}]/1

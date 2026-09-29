@@ -1,0 +1,1 @@
+2026-09-28 16:14:59,092 INFO _client HTTP Request: GET https://kaikki.org/dictionary/English/meaning/k/ki/king.jsonl "HTTP/1.1 200 OK"

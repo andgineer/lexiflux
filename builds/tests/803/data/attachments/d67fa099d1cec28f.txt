@@ -1,0 +1,13 @@
+WARNING  llmbroker.broker:presets.py:154 preset freetier: nothing cached and nothing is fetched automatically — falling back to the bundled copy, frozen at this llmbroker release
+WARNING  llmbroker.broker:presets.py:154 preset paid-catalog: nothing cached and nothing is fetched automatically — falling back to the bundled copy, frozen at this llmbroker release
+INFO     llmbroker.broker:refresher.py:249 sync freetier: applied — 0 -> 3 entries with a key
+  added: groq-gpt-oss-120b, openrouter-nemotron-3-ultra, openrouter-laguna-s-2.1, google-gemini-3.5-flash-lite, zai-glm-4.7-flash
+  pending key GEMINI_API_KEY — holds back google-gemini-3.5-flash-lite
+      Create a free API key at [aistudio](https://aistudio.google.com/apikey) (Google AI Studio).
+  pending key ZAI_API_KEY — holds back zai-glm-4.7-flash
+      Create a free API key at [z.ai](https://z.ai/manage-apikey/apikey-list) (register with an email, no card).
+INFO     llmbroker.broker:catalog.py:425 api_key_ref 'GEMINI_API_KEY' not resolved — google-gemini-3.5-flash-lite inactive until the env var / secret is set; this is normal, the pool routes over whatever keys are present — Create a free API key at [aistudio](https://aistudio.google.com/apikey) (Google AI Studio).
+INFO     llmbroker.broker:catalog.py:425 api_key_ref 'ZAI_API_KEY' not resolved — zai-glm-4.7-flash inactive until the env var / secret is set; this is normal, the pool routes over whatever keys are present — Create a free API key at [z.ai](https://z.ai/manage-apikey/apikey-list) (register with an email, no card).
+INFO     llmbroker.broker:catalog.py:434 api_key_ref 'OPENAI_API_KEY' not resolved — gpt, gpt-fast is reached by name only, so direct() on it fails until the env var / secret is set — Create a key at https://platform.openai.com/api-keys (paid).
+INFO     llmbroker.broker:catalog.py:434 api_key_ref 'ANTHROPIC_API_KEY' not resolved — opus is reached by name only, so direct() on it fails until the env var / secret is set — Create a key at https://console.anthropic.com/ (paid).
+INFO     httpx:_client.py:1740 HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"

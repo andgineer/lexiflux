@@ -1,0 +1,2 @@
+2026-09-24 10:36:29,367 INFO apps Lexiflux 2.9.0 is ready.
+2026-09-24 10:36:29,778 INFO signals Successfully created language preferences for user testuser (ID: 1)

@@ -1,0 +1,2 @@
+INFO     lexiflux.language.nltk_tokenizer:nltk_tokenizer.py:37 Downloaded NLTK data: punkt
+WARNING  lexiflux.language.nltk_tokenizer:nltk_tokenizer.py:57 NLTK punkt tokenizer not available for en. Using default.

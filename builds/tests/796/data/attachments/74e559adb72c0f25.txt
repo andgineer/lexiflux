@@ -1,0 +1,17 @@
+2026-05-15 09:11:01,514 INFO signals Successfully created language preferences for user testuser (ID: 1)
+2026-05-15 09:11:05,105 INFO import_views Pasted content (txt): # Test Book
+
+This is a test book created via paste.
+
+## Chapter 1
+
+Once upon a time, there was a test that needed to be run.
+
+The end....
+2026-05-15 09:11:05,192 INFO timing Iterate over pages and save them completed in 0.079 seconds
+2026-05-15 09:11:06,185 INFO reader_views Opening book pastedtext-author at page 1 for user testuser
+2026-05-15 09:11:06,197 INFO models Reading location updated for pastedtext-author: 1(1):0/0.0
+[{'page_number': 1, 'word': 0}]/0
+2026-05-15 09:11:06,198 INFO reader_views Jump status: book pastedtext-author, is_first_jump True, is_last_jump True
+2026-05-15 09:11:06,272 INFO test_e2e_import_book Redirected to reader page
+2026-05-15 09:11:06,272 INFO reader_views Rendering page 1 of book pastedtext-author

@@ -1,0 +1,3 @@
+2026-09-27 08:26:42,390 INFO signals Successfully created language preferences for user testuser (ID: 1)
+2026-09-27 08:26:42,512 INFO lexical_views Selected text: page
+2026-09-27 08:26:42,513 WARNING lexical_views Dictionary article failed: network: ConnectTimeout

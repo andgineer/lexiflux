@@ -1,0 +1,7 @@
+2026-09-29 07:13:18,678 INFO signals Successfully created language preferences for user testuser (ID: 1)
+2026-09-29 07:13:18,856 INFO lexical_views Selected text: springs
+2026-09-29 07:13:18,859 INFO _client HTTP Request: GET https://kaikki.org/ruwiktionary/%D0%90%D0%BD%D0%B3%D0%BB%D0%B8%D0%B9%D1%81%D0%BA%D0%B8%D0%B9/meaning/s/sp/springs.jsonl "HTTP/1.1 404 Not Found"
+2026-09-29 07:13:18,860 INFO _client HTTP Request: GET https://kaikki.org/dictionary/English/meaning/s/sp/springs.jsonl "HTTP/1.1 200 OK"
+2026-09-29 07:13:18,861 INFO _client HTTP Request: GET https://kaikki.org/ruwiktionary/%D0%90%D0%BD%D0%B3%D0%BB%D0%B8%D0%B9%D1%81%D0%BA%D0%B8%D0%B9/meaning/s/sp/spring.jsonl "HTTP/1.1 200 OK"
+2026-09-29 07:13:18,861 INFO _client HTTP Request: GET https://kaikki.org/dictionary/English/meaning/s/sp/spring.jsonl "HTTP/1.1 200 OK"
+2026-09-29 07:13:18,867 WARNING lexical_views History translation of 'springs' failed: NoLLMAvailableError('none')

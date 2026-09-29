@@ -1,0 +1,4 @@
+2026-09-27 07:59:32,010 INFO _client HTTP Request: GET https://kaikki.org/ruwiktionary/%D0%9D%D0%B5%D0%BC%D0%B5%D1%86%D0%BA%D0%B8%D0%B9/meaning/T/Ta/Tanzen.jsonl "HTTP/1.1 404 Not Found"
+2026-09-27 07:59:32,011 INFO _client HTTP Request: GET https://kaikki.org/dictionary/German/meaning/T/Ta/Tanzen.jsonl "HTTP/1.1 200 OK"
+2026-09-27 07:59:32,013 INFO _client HTTP Request: GET https://kaikki.org/ruwiktionary/%D0%9D%D0%B5%D0%BC%D0%B5%D1%86%D0%BA%D0%B8%D0%B9/meaning/t/ta/tanzen.jsonl "HTTP/1.1 200 OK"
+2026-09-27 07:59:32,014 INFO _client HTTP Request: GET https://kaikki.org/dictionary/German/meaning/t/ta/tanzen.jsonl "HTTP/1.1 200 OK"

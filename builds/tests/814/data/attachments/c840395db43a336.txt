@@ -1,0 +1,8 @@
+2026-09-29 07:13:30,165 INFO apps Lexiflux 2.9.6 is ready.
+2026-09-29 07:13:30,551 INFO signals Successfully created language preferences for user testuser (ID: 1)
+2026-09-29 07:13:30,582 INFO reader_views Opening book some-book-code at page 1 for user testuser
+2026-09-29 07:13:30,600 INFO models Reading location updated for some-book-code: 1(1):0/0.0
+[{'page_number': 1, 'word': 0}]/0
+2026-09-29 07:13:30,601 INFO reader_views Jump status: book some-book-code, is_first_jump True, is_last_jump True
+2026-09-29 07:13:30,819 INFO reader_views Rendering page 1 of book some-book-code
+2026-09-29 07:13:31,966 INFO lexical_views Selected text: page

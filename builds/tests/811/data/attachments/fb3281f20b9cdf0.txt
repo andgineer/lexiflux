@@ -1,0 +1,6 @@
+2026-09-28 15:41:55,102 INFO signals Successfully created language preferences for user testuser (ID: 1)
+2026-09-28 15:41:55,280 INFO lexical_views Selected text: page
+2026-09-28 15:41:55,281 WARNING llm AI article failed: NoLLMAvailableError('none') model=pool type=Inline translation
+2026-09-28 15:41:55,282 WARNING presets preset freetier: nothing cached and nothing is fetched automatically — falling back to the bundled copy, frozen at this llmbroker release
+2026-09-28 15:41:55,285 WARNING presets preset paid-catalog: nothing cached and nothing is fetched automatically — falling back to the bundled copy, frozen at this llmbroker release
+2026-09-28 15:41:55,287 WARNING presets preset freetier: nothing cached and nothing is fetched automatically — falling back to the bundled copy, frozen at this llmbroker release

@@ -1,0 +1,7 @@
+2026-09-28 13:41:03,414 INFO signals Successfully created language preferences for user testuser (ID: 1)
+2026-09-28 13:41:03,517 INFO lexical_views Selected text: springs
+2026-09-28 13:41:03,519 WARNING wiktionary kaikki.org: https://kaikki.org/ruwiktionary/%D0%90%D0%BD%D0%B3%D0%BB%D0%B8%D0%B9%D1%81%D0%BA%D0%B8%D0%B9/meaning/s/sp/springs.jsonl failed: down
+2026-09-28 13:41:03,519 WARNING wiktionary kaikki.org: https://kaikki.org/dictionary/English/meaning/s/sp/springs.jsonl failed: down
+2026-09-28 13:41:03,519 WARNING wiktionary kaikki.org: https://kaikki.org/ruwiktionary/%D0%90%D0%BD%D0%B3%D0%BB%D0%B8%D0%B9%D1%81%D0%BA%D0%B8%D0%B9/meaning/s/sp/spring.jsonl failed: down
+2026-09-28 13:41:03,519 WARNING wiktionary kaikki.org: https://kaikki.org/dictionary/English/meaning/s/sp/spring.jsonl failed: down
+2026-09-28 13:41:03,519 WARNING lexical_views Dictionary article failed: network: springs

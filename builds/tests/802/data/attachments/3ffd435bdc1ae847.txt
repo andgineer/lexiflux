@@ -1,0 +1,19 @@
+2026-09-25 19:05:02,928 WARNING presets preset freetier: nothing cached and nothing is fetched automatically — falling back to the bundled copy, frozen at this llmbroker release
+2026-09-25 19:05:02,929 WARNING presets preset paid-catalog: nothing cached and nothing is fetched automatically — falling back to the bundled copy, frozen at this llmbroker release
+2026-09-25 19:05:02,934 WARNING presets preset freetier: nothing cached and nothing is fetched automatically — falling back to the bundled copy, frozen at this llmbroker release
+2026-09-25 19:05:02,946 INFO refresher sync freetier: applied — 0 -> 1 entries with a key
+  added: groq-gpt-oss-120b, openrouter-nemotron-3-ultra, openrouter-laguna-s-2.1, google-gemini-3.5-flash-lite, zai-glm-4.7-flash
+  pending key OPENROUTER_API_KEY — holds back openrouter-nemotron-3-ultra, openrouter-laguna-s-2.1
+      Create a free API key at [openrouter](https://openrouter.ai/keys).
+  pending key GEMINI_API_KEY — holds back google-gemini-3.5-flash-lite
+      Create a free API key at [aistudio](https://aistudio.google.com/apikey) (Google AI Studio).
+  pending key ZAI_API_KEY — holds back zai-glm-4.7-flash
+      Create a free API key at [z.ai](https://z.ai/manage-apikey/apikey-list) (register with an email, no card).
+2026-09-25 19:05:02,952 ERROR catalog pool degraded, no failover left: 1 of 4 providers usable — no key for OPENROUTER_API_KEY, GEMINI_API_KEY, ZAI_API_KEY
+2026-09-25 19:05:02,952 INFO catalog api_key_ref 'OPENROUTER_API_KEY' not resolved — openrouter-nemotron-3-ultra, openrouter-laguna-s-2.1 inactive until the env var / secret is set; this is normal, the pool routes over whatever keys are present — Create a free API key at [openrouter](https://openrouter.ai/keys).
+2026-09-25 19:05:02,952 INFO catalog api_key_ref 'GEMINI_API_KEY' not resolved — google-gemini-3.5-flash-lite inactive until the env var / secret is set; this is normal, the pool routes over whatever keys are present — Create a free API key at [aistudio](https://aistudio.google.com/apikey) (Google AI Studio).
+2026-09-25 19:05:02,952 INFO catalog api_key_ref 'ZAI_API_KEY' not resolved — zai-glm-4.7-flash inactive until the env var / secret is set; this is normal, the pool routes over whatever keys are present — Create a free API key at [z.ai](https://z.ai/manage-apikey/apikey-list) (register with an email, no card).
+2026-09-25 19:05:02,953 INFO catalog api_key_ref 'OPENAI_API_KEY' not resolved — gpt, gpt-fast is reached by name only, so direct() on it fails until the env var / secret is set — Create a key at https://platform.openai.com/api-keys (paid).
+2026-09-25 19:05:02,953 INFO catalog api_key_ref 'ANTHROPIC_API_KEY' not resolved — opus is reached by name only, so direct() on it fails until the env var / secret is set — Create a key at https://console.anthropic.com/ (paid).
+2026-09-25 19:05:02,956 WARNING broker Pool model no-such-llm to exclude is not in the llmbroker catalog
+2026-09-25 19:05:02,957 INFO _client HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"

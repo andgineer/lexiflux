@@ -1,0 +1,1 @@
+WARNING  lexiflux.language.llm:llm.py:391 AI article failed: LLMTimeoutError('no answer in 0.2 s') model=pool type=Inline translation

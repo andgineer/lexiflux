@@ -1,0 +1,1 @@
+2026-09-25 19:05:02,525 WARNING presets preset paid-catalog: nothing cached and nothing is fetched automatically — falling back to the bundled copy, frozen at this llmbroker release

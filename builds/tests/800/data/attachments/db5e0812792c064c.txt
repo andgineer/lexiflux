@@ -1,0 +1,9 @@
+2026-09-24 10:36:45,837 WARNING llm AI article failed: ConnectError('refused') model=pool type=AI dictionary
+2026-09-24 10:36:45,838 ERROR llm AI article failed with an unexpected error
+Traceback (most recent call last):
+  File "/home/runner/work/lexiflux/lexiflux/lexiflux/language/llm.py", line 215, in stream_article
+    for delta in stream:
+                 ^^^^^^
+  File "/home/runner/work/lexiflux/lexiflux/tests/test_llm.py", line 45, in __next__
+    raise item
+httpx.ConnectError: refused

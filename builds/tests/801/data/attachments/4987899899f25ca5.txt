@@ -1,0 +1,17 @@
+2026-09-25 18:54:09,691 WARNING presets preset freetier: nothing cached and nothing is fetched automatically — falling back to the bundled copy, frozen at this llmbroker release
+2026-09-25 18:54:09,692 WARNING presets preset paid-catalog: nothing cached and nothing is fetched automatically — falling back to the bundled copy, frozen at this llmbroker release
+2026-09-25 18:54:09,715 INFO refresher sync freetier: applied — 0 -> 2 entries with a key
+  added: groq-gpt-oss-120b, openrouter-nemotron-3-ultra, openrouter-laguna-s-2.1, google-gemini-3.5-flash-lite, zai-glm-4.7-flash
+  pending key GROQ_API_KEY — holds back groq-gpt-oss-120b
+      Create a free API key at [groq](https://console.groq.com/keys) (sign in, then New API Key).
+  pending key GEMINI_API_KEY — holds back google-gemini-3.5-flash-lite
+      Create a free API key at [aistudio](https://aistudio.google.com/apikey) (Google AI Studio).
+  pending key ZAI_API_KEY — holds back zai-glm-4.7-flash
+      Create a free API key at [z.ai](https://z.ai/manage-apikey/apikey-list) (register with an email, no card).
+2026-09-25 18:54:09,719 ERROR catalog pool degraded, no failover left: 1 of 4 providers usable — no key for GROQ_API_KEY, GEMINI_API_KEY, ZAI_API_KEY
+2026-09-25 18:54:09,719 INFO catalog api_key_ref 'GROQ_API_KEY' not resolved — groq-gpt-oss-120b inactive until the env var / secret is set; this is normal, the pool routes over whatever keys are present — Create a free API key at [groq](https://console.groq.com/keys) (sign in, then New API Key).
+2026-09-25 18:54:09,719 INFO catalog api_key_ref 'GEMINI_API_KEY' not resolved — google-gemini-3.5-flash-lite inactive until the env var / secret is set; this is normal, the pool routes over whatever keys are present — Create a free API key at [aistudio](https://aistudio.google.com/apikey) (Google AI Studio).
+2026-09-25 18:54:09,719 INFO catalog api_key_ref 'ZAI_API_KEY' not resolved — zai-glm-4.7-flash inactive until the env var / secret is set; this is normal, the pool routes over whatever keys are present — Create a free API key at [z.ai](https://z.ai/manage-apikey/apikey-list) (register with an email, no card).
+2026-09-25 18:54:09,719 INFO catalog api_key_ref 'OPENAI_API_KEY' not resolved — gpt, gpt-fast is reached by name only, so direct() on it fails until the env var / secret is set — Create a key at https://platform.openai.com/api-keys (paid).
+2026-09-25 18:54:09,719 INFO catalog api_key_ref 'ANTHROPIC_API_KEY' not resolved — opus is reached by name only, so direct() on it fails until the env var / secret is set — Create a key at https://console.anthropic.com/ (paid).
+2026-09-25 18:54:09,732 WARNING llm AI article failed: NoLLMAvailableError('every LLM is administratively disabled') model=pool type=AI dictionary

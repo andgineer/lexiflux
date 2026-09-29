@@ -1,0 +1,2 @@
+2026-09-27 07:58:55,519 INFO signals Successfully created language preferences for user testuser (ID: 1)
+2026-09-27 07:58:55,534 WARNING log Bad Request: /api/manage-lexical-article/

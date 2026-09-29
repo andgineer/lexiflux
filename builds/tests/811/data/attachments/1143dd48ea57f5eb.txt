@@ -1,0 +1,4 @@
+2026-09-28 15:43:12,364 INFO _client HTTP Request: GET https://kaikki.org/ruwiktionary/%D0%A1%D0%B5%D1%80%D0%B1%D1%81%D0%BA%D0%B8%D0%B9/meaning/%D0%BA/%D0%BA%D1%99/%D0%BA%D1%99%D1%83%D1%87%D0%B0.jsonl "HTTP/1.1 404 Not Found"
+2026-09-28 15:43:12,364 INFO _client HTTP Request: GET https://kaikki.org/dictionary/Serbo-Croatian/meaning/k/kl/klju%C4%8Da.jsonl "HTTP/1.1 404 Not Found"
+2026-09-28 15:43:12,365 INFO _client HTTP Request: GET https://kaikki.org/ruwiktionary/%D0%A1%D0%B5%D1%80%D0%B1%D1%81%D0%BA%D0%B8%D0%B9/meaning/%D0%BA/%D0%BA%D1%99/%D0%BA%D1%99%D1%83%D1%87.jsonl "HTTP/1.1 200 OK"
+2026-09-28 15:43:12,366 INFO _client HTTP Request: GET https://kaikki.org/dictionary/Serbo-Croatian/meaning/k/kl/klju%C4%8D.jsonl "HTTP/1.1 200 OK"

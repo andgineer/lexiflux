@@ -1,0 +1,4 @@
+2026-09-27 08:48:22,909 INFO _client HTTP Request: GET https://kaikki.org/ruwiktionary/%D0%9D%D0%B5%D0%BC%D0%B5%D1%86%D0%BA%D0%B8%D0%B9/meaning/S/Sc/Sch%C3%B6n.jsonl "HTTP/1.1 404 Not Found"
+2026-09-27 08:48:22,910 INFO _client HTTP Request: GET https://kaikki.org/dictionary/German/meaning/S/Sc/Sch%C3%B6n.jsonl "HTTP/1.1 200 OK"
+2026-09-27 08:48:22,913 INFO _client HTTP Request: GET https://kaikki.org/ruwiktionary/%D0%9D%D0%B5%D0%BC%D0%B5%D1%86%D0%BA%D0%B8%D0%B9/meaning/s/sc/sch%C3%B6n.jsonl "HTTP/1.1 200 OK"
+2026-09-27 08:48:22,913 INFO _client HTTP Request: GET https://kaikki.org/dictionary/German/meaning/s/sc/sch%C3%B6n.jsonl "HTTP/1.1 200 OK"

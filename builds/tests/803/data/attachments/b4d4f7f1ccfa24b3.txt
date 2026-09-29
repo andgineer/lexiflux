@@ -1,0 +1,1 @@
+WARNING  lexiflux.language.broker:broker.py:42 Pool model gone-llm to exclude is not in the llmbroker catalog

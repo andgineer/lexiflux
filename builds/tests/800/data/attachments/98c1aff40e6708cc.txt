@@ -1,0 +1,2 @@
+2026-09-24 10:36:08,465 INFO signals Successfully created language preferences for user testuser (ID: 1)
+2026-09-24 10:36:08,471 WARNING log Bad Request: /location

@@ -1,0 +1,2 @@
+2026-09-28 16:15:10,812 INFO _client HTTP Request: GET https://kaikki.org/dictionary/Serbo-Croatian/meaning/b/be/beogradu.jsonl "HTTP/1.1 404 Not Found"
+2026-09-28 16:15:10,813 INFO _client HTTP Request: GET https://kaikki.org/dictionary/Serbo-Croatian/meaning/B/Be/Beograd.jsonl "HTTP/1.1 200 OK"

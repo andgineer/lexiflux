@@ -1,0 +1,1 @@
+WARNING  llmbroker.broker:presets.py:154 preset paid-catalog: nothing cached and nothing is fetched automatically — falling back to the bundled copy, frozen at this llmbroker release

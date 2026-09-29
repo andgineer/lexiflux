@@ -1,0 +1,2 @@
+2026-09-28 15:42:47,283 INFO signals Successfully created language preferences for user testuser (ID: 1)
+2026-09-28 15:42:47,461 WARNING lexical_views Dictionary article failed: too_long: raw-secret-detail <b>

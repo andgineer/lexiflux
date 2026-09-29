@@ -1,0 +1,2 @@
+2026-09-25 19:04:57,830 WARNING broker Pool model openrouter-nemotron-3-ultra to exclude is not in the llmbroker catalog
+2026-09-25 19:04:57,830 WARNING broker Pool model openrouter-laguna-s-2.1 to exclude is not in the llmbroker catalog

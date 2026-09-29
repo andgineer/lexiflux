@@ -1,0 +1,8 @@
+2026-09-28 15:43:32,521 INFO _client HTTP Request: GET https://kaikki.org/ruwiktionary/%D0%90%D0%BD%D0%B3%D0%BB%D0%B8%D0%B9%D1%81%D0%BA%D0%B8%D0%B9/meaning/s/sp/springs.jsonl "HTTP/1.1 503 Service Unavailable"
+2026-09-28 15:43:32,522 INFO _client HTTP Request: GET https://kaikki.org/dictionary/English/meaning/s/sp/springs.jsonl "HTTP/1.1 503 Service Unavailable"
+2026-09-28 15:43:32,522 INFO _client HTTP Request: GET https://kaikki.org/ruwiktionary/%D0%90%D0%BD%D0%B3%D0%BB%D0%B8%D0%B9%D1%81%D0%BA%D0%B8%D0%B9/meaning/s/sp/spring.jsonl "HTTP/1.1 503 Service Unavailable"
+2026-09-28 15:43:32,523 INFO _client HTTP Request: GET https://kaikki.org/dictionary/English/meaning/s/sp/spring.jsonl "HTTP/1.1 503 Service Unavailable"
+2026-09-28 15:43:32,523 WARNING wiktionary kaikki.org: https://kaikki.org/ruwiktionary/%D0%90%D0%BD%D0%B3%D0%BB%D0%B8%D0%B9%D1%81%D0%BA%D0%B8%D0%B9/meaning/s/sp/springs.jsonl failed: HTTP 503
+2026-09-28 15:43:32,523 WARNING wiktionary kaikki.org: https://kaikki.org/dictionary/English/meaning/s/sp/springs.jsonl failed: HTTP 503
+2026-09-28 15:43:32,524 WARNING wiktionary kaikki.org: https://kaikki.org/ruwiktionary/%D0%90%D0%BD%D0%B3%D0%BB%D0%B8%D0%B9%D1%81%D0%BA%D0%B8%D0%B9/meaning/s/sp/spring.jsonl failed: HTTP 503
+2026-09-28 15:43:32,524 WARNING wiktionary kaikki.org: https://kaikki.org/dictionary/English/meaning/s/sp/spring.jsonl failed: HTTP 503

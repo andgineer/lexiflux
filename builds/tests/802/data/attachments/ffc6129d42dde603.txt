@@ -1,0 +1,24 @@
+2026-09-25 19:05:01,350 WARNING google_languages Warning: Egyptian Arabic not found in the database for group Arabic.
+2026-09-25 19:05:01,714 INFO signals Successfully created language preferences for user testuser (ID: 12)
+2026-09-25 19:05:01,738 INFO reader_views Opening book some-book-code at page 1 for user testuser
+2026-09-25 19:05:01,750 INFO models Reading location updated for some-book-code: 1(1):0/0.0
+[{'page_number': 1, 'word': 0}]/0
+2026-09-25 19:05:01,751 INFO reader_views Jump status: book some-book-code, is_first_jump True, is_last_jump True
+2026-09-25 19:05:03,153 INFO lexical_views Selected text: page
+Traceback (most recent call last):
+  File "/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/wsgiref/handlers.py", line 138, in run
+    self.finish_response()
+  File "/home/runner/work/lexiflux/lexiflux/.venv/lib/python3.12/site-packages/django/core/servers/basehttp.py", line 175, in finish_response
+    super().finish_response()
+  File "/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/wsgiref/handlers.py", line 183, in finish_response
+    for data in self.result:
+                ^^^^^^^^^^^
+  File "/home/runner/work/lexiflux/lexiflux/lexiflux/views/lexical_views.py", line 363, in <genexpr>
+    (_ndjson_line(event) for event in events),
+                                      ^^^^^^
+  File "/home/runner/work/lexiflux/lexiflux/lexiflux/views/lexical_views.py", line 327, in _article_events
+    for event in stream_article(req):
+                 ^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/work/lexiflux/lexiflux/tests/e2e_playwright/fakes.py", line 61, in _run
+    raise step
+tests.e2e_playwright.fakes.DroppedConnection: connection dropped

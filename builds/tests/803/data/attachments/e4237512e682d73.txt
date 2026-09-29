@@ -1,0 +1,2 @@
+INFO     httpx:_client.py:1025 HTTP Request: GET https://kaikki.org/dictionary/English/meaning/n/no/nonexistent.jsonl "HTTP/1.1 200 OK"
+WARNING  lexiflux.language.wiktionary:wiktionary.py:485 kaikki.org: https://kaikki.org/dictionary/English/meaning/n/no/nonexistent.jsonl failed: the page has no JSON lines

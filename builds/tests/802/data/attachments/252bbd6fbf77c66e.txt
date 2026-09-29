@@ -1,0 +1,2 @@
+INFO     lexiflux.signals:signals.py:55 Successfully created language preferences for user testuser (ID: 1)
+INFO     lexiflux.anki.anki_connect:anki_connect.py:85 result {'result': [1, 2, 3, 4, 5, 6]}

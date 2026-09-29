@@ -1,0 +1,5 @@
+2026-09-28 12:47:11,125 INFO signals Successfully created language preferences for user key-user (ID: 1)
+2026-09-28 12:47:11,129 WARNING llm AI article failed: AuthError('rejected') model=gpt type=In depth
+2026-09-28 12:47:11,129 WARNING presets preset paid-catalog: nothing cached and nothing is fetched automatically — falling back to the bundled copy, frozen at this llmbroker release
+2026-09-28 12:47:11,132 WARNING presets preset paid-catalog: nothing cached and nothing is fetched automatically — falling back to the bundled copy, frozen at this llmbroker release
+2026-09-28 12:47:11,135 WARNING presets preset freetier: nothing cached and nothing is fetched automatically — falling back to the bundled copy, frozen at this llmbroker release

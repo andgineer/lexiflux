@@ -1,0 +1,2 @@
+2026-05-15 08:52:47,315 INFO signals Successfully created language preferences for user testuser (ID: 1)
+2026-05-15 08:52:47,329 WARNING book_loader_base Anchor 'anchor' not found in page 12 content

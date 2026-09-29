@@ -1,0 +1,2 @@
+2026-09-29 07:12:55,376 INFO signals Successfully created language preferences for user testuser (ID: 1)
+2026-09-29 07:12:55,552 WARNING log Not Found: /translate/stream

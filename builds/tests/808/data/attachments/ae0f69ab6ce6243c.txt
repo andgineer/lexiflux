@@ -1,0 +1,4 @@
+2026-09-28 12:13:59,172 INFO _client HTTP Request: GET https://kaikki.org/ruwiktionary/%D0%9D%D0%B5%D0%BC%D0%B5%D1%86%D0%BA%D0%B8%D0%B9/meaning/W/We/Wenn.jsonl "HTTP/1.1 200 OK"
+2026-09-28 12:13:59,173 INFO _client HTTP Request: GET https://kaikki.org/dictionary/German/meaning/W/We/Wenn.jsonl "HTTP/1.1 200 OK"
+2026-09-28 12:13:59,173 INFO _client HTTP Request: GET https://kaikki.org/ruwiktionary/%D0%9D%D0%B5%D0%BC%D0%B5%D1%86%D0%BA%D0%B8%D0%B9/meaning/w/we/wenn.jsonl "HTTP/1.1 200 OK"
+2026-09-28 12:13:59,174 INFO _client HTTP Request: GET https://kaikki.org/dictionary/German/meaning/w/we/wenn.jsonl "HTTP/1.1 200 OK"

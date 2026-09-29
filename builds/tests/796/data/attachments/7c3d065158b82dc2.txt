@@ -1,0 +1,2 @@
+2026-05-15 09:10:18,691 INFO signals Successfully created language preferences for user lexiflux (ID: 1)
+2026-05-15 09:10:18,692 INFO auth Created default user: lexiflux@example.com

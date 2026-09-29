@@ -1,0 +1,28 @@
+2026-09-28 13:40:06,907 INFO timing Loading from https://example.com completed in 0.000 seconds
+2026-09-28 13:40:06,907 INFO timing Extract metadata completed in 0.000 seconds
+2026-09-28 13:40:06,907 INFO timing Extracting IDs with internal links completed in 0.000 seconds
+2026-09-28 13:40:06,910 INFO timing Extracting readable HTML completed in 0.003 seconds
+2026-09-28 13:40:06,910 INFO timing Parse extracted HTML completed in 0.000 seconds
+2026-09-28 13:40:06,910 INFO timing Adding source info completed in 0.000 seconds
+2026-09-28 13:40:06,910 INFO timing Cleared HTML completed in 0.000 seconds
+2026-09-28 13:40:06,912 INFO timing Loading from https://example.com/article completed in 0.000 seconds
+2026-09-28 13:40:06,913 INFO timing Extract metadata completed in 0.000 seconds
+2026-09-28 13:40:06,913 INFO timing Extracting IDs with internal links completed in 0.000 seconds
+2026-09-28 13:40:06,915 INFO timing Extracting readable HTML completed in 0.002 seconds
+2026-09-28 13:40:06,915 INFO timing Parse extracted HTML completed in 0.000 seconds
+2026-09-28 13:40:06,915 INFO timing Adding source info completed in 0.000 seconds
+2026-09-28 13:40:06,915 INFO timing Cleared HTML completed in 0.000 seconds
+2026-09-28 13:40:06,917 INFO timing Loading from https://blog.example.com/post/123 completed in 0.000 seconds
+2026-09-28 13:40:06,917 INFO timing Extract metadata completed in 0.000 seconds
+2026-09-28 13:40:06,918 INFO timing Extracting IDs with internal links completed in 0.000 seconds
+2026-09-28 13:40:06,920 INFO timing Extracting readable HTML completed in 0.002 seconds
+2026-09-28 13:40:06,920 INFO timing Parse extracted HTML completed in 0.000 seconds
+2026-09-28 13:40:06,920 INFO timing Adding source info completed in 0.000 seconds
+2026-09-28 13:40:06,920 INFO timing Cleared HTML completed in 0.000 seconds
+2026-09-28 13:40:06,922 INFO timing Loading from https://example.com/document.pdf completed in 0.000 seconds
+2026-09-28 13:40:06,922 INFO timing Extract metadata completed in 0.000 seconds
+2026-09-28 13:40:06,922 INFO timing Extracting IDs with internal links completed in 0.000 seconds
+2026-09-28 13:40:06,925 INFO timing Extracting readable HTML completed in 0.002 seconds
+2026-09-28 13:40:06,925 INFO timing Parse extracted HTML completed in 0.000 seconds
+2026-09-28 13:40:06,925 INFO timing Adding source info completed in 0.000 seconds
+2026-09-28 13:40:06,925 INFO timing Cleared HTML completed in 0.000 seconds

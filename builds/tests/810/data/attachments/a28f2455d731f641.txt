@@ -1,0 +1,2 @@
+2026-09-28 13:40:23,101 INFO signals Successfully created language preferences for user testuser (ID: 1)
+2026-09-28 13:40:23,111 INFO calibre_views Successfully imported book from Calibre JSON: Alice in Wonderland

@@ -1,0 +1,2 @@
+2026-09-29 07:12:45,061 INFO signals Successfully created language preferences for user testuser (ID: 1)
+2026-09-29 07:12:45,074 INFO calibre_views Successfully imported book from Calibre: Alice in Wonderland

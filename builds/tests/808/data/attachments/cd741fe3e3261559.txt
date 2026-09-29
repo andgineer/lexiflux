@@ -1,0 +1,2 @@
+INFO     httpx:_client.py:1025 HTTP Request: GET https://kaikki.org/dictionary/German/meaning/T/Tr/Tr%C3%A4umen.jsonl "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET https://kaikki.org/dictionary/German/meaning/T/Tr/Traum.jsonl "HTTP/1.1 200 OK"
