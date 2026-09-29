@@ -1,3 +1,0 @@
-Article 1 -> 1
-Article 2 -> 4
-Article 3 -> 5

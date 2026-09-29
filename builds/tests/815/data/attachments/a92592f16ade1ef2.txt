@@ -1,0 +1,4 @@
+2026-09-29 08:03:50,948 INFO _client HTTP Request: GET https://kaikki.org/dictionary/English/meaning/x/xy/xyzzy.jsonl "HTTP/1.1 200 OK"
+2026-09-29 08:03:50,951 INFO _client HTTP Request: GET https://kaikki.org/dictionary/English/meaning/s/sp/spring.jsonl "HTTP/1.1 200 OK"
+2026-09-29 08:03:50,952 INFO _client HTTP Request: GET https://kaikki.org/dictionary/English/meaning/b/be/be.jsonl "HTTP/1.1 200 OK"
+2026-09-29 08:03:50,953 INFO _client HTTP Request: GET https://kaikki.org/dictionary/English/meaning/s/sh/she.jsonl "HTTP/1.1 200 OK"
