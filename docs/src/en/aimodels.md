@@ -140,9 +140,8 @@ Enter your API keys on the [AI Keys](http://localhost:6100/ai-keys/) page (in th
 each key the page says where to get it. A key you enter pays for your own articles only and
 works from your next article on.
 
-- **Free pool**: any one of the free keys on the page is enough (Groq, Google Gemini, Z.ai); more
-  keys make the pool faster and more reliable. Lexiflux does not use an OpenRouter key: the pool
-  leaves out the OpenRouter models because with them more Articles ended in "busy".
+- **Free pool**: any one of the free keys on the page is enough; more keys make the pool faster
+  and more reliable.
 - **GPT-5.6 Sol and Luna**: an OpenAI key (paid).
 - **Claude Opus**: an Anthropic key (paid).
 
@@ -152,11 +151,10 @@ the keys in its database, encrypted with the server's secret key (`SECRET_KEY`);
 changes, enter yours again.
 
 Whoever runs Lexiflux can also give the server keys, which every user without a key of their own
-uses (`GROQ_API_KEY`, `GEMINI_API_KEY`, `ZAI_API_KEY`, `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`):
+uses (the free pool keys, `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`):
 
 - **Running from source**: in a `.env` file in the Lexiflux folder, or in the environment.
-  `llmbroker env freetier` prints the free keys with a link to get each one (it also lists
-  OpenRouter).
+  `llmbroker env freetier` prints the free keys with a link to get each one.
 - **Docker**: pass them to `docker run`, see [Docker](docker.md#ai-keys).
 - **A hosted server**: in the server's environment variables (secrets).
 

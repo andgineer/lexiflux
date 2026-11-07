@@ -8,17 +8,15 @@ from django.contrib.auth import get_user_model
 from lexiflux.language import ai_keys, key_store
 from lexiflux.language.ai_keys import NONE, OWN, SERVER, hint_html, key_rows
 
-SERVED_POOL_REFS = ["GROQ_API_KEY", "GEMINI_API_KEY", "ZAI_API_KEY"]
-
 
 @allure.epic("AI keys")
 @allure.feature("Keys from llmbroker")
-def test_the_keys_are_the_served_pool_keys_then_the_paid_providers():
+def test_the_keys_are_the_curated_pool_keys_then_the_paid_providers():
+    pool_refs = list(llmbroker.curated_pool().keys)
     keys = ai_keys.ai_keys()
 
-    assert [key.ref for key in keys] == [*SERVED_POOL_REFS, "OPENAI_API_KEY", "ANTHROPIC_API_KEY"]
-    assert [key.pool for key in keys] == [True, True, True, False, False]
-    assert "OPENROUTER_API_KEY" not in [key.ref for key in keys]
+    assert [key.ref for key in keys] == [*pool_refs, "OPENAI_API_KEY", "ANTHROPIC_API_KEY"]
+    assert [key.pool for key in keys] == [True] * len(pool_refs) + [False, False]
 
 
 @allure.epic("AI keys")

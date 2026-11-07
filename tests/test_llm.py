@@ -1,3 +1,4 @@
+import re
 from dataclasses import replace
 from datetime import UTC, datetime, timedelta
 from types import SimpleNamespace
@@ -5,6 +6,7 @@ from unittest.mock import patch
 
 import allure
 import httpx
+import llmbroker
 import pytest
 from django.contrib.auth import get_user_model
 from django.urls import reverse
@@ -406,17 +408,11 @@ class TestErrorMessages:
         assert error.kind == ArticleError.BUSY
         assert "retry in 30 s" in error.html or "retry in 29 s" in error.html
 
-    def test_no_keys_omits_keys_that_serve_only_excluded_pool_models(self):
+    def test_no_keys_lists_every_curated_pool_key(self):
         error = self.error_for(NoLLMAvailableError("none", reason="no_keys"))
-        assert "openrouter.ai" not in error.html
-        for name in ("Groq", "Google (Gemini)", "Z.ai"):
-            assert f"<strong>{name}</strong>" in error.html
-
-    def test_only_excluded_pool_models_payable_shows_the_no_keys_message(self):
-        error = self.error_for(NoLLMAvailableError("none", reason="all_disabled"))
-        assert error.kind == ArticleError.NO_KEYS
-        assert "<strong>Groq</strong>" in error.html
-        assert "openrouter.ai" not in error.html
+        for info in llmbroker.curated_pool().keys.values():
+            (link,) = re.findall(r"\]\((https?://[^)]+)\)", info.help)
+            assert link in error.html
 
     def test_no_keys_names_the_users_own_refused_key(self, key_user):
         key_store.save_own_key(key_user, "GROQ_API_KEY", "gsk-own")

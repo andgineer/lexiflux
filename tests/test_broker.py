@@ -107,74 +107,20 @@ def test_llms_for_scopes_by_user(fresh_broker):
     assert llms is fresh_broker.cls.return_value.for_scope.return_value
 
 
-def pool_snapshot(**disabled: bool) -> dict[str, SimpleNamespace]:
-    return {name: SimpleNamespace(disabled=flag) for name, flag in disabled.items()}
-
-
 @allure.epic("AI articles")
 @allure.feature("Broker")
-def test_get_broker_disables_the_excluded_pool_models(fresh_broker):
-    instance = fresh_broker.cls.return_value
-    instance.snapshot.return_value = pool_snapshot(
-        **{"groq-gpt-oss-120b": False, **dict.fromkeys(broker.EXCLUDED_POOL_LLMS, False)},
-    )
+def test_get_broker_disables_no_pool_model(fresh_broker):
     broker.get_broker()
-    broker.get_broker()
-    assert set(broker.EXCLUDED_POOL_LLMS) == {
-        "openrouter-nemotron-3-ultra",
-        "openrouter-laguna-s-2.1",
-    }
-    assert [c.args[0] for c in instance.disable_llm.call_args_list] == list(
-        broker.EXCLUDED_POOL_LLMS,
-    )
+    fresh_broker.cls.return_value.disable_llm.assert_not_called()
 
 
 @allure.epic("AI articles")
 @allure.feature("Broker")
-def test_get_broker_skips_models_already_disabled_in_the_store(fresh_broker):
-    instance = fresh_broker.cls.return_value
-    instance.snapshot.return_value = pool_snapshot(**dict.fromkeys(broker.EXCLUDED_POOL_LLMS, True))
-    broker.get_broker()
-    instance.disable_llm.assert_not_called()
-
-
-@allure.epic("AI articles")
-@allure.feature("Broker")
-def test_an_excluded_name_missing_from_the_catalog_is_logged_not_fatal(fresh_broker, caplog):
-    instance = fresh_broker.cls.return_value
-    instance.snapshot.return_value = pool_snapshot(**{"openrouter-laguna-s-2.1": False})
-    with patch.object(broker, "EXCLUDED_POOL_LLMS", ("gone-llm", "openrouter-laguna-s-2.1")):
-        assert broker.get_broker() is instance
-    instance.disable_llm.assert_called_once_with("openrouter-laguna-s-2.1")
-    assert "gone-llm" in caplog.text
-
-
-@allure.epic("AI articles")
-@allure.feature("Broker")
-def test_a_failed_exclusion_is_retried_on_the_next_call(fresh_broker):
-    instance = fresh_broker.cls.return_value
-    instance.snapshot.side_effect = [RuntimeError("catalog empty"), {}]
-    with pytest.raises(RuntimeError):
-        broker.get_broker()
-    assert broker.get_broker() is instance
-    assert fresh_broker.cls.call_count == 1
-    assert instance.snapshot.call_count == 2
-
-
-@allure.epic("AI articles")
-@allure.feature("Broker")
-def test_pool_keys_omit_keys_that_serve_only_excluded_models():
-    configs = [
-        SimpleNamespace(name="openrouter-nemotron-3-ultra", api_key_ref="OPENROUTER_API_KEY"),
-        SimpleNamespace(name="openrouter-laguna-s-2.1", api_key_ref="OPENROUTER_API_KEY"),
-        SimpleNamespace(name="groq-gpt-oss-120b", api_key_ref="GROQ_API_KEY"),
-        SimpleNamespace(name="openrouter-other", api_key_ref="SHARED_API_KEY"),
-        SimpleNamespace(name="openrouter-laguna-s-2.1", api_key_ref="SHARED_API_KEY"),
-    ]
+def test_pool_keys_are_every_key_of_the_curated_pool():
     keys = dict.fromkeys(("OPENROUTER_API_KEY", "GROQ_API_KEY", "SHARED_API_KEY"), "help")
-    pool = SimpleNamespace(configs=configs, keys=keys)
+    pool = SimpleNamespace(configs=[], keys=keys)
     with patch("lexiflux.language.broker.llmbroker.curated_pool", return_value=pool) as curated:
-        assert list(broker.pool_keys()) == ["GROQ_API_KEY", "SHARED_API_KEY"]
+        assert broker.pool_keys() == keys
     curated.assert_called_once_with(home=settings.LLMBROKER_HOME)
 
 

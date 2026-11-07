@@ -407,8 +407,7 @@ def llm_error(  # noqa: PLR0911
     ):
         return _render(ArticleError.CUT_OFF)
     if isinstance(exc, NoLLMAvailableError):
-        # "all_disabled" here means only keys of excluded pool models are set.
-        if exc.reason in ("no_keys", "all_disabled"):
+        if exc.reason == "no_keys":
             keys = _alert_keys(user, set(pool_keys()))
             refused = [key for key in keys if key["source"] != NONE]
             return _render(ArticleError.NO_KEYS, keys=keys, refused=refused)

@@ -2,6 +2,7 @@ import json
 from unittest.mock import patch
 
 import allure
+import llmbroker
 import pytest
 from django.contrib.auth import get_user_model
 from django.urls import reverse
@@ -61,13 +62,7 @@ def test_the_page_lists_every_key_with_its_hint_and_whose_it_is(client, alice, s
     content = response.content.decode()
     keys = {row["ref"]: row for row in response.context["keys"]}
 
-    assert list(keys) == [
-        "GROQ_API_KEY",
-        "GEMINI_API_KEY",
-        "ZAI_API_KEY",
-        "OPENAI_API_KEY",
-        "ANTHROPIC_API_KEY",
-    ]
+    assert list(keys) == [*llmbroker.curated_pool().keys, "OPENAI_API_KEY", "ANTHROPIC_API_KEY"]
     assert keys["GROQ_API_KEY"]["source"] == "server"
     assert keys["OPENAI_API_KEY"]["source"] == "none"
     assert 'href=\\"https://console.groq.com/keys\\" target=\\"_blank\\"' in content
@@ -150,7 +145,7 @@ def test_a_blank_save_keeps_the_saved_key(client, alice, refresh):
 
 @allure.epic("AI keys")
 @allure.feature("AI keys page")
-@pytest.mark.parametrize("ref", ["OPENROUTER_API_KEY", "PATH", "u-1"])
+@pytest.mark.parametrize("ref", ["NOT_LISTED_API_KEY", "PATH", "u-1"])
 def test_only_the_listed_keys_can_be_saved(client, alice, refresh, ref):
     client.force_login(alice)
 

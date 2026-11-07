@@ -8,7 +8,6 @@ import os
 import re
 import urllib.error
 import urllib.request
-import warnings
 from collections import Counter
 from dataclasses import dataclass
 from email.message import Message
@@ -288,72 +287,24 @@ def test_a_pool_without_keys_shows_the_no_key_message_and_sends_nothing(wire):
 
     assert (event["event"], event["kind"]) == ("error", ArticleError.NO_KEYS)
     assert "You have no free pool key of your own, and the server has none." in event["html"]
-    assert lexiflux_broker.pool_keys()
-    for ref, info in llmbroker.curated_pool().keys.items():
+    assert llmbroker.curated_pool().keys
+    for info in llmbroker.curated_pool().keys.values():
         (link,) = re.findall(r"\]\((https?://[^)]+)\)", info.help)
-        assert (link in event["html"]) == (ref in lexiflux_broker.pool_keys())
+        assert link in event["html"]
     assert wire.sent == []
 
 
 @allure.epic("AI articles")
 @allure.feature("llmbroker contract")
-def test_the_excluded_pool_models_are_still_in_the_catalog():
-    # A dropped name only warns: the exclusion is then a no-op, but a renamed model
-    # would be back in the race, so look at the catalog's names when this fires.
-    catalog = {entry.name for entry in llmbroker.curated_pool().configs}
-    missing = [name for name in lexiflux_broker.EXCLUDED_POOL_LLMS if name not in catalog]
-    if missing:
-        warnings.warn(
-            f"excluded pool models no longer in the llmbroker catalog: {missing}; "
-            f"catalog: {sorted(catalog)}",
-            stacklevel=1,
-        )
-
-
-@allure.epic("AI articles")
-@allure.feature("llmbroker contract")
-def test_excluded_pool_models_are_disabled_and_never_raced(wire, pay):
-    pay("GROQ_API_KEY", "OPENROUTER_API_KEY")
+def test_every_curated_pool_model_stays_in_the_race(wire, pay):
+    pay(*llmbroker.curated_pool().keys)
 
     events = [event.to_dict() for event in stream_article(article(POOL))]
 
     assert events and all(event["event"] == "delta" for event in events)
-    assert wire.sent
-    assert not {sent.model for sent in wire.sent} & {
-        entry.model
-        for entry in llmbroker.curated_pool().configs
-        if entry.name in lexiflux_broker.EXCLUDED_POOL_LLMS
-    }
     snapshot = lexiflux_broker.get_broker().snapshot()
-    assert snapshot["openrouter-nemotron-3-ultra"].disabled
-    assert snapshot["openrouter-laguna-s-2.1"].disabled
-    assert not snapshot["groq-gpt-oss-120b"].disabled
-
-
-@allure.epic("AI articles")
-@allure.feature("llmbroker contract")
-def test_a_key_that_serves_only_excluded_models_shows_the_no_key_message(wire, pay):
-    pay("OPENROUTER_API_KEY")
-
-    (event,) = [event.to_dict() for event in stream_article(article(POOL))]
-
-    assert (event["event"], event["kind"]) == ("error", ArticleError.NO_KEYS)
-    assert "openrouter.ai" not in event["html"]
-    assert "<strong>Groq</strong>" in event["html"]
-    assert wire.sent == []
-
-
-@allure.epic("AI articles")
-@allure.feature("llmbroker contract")
-def test_an_excluded_name_unknown_to_the_catalog_does_not_break_the_pool(wire, pay):
-    entry = next(e for e in llmbroker.curated_pool().configs if e.api_key_ref == "GROQ_API_KEY")
-    pay("GROQ_API_KEY")
-    with patch.object(lexiflux_broker, "EXCLUDED_POOL_LLMS", ("no-such-llm",)):
-        events = [event.to_dict() for event in stream_article(article(POOL))]
-
-    assert events and all(event["event"] == "delta" for event in events)
-    assert {sent.model for sent in wire.sent} == {entry.model}
-    assert "no-such-llm" not in lexiflux_broker.get_broker().snapshot()
+    assert {entry.name for entry in llmbroker.curated_pool().configs} <= set(snapshot)
+    assert not [name for name, entry in snapshot.items() if entry.disabled]
 
 
 @allure.epic("AI articles")

@@ -35,22 +35,13 @@ The numbers come from echo-words' measurements of its "Подробнее" artic
 
 ### Free pool members
 
-- The pool excludes the OpenRouter models (Nemotron 3 Ultra and Laguna S 2.1), as echo-words
-  does. Nemotron is a reasoning model: it answers HTTP 200 at once, then often holds its lane
-  past the pool's 25 s wait without text. Laguna answered quickly when it answered, but on the
-  shared free key most of its calls were rate-limited. As the race's second lane, neither could
-  rescue a Gemini Flash Lite stall (10–40 s on Google's side in some windows), and in those
-  windows 7–13% of Articles ended "busy".
-- With them out, the second lane is Groq, which answers in 2–3 s. At the same moments, the pool
-  with the exclusion answered 27 of 28 Articles (first text p50 0.8 s, p90 2.1 s); in a later
-  window without a stall, 36 of 36 (first text p50 0.6 s, p90 0.8 s, whole answer p90 2.2 s).
-- Groq's free tier is the limit of this rescue: once its rate limit is hit, a Gemini stall again
-  ends "busy".
-- The exclusion is kept in the broker's own state (llmbroker's disable), so it holds locally, in
-  Docker and on Koyeb, and survives model-list refreshes. A name the catalog no longer carries
-  is skipped with a log line.
-- The OpenRouter key is then unused, so neither the AI keys page nor the no-key message lists
-  it, and a server with only that key gets the no-key message instead of "busy".
+- lexiflux names no free model. The free pool is exactly what llmbroker's curated free-tier list
+  holds, and every key that list uses serves the pool. lexiflux names only the paid models it
+  offers.
+- llmbroker refreshes that list from its catalog once a day while lexiflux runs, so free models
+  are renamed, replaced and dropped without a lexiflux release. A free model named in lexiflux
+  silently stops matching: keeping it out then does nothing, and the model that replaced it joins
+  the race unmeasured. Which free models race is llmbroker's call, as in echo-words.
 
 ### Reasoning effort and processing tier
 
@@ -79,11 +70,11 @@ Each AI article on a paid model has two knobs, with per-model defaults:
   alike. Entering a key there is optional, key by key: for every key the user has not entered,
   the server's key is used. The operator sets the server's keys in its environment; users cannot
   change that environment, so the page is how a user brings a key of their own.
-- The page lists every key lexiflux can spend: the keys that serve the free pool (not the
-  OpenRouter key, see above) and the keys of the paid models' providers. The list comes from
-  llmbroker, and so does each key's hint: how to get the key, with its link, and the sign-up
-  effort in plain words (such as "Free signup"). llmbroker's other notes, such as its own rating
-  of the provider, are not shown. lexiflux writes no provider instructions of its own.
+- The page lists every key lexiflux can spend: the keys that serve the free pool and the keys
+  of the paid models' providers. The list comes from llmbroker, and so does each key's hint: how
+  to get the key, with its link, and the sign-up effort in plain words (such as "Free signup").
+  llmbroker's other notes, such as its own rating of the provider, are not shown. lexiflux
+  writes no provider instructions of its own.
 - A user's key pays for that user's calls only. For a key the user has not entered, a call
   spends the server's key: the environment first, then `.env` in the repository root; in Docker
   the container's environment variables, on Koyeb secrets exposed as environment variables. The
@@ -117,8 +108,7 @@ Each AI article on a paid model has two knobs, with per-model defaults:
 - One broker per process. Requests are attributed to the user in llmbroker's journal, but all
   users share the pool and its learned ordering.
 - Locally and in Docker the broker keeps its state in lexiflux's own llmbroker home next to the
-  database, not in the machine-wide llmbroker directory: the pool exclusions are persistent, and
-  there they would also switch those models off for every other llmbroker user on the machine.
+  database, not in the machine-wide llmbroker directory.
 - On Koyeb it keeps its state in lexiflux's PostgreSQL. The pool learns which models answer
   fast; on a cold broker Groq gpt-oss-120b wrote 10 of 23 answers at 2.2/5 with first text p90
   14.5 s, while warm, Gemini wrote 20 of 24 with first text p90 1.6 s. Keeping the state across

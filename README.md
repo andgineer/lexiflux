@@ -68,8 +68,7 @@ database with sample data; `inv run` enables local auto-login.
 For AI articles, enter your API keys on the AI Keys page (in the menu). Keys for everyone who
 has not entered their own go in `.env` in the repository root:
 `llmbroker env freetier >> .env` appends the free-pool key names with links to get them.
-Fill in at least one of `GROQ_API_KEY`, `GEMINI_API_KEY`, `ZAI_API_KEY` and skip
-`OPENROUTER_API_KEY`: Lexiflux leaves the OpenRouter models out of the pool.
+Fill in at least one of them.
 
 Run checks from the activated environment:
 
