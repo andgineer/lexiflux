@@ -1,0 +1,4 @@
+2026-09-25 19:03:44,600 INFO signals Successfully created language preferences for user testuser (ID: 1)
+2026-09-25 19:03:44,758 INFO lexical_views Selected text: page
+2026-09-25 19:03:47,759 WARNING llm AI article failed: LLMTimeoutError('no answer in 3.0 s') model=pool type=Inline translation
+2026-09-25 19:03:47,775 INFO lexical_views Selected text: page

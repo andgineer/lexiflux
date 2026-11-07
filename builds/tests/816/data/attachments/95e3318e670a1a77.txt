@@ -1,0 +1,8 @@
+2026-11-07 06:27:43,938 WARNING google_languages Warning: Egyptian Arabic not found in the database for group Arabic.
+2026-11-07 06:27:44,333 INFO signals Successfully created language preferences for user testuser (ID: 2)
+2026-11-07 06:27:44,353 WARNING presets preset paid-catalog: nothing cached and nothing is fetched automatically — falling back to the bundled copy, frozen at this llmbroker release
+2026-11-07 06:27:44,356 WARNING presets preset freetier: nothing cached and nothing is fetched automatically — falling back to the bundled copy, frozen at this llmbroker release
+2026-11-07 06:27:44,870 WARNING presets preset paid-catalog: nothing cached and nothing is fetched automatically — falling back to the bundled copy, frozen at this llmbroker release
+2026-11-07 06:27:44,874 WARNING presets preset freetier: nothing cached and nothing is fetched automatically — falling back to the bundled copy, frozen at this llmbroker release
+2026-11-07 06:27:44,883 WARNING presets preset paid-catalog: nothing cached and nothing is fetched automatically — falling back to the bundled copy, frozen at this llmbroker release
+2026-11-07 06:27:44,887 WARNING presets preset freetier: nothing cached and nothing is fetched automatically — falling back to the bundled copy, frozen at this llmbroker release

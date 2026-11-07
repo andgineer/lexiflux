@@ -1,0 +1,13 @@
+2026-11-07 06:26:24,146 INFO signals Successfully created language preferences for user alice (ID: 1)
+2026-11-07 06:26:24,153 WARNING presets preset paid-catalog: nothing cached and nothing is fetched automatically — falling back to the bundled copy, frozen at this llmbroker release
+2026-11-07 06:26:24,156 WARNING presets preset freetier: nothing cached and nothing is fetched automatically — falling back to the bundled copy, frozen at this llmbroker release
+2026-11-07 06:26:24,161 WARNING presets preset paid-catalog: nothing cached and nothing is fetched automatically — falling back to the bundled copy, frozen at this llmbroker release
+2026-11-07 06:26:24,163 WARNING presets preset freetier: nothing cached and nothing is fetched automatically — falling back to the bundled copy, frozen at this llmbroker release
+2026-11-07 06:26:24,169 WARNING presets preset paid-catalog: nothing cached and nothing is fetched automatically — falling back to the bundled copy, frozen at this llmbroker release
+2026-11-07 06:26:24,172 WARNING presets preset freetier: nothing cached and nothing is fetched automatically — falling back to the bundled copy, frozen at this llmbroker release
+2026-11-07 06:26:24,177 WARNING presets preset paid-catalog: nothing cached and nothing is fetched automatically — falling back to the bundled copy, frozen at this llmbroker release
+2026-11-07 06:26:24,180 WARNING presets preset freetier: nothing cached and nothing is fetched automatically — falling back to the bundled copy, frozen at this llmbroker release
+2026-11-07 06:26:24,187 WARNING presets preset paid-catalog: nothing cached and nothing is fetched automatically — falling back to the bundled copy, frozen at this llmbroker release
+2026-11-07 06:26:24,189 WARNING presets preset freetier: nothing cached and nothing is fetched automatically — falling back to the bundled copy, frozen at this llmbroker release
+2026-11-07 06:26:24,192 WARNING presets preset paid-catalog: nothing cached and nothing is fetched automatically — falling back to the bundled copy, frozen at this llmbroker release
+2026-11-07 06:26:24,194 WARNING presets preset freetier: nothing cached and nothing is fetched automatically — falling back to the bundled copy, frozen at this llmbroker release

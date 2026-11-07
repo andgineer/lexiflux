@@ -1,0 +1,1 @@
+INFO     httpx:_client.py:1025 HTTP Request: GET https://kaikki.org/dictionary/English/meaning/k/ki/king.jsonl "HTTP/1.1 200 OK"

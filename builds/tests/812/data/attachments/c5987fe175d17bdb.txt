@@ -1,0 +1,4 @@
+2026-09-28 16:19:04,646 WARNING presets preset freetier: nothing cached and nothing is fetched automatically — falling back to the bundled copy, frozen at this llmbroker release
+2026-09-28 16:19:04,647 WARNING presets preset paid-catalog: nothing cached and nothing is fetched automatically — falling back to the bundled copy, frozen at this llmbroker release
+2026-09-28 16:19:04,650 WARNING presets preset paid-catalog: nothing cached and nothing is fetched automatically — falling back to the bundled copy, frozen at this llmbroker release
+2026-09-28 16:19:04,652 WARNING presets preset paid-catalog: nothing cached and nothing is fetched automatically — falling back to the bundled copy, frozen at this llmbroker release

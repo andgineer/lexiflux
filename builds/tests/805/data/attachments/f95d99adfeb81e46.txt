@@ -1,0 +1,7 @@
+2026-09-27 08:48:20,834 INFO signals Successfully created language preferences for user testuser (ID: 1)
+2026-09-27 08:48:21,007 INFO lexical_views Selected text: China
+2026-09-27 08:48:21,010 INFO _client HTTP Request: GET https://kaikki.org/ruwiktionary/%D0%90%D0%BD%D0%B3%D0%BB%D0%B8%D0%B9%D1%81%D0%BA%D0%B8%D0%B9/meaning/c/ch/china.jsonl "HTTP/1.1 200 OK"
+2026-09-27 08:48:21,010 INFO _client HTTP Request: GET https://kaikki.org/dictionary/English/meaning/c/ch/china.jsonl "HTTP/1.1 200 OK"
+2026-09-27 08:48:21,011 INFO _client HTTP Request: GET https://kaikki.org/ruwiktionary/%D0%90%D0%BD%D0%B3%D0%BB%D0%B8%D0%B9%D1%81%D0%BA%D0%B8%D0%B9/meaning/C/Ch/China.jsonl "HTTP/1.1 200 OK"
+2026-09-27 08:48:21,012 INFO _client HTTP Request: GET https://kaikki.org/dictionary/English/meaning/C/Ch/China.jsonl "HTTP/1.1 200 OK"
+2026-09-27 08:48:21,017 WARNING lexical_views History translation of 'China' failed: NoLLMAvailableError('No LLM available: no keys')

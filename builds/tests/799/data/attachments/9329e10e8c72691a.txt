@@ -1,0 +1,2 @@
+WARNING  lexiflux.language.llm:llm.py:312 AI article failed: AuthError('rejected') model=opus type=Origin
+WARNING  llmbroker.broker:presets.py:154 preset paid-catalog: nothing cached and nothing is fetched automatically — falling back to the bundled copy, frozen at this llmbroker release

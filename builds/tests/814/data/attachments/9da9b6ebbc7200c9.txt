@@ -1,0 +1,4 @@
+2026-09-29 07:12:04,100 WARNING llm AI article failed: AuthError('rejected') model=opus type=Origin
+2026-09-29 07:12:04,100 WARNING presets preset paid-catalog: nothing cached and nothing is fetched automatically — falling back to the bundled copy, frozen at this llmbroker release
+2026-09-29 07:12:04,104 WARNING presets preset paid-catalog: nothing cached and nothing is fetched automatically — falling back to the bundled copy, frozen at this llmbroker release
+2026-09-29 07:12:04,106 WARNING presets preset freetier: nothing cached and nothing is fetched automatically — falling back to the bundled copy, frozen at this llmbroker release

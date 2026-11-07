@@ -1,0 +1,3 @@
+2026-11-07 06:36:52,808 WARNING llm AI article failed: ProviderError('upstream exploded') model=pool type=AI dictionary
+2026-11-07 06:36:52,808 ERROR llm AI article failed with an unexpected error
+llmbroker.exceptions.ProviderError: upstream exploded

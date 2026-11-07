@@ -1,0 +1,2 @@
+2026-11-07 06:26:27,908 INFO signals Successfully created language preferences for user testuser (ID: 1)
+2026-11-07 06:26:28,086 INFO lexical_views Selected text: Content of page 1

@@ -1,0 +1,4 @@
+2026-09-28 13:41:10,586 WARNING google_languages Warning: Egyptian Arabic not found in the database for group Arabic.
+2026-09-28 13:41:10,869 INFO signals Successfully created language preferences for user testuser (ID: 3)
+2026-09-28 13:41:10,884 WARNING presets preset paid-catalog: nothing cached and nothing is fetched automatically — falling back to the bundled copy, frozen at this llmbroker release
+2026-09-28 13:41:10,886 WARNING presets preset freetier: nothing cached and nothing is fetched automatically — falling back to the bundled copy, frozen at this llmbroker release

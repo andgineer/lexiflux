@@ -1,0 +1,1 @@
+Marked text for term 'Word10 word11 word12': Word8 word9. [FRAGMENT][HIGHLIGHT]Word10 word11 word12[/HIGHLIGHT][/FRAGMENT]

@@ -1,0 +1,22 @@
+2026-09-29 07:14:12,852 ERROR webdriver_augmented Failed to enable CDP logging: Message: HTTP method not allowed
+
+2026-09-29 07:14:13,114 WARNING google_languages Warning: Egyptian Arabic not found in the database for group Arabic.
+2026-09-29 07:14:13,514 INFO signals Successfully created language preferences for user testuser (ID: 15)
+2026-09-29 07:14:16,592 INFO timing Loading from https://example.com/test-book.html completed in 0.000 seconds
+2026-09-29 07:14:16,593 INFO timing Extract metadata completed in 0.001 seconds
+2026-09-29 07:14:16,593 INFO timing Extracting IDs with internal links completed in 0.000 seconds
+2026-09-29 07:14:16,601 INFO timing Extracting readable HTML completed in 0.008 seconds
+2026-09-29 07:14:16,602 INFO timing Parse extracted HTML completed in 0.000 seconds
+2026-09-29 07:14:16,602 INFO timing Adding source info completed in 0.000 seconds
+2026-09-29 07:14:16,603 INFO timing Cleared HTML completed in 0.000 seconds
+2026-09-29 07:14:16,606 INFO book_loader_url No images found in the content
+2026-09-29 07:14:16,610 INFO timing Iterate over pages and save them completed in 0.001 seconds
+2026-09-29 07:14:16,610 INFO book_loader_url No images to download
+2026-09-29 07:14:17,077 INFO test_e2e_import_book Book title extracted correctly
+2026-09-29 07:14:17,105 INFO test_e2e_import_book Author input field is displayed
+2026-09-29 07:14:17,167 INFO reader_views Opening book pride-prejudice-examplecom at page 1 for user testuser
+2026-09-29 07:14:17,186 INFO models Reading location updated for pride-prejudice-examplecom: 1(1):0/0.0
+[{'page_number': 1, 'word': 0}]/0
+2026-09-29 07:14:17,187 INFO reader_views Jump status: book pride-prejudice-examplecom, is_first_jump True, is_last_jump True
+2026-09-29 07:14:17,359 INFO test_e2e_import_book Book saved successfully
+2026-09-29 07:14:17,392 INFO test_e2e_import_book Redirected to reader page

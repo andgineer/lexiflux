@@ -1,0 +1,4 @@
+2026-09-28 16:14:32,275 INFO signals Successfully created language preferences for user testuser (ID: 1)
+2026-09-28 16:14:32,284 INFO user_modal   - Serbian -> English (ID: 1)
+2026-09-28 16:14:32,285 INFO user_modal New language: Afrikaans (af)
+2026-09-28 16:14:32,286 INFO user_modal Old user language: English

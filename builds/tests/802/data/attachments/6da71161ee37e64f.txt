@@ -1,0 +1,8 @@
+2026-09-25 19:04:42,239 WARNING google_languages Warning: Egyptian Arabic not found in the database for group Arabic.
+2026-09-25 19:04:42,596 INFO signals Successfully created language preferences for user testuser (ID: 3)
+2026-09-25 19:04:42,625 INFO reader_views Opening book the-old-armchair at page 1 for user testuser
+2026-09-25 19:04:42,632 INFO models Reading location updated for the-old-armchair: 1(1):0/0.0
+[{'page_number': 1, 'word': 0}]/0
+2026-09-25 19:04:42,633 INFO reader_views Jump status: book the-old-armchair, is_first_jump True, is_last_jump True
+2026-09-25 19:04:43,154 INFO lexical_views Selected text: springs
+2026-09-25 19:04:46,156 WARNING llm AI article failed: LLMTimeoutError('no answer in 3.0 s') model=pool type=Inline translation

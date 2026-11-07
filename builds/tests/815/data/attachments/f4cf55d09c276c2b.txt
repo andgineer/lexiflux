@@ -1,0 +1,6 @@
+2026-09-29 08:03:53,250 INFO _client HTTP Request: GET https://kaikki.org/ruwiktionary/%D0%9D%D0%B5%D0%BC%D0%B5%D1%86%D0%BA%D0%B8%D0%B9/meaning/S/Sc/Schloss.jsonl "HTTP/1.1 200 OK"
+2026-09-29 08:03:53,250 INFO _client HTTP Request: GET https://kaikki.org/dictionary/German/meaning/S/Sc/Schloss.jsonl "HTTP/1.1 200 OK"
+2026-09-29 08:03:53,251 INFO _client HTTP Request: GET https://kaikki.org/ruwiktionary/%D0%9D%D0%B5%D0%BC%D0%B5%D1%86%D0%BA%D0%B8%D0%B9/meaning/S/Sc/Schlo%C3%9F.jsonl "HTTP/1.1 404 Not Found"
+2026-09-29 08:03:53,252 INFO _client HTTP Request: GET https://kaikki.org/dictionary/German/meaning/S/Sc/Schlo%C3%9F.jsonl "HTTP/1.1 200 OK"
+2026-09-29 08:03:53,256 INFO _client HTTP Request: GET https://kaikki.org/dictionary/Serbo-Croatian/meaning/k/ko/kosu.jsonl "HTTP/1.1 200 OK"
+2026-09-29 08:03:53,257 INFO _client HTTP Request: GET https://kaikki.org/dictionary/Serbo-Croatian/meaning/k/ko/kosa.jsonl "HTTP/1.1 200 OK"

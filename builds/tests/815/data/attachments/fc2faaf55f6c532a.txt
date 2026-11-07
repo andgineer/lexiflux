@@ -1,0 +1,7 @@
+2026-09-29 08:02:54,994 INFO signals Successfully created language preferences for user alice (ID: 1)
+2026-09-29 08:02:55,000 WARNING presets preset paid-catalog: nothing cached and nothing is fetched automatically — falling back to the bundled copy, frozen at this llmbroker release
+2026-09-29 08:02:55,002 WARNING presets preset freetier: nothing cached and nothing is fetched automatically — falling back to the bundled copy, frozen at this llmbroker release
+2026-09-29 08:02:55,003 WARNING log Not Found: /api/ai-keys/u-1/
+2026-09-29 08:02:55,005 WARNING presets preset paid-catalog: nothing cached and nothing is fetched automatically — falling back to the bundled copy, frozen at this llmbroker release
+2026-09-29 08:02:55,007 WARNING presets preset freetier: nothing cached and nothing is fetched automatically — falling back to the bundled copy, frozen at this llmbroker release
+2026-09-29 08:02:55,008 WARNING log Not Found: /api/ai-keys/u-1/

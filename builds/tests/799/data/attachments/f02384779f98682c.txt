@@ -1,0 +1,1 @@
+WARNING  lexiflux.language.llm:llm.py:312 AI article failed: RateLimitError('slow down') model=gpt type=In depth

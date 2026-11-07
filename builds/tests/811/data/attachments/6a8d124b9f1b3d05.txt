@@ -1,0 +1,2 @@
+2026-09-28 15:42:06,111 INFO signals Successfully created language preferences for user testuser (ID: 1)
+2026-09-28 15:42:06,123 INFO models Jumping to 2#30

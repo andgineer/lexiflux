@@ -1,0 +1,4 @@
+INFO     lexiflux.signals:signals.py:55 Successfully created language preferences for user testuser (ID: 1)
+INFO     lexiflux.views.lexical_views:lexical_views.py:242 Selected text: page
+WARNING  lexiflux.language.llm:llm.py:391 AI article failed: LLMTimeoutError('no answer in 3.0 s') model=pool type=Inline translation
+INFO     lexiflux.views.lexical_views:lexical_views.py:242 Selected text: page

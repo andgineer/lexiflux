@@ -1,0 +1,2 @@
+2026-09-28 13:40:35,605 INFO signals Successfully created language preferences for user testuser (ID: 1)
+2026-09-28 13:40:35,706 WARNING lexical_views Dictionary article failed: not_found

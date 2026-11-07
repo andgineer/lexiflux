@@ -1,0 +1,4 @@
+2026-09-25 18:53:14,247 INFO signals Successfully created language preferences for user testuser (ID: 1)
+2026-09-25 18:53:14,346 INFO lexical_views Selected text: page
+2026-09-25 18:53:14,347 INFO _client HTTP Request: GET https://translate.googleapis.com/translate_a/single?client=dict-chrome-ex&sl=en&tl=ru&dt=t&dt=bd&q=page "HTTP/1.1 200 OK"
+2026-09-25 18:53:14,347 WARNING lexical_views Dictionary article failed: not_found

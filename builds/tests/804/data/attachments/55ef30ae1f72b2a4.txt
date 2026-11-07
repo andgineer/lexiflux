@@ -1,0 +1,1 @@
+WARNING  lexiflux.views.calibre_views:calibre_views.py:36 No Bearer token provided for Calibre upload

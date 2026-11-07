@@ -1,0 +1,1 @@
+2026-11-07 06:37:04,788 WARNING log Forbidden (Origin checking failed - https://evil.example.com does not match any trusted origins.): /accounts/login/

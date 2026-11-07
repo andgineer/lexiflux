@@ -1,0 +1,2 @@
+2026-11-07 06:37:11,335 INFO signals Successfully created language preferences for user owner (ID: 1)
+2026-11-07 06:37:11,618 INFO signals Successfully created language preferences for user other (ID: 2)

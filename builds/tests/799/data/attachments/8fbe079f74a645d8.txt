@@ -1,0 +1,8 @@
+Anchor map: {'#chapter1': {'page': 1, 'item_id': 'chapter1', 'item_name': 'Chapter 1: The Beginning'}, '#chapter2': {'page': 2, 'item_id': 'chapter2', 'item_name': 'Chapter 2: The Middle Part'}, '#important_note': {'page': 4, 'item_id': 'important_note', 'item_name': 'Important Note About Something'}, '#chapter3': {'page': 6, 'item_id': 'chapter3', 'item_name': 'Chapter 3: The Final Section'}}
+Anchor #chapter1: page 1, has 301 words
+Anchor #chapter2: page 2, has 265 words
+Anchor #important_note: page 4, has 264 words
+Anchor #chapter3: page 6, has 299 words
+Page content length: 2530
+Word position: 33 out of 301 words
+Context fragment: 'Note</a>                 <a href="#chapter3">Go to Chapter 3</a>                          <h1 id="chapter1" class="display-4 fw-semibold text-primary mb-4">Chapter 1: The Beginning</h1>             <p>This is the start of our story with introductory content.</p>             <p>Continue reading'

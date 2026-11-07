@@ -1,0 +1,2 @@
+2026-09-27 08:27:22,179 INFO _client HTTP Request: GET https://kaikki.org/ruwiktionary/%D0%A5%D0%BE%D1%80%D0%B2%D0%B0%D1%82%D1%81%D0%BA%D0%B8%D0%B9/meaning/m/ml/mlijeko.jsonl "HTTP/1.1 200 OK"
+2026-09-27 08:27:22,179 INFO _client HTTP Request: GET https://kaikki.org/dictionary/Serbo-Croatian/meaning/m/ml/mlijeko.jsonl "HTTP/1.1 200 OK"

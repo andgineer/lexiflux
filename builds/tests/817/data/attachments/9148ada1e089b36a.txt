@@ -1,0 +1,1 @@
+ERROR    lexiflux.anki.anki_connect:anki_connect.py:105 Failed to parse AnkiConnect response: Invalid JSON: line 1 column 1 (char 0)

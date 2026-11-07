@@ -1,0 +1,5 @@
+2026-09-28 12:13:55,244 INFO signals Successfully created language preferences for user testuser (ID: 1)
+2026-09-28 12:13:55,344 INFO _client HTTP Request: GET https://kaikki.org/ruwiktionary/%D0%9D%D0%B5%D0%BC%D0%B5%D1%86%D0%BA%D0%B8%D0%B9/meaning/E/Es/Es.jsonl "HTTP/1.1 404 Not Found"
+2026-09-28 12:13:55,345 INFO _client HTTP Request: GET https://kaikki.org/dictionary/German/meaning/E/Es/Es.jsonl "HTTP/1.1 200 OK"
+2026-09-28 12:13:55,345 INFO _client HTTP Request: GET https://kaikki.org/ruwiktionary/%D0%9D%D0%B5%D0%BC%D0%B5%D1%86%D0%BA%D0%B8%D0%B9/meaning/e/es/es.jsonl "HTTP/1.1 200 OK"
+2026-09-28 12:13:55,346 INFO _client HTTP Request: GET https://kaikki.org/dictionary/German/meaning/e/es/es.jsonl "HTTP/1.1 200 OK"

@@ -1,0 +1,4 @@
+2026-11-07 06:31:34,425 WARNING presets preset freetier: nothing cached and nothing is fetched automatically — falling back to the bundled copy, frozen at this llmbroker release
+2026-11-07 06:31:34,427 WARNING presets preset paid-catalog: nothing cached and nothing is fetched automatically — falling back to the bundled copy, frozen at this llmbroker release
+2026-11-07 06:31:34,445 INFO apps Lexiflux 2.9.6 is ready.
+2026-11-07 06:31:34,446 WARNING llm AI article failed: MissingKeyError("api_key_ref 'OPENAI_API_KEY' for model 'gpt' could not be resolved — set the env var or configure a secrets backend. Create a key at https://platform.openai.com/api-keys (paid).") model=gpt type=AI dictionary

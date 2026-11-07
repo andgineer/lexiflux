@@ -1,0 +1,4 @@
+WARNING  llmbroker.broker:presets.py:154 preset freetier: nothing cached and nothing is fetched automatically — falling back to the bundled copy, frozen at this llmbroker release
+WARNING  llmbroker.broker:presets.py:154 preset paid-catalog: nothing cached and nothing is fetched automatically — falling back to the bundled copy, frozen at this llmbroker release
+INFO     root:apps.py:36 Lexiflux 2.9.6 is ready.
+WARNING  lexiflux.language.llm:llm.py:401 AI article failed: MissingKeyError("api_key_ref 'OPENAI_API_KEY' for model 'gpt' could not be resolved — set the env var or configure a secrets backend. Create a key at https://platform.openai.com/api-keys (paid).") model=gpt type=AI dictionary

@@ -1,0 +1,3 @@
+INFO     lexiflux.signals:signals.py:55 Successfully created language preferences for user testuser (ID: 1)
+INFO     lexiflux.signals:signals.py:55 Successfully created language preferences for user reader (ID: 2)
+INFO     lexiflux.views.lexical_views:lexical_views.py:242 Selected text: Content of page 1

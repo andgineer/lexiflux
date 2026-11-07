@@ -1,0 +1,1 @@
+2026-09-25 19:05:00,061 INFO _client HTTP Request: GET https://translate.googleapis.com/translate_a/single?client=dict-chrome-ex&sl=sr&tl=ru&dt=t&dt=bd&q=%D0%B3%D1%80%D0%B0%D0%B4 "HTTP/1.1 200 OK"

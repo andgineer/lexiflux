@@ -1,0 +1,1 @@
+2026-09-28 13:41:36,557 WARNING llm AI article failed: LLMTimeoutError('t') model=pool type=AI dictionary

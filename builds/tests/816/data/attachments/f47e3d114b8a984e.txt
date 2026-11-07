@@ -1,0 +1,4 @@
+2026-11-07 06:25:48,181 WARNING llm AI article failed: MissingKeyError('no key') model=gpt type=In depth
+2026-11-07 06:25:48,182 WARNING presets preset paid-catalog: nothing cached and nothing is fetched automatically — falling back to the bundled copy, frozen at this llmbroker release
+2026-11-07 06:25:48,185 WARNING presets preset paid-catalog: nothing cached and nothing is fetched automatically — falling back to the bundled copy, frozen at this llmbroker release
+2026-11-07 06:25:48,187 WARNING presets preset freetier: nothing cached and nothing is fetched automatically — falling back to the bundled copy, frozen at this llmbroker release

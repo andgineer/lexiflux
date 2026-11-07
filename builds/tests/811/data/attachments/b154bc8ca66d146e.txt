@@ -1,0 +1,6 @@
+2026-09-28 15:44:27,035 INFO _client HTTP Request: GET https://translate.googleapis.com/translate_a/single?client=dict-chrome-ex&sl=en&tl=ru&dt=t&dt=bd&q=spring "HTTP/1.1 429 Too Many Requests"
+2026-09-28 15:44:27,036 WARNING translation Google client dict-chrome-ex refused: HTTP 429
+2026-09-28 15:44:27,036 INFO _client HTTP Request: GET https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=ru&dt=t&dt=bd&q=spring "HTTP/1.1 200 OK"
+2026-09-28 15:44:27,037 WARNING translation Google client gtx answered with non-JSON
+2026-09-28 15:44:27,037 INFO _client HTTP Request: GET https://translate.googleapis.com/translate_a/single?client=at&sl=en&tl=ru&dt=t&dt=bd&q=spring "HTTP/1.1 403 Forbidden"
+2026-09-28 15:44:27,037 WARNING translation Google client at refused: HTTP 403

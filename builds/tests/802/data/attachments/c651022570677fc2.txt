@@ -1,0 +1,2 @@
+INFO     httpx:_client.py:1025 HTTP Request: GET https://kaikki.org/ruwiktionary/raw-wiktextract-data.jsonl.gz "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET https://kaikki.org/dictionary/raw-wiktextract-data.jsonl.gz "HTTP/1.1 200 OK"

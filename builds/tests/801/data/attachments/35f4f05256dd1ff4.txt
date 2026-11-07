@@ -1,0 +1,2 @@
+2026-09-25 18:53:11,528 INFO signals Successfully created language preferences for user testuser (ID: 1)
+2026-09-25 18:53:11,541 INFO anki_connect result {'result': [1, 2, 3, 4, 5, 6]}

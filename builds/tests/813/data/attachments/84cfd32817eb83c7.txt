@@ -1,0 +1,1 @@
+2026-09-29 06:22:24,674 WARNING log Forbidden (Origin checking failed - https://evil.example.com does not match any trusted origins.): /accounts/login/

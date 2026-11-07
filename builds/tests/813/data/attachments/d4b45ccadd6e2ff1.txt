@@ -1,0 +1,37 @@
+2026-09-29 06:26:10,765 WARNING google_languages Warning: Egyptian Arabic not found in the database for group Arabic.
+2026-09-29 06:26:11,121 INFO signals Successfully created language preferences for user testuser (ID: 44)
+2026-09-29 06:26:12,231 INFO reader_views Opening book some-book-code at page 1 for user testuser
+2026-09-29 06:26:12,244 INFO models Reading location updated for some-book-code: 1(1):0/0.0
+[{'page_number': 1, 'word': 0}]/0
+2026-09-29 06:26:12,245 INFO reader_views Jump status: book some-book-code, is_first_jump True, is_last_jump True
+2026-09-29 06:26:12,756 INFO lexical_views Selected text: page
+2026-09-29 06:26:12,757 WARNING llm AI article failed: RuntimeError('a test reached the real LLM broker; patch llms_for') model=pool type=Inline translation
+2026-09-29 06:26:12,757 ERROR llm AI article failed with an unexpected error
+Traceback (most recent call last):
+  File "/home/runner/work/lexiflux/lexiflux/lexiflux/language/llm.py", line 340, in translate_inline
+    return ask_inline_translation(req)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/work/lexiflux/lexiflux/lexiflux/language/llm.py", line 330, in ask_inline_translation
+    text = call.result(timeout=INLINE_TRANSLATION_SECONDS)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/concurrent/futures/_base.py", line 449, in result
+    return self.__get_result()
+           ^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/concurrent/futures/_base.py", line 401, in __get_result
+    raise self._exception
+  File "/home/runner/work/lexiflux/lexiflux/lexiflux/language/llm.py", line 310, in _answer_pool
+    call.set_result(_ask_pool(req))
+                    ^^^^^^^^^^^^^^
+  File "/home/runner/work/lexiflux/lexiflux/lexiflux/language/llm.py", line 299, in _ask_pool
+    answer = llms_for(req.user).ask(
+             ^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/unittest/mock.py", line 1139, in __call__
+    return self._mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/unittest/mock.py", line 1143, in _mock_call
+    return self._execute_mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/unittest/mock.py", line 1198, in _execute_mock_call
+    raise effect
+RuntimeError: a test reached the real LLM broker; patch llms_for
+2026-09-29 06:26:12,769 WARNING webdriver_augmented js log 1 error entries found

@@ -1,0 +1,2 @@
+2026-09-28 16:14:12,970 INFO signals Successfully created language preferences for user testuser (ID: 1)
+2026-09-28 16:14:12,977 INFO calibre_views Created new author: Test Author

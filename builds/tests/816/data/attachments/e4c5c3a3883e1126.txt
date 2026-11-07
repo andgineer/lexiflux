@@ -1,0 +1,1 @@
+2026-11-07 06:26:29,491 WARNING log Bad Request: /calibre/handshake/

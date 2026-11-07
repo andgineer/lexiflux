@@ -1,0 +1,2 @@
+2026-09-28 15:42:55,305 INFO signals Successfully created language preferences for user testuser (ID: 1)
+2026-09-28 15:42:55,485 INFO lexical_views Selected text: springs

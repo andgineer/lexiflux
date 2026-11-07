@@ -1,0 +1,9 @@
+2026-09-28 12:13:47,767 INFO apps Lexiflux 2.9.3 is ready.
+2026-09-28 12:13:48,129 INFO signals Successfully created language preferences for user testuser (ID: 1)
+2026-09-28 12:13:48,158 INFO reader_views Opening book some-book-code at page 1 for user testuser
+2026-09-28 12:13:48,172 INFO models Reading location updated for some-book-code: 1(1):0/0.0
+[{'page_number': 1, 'word': 0}]/0
+2026-09-28 12:13:48,173 INFO reader_views Jump status: book some-book-code, is_first_jump True, is_last_jump True
+2026-09-28 12:13:48,382 INFO reader_views Rendering page 1 of book some-book-code
+2026-09-28 12:13:49,537 INFO lexical_views Selected text: page
+2026-09-28 12:13:49,551 WARNING llm AI article failed: StreamInterruptedError('died') model=pool type=AI dictionary

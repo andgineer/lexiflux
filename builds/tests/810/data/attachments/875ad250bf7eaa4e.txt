@@ -1,0 +1,7 @@
+2026-09-28 13:40:20,714 INFO signals Successfully created language preferences for user alice (ID: 1)
+2026-09-28 13:40:20,718 WARNING presets preset paid-catalog: nothing cached and nothing is fetched automatically — falling back to the bundled copy, frozen at this llmbroker release
+2026-09-28 13:40:20,720 WARNING presets preset freetier: nothing cached and nothing is fetched automatically — falling back to the bundled copy, frozen at this llmbroker release
+2026-09-28 13:40:20,721 WARNING log Not Found: /api/ai-keys/OPENROUTER_API_KEY/
+2026-09-28 13:40:20,722 WARNING presets preset paid-catalog: nothing cached and nothing is fetched automatically — falling back to the bundled copy, frozen at this llmbroker release
+2026-09-28 13:40:20,723 WARNING presets preset freetier: nothing cached and nothing is fetched automatically — falling back to the bundled copy, frozen at this llmbroker release
+2026-09-28 13:40:20,724 WARNING log Not Found: /api/ai-keys/OPENROUTER_API_KEY/

@@ -1,0 +1,10 @@
+2026-11-07 06:31:34,327 WARNING presets preset freetier: nothing cached and nothing is fetched automatically — falling back to the bundled copy, frozen at this llmbroker release
+2026-11-07 06:31:34,328 WARNING presets preset paid-catalog: nothing cached and nothing is fetched automatically — falling back to the bundled copy, frozen at this llmbroker release
+2026-11-07 06:31:34,333 WARNING presets preset freetier: nothing cached and nothing is fetched automatically — falling back to the bundled copy, frozen at this llmbroker release
+2026-11-07 06:31:34,345 INFO refresher sync freetier: applied — 0 -> 5 entries with a key
+  added: groq-gpt-oss-120b, openrouter-nemotron-3-ultra, openrouter-laguna-s-2.1, google-gemini-3.5-flash-lite, zai-glm-4.7-flash
+2026-11-07 06:31:34,348 INFO apps Lexiflux 2.9.6 is ready.
+2026-11-07 06:31:34,355 INFO catalog api_key_ref 'OPENAI_API_KEY' not resolved — gpt, gpt-fast is reached by name only, so direct() on it fails until the env var / secret is set — Create a key at https://platform.openai.com/api-keys (paid).
+2026-11-07 06:31:34,355 INFO catalog api_key_ref 'ANTHROPIC_API_KEY' not resolved — opus is reached by name only, so direct() on it fails until the env var / secret is set — Create a key at https://console.anthropic.com/ (paid).
+2026-11-07 06:31:34,359 INFO _client HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/openai/chat/completions "HTTP/1.1 200 OK"
+2026-11-07 06:31:34,360 INFO _client HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 200 OK"

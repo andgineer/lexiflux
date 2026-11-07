@@ -1,0 +1,4 @@
+2026-09-28 13:39:54,972 WARNING llm AI article failed: NoLLMAvailableError('none') model=pool type=AI dictionary
+2026-09-28 13:39:54,972 WARNING presets preset freetier: nothing cached and nothing is fetched automatically — falling back to the bundled copy, frozen at this llmbroker release
+2026-09-28 13:39:54,973 WARNING presets preset paid-catalog: nothing cached and nothing is fetched automatically — falling back to the bundled copy, frozen at this llmbroker release
+2026-09-28 13:39:54,975 WARNING presets preset freetier: nothing cached and nothing is fetched automatically — falling back to the bundled copy, frozen at this llmbroker release

@@ -1,0 +1,3 @@
+2026-09-29 08:02:19,045 INFO signals Successfully created language preferences for user u (ID: 1)
+2026-09-29 08:02:19,048 WARNING presets preset paid-catalog: nothing cached and nothing is fetched automatically — falling back to the bundled copy, frozen at this llmbroker release
+2026-09-29 08:02:19,050 WARNING presets preset freetier: nothing cached and nothing is fetched automatically — falling back to the bundled copy, frozen at this llmbroker release

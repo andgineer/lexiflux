@@ -1,0 +1,2 @@
+INFO     lexiflux.signals:signals.py:55 Successfully created language preferences for user testuser (ID: 1)
+INFO     httpx:_client.py:1025 HTTP Request: GET https://translate.googleapis.com/translate_a/single?client=dict-chrome-ex&sl=en&tl=ru&dt=t&dt=bd&q=page "HTTP/1.1 200 OK"

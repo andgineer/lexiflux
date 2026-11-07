@@ -1,0 +1,3 @@
+WARNING  lexiflux.language.llm:llm.py:391 AI article failed: ProviderError('upstream exploded') model=pool type=AI dictionary
+ERROR    lexiflux.language.llm:llm.py:427 AI article failed with an unexpected error
+llmbroker.exceptions.ProviderError: upstream exploded

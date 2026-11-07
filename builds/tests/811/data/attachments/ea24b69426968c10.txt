@@ -1,0 +1,2 @@
+2026-09-28 15:43:32,599 INFO _client HTTP Request: GET https://kaikki.org/dictionary/English/meaning/n/no/nonexistent.jsonl "HTTP/1.1 200 OK"
+2026-09-28 15:43:32,600 WARNING wiktionary kaikki.org: https://kaikki.org/dictionary/English/meaning/n/no/nonexistent.jsonl failed: the page has no JSON lines

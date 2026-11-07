@@ -1,0 +1,19 @@
+2026-09-25 18:53:56,602 INFO signals Successfully created language preferences for user testuser (ID: 1)
+2026-09-25 18:53:56,701 INFO lexical_views Selected text: page
+2026-09-25 18:53:56,702 ERROR lexical_views Dictionary article failed
+Traceback (most recent call last):
+  File "/home/runner/work/lexiflux/lexiflux/lexiflux/views/lexical_views.py", line 133, in _safe_dictionary_article
+    article = _dictionary_article(
+              ^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/work/lexiflux/lexiflux/lexiflux/views/lexical_views.py", line 105, in _dictionary_article
+    result = translator.translate(Term(context.word, context.passage, user))
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/unittest/mock.py", line 1139, in __call__
+    return self._mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/unittest/mock.py", line 1143, in _mock_call
+    return self._execute_mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/unittest/mock.py", line 1198, in _execute_mock_call
+    raise effect
+KeyError: 'raw-secret-detail <b>'

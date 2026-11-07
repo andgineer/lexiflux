@@ -1,0 +1,2 @@
+2026-05-15 09:17:46,100 INFO signals Successfully created language preferences for user testuser (ID: 1)
+2026-05-15 09:17:46,106 WARNING calibre_views Language unknown_lang_code not found in database

@@ -1,0 +1,4 @@
+2026-09-28 15:43:12,440 INFO signals Successfully created language preferences for user testuser (ID: 1)
+2026-09-28 15:43:12,460 INFO reader_views Link clicked: #chapter1, page_info: {'page': 2}
+2026-09-28 15:43:12,461 WARNING book_loader_base Anchor 'chapter1' not found in page 2 content
+2026-09-28 15:43:12,463 INFO models Jumping to 2#0

@@ -1,0 +1,8 @@
+2026-09-28 16:15:11,913 INFO _client HTTP Request: GET https://kaikki.org/ruwiktionary/%D0%90%D0%BD%D0%B3%D0%BB%D0%B8%D0%B9%D1%81%D0%BA%D0%B8%D0%B9/meaning/s/sp/springs.jsonl "HTTP/1.1 404 Not Found"
+2026-09-28 16:15:11,914 INFO _client HTTP Request: GET https://kaikki.org/dictionary/English/meaning/s/sp/springs.jsonl "HTTP/1.1 200 OK"
+2026-09-28 16:15:11,914 INFO _client HTTP Request: GET https://kaikki.org/ruwiktionary/%D0%90%D0%BD%D0%B3%D0%BB%D0%B8%D0%B9%D1%81%D0%BA%D0%B8%D0%B9/meaning/s/sp/spring.jsonl "HTTP/1.1 200 OK"
+2026-09-28 16:15:11,915 INFO _client HTTP Request: GET https://kaikki.org/dictionary/English/meaning/s/sp/spring.jsonl "HTTP/1.1 200 OK"
+2026-09-28 16:15:11,920 INFO _client HTTP Request: GET https://kaikki.org/ruwiktionary/%D0%90%D0%BD%D0%B3%D0%BB%D0%B8%D0%B9%D1%81%D0%BA%D0%B8%D0%B9/meaning/s/sp/springs.jsonl "HTTP/1.1 404 Not Found"
+2026-09-28 16:15:11,921 INFO _client HTTP Request: GET https://kaikki.org/dictionary/English/meaning/s/sp/springs.jsonl "HTTP/1.1 200 OK"
+2026-09-28 16:15:11,922 INFO _client HTTP Request: GET https://kaikki.org/ruwiktionary/%D0%90%D0%BD%D0%B3%D0%BB%D0%B8%D0%B9%D1%81%D0%BA%D0%B8%D0%B9/meaning/s/sp/spring.jsonl "HTTP/1.1 200 OK"
+2026-09-28 16:15:11,923 INFO _client HTTP Request: GET https://kaikki.org/dictionary/English/meaning/s/sp/spring.jsonl "HTTP/1.1 200 OK"

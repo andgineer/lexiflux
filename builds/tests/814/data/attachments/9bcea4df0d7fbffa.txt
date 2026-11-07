@@ -1,0 +1,7 @@
+INFO     lexiflux.signals:signals.py:55 Successfully created language preferences for user testuser (ID: 1)
+INFO     lexiflux.views.lexical_views:lexical_views.py:257 Selected text: springs
+WARNING  lexiflux.language.wiktionary:wiktionary.py:485 kaikki.org: https://kaikki.org/ruwiktionary/%D0%90%D0%BD%D0%B3%D0%BB%D0%B8%D0%B9%D1%81%D0%BA%D0%B8%D0%B9/meaning/s/sp/springs.jsonl failed: down
+WARNING  lexiflux.language.wiktionary:wiktionary.py:485 kaikki.org: https://kaikki.org/dictionary/English/meaning/s/sp/springs.jsonl failed: down
+WARNING  lexiflux.language.wiktionary:wiktionary.py:485 kaikki.org: https://kaikki.org/ruwiktionary/%D0%90%D0%BD%D0%B3%D0%BB%D0%B8%D0%B9%D1%81%D0%BA%D0%B8%D0%B9/meaning/s/sp/spring.jsonl failed: down
+WARNING  lexiflux.language.wiktionary:wiktionary.py:485 kaikki.org: https://kaikki.org/dictionary/English/meaning/s/sp/spring.jsonl failed: down
+WARNING  lexiflux.views.lexical_views:lexical_views.py:157 Dictionary article failed: network: springs

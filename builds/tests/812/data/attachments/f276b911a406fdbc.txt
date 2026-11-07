@@ -1,0 +1,2 @@
+INFO     lexiflux.signals:signals.py:55 Successfully created language preferences for user lexiflux (ID: 1)
+INFO     lexiflux.auth:auth.py:62 Created default user: lexiflux@example.com

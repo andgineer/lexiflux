@@ -1,0 +1,3 @@
+INFO     httpx:_client.py:1025 HTTP Request: GET https://kaikki.org/dictionary/German/meaning/D/De/Deutschlands.jsonl "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET https://kaikki.org/dictionary/German/meaning/D/De/Deutschland.jsonl "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET https://kaikki.org/dictionary/German/meaning/d/de/deutschlands.jsonl "HTTP/1.1 404 Not Found"

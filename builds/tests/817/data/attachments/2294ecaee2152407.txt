@@ -1,0 +1,2 @@
+INFO     httpx:_client.py:1025 HTTP Request: GET https://kaikki.org/dictionary/German/meaning/G/Ge/Gehen.jsonl "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET https://kaikki.org/dictionary/German/meaning/g/ge/gehen.jsonl "HTTP/1.1 200 OK"

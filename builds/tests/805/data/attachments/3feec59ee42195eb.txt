@@ -1,0 +1,2 @@
+WARNING  lexiflux.language.broker:broker.py:42 Pool model openrouter-nemotron-3-ultra to exclude is not in the llmbroker catalog
+WARNING  lexiflux.language.broker:broker.py:42 Pool model openrouter-laguna-s-2.1 to exclude is not in the llmbroker catalog

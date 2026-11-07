@@ -1,0 +1,5 @@
+2026-09-25 19:04:28,734 INFO signals Successfully created language preferences for user testuser (ID: 1)
+2026-09-25 19:04:28,751 INFO reader_views Opening book some-book-code at page 1 for user testuser
+2026-09-25 19:04:28,762 INFO models Reading location updated for some-book-code: 1(1):0/0.0
+[{'page_number': 1, 'word': 0}]/0
+2026-09-25 19:04:28,763 INFO reader_views Jump status: book some-book-code, is_first_jump True, is_last_jump True

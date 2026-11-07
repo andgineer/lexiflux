@@ -1,0 +1,2 @@
+2026-09-22 11:57:10,954 WARNING calibre_views No Bearer token provided for Calibre upload
+2026-09-22 11:57:10,955 WARNING log Unauthorized: /calibre/upload/

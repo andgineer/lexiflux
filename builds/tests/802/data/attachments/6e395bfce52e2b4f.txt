@@ -1,0 +1,3 @@
+INFO     lexiflux.signals:signals.py:55 Successfully created language preferences for user testuser (ID: 1)
+INFO     lexiflux.views.lexical_views:lexical_views.py:242 Selected text: page
+WARNING  lexiflux.views.lexical_views:lexical_views.py:142 Dictionary article failed: not_found: raw-secret-detail <b>

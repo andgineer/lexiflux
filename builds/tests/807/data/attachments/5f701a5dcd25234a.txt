@@ -1,0 +1,13 @@
+2026-09-27 14:47:53,181 WARNING google_languages Warning: Egyptian Arabic not found in the database for group Arabic.
+2026-09-27 14:47:53,530 INFO signals Successfully created language preferences for user testuser (ID: 4)
+2026-09-27 14:47:53,551 INFO reader_views Opening book some-book-code at page 1 for user testuser
+2026-09-27 14:47:53,561 INFO models Reading location updated for some-book-code: 1(1):0/0.0
+[{'page_number': 1, 'word': 0}]/0
+2026-09-27 14:47:53,562 INFO reader_views Jump status: book some-book-code, is_first_jump True, is_last_jump True
+2026-09-27 14:47:54,846 INFO lexical_views Selected text: page
+2026-09-27 14:47:54,859 WARNING llm AI article failed: NoLLMAvailableError('none') model=pool type=AI dictionary
+2026-09-27 14:47:54,860 WARNING presets preset freetier: nothing cached and nothing is fetched automatically — falling back to the bundled copy, frozen at this llmbroker release
+2026-09-27 14:47:54,863 WARNING presets preset paid-catalog: nothing cached and nothing is fetched automatically — falling back to the bundled copy, frozen at this llmbroker release
+2026-09-27 14:47:54,866 WARNING presets preset freetier: nothing cached and nothing is fetched automatically — falling back to the bundled copy, frozen at this llmbroker release
+2026-09-27 14:47:54,968 WARNING presets preset paid-catalog: nothing cached and nothing is fetched automatically — falling back to the bundled copy, frozen at this llmbroker release
+2026-09-27 14:47:54,970 WARNING presets preset freetier: nothing cached and nothing is fetched automatically — falling back to the bundled copy, frozen at this llmbroker release

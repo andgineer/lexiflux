@@ -1,0 +1,4 @@
+2026-09-28 12:12:22,238 WARNING llm AI article failed: AuthError('rejected') model=gpt type=In depth
+2026-09-28 12:12:22,238 WARNING presets preset paid-catalog: nothing cached and nothing is fetched automatically — falling back to the bundled copy, frozen at this llmbroker release
+2026-09-28 12:12:22,241 WARNING presets preset paid-catalog: nothing cached and nothing is fetched automatically — falling back to the bundled copy, frozen at this llmbroker release
+2026-09-28 12:12:22,243 WARNING presets preset freetier: nothing cached and nothing is fetched automatically — falling back to the bundled copy, frozen at this llmbroker release

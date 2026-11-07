@@ -1,0 +1,1 @@
+2026-09-29 08:02:41,883 INFO signals Successfully created language preferences for user lingea (ID: 1)

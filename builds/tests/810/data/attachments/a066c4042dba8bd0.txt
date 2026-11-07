@@ -1,0 +1,5 @@
+INFO     lexiflux.signals:signals.py:55 Successfully created language preferences for user testuser (ID: 1)
+INFO     root:user_modal.py:24   - Serbian -> English (ID: 1)
+INFO     root:user_modal.py:24   - Afrikaans -> English (ID: 2)
+INFO     root:user_modal.py:34 New language: Afrikaans (af)
+INFO     root:user_modal.py:37 Old user language: English

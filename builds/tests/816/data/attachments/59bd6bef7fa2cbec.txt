@@ -1,0 +1,4 @@
+2026-11-07 06:26:24,983 INFO signals Successfully created language preferences for user alice (ID: 1)
+2026-11-07 06:26:24,990 WARNING presets preset paid-catalog: nothing cached and nothing is fetched automatically — falling back to the bundled copy, frozen at this llmbroker release
+2026-11-07 06:26:24,992 WARNING presets preset freetier: nothing cached and nothing is fetched automatically — falling back to the bundled copy, frozen at this llmbroker release
+2026-11-07 06:26:24,994 WARNING log Bad Request: /api/ai-keys/OPENAI_API_KEY/

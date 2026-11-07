@@ -1,0 +1,7 @@
+INFO     root:timing.py:14 Loading from https://example.com/test completed in 0.000 seconds
+INFO     root:timing.py:14 Extract metadata completed in 0.000 seconds
+INFO     root:timing.py:14 Extracting IDs with internal links completed in 0.000 seconds
+INFO     root:timing.py:14 Extracting readable HTML completed in 0.000 seconds
+INFO     root:timing.py:14 Parse extracted HTML completed in 0.000 seconds
+INFO     root:timing.py:14 Adding source info completed in 0.000 seconds
+INFO     root:timing.py:14 Cleared HTML completed in 0.000 seconds

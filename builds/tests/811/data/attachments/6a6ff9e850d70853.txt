@@ -1,0 +1,4 @@
+INFO     httpx:_client.py:1025 HTTP Request: GET https://kaikki.org/dictionary/English/meaning/x/xy/xyzzy.jsonl "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET https://kaikki.org/dictionary/English/meaning/s/sp/spring.jsonl "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET https://kaikki.org/dictionary/English/meaning/b/be/be.jsonl "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1025 HTTP Request: GET https://kaikki.org/dictionary/English/meaning/s/sh/she.jsonl "HTTP/1.1 200 OK"

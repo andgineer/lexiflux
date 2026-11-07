@@ -1,0 +1,9 @@
+INFO     lexiflux.signals:signals.py:55 Successfully created language preferences for user testuser (ID: 1)
+INFO     lexiflux.views.lexical_views:lexical_views.py:242 Selected text: page
+INFO     httpx:_client.py:1025 HTTP Request: GET https://translate.googleapis.com/translate_a/single?client=dict-chrome-ex&sl=en&tl=ru&dt=t&dt=bd&q=page "HTTP/1.1 429 Too Many Requests"
+WARNING  root:translation.py:164 Google client dict-chrome-ex refused: HTTP 429
+INFO     httpx:_client.py:1025 HTTP Request: GET https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=ru&dt=t&dt=bd&q=page "HTTP/1.1 429 Too Many Requests"
+WARNING  root:translation.py:164 Google client gtx refused: HTTP 429
+INFO     httpx:_client.py:1025 HTTP Request: GET https://translate.googleapis.com/translate_a/single?client=at&sl=en&tl=ru&dt=t&dt=bd&q=page "HTTP/1.1 429 Too Many Requests"
+WARNING  root:translation.py:164 Google client at refused: HTTP 429
+WARNING  lexiflux.views.lexical_views:lexical_views.py:142 Dictionary article failed: rate_limit: every identifier tried refused

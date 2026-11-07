@@ -1,0 +1,2 @@
+INFO     httpx:_client.py:1025 HTTP Request: GET https://translate.googleapis.com/translate_a/single?client=dict-chrome-ex&sl=en&tl=ru&dt=t&dt=bd&q=spring "HTTP/1.1 429 Too Many Requests"
+WARNING  root:translation.py:164 Google client dict-chrome-ex refused: HTTP 429

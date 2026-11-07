@@ -1,0 +1,1 @@
+2026-09-24 10:12:14,357 WARNING presets preset freetier: nothing cached and nothing is fetched automatically — falling back to the bundled copy, frozen at this llmbroker release

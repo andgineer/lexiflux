@@ -1,0 +1,5 @@
+2026-11-07 06:41:11,557 WARNING presets preset freetier: nothing cached and nothing is fetched automatically — falling back to the bundled copy, frozen at this llmbroker release
+2026-11-07 06:41:11,557 WARNING presets preset paid-catalog: nothing cached and nothing is fetched automatically — falling back to the bundled copy, frozen at this llmbroker release
+2026-11-07 06:41:11,560 WARNING presets preset paid-catalog: nothing cached and nothing is fetched automatically — falling back to the bundled copy, frozen at this llmbroker release
+2026-11-07 06:41:11,570 INFO apps Lexiflux 2.9.7 is ready.
+2026-11-07 06:41:11,570 INFO _client HTTP Request: POST https://api.anthropic.com/v1/chat/completions "HTTP/1.1 200 OK"

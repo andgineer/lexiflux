@@ -1,0 +1,3 @@
+2026-09-28 12:12:59,892 INFO signals Successfully created language preferences for user alice (ID: 1)
+2026-09-28 12:12:59,896 WARNING log Method Not Allowed (GET): /api/ai-keys/OPENAI_API_KEY/
+2026-09-28 12:12:59,897 WARNING log Method Not Allowed: /api/ai-keys/OPENAI_API_KEY/

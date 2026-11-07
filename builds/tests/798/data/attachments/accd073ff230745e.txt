@@ -1,0 +1,1 @@
+Marked text for term 'Word1 word2': [FRAGMENT][HIGHLIGHT]Word1 word2[/HIGHLIGHT][/FRAGMENT]. Word3 word4

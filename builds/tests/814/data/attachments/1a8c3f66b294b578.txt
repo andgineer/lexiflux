@@ -1,0 +1,3 @@
+2026-09-29 07:14:36,043 WARNING book_loader_epub EPUB lists EPUB/Text/Sadržaj.html, reading archive file EPUB/Text/Sadr┼╛aj.html instead
+2026-09-29 07:14:36,043 WARNING book_loader_epub EPUB lists EPUB/Text/Chapter.html, reading archive file EPUB/text/chapter.html instead
+2026-09-29 07:14:36,044 WARNING book_loader_epub EPUB lists EPUB/Images/picture.jpg, but the archive has no such file; importing without it

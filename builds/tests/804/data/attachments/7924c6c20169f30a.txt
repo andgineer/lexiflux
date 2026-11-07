@@ -1,0 +1,4 @@
+2026-09-27 08:27:22,310 INFO _client HTTP Request: GET https://kaikki.org/ruwiktionary/%D0%90%D0%BD%D0%B3%D0%BB%D0%B8%D0%B9%D1%81%D0%BA%D0%B8%D0%B9/meaning/l/li/liveth.jsonl "HTTP/1.1 404 Not Found"
+2026-09-27 08:27:22,310 INFO _client HTTP Request: GET https://kaikki.org/dictionary/English/meaning/l/li/liveth.jsonl "HTTP/1.1 200 OK"
+2026-09-27 08:27:22,312 INFO _client HTTP Request: GET https://kaikki.org/ruwiktionary/%D0%90%D0%BD%D0%B3%D0%BB%D0%B8%D0%B9%D1%81%D0%BA%D0%B8%D0%B9/meaning/l/li/live.jsonl "HTTP/1.1 200 OK"
+2026-09-27 08:27:22,313 INFO _client HTTP Request: GET https://kaikki.org/dictionary/English/meaning/l/li/live.jsonl "HTTP/1.1 200 OK"

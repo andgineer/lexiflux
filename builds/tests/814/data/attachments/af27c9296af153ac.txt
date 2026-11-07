@@ -1,0 +1,7 @@
+2026-09-29 07:14:43,167 ERROR lexical_views Background work failed
+Traceback (most recent call last):
+  File "/home/runner/work/lexiflux/lexiflux/lexiflux/views/lexical_views.py", line 388, in _closing_connection
+    work()
+  File "/home/runner/work/lexiflux/lexiflux/tests/test_vocabulary_history.py", line 400, in work
+    raise ProcessLookupError("broken")
+ProcessLookupError: broken

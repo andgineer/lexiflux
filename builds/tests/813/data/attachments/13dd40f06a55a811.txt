@@ -1,0 +1,1 @@
+2026-09-29 06:22:23,667 WARNING book_loader_url Image too small, skipping: https://example.com/test.jpg

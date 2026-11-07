@@ -1,0 +1,2 @@
+2026-09-27 08:46:52,255 INFO signals Successfully created language preferences for user testuser (ID: 1)
+2026-09-27 08:46:52,262 WARNING log Not Found: /api/ai-settings/

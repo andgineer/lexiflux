@@ -1,0 +1,2 @@
+2026-09-28 13:39:56,001 WARNING llm AI article failed: AuthError('rejected') model=pool type=Inline translation
+2026-09-28 13:39:56,002 WARNING presets preset paid-catalog: nothing cached and nothing is fetched automatically — falling back to the bundled copy, frozen at this llmbroker release

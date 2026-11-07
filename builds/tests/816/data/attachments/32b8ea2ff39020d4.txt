@@ -1,0 +1,2 @@
+INFO     lexiflux.signals:signals.py:55 Successfully created language preferences for user testuser (ID: 1)
+WARNING  lexiflux.views.calibre_views:calibre_views.py:268 Language unknown_lang_code not found in database
